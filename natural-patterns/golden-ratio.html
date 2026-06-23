@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>KINETIC_GEOMETRY // GOLDEN_RATIO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,700;0,900;1,900&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@400;600;800&family=Cormorant+Garamond:ital,wght@0,700;1,700&display=swap">
+<style>
+:root{
+  --rouge:#FF4FA8; --ice:#5AE9FF; --gold:#FFD27A; --lav:#B58EFF; --magenta:#B850FF;
+  --bg-0:#07030f; --bg-1:#0c061d; --panel:#150927; --panel-2:#100728; --cell:#0d0620;
+  --white:#F8EFFF; --ink:#0a0612;
+  --disp:'Barlow Condensed',sans-serif; --orn:'Cormorant Garamond',serif;
+  --mono:'IBM Plex Mono',monospace; --jp-serif:'Noto Serif JP',serif; --jp:'Noto Sans JP',sans-serif;
+  --grad:linear-gradient(120deg,#FFE9B0,#FFD27A 26%,#FF4FA8 62%,#B58EFF 100%);
+  --grad-btn:linear-gradient(135deg,#FF4FA8,#B850FF);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg-1);color:var(--white);font-family:var(--mono);-webkit-font-smoothing:antialiased;
+  user-select:text;-webkit-user-select:text}
+#main,.ed-btn,.fp,.tg,input[type=range],#sc-open-btn,#topbar .esc,.sc-key,.check-item .bx,.po,.corner{
+  user-select:none;-webkit-user-select:none}
+#app{height:100vh;display:grid;grid-template-rows:44px 1fr 44px;grid-template-columns:1fr 300px}
+
+/* ── topbar ── */
+#topbar{grid-column:1/3;display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;border-bottom:1px solid rgba(181,142,255,0.14);background:var(--panel-2)}
+#topbar .lec{font-size:10px;letter-spacing:0.28em;color:var(--gold);text-transform:uppercase}
+#topbar .ttl{font-size:10px;letter-spacing:0.3em;color:var(--lav);text-transform:uppercase}
+#topbar .esc{font-size:9px;letter-spacing:0.24em;color:rgba(255,79,168,0.55);cursor:pointer;transition:.15s}
+#topbar .esc:hover{color:var(--rouge)}
+
+/* ── main / stage ── */
+#main{position:relative;overflow:hidden;background:radial-gradient(120% 120% at 30% 20%,#100728 0%,#07030f 90%)}
+#stage{position:absolute;inset:0}
+#geo{position:absolute;inset:0;width:100%;height:100%;touch-action:none;z-index:2}
+.stage-grid{position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(181,142,255,0.045) 1px,transparent 1px),linear-gradient(90deg,rgba(181,142,255,0.045) 1px,transparent 1px);
+  background-size:40px 40px}
+.stage-bignum{position:absolute;left:-10px;bottom:-44px;font-family:var(--orn);font-style:italic;
+  font-size:300px;line-height:1;pointer-events:none;-webkit-text-stroke:1.5px rgba(255,210,122,0.16);
+  color:transparent;background:linear-gradient(180deg,rgba(255,79,168,0.06),rgba(184,80,255,0.03));
+  -webkit-background-clip:text;background-clip:text}
+.corner{position:absolute;width:18px;height:18px;border:0 solid rgba(255,210,122,0.5);pointer-events:none}
+.corner.tl{top:14px;left:14px;border-top-width:1px;border-left-width:1px}
+.corner.tr{top:14px;right:14px;border-top-width:1px;border-right-width:1px}
+.corner.bl{bottom:14px;left:14px;border-bottom-width:1px;border-left-width:1px}
+.corner.br{bottom:14px;right:14px;border-bottom-width:1px;border-right-width:1px}
+.po{position:absolute;top:16px;right:18px;text-align:right;pointer-events:none}
+.po-num{font-family:var(--orn);font-style:italic;font-size:48px;line-height:.8;
+  background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.po-en{font-family:var(--mono);font-size:10px;letter-spacing:0.22em;color:var(--gold);text-transform:uppercase;margin-top:4px}
+.po-jp{font-family:var(--jp);font-size:9px;letter-spacing:0.14em;color:var(--lav)}
+
+/* φ-lock reveal — momentary 'whole = remainder' discovery */
+#lock{position:absolute;top:15%;left:50%;transform:translate(-50%,-50%) scale(.8);opacity:0;z-index:6;
+  pointer-events:none;text-align:center;text-transform:uppercase}
+#lock.fire{animation:lockReveal 1.9s cubic-bezier(.2,.7,.3,1) forwards}
+#lock .lk-main{font-family:var(--disp);font-style:italic;font-weight:900;font-size:42px;letter-spacing:.04em;
+  color:var(--ice);text-shadow:0 0 28px rgba(90,233,255,.9)}
+#lock .lk-jp{font-family:var(--jp-serif);font-weight:800;font-size:22px;color:var(--white);
+  letter-spacing:.32em;margin-top:7px;text-shadow:0 0 14px rgba(90,233,255,.45)}
+#lock .lk-sub{font-family:var(--jp);font-size:11px;letter-spacing:.26em;color:var(--lav);margin-top:11px}
+@keyframes lockReveal{0%{opacity:0;transform:translate(-50%,-50%) scale(.8)}
+  12%{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  84%{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(1.04)}}
+
+/* hint */
+#hint{position:absolute;left:18px;bottom:16px;font-size:9.5px;letter-spacing:.16em;color:rgba(248,239,255,.5);
+  pointer-events:none;font-family:var(--mono);text-transform:uppercase;z-index:3}
+#hint b{color:var(--ice)}
+
+/* poster (DESIGN mode) — the golden lines become real layout regions */
+#poster{position:absolute;display:none;z-index:1;pointer-events:none;background:var(--cell);
+  border:1.5px solid rgba(255,79,168,.5);box-shadow:0 18px 64px rgba(0,0,0,.55);
+  opacity:0;transform:scale(.975);transition:opacity .3s ease,transform .34s cubic-bezier(.4,0,.2,1),border-color .3s,box-shadow .3s}
+#poster.show{display:flex;opacity:1;transform:scale(1)}
+#poster .reg{position:relative;overflow:hidden}
+/* region name badge — makes each golden region read as a real layout slot */
+#poster .reglbl{position:absolute;z-index:4;font-family:var(--mono);font-size:7px;letter-spacing:.28em;
+  text-transform:uppercase;padding:2px 6px;border-radius:0 0 4px 0;top:0;left:0;pointer-events:none}
+#poster .col-img .reglbl{background:rgba(10,6,18,.34);color:rgba(10,6,18,.92)}
+#poster .col-txt .reglbl{background:rgba(90,233,255,.14);color:var(--ice)}
+#poster .col-img{background:var(--grad)}
+#poster .col-img .imgtag{position:absolute;top:9px;right:9px;font-family:var(--mono);font-size:8px;
+  letter-spacing:.26em;color:rgba(10,6,18,.62)}
+#poster .col-img .imgcap{position:absolute;left:10px;bottom:9px;font-family:var(--orn);font-style:italic;
+  font-size:30px;line-height:.8;color:rgba(10,6,18,.85)}
+#poster .col-txt{flex:1 1 auto;background:linear-gradient(180deg,#221143,#190d33);display:flex;flex-direction:column;
+  padding:15px 13px 12px}
+#poster .col-txt>*{transition:transform .28s ease,opacity .28s ease}
+#poster .eyebrow{font-family:var(--mono);font-size:8px;letter-spacing:.28em;color:var(--gold);
+  text-transform:uppercase;display:flex;justify-content:space-between}
+#poster .head{font-family:var(--disp);font-style:italic;font-weight:900;font-size:27px;line-height:.84;
+  text-transform:uppercase;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;margin-top:6px}
+#poster .subt{font-family:var(--jp-serif);font-size:10.5px;color:var(--white);line-height:1.5;letter-spacing:.02em;margin-top:6px}
+#poster .prule{height:1px;background:linear-gradient(90deg,rgba(255,210,122,.6),transparent);margin:9px 0 8px}
+#poster .body{display:flex;flex-direction:column;gap:5px}
+#poster .body span{display:block;height:4px;border-radius:2px;background:rgba(181,142,255,.42);transition:width .3s ease}
+#poster .metabar{margin-top:auto;font-family:var(--mono);font-size:7.5px;letter-spacing:.2em;color:var(--lav);
+  display:flex;justify-content:space-between;border-top:1px dotted rgba(181,142,255,.3);padding-top:8px}
+
+/* ── side panel ── */
+#side{background:var(--panel-2);border-left:1px solid rgba(181,142,255,.14);overflow-y:auto;overflow-x:hidden}
+#side::-webkit-scrollbar{width:2px}#side::-webkit-scrollbar-thumb{background:var(--rouge)}
+.sp{padding:13px 15px;border-bottom:1px solid rgba(181,142,255,.1)}
+.spl{font-size:9px;letter-spacing:.36em;color:var(--gold);text-transform:uppercase;margin-bottom:11px;
+  display:flex;justify-content:space-between;align-items:baseline}
+.spl .sub{color:var(--lav);letter-spacing:.1em;font-size:8px}
+
+/* big ratio readout */
+.ratio-big{font-family:var(--orn);font-style:italic;font-size:46px;line-height:.9;color:var(--ice);
+  text-shadow:0 0 16px rgba(90,233,255,.35)}
+.ratio-big .eq{color:rgba(248,239,255,.4);font-size:24px}
+.rrow{display:flex;align-items:flex-end;gap:8px}
+.rrow .tag{font-family:var(--mono);font-size:8px;letter-spacing:.2em;color:var(--lav);padding-bottom:8px}
+
+/* slider */
+.tr{display:flex;align-items:center;gap:10px;margin-top:9px}
+.tr .lab{font-size:9px;letter-spacing:.18em;color:var(--lav);min-width:54px;text-transform:uppercase}
+.tr .val{font-family:var(--mono);font-size:10px;color:var(--gold);min-width:30px;text-align:right}
+input[type=range]{-webkit-appearance:none;appearance:none;flex:1;height:2px;background:rgba(181,142,255,.25);border-radius:2px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;
+  background:var(--gold);box-shadow:0 0 8px rgba(255,210,122,.5);cursor:pointer;border:none}
+input[type=range]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;background:var(--gold);border:none;cursor:pointer}
+
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.fp{font-family:var(--mono);font-size:9px;letter-spacing:.1em;padding:5px 9px;border:1px solid rgba(181,142,255,.3);
+  color:var(--lav);background:transparent;cursor:pointer;border-radius:3px;transition:.14s;text-transform:uppercase}
+.fp:hover{border-color:var(--rouge);color:var(--white)}
+.fp.on{background:var(--grad-btn);border-color:transparent;color:#fff;box-shadow:0 0 14px rgba(255,79,168,.4)}
+.fp .px{display:block;font-size:7.5px;color:rgba(248,239,255,.5);letter-spacing:0;margin-top:2px}
+.fp.on .px{color:rgba(255,255,255,.8)}
+
+/* segmented view switch (ABSTRACT / DESIGN) */
+.seglab{font-size:8px;letter-spacing:.3em;color:var(--lav);text-transform:uppercase;margin-top:12px;margin-bottom:5px}
+.seglab span{color:rgba(181,142,255,.6);letter-spacing:.08em}
+.seg{display:flex;gap:5px}
+.seg-b{flex:1;font-family:var(--mono);font-size:10px;letter-spacing:.14em;padding:9px 4px;
+  border:1px solid rgba(181,142,255,.3);background:transparent;color:var(--lav);cursor:pointer;
+  border-radius:3px;transition:.15s;text-transform:uppercase}
+.seg-b:hover{border-color:var(--rouge);color:var(--white)}
+.seg-b.on{background:var(--grad-btn);border-color:transparent;color:#fff;box-shadow:0 0 14px rgba(255,79,168,.4)}
+
+/* ratio personality cards */
+.pers{display:flex;flex-direction:column;gap:8px}
+.pc{display:flex;gap:11px;align-items:center;border:1px solid rgba(181,142,255,.2);border-radius:4px;
+  padding:9px 10px;cursor:pointer;transition:.15s;
+  background:linear-gradient(180deg,rgba(255,79,168,.05),rgba(184,80,255,.02))}
+.pc:hover{border-color:var(--rouge);box-shadow:0 0 12px rgba(255,79,168,.22)}
+.pc.on{border-color:var(--ice);box-shadow:0 0 14px rgba(90,233,255,.3)}
+.pc .mini{flex:0 0 auto;width:48px;display:flex;align-items:center;justify-content:flex-start}
+.pc .mbox{display:flex;border:1px solid rgba(248,239,255,.45);overflow:hidden}
+.pc.on .mbox{border-color:var(--ice);box-shadow:0 0 8px rgba(90,233,255,.4)}
+.pc .mbox .mi{flex:0 0 auto;background:var(--grad)}
+.pc .mbox .mt{flex:1;background:rgba(181,142,255,.16)}
+.pc .pinfo{flex:1;min-width:0}
+.pc .pname{font-family:var(--disp);font-style:italic;font-weight:900;font-size:16px;text-transform:uppercase;
+  color:var(--white);line-height:1;display:flex;align-items:baseline;gap:7px}
+.pc .pname .pr{font-family:var(--mono);font-size:8px;letter-spacing:.08em;color:var(--gold);font-style:normal;font-weight:400}
+.pc .ptag{font-family:var(--mono);font-size:8px;letter-spacing:.24em;color:var(--ice);text-transform:uppercase;margin:3px 0 4px}
+.pc .ptraits{font-family:var(--jp);font-size:9.5px;color:rgba(181,142,255,.85);line-height:1.5}
+
+/* toggles */
+.tg-row{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.tg-row .l{font-size:9.5px;letter-spacing:.14em;color:var(--white);text-transform:uppercase}
+.tg{width:34px;height:17px;border-radius:9px;background:rgba(181,142,255,.2);position:relative;cursor:pointer;transition:.18s;flex:0 0 auto}
+.tg::after{content:'';position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:var(--lav);transition:.18s}
+.tg.on{background:var(--grad-btn)}.tg.on::after{left:19px;background:#fff}
+
+/* self-sim meter */
+.simbox{margin-top:6px}
+.simrow{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;margin-bottom:6px}
+.simrow .k{color:var(--lav);letter-spacing:.12em}
+.simrow .v{color:var(--gold)}
+.simrow .v.ice{color:var(--ice)}
+.meter{height:6px;background:rgba(181,142,255,.14);border-radius:4px;position:relative;overflow:hidden;margin-top:4px}
+.meter .ctr{position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:rgba(90,233,255,.6)}
+.meter .fill{position:absolute;top:0;bottom:0;left:50%;background:var(--rouge);transition:.06s}
+.meter.lit .fill{background:var(--ice);box-shadow:0 0 10px rgba(90,233,255,.7)}
+.simnote{font-family:var(--jp);font-size:11px;line-height:1.7;color:rgba(181,142,255,.9);margin-top:8px}
+.simnote b{color:var(--ice);font-weight:700}
+
+/* data rows */
+.data-row{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;padding:4px 0;
+  border-bottom:1px dotted rgba(181,142,255,.12)}
+.data-row .dk{color:var(--lav);letter-spacing:.08em}
+.data-row .dv{color:var(--gold)}
+.data-row .dv.neon{color:var(--ice);text-shadow:0 0 8px rgba(90,233,255,.4)}
+.bridge{margin-top:9px;padding:8px 10px;border:1px dashed rgba(90,233,255,.3);border-radius:4px;background:rgba(90,233,255,.04)}
+.bridge .bh{font-size:8px;letter-spacing:.26em;color:var(--ice);text-transform:uppercase;margin-bottom:4px}
+.bridge .bv{font-family:var(--mono);font-size:11px;color:var(--white)}
+.bridge .bj{font-family:var(--jp);font-size:10px;color:var(--lav);line-height:1.65;margin-top:4px}
+
+/* quote / db */
+.db{border-left:2px solid var(--gold);padding:4px 0 4px 12px;position:relative}
+.db::before{content:'✦';position:absolute;left:-7px;top:-2px;color:var(--gold);font-size:10px}
+.de{font-family:var(--orn);font-style:italic;font-weight:700;font-size:17px;color:var(--gold);line-height:1.25}
+.dj{font-family:var(--jp-serif);font-size:11.5px;color:var(--white);line-height:1.75;margin-top:6px}
+.dnote{font-family:var(--jp);font-size:10.5px;color:rgba(181,142,255,.78);line-height:1.7;margin-top:9px}
+
+/* checklist */
+.check-item{display:flex;align-items:center;gap:9px;font-size:10px;letter-spacing:.04em;padding:5px 0;cursor:pointer;color:var(--lav)}
+.check-item .bx{width:13px;height:13px;border:1px solid rgba(181,142,255,.4);border-radius:2px;flex:0 0 auto;
+  display:flex;align-items:center;justify-content:center;font-size:9px;color:transparent}
+.check-item.checked{color:rgba(248,239,255,.5)}
+.check-item.checked .bx{background:var(--grad-btn);border-color:transparent;color:#fff}
+.check-item.checked .tx{text-decoration:line-through;text-decoration-color:rgba(255,210,122,.6)}
+.check-progress{font-size:8px;letter-spacing:.2em;color:var(--rouge);margin-top:8px}
+.check-progress.complete{color:var(--ice);text-shadow:0 0 8px rgba(90,233,255,.5)}
+
+/* buttons */
+.ed-btn{width:100%;font-family:var(--mono);font-size:10px;letter-spacing:.2em;padding:8px;border:1px solid var(--rouge);
+  background:transparent;color:var(--rouge);cursor:pointer;text-transform:uppercase;transition:.15s;border-radius:3px}
+.ed-btn:hover{background:rgba(255,79,168,.1)}
+.ed-btn.prim{background:var(--grad-btn);border-color:transparent;color:#fff}
+.ed-btn.prim:hover{box-shadow:0 0 16px rgba(255,79,168,.5)}
+.params{display:flex;gap:7px}
+.params .ed-btn{font-size:9px;padding:7px}
+
+/* ── bottombar ── */
+#bottombar{grid-column:1/3;display:flex;align-items:center;justify-content:space-between;padding:0 16px;
+  border-top:1px solid rgba(181,142,255,.14);background:var(--panel-2);font-size:9px;letter-spacing:.16em;color:var(--lav)}
+#bottombar .st{color:var(--ice)}
+#sc-open-btn{font-family:var(--mono);font-size:9px;letter-spacing:.22em;color:rgba(255,79,168,.55);cursor:pointer;
+  border:1px solid rgba(255,79,168,.2);padding:3px 9px;border-radius:3px;transition:.15s}
+#sc-open-btn:hover{border-color:var(--rouge);color:var(--rouge)}
+
+/* shortcut modal */
+#shortcut-modal{display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.85);align-items:center;justify-content:center}
+#shortcut-modal.open{display:flex}
+#shortcut-box{background:#150927;border:1px solid var(--ice);width:min(460px,92vw);max-height:80vh;overflow-y:auto;padding:20px}
+#shortcut-box::-webkit-scrollbar{width:2px}#shortcut-box::-webkit-scrollbar-thumb{background:var(--ice)}
+.sc-header{font-family:var(--mono);font-size:11px;letter-spacing:.24em;color:var(--ice);display:flex;justify-content:space-between;
+  text-transform:uppercase;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid rgba(90,233,255,.2)}
+.sc-header span{cursor:pointer;color:var(--lav)}
+.sc-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0}
+.sc-desc{font-size:10px;color:var(--white);letter-spacing:.05em}
+.sc-desc em{font-style:normal;color:var(--lav);font-size:8.5px;display:block;font-family:var(--jp)}
+.sc-key{display:inline-block;min-width:22px;padding:3px 8px;background:#1a0835;border:1px solid var(--ice);border-radius:3px;
+  font-family:var(--mono);font-size:10px;text-align:center;color:var(--ice)}
+
+@media (max-width:780px){
+  #app{grid-template-columns:1fr;grid-template-rows:40px 1fr auto 40px}
+  #side{grid-row:3;max-height:42vh;border-left:none;border-top:1px solid rgba(181,142,255,.14)}
+  #topbar{grid-column:1}#bottombar{grid-column:1}
+  .po-num{font-size:34px}.stage-bignum{font-size:180px;bottom:-26px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="topbar">
+    <span class="lec">KINETIC_GEOMETRY // GOLDEN_RATIO</span>
+    <span class="ttl">Proportion · 比率を触る</span>
+    <span class="esc" onclick="location.href='index.html'">[ESC] INDEX</span>
+  </div>
+
+  <div id="main">
+    <div id="stage">
+      <div class="stage-grid"></div>
+      <div class="stage-bignum">φ</div>
+      <canvas id="geo"></canvas>
+      <div id="poster">
+        <div class="reg col-img"><span class="reglbl">IMAGE</span><span class="imgtag">φ-SQUARE</span><span class="imgcap">φ</span></div>
+        <div class="reg col-txt">
+          <span class="reglbl">TEXT</span>
+          <div class="eyebrow"><span>EDITORIAL // 01</span><span>φ</span></div>
+          <div class="head">Golden<br>Section</div>
+          <div class="subt">比率は、置くだけで秩序になる。</div>
+          <div class="prule"></div>
+          <div class="body"><span></span><span></span><span></span></div>
+          <div class="metabar"><span>WHOLE = REMAINDER</span><span id="poster-split">φ : 1</span></div>
+        </div>
+      </div>
+      <div id="lock">
+        <div class="lk-main">WHOLE = REMAINDER</div>
+        <div class="lk-jp">全体 ＝ 残り</div>
+        <div class="lk-sub">同じ形が永遠に続く</div>
+      </div>
+      <div id="hint">DRAG THE EDGE — 端をドラッグして <b>φ</b> でロックする感触を探す</div>
+    </div>
+    <div class="corner tl"></div><div class="corner tr"></div>
+    <div class="corner bl"></div><div class="corner br"></div>
+    <div class="po">
+      <div class="po-num">φ</div>
+      <div class="po-en">Golden Ratio</div>
+      <div class="po-jp">黄金比</div>
+    </div>
+  </div>
+
+  <div id="side">
+
+    <div class="sp">
+      <div class="spl">PROPORTION <span class="sub" id="modesub">ABSTRACT</span></div>
+      <div class="rrow">
+        <div class="ratio-big"><span id="ratio-num">1.4500</span> <span class="eq">: 1</span></div>
+        <div class="tag">b : a</div>
+      </div>
+      <div class="tr">
+        <span class="lab">Ratio</span>
+        <input type="range" id="ratio-slider" min="1.000" max="2.600" step="0.001" value="1.450">
+        <span class="val" id="ratio-val">1.45</span>
+      </div>
+      <div class="seglab">View <span>表示モード</span></div>
+      <div class="seg" id="seg-mode">
+        <button class="seg-b on" data-mode="abstract">□ ABSTRACT</button>
+        <button class="seg-b" data-mode="design">■ DESIGN</button>
+      </div>
+      <div class="tg-row" style="margin-top:10px"><span class="l">Orientation 縦</span><div class="tg" id="tg-orient"></div></div>
+      <button class="ed-btn prim" id="btn-snap" style="margin-top:11px">▸ SNAP TO φ</button>
+    </div>
+
+    <div class="sp">
+      <div class="spl">RATIO FAMILY <span class="sub">比率の仲間</span></div>
+      <div class="chips" id="chips"></div>
+    </div>
+
+    <div class="sp">
+      <div class="spl">RATIO PERSONALITY <span class="sub">用途で選ぶ</span></div>
+      <div class="pers" id="pers"></div>
+    </div>
+
+    <div class="sp">
+      <div class="spl">SELF-SIMILARITY <span class="sub">自己相似</span></div>
+      <div class="simbox">
+        <div class="simrow"><span class="k">WHOLE　 r</span><span class="v" id="sim-r">1.4500</span></div>
+        <div class="simrow"><span class="k">LEFTOVER r'</span><span class="v" id="sim-rp">2.2222</span></div>
+        <div class="meter" id="sim-meter"><div class="ctr"></div><div class="fill" id="sim-fill"></div></div>
+        <div class="simnote">正方形を1つ取り除いた<b>残り</b>の比 r'。φでは r' が全体 r と<b>完全に一致</b>＝残りもまた黄金長方形。だから螺旋が無限に続く。</div>
+      </div>
+      <div class="tg-row" style="margin-top:11px"><span class="l">Subdivision 分割</span><div class="tg on" id="tg-sub"></div></div>
+      <div class="tg-row"><span class="l">Spiral 螺旋</span><div class="tg on" id="tg-spiral"></div></div>
+      <div class="tr">
+        <span class="lab">Depth</span>
+        <input type="range" id="depth-slider" min="1" max="14" step="1" value="9">
+        <span class="val" id="depth-val">9</span>
+      </div>
+    </div>
+
+    <div class="sp">
+      <div class="spl">READOUT <span class="sub">数値</span></div>
+      <div class="data-row"><span class="dk">φ = (1+√5)/2</span><span class="dv neon">1.6180339887</span></div>
+      <div class="data-row"><span class="dk">b/a</span><span class="dv" id="d-ba">1.4500</span></div>
+      <div class="data-row"><span class="dk">(a+b)/b　※φで一致</span><span class="dv" id="d-abb">1.6897</span></div>
+      <div class="data-row"><span class="dk">連分数 CF</span><span class="dv" id="d-cf">[1; 2, 4]</span></div>
+      <div class="data-row"><span class="dk">分割の正方形数</span><span class="dv" id="d-sq">3</span></div>
+      <div class="bridge">
+        <div class="bh">▸ FIBONACCI BRIDGE</div>
+        <div class="bv" id="d-fib">8 / 5 → 1.6000</div>
+        <div class="bj">隣り合うフィボナッチ数の比は φ に収束する。次章で「触って分かる」拡張予定。</div>
+      </div>
+    </div>
+
+    <div class="sp">
+      <div class="spl">LEARN <span class="sub">読む</span></div>
+      <div class="db">
+        <div class="de">a : b = b : (a+b)</div>
+        <div class="dj">短辺と長辺の比が、長辺と全体の比に等しい。この自己言及を満たす唯一の比が φ。</div>
+      </div>
+      <div class="dnote">※「黄金比は普遍的に最も美しい」という主張は実証的には諸説あり。確かなのは φ の<b style="color:var(--ice)">自己相似性</b>と、均等な分配（葉序など）に現れる性質。デザイナーにとっては"再現可能な、入れ子になる比率"として使える。</div>
+      <div id="checklist" style="margin-top:11px"></div>
+      <div class="check-progress" id="check-prog">0 / 4 EXPERIENCED</div>
+    </div>
+
+    <div class="sp">
+      <div class="spl">PARAMS</div>
+      <div class="params">
+        <button class="ed-btn" id="btn-copy">⧉ COPY</button>
+        <button class="ed-btn" id="btn-paste">⤓ PASTE</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="bottombar">
+    <span>STATUS : <span class="st" id="status">EXPLORING</span></span>
+    <span>RATIO <span class="st" id="bb-ratio">1.4500</span></span>
+    <span id="sc-open-btn" onclick="openShortcuts()">⌨ SHORTCUTS</span>
+  </div>
+
+</div>
+
+<div id="shortcut-modal" onclick="if(event.target.id==='shortcut-modal')closeShortcuts()">
+  <div id="shortcut-box">
+    <div class="sc-header">⌨ KEYBOARD SHORTCUTS <span onclick="closeShortcuts()">✕</span></div>
+    <div id="sc-list"></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+const PHI=(1+Math.sqrt(5))/2;
+const MINR=1.0, MAXR=2.6, EPS=0.004;
+
+const state={ r:1.45, mode:'abstract', orient:'land', depth:9, showSub:true, showSpiral:true };
+const done={ drag:false, snap:false, compare:false, spiral:false };
+
+const cv=document.getElementById('geo');
+const ctx=cv.getContext('2d');
+let DPR=Math.min(window.devicePixelRatio||1,2);
+let SW=0,SH=0;
+
+/* ── canvas sizing ── */
+function resize(){
+  const m=document.getElementById('main').getBoundingClientRect();
+  SW=m.width; SH=m.height;
+  DPR=Math.min(window.devicePixelRatio||1,2);
+  cv.width=SW*DPR; cv.height=SH*DPR; cv.style.width=SW+'px'; cv.style.height=SH+'px';
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  draw();
+}
+window.addEventListener('resize',resize);
+
+/* ── rect geometry for current state ── */
+function computeRect(){
+  const r=state.r;
+  if(state.orient==='land'){
+    const H=Math.min(SH*0.62,(SW*0.76)/MAXR);
+    const W=r*H;
+    const left=SW*0.13, top=(SH-H)/2;
+    return {x:left,y:top,w:W,h:H,axis:'x',anchor:left,unit:H,handle:{x:left+W,y:top+H/2}};
+  } else {
+    const W=Math.min(SW*0.60,(SH*0.76)/MAXR);
+    const H=r*W;
+    const top=SH*0.12, left=(SW-W)/2;
+    return {x:left,y:top,w:W,h:H,axis:'y',anchor:top,unit:W,handle:{x:left+W/2,y:top+H}};
+  }
+}
+
+/* ── subdivision squares (rotating cut) ── */
+function buildSquares(x,y,w,h,maxDepth,startPhase){
+  const sq=[]; let rx=x,ry=y,rw=w,rh=h,phase=startPhase||0;
+  for(let i=0;i<maxDepth;i++){
+    const s=Math.min(rw,rh);
+    if(s<=0.6) break;
+    if(phase===0){ sq.push({x:rx,y:ry,s}); rx+=s; rw-=s; }
+    else if(phase===1){ sq.push({x:rx,y:ry,s}); ry+=s; rh-=s; }
+    else if(phase===2){ sq.push({x:rx+rw-s,y:ry,s}); rw-=s; }
+    else { sq.push({x:rx,y:ry+rh-s,s}); rh-=s; }
+    phase=(phase+1)%4;
+  }
+  return sq;
+}
+function corners(q){ return [{x:q.x,y:q.y},{x:q.x+q.s,y:q.y},{x:q.x+q.s,y:q.y+q.s},{x:q.x,y:q.y+q.s}]; }
+function near(a,b){ return Math.abs(a.x-b.x)<0.5 && Math.abs(a.y-b.y)<0.5; }
+function buildArcs(squares){
+  const out=[]; const adj={0:[1,3],1:[2,0],2:[3,1],3:[0,2]};
+  let prevEnd=null;
+  for(let i=0;i<squares.length;i++){
+    const cs=corners(squares[i]); const next=squares[i+1]?corners(squares[i+1]):null;
+    let chosen=null;
+    for(let c=0;c<4 && !chosen;c++){
+      const center=cs[c]; const pairs=[[cs[adj[c][0]],cs[adj[c][1]]],[cs[adj[c][1]],cs[adj[c][0]]]];
+      for(const [a,b] of pairs){
+        if(prevEnd){ if(!near(a,prevEnd)) continue; }
+        else if(next){ if(!next.some(p=>near(p,b))) continue; }
+        chosen={center,a,b}; break;
+      }
+    }
+    if(!chosen) break;
+    out.push({cx:chosen.center.x,cy:chosen.center.y,r:squares[i].s,p0:chosen.a,p1:chosen.b});
+    prevEnd=chosen.b;
+  }
+  return out;
+}
+
+/* ── draw ── */
+function draw(){
+  ctx.clearRect(0,0,SW,SH);
+  const R=computeRect();
+  const startPhase=state.orient==='land'?0:1;
+  const squares=buildSquares(R.x,R.y,R.w,R.h,state.depth,startPhase);
+  const layout=(state.mode==='design');
+  if(layout) layoutPoster(R);
+  const atPhi=Math.abs(state.r-PHI)<EPS;
+  const prox=Math.max(0,1-Math.abs(state.r-PHI)/0.30);
+
+  // subdivision squares (faint white overlay grid when layout is on)
+  if(state.showSub){
+    ctx.lineWidth=1;
+    squares.forEach((q,i)=>{
+      ctx.strokeStyle = layout
+        ? 'rgba(248,239,255,'+Math.max(0.05,0.26-i*0.02).toFixed(3)+')'
+        : 'rgba(181,142,255,'+(0.5-i*0.025).toFixed(3)+')';
+      ctx.strokeRect(q.x,q.y,q.s,q.s);
+    });
+  }
+
+  // primary golden-section line — in layout mode this is the image / text split
+  if(layout && squares.length){
+    const s=squares[0].s;
+    ctx.strokeStyle=atPhi?'rgba(90,233,255,.85)':(prox>0.55?'rgba(255,210,122,.75)':'rgba(255,79,168,.6)'); ctx.lineWidth=1.5;
+    ctx.beginPath();
+    if(state.orient==='land'){ ctx.moveTo(R.x+s,R.y); ctx.lineTo(R.x+s,R.y+R.h); }
+    else { ctx.moveTo(R.x,R.y+s); ctx.lineTo(R.x+R.w,R.y+s); }
+    ctx.stroke();
+  }
+
+  // spiral (connected quarter arcs) — abstract mode only
+  if(state.showSpiral && !layout){
+    const arcs=buildArcs(squares);
+    const g=ctx.createLinearGradient(R.x,R.y,R.x+R.w,R.y+R.h);
+    g.addColorStop(0,'#FFD27A'); g.addColorStop(.55,'#FF4FA8'); g.addColorStop(1,'#B58EFF');
+    ctx.strokeStyle=g; ctx.lineWidth=2.2; ctx.lineCap='round';
+    ctx.shadowColor='rgba(255,79,168,.35)'; ctx.shadowBlur=6;
+    arcs.forEach(a=>{
+      const a0=Math.atan2(a.p0.y-a.cy,a.p0.x-a.cx);
+      const a1=Math.atan2(a.p1.y-a.cy,a.p1.x-a.cx);
+      let d=a1-a0; while(d<=-Math.PI)d+=2*Math.PI; while(d>Math.PI)d-=2*Math.PI;
+      ctx.beginPath(); ctx.arc(a.cx,a.cy,a.r,a0,a1,d<0); ctx.stroke();
+    });
+    ctx.shadowBlur=0;
+  }
+
+  // outer rectangle
+  ctx.lineWidth=2;
+  if(atPhi){ ctx.strokeStyle='#5AE9FF'; ctx.shadowColor='rgba(90,233,255,.6)'; ctx.shadowBlur=14; }
+  else if(prox>0.55){ ctx.strokeStyle='#FFD27A'; ctx.shadowColor='rgba(255,210,122,.4)'; ctx.shadowBlur=8; }
+  else { ctx.strokeStyle='rgba(248,239,255,.85)'; }
+  ctx.strokeRect(R.x,R.y,R.w,R.h);
+  ctx.shadowBlur=0;
+
+  // φ guide line
+  if(state.orient==='land'){
+    const gx=R.anchor+PHI*R.unit;
+    drawGuide(gx,R.y-12,gx,R.y+R.h+12,'φ',gx,R.y-16,'x');
+  } else {
+    const gy=R.anchor+PHI*R.unit;
+    drawGuide(R.x-12,gy,R.x+R.w+12,gy,'φ',R.x+R.w+16,gy,'y');
+  }
+
+  // drag handle
+  ctx.fillStyle=atPhi?'#5AE9FF':(prox>0.55?'#FFD27A':'#FF4FA8');
+  if(atPhi){ ctx.shadowColor='rgba(90,233,255,.8)'; ctx.shadowBlur=16; }
+  else if(prox>0.55){ ctx.shadowColor='rgba(255,210,122,.5)'; ctx.shadowBlur=12; }
+  else { ctx.shadowColor='rgba(255,79,168,.6)'; ctx.shadowBlur=10; }
+  ctx.beginPath();
+  if(state.orient==='land'){ ctx.fillRect(R.handle.x-2.5,R.y+4,5,R.h-8); }
+  else { ctx.fillRect(R.x+4,R.handle.y-2.5,R.w-8,5); }
+  ctx.shadowBlur=0;
+}
+function drawGuide(x0,y0,x1,y1,label,lx,ly,axis){
+  ctx.save();
+  ctx.strokeStyle='rgba(90,233,255,.4)'; ctx.lineWidth=1; ctx.setLineDash([5,5]);
+  ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#5AE9FF'; ctx.font='italic 16px Cormorant Garamond, serif';
+  ctx.textAlign=axis==='x'?'center':'left'; ctx.textBaseline=axis==='x'?'bottom':'middle';
+  ctx.fillText(label,lx,ly);
+  ctx.restore();
+}
+
+/* ── readouts ── */
+const fmt=(n,d=4)=>Number(n).toFixed(d);
+function continuedFraction(x,terms){
+  const out=[]; let v=x;
+  for(let i=0;i<terms;i++){ const a=Math.floor(v); out.push(a); const f=v-a; if(f<1e-6)break; v=1/f; }
+  return out.length>1?('[ '+out[0]+'; '+out.slice(1).join(', ')+' ]'):('[ '+out[0]+' ]');
+}
+function nearestFib(r){
+  const f=[1,1]; while(f[f.length-1]<2000) f.push(f[f.length-1]+f[f.length-2]);
+  let best=null,bd=Infinity;
+  for(let i=2;i<f.length;i++){ const ra=f[i]/f[i-1]; const d=Math.abs(ra-r); if(d<bd){bd=d;best={a:f[i],b:f[i-1],ra};} }
+  return best;
+}
+function leftoverRatio(r){
+  const long=r, short=1, lo=long-short;
+  if(lo<=1e-6) return Infinity;
+  return Math.max(lo,short)/Math.min(lo,short);
+}
+function updateReadouts(){
+  const r=state.r;
+  document.getElementById('ratio-num').textContent=fmt(r);
+  document.getElementById('ratio-val').textContent=fmt(r,2);
+  document.getElementById('bb-ratio').textContent=fmt(r);
+  document.getElementById('sim-r').textContent=fmt(r);
+  const rp=leftoverRatio(r);
+  document.getElementById('sim-rp').textContent=isFinite(rp)?fmt(rp):'∞';
+
+  // meter: drift r' - r, centered, lit at phi
+  const drift=isFinite(rp)?(rp-r):2;
+  const meter=document.getElementById('sim-meter'), fill=document.getElementById('sim-fill');
+  const w=Math.max(-1,Math.min(1,drift/1.2));
+  const half=50;
+  fill.style.left=(w>=0?50:50+w*half)+'%';
+  fill.style.width=Math.abs(w)*half+'%';
+  const lit=Math.abs(state.r-PHI)<EPS;
+  meter.classList.toggle('lit',lit);
+  document.getElementById('sim-r').classList.toggle('ice',lit);
+  document.getElementById('sim-rp').classList.toggle('ice',lit);
+  if(lit && !lockFired){ lockFired=true; fireLock(); }
+  if(!lit) lockFired=false;
+
+  document.getElementById('d-ba').textContent=fmt(r);
+  document.getElementById('d-abb').textContent=fmt((1+r)/r);
+  document.getElementById('d-cf').textContent=continuedFraction(r,7);
+
+  const startPhase=state.orient==='land'?0:1;
+  const R=computeRect();
+  const sq=buildSquares(R.x,R.y,R.w,R.h,30,startPhase);
+  document.getElementById('d-sq').textContent=sq.length>=30?'30+ (≈∞)':String(sq.length);
+
+  const fb=nearestFib(r);
+  document.getElementById('d-fib').textContent=fb.a+' / '+fb.b+' → '+fmt(fb.ra);
+
+  // chips active
+  document.querySelectorAll('.fp').forEach(c=>{
+    c.classList.toggle('on',Math.abs(parseFloat(c.dataset.r)-r)<EPS);
+  });
+  document.querySelectorAll('.pc').forEach(c=>{
+    c.classList.toggle('on',Math.abs(parseFloat(c.dataset.r)-r)<EPS);
+  });
+
+  document.getElementById('status').textContent=lit?'φ LOCKED':'EXPLORING';
+  document.getElementById('modesub').textContent=state.mode==='design'?'DESIGN':'ABSTRACT';
+}
+
+/* ── set ratio (+ animation) ── */
+let animRAF=null;
+let lockFired=false;
+
+/* ── morph: golden line → filled design regions (robust, JS-driven) ── */
+let morphP=1, morphRAF=null, morphTO=null;
+function startMorph(){
+  if(morphRAF)cancelAnimationFrame(morphRAF);
+  if(morphTO)clearTimeout(morphTO);
+  const t0=performance.now(), dur=340;
+  const step=now=>{
+    const k=Math.min(1,(now-t0)/dur);
+    morphP=k*k*(3-2*k);
+    draw();
+    if(k<1) morphRAF=requestAnimationFrame(step); else morphP=1;
+  };
+  morphP=0; morphRAF=requestAnimationFrame(step);
+  // safety: guarantee the poster ends fully revealed even if rAF is throttled
+  morphTO=setTimeout(()=>{ morphP=1; draw(); }, dur+60);
+}
+function setRatio(r,animate){
+  r=Math.max(MINR,Math.min(MAXR,r));
+  if(animate){
+    if(animRAF)cancelAnimationFrame(animRAF);
+    const from=state.r, to=r, t0=performance.now(), dur=380;
+    const step=now=>{
+      const k=Math.min(1,(now-t0)/dur); const e=k*k*(3-2*k);
+      state.r=from+(to-from)*e;
+      syncUI(); draw(); updateReadouts();
+      if(k<1) animRAF=requestAnimationFrame(step);
+    };
+    animRAF=requestAnimationFrame(step);
+  } else {
+    state.r=r; syncUI(); draw(); updateReadouts();
+  }
+}
+function syncUI(){
+  document.getElementById('ratio-slider').value=state.r.toFixed(3);
+}
+
+/* ── drag on stage (abstract) ── */
+let dragging=false;
+function ratioFromPoint(px,py){
+  const R=computeRect();
+  if(state.orient==='land') return (px-R.anchor)/R.unit;
+  return (py-R.anchor)/R.unit;
+}
+function nearHandle(px,py){
+  const R=computeRect();
+  return Math.hypot(px-R.handle.x,py-R.handle.y)<46;
+}
+cv.addEventListener('pointerdown',e=>{
+  const rect=cv.getBoundingClientRect(); const px=e.clientX-rect.left, py=e.clientY-rect.top;
+  dragging=true; cv.setPointerCapture(e.pointerId);
+  setRatio(ratioFromPoint(px,py),false);
+  markDone('drag');
+  document.getElementById('hint').style.opacity='0';
+});
+cv.addEventListener('pointermove',e=>{
+  if(!dragging)return;
+  const rect=cv.getBoundingClientRect();
+  let r=ratioFromPoint(e.clientX-rect.left,e.clientY-rect.top);
+  if(Math.abs(r-PHI)<0.022) r=PHI; // magnetic snap near phi
+  setRatio(r,false);
+  if(Math.abs(state.r-PHI)<EPS) markDone('snap');
+});
+cv.addEventListener('pointerup',()=>{dragging=false;});
+cv.addEventListener('pointercancel',()=>{dragging=false;});
+
+/* ── poster (DESIGN mode): content rides the golden lines; tidies as r→φ ── */
+const JIT=[-1,1,-1,1,-1];
+function layoutPoster(R){
+  const p=document.getElementById('poster');
+  p.style.left=R.x+'px'; p.style.top=R.y+'px'; p.style.width=R.w+'px'; p.style.height=R.h+'px';
+  const img=p.querySelector('.col-img'); const txt=p.querySelector('.col-txt');
+  const s=Math.min(R.w,R.h);              // image = the golden-section square
+  const lo=Math.max(R.w,R.h)-s;           // text = the leftover
+  p.style.flexDirection=state.orient==='land'?'row':'column';
+  // when leftover collapses (square), the text slot vanishes — show image only, no sliver past the edge
+  if(lo<12){ txt.style.display='none'; img.style.flex='1 1 auto'; }
+  else { txt.style.display='flex'; img.style.flex='0 0 '+s+'px'; }
+  txt.style.flex='1 1 auto';
+  img.style.clipPath=''; txt.style.clipPath='';
+  document.getElementById('poster-split').textContent=(lo>0?fmt(s/lo,3):'—')+' : 1';
+
+  // proximity to φ: 0 (far) → 1 (locked). drives how 'designed' the layout looks.
+  const prox=Math.max(0,1-Math.abs(state.r-PHI)/0.30);
+  const ease=prox*prox*(3-2*prox);
+
+  // border / glow state: rouge (exploring) → gold (near) → ice (locked)
+  if(Math.abs(state.r-PHI)<EPS){ p.style.borderColor='rgba(90,233,255,.85)'; p.style.boxShadow='0 16px 60px rgba(0,0,0,.5),0 0 26px rgba(90,233,255,.4)'; }
+  else if(prox>0.55){ p.style.borderColor='rgba(255,210,122,.7)'; p.style.boxShadow='0 16px 60px rgba(0,0,0,.5),0 0 16px rgba(255,210,122,.25)'; }
+  else { p.style.borderColor='rgba(255,79,168,.5)'; p.style.boxShadow='0 16px 60px rgba(0,0,0,.5)'; }
+
+  // text blocks settle into alignment as φ approaches
+  const blocks=txt.querySelectorAll('.col-txt>*');
+  const jitter=(1-ease)*7;
+  blocks.forEach((b,i)=>{
+    b.style.transform='translateX('+(JIT[i%JIT.length]*jitter).toFixed(1)+'px)';
+    b.style.opacity=(0.55+0.45*ease).toFixed(2);
+  });
+  txt.style.gap=(5+6*ease).toFixed(1)+'px';
+  txt.style.paddingTop=(10+7*ease).toFixed(0)+'px';
+
+  // body line widths: ragged when far, evened-out at φ
+  const rag=[100,62,86], tidy=[100,92,82];
+  txt.querySelectorAll('.body span').forEach((sp,i)=>{
+    sp.style.width=(rag[i]+(tidy[i]-rag[i])*ease).toFixed(0)+'%';
+  });
+}
+
+function setMode(m){
+  state.mode=m;
+  document.querySelectorAll('#seg-mode .seg-b').forEach(b=>b.classList.toggle('on',b.dataset.mode===m));
+  const p=document.getElementById('poster');
+  if(m==='design'){
+    p.classList.remove('show'); void p.offsetWidth; p.classList.add('show');
+  } else {
+    p.classList.remove('show');
+  }
+  document.getElementById('hint').innerHTML=m==='design'
+    ? 'DRAG THE EDGE — 枠を伸ばすと <b>引いた線がそのままデザインの境界</b>になる'
+    : 'DRAG THE EDGE — 端をドラッグして <b>φ</b> でロックする感触を探す';
+  document.getElementById('hint').style.opacity='';
+  document.getElementById('modesub').textContent=m==='design'?'DESIGN':'ABSTRACT';
+  draw(); updateReadouts();
+}
+
+function fireLock(){
+  const el=document.getElementById('lock');
+  el.classList.remove('fire'); void el.offsetWidth; el.classList.add('fire');
+}
+
+/* ── chips ── */
+const FAMILY=[
+  {label:'1 : 1',  r:1.000, px:'SQUARE'},
+  {label:'3 : 2',  r:1.500, px:'PHOTO'},
+  {label:'√2',     r:Math.SQRT2, px:'PAPER A'},
+  {label:'φ',      r:PHI,   px:'GOLDEN'},
+  {label:'16 : 9', r:16/9,  px:'SCREEN'},
+];
+(function buildChips(){
+  const box=document.getElementById('chips');
+  FAMILY.forEach(f=>{
+    const b=document.createElement('button'); b.className='fp'; b.dataset.r=f.r;
+    b.innerHTML=f.label+'<span class="px">'+f.px+' · '+fmt(f.r,3)+'</span>';
+    b.addEventListener('click',()=>{ setRatio(f.r,true); markDone('compare'); });
+    box.appendChild(b);
+  });
+})();
+
+/* ── ratio personality (compare uses, not 'find the right answer') ── */
+(function buildPersonality(){
+  const PERS=[
+    {label:'3:2', r:1.5,        tag:'PHOTO',     jp:'安定・写真らしい・クラシック'},
+    {label:'√2',  r:Math.SQRT2, tag:'PAPER',     jp:'実用的・余白多め・書類向き'},
+    {label:'φ',   r:PHI,        tag:'EDITORIAL', jp:'自己相似・入れ子に強い・展開しやすい'},
+  ];
+  const box=document.getElementById('pers');
+  PERS.forEach(p=>{
+    const w=46, h=Math.round(w/p.r), sq=h;
+    const c=document.createElement('div'); c.className='pc'; c.dataset.r=p.r;
+    c.innerHTML=
+      '<div class="mini"><div class="mbox" style="width:'+w+'px;height:'+h+'px">'+
+        '<div class="mi" style="width:'+sq+'px"></div><div class="mt"></div></div></div>'+
+      '<div class="pinfo"><div class="pname">'+p.label+' <span class="pr">'+fmt(p.r,3)+'</span></div>'+
+        '<div class="ptag">'+p.tag+'</div><div class="ptraits">'+p.jp+'</div></div>';
+    c.addEventListener('click',()=>{ setMode('design'); setRatio(p.r,true); markDone('compare'); });
+    box.appendChild(c);
+  });
+})();
+
+/* ── toggles ── */
+function bindTg(id,key,onChange){
+  const el=document.getElementById(id);
+  el.addEventListener('click',()=>{ state[key]=!state[key]; el.classList.toggle('on',state[key]); onChange&&onChange(); draw(); updateReadouts(); });
+}
+bindTg('tg-sub','showSub');
+bindTg('tg-spiral','showSpiral',()=>{ if(state.showSpiral)markDone('spiral'); });
+document.querySelectorAll('#seg-mode .seg-b').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
+document.getElementById('tg-orient').addEventListener('click',()=>{
+  state.orient=state.orient==='land'?'port':'land';
+  document.getElementById('tg-orient').classList.toggle('on',state.orient==='port');
+  draw(); updateReadouts();
+});
+
+document.getElementById('ratio-slider').addEventListener('input',e=>{ setRatio(parseFloat(e.target.value),false); markDone('drag'); });
+document.getElementById('depth-slider').addEventListener('input',e=>{
+  state.depth=parseInt(e.target.value,10); document.getElementById('depth-val').textContent=state.depth; draw();
+});
+document.getElementById('btn-snap').addEventListener('click',()=>{ setRatio(PHI,true); markDone('snap'); });
+
+/* ── checklist ── */
+const CHECKS=[
+  {k:'drag',   t:'端をドラッグして比率を変える'},
+  {k:'snap',   t:'φ でロック（残り = 全体）を体感'},
+  {k:'compare',t:'3:2 や √2 と φ を見比べる'},
+  {k:'spiral', t:'螺旋が分割から生まれるのを見る'},
+];
+(function buildChecklist(){
+  const box=document.getElementById('checklist');
+  CHECKS.forEach(c=>{
+    const row=document.createElement('div'); row.className='check-item'; row.dataset.k=c.k;
+    row.innerHTML='<span class="bx">✓</span><span class="tx">'+c.t+'</span>';
+    box.appendChild(row);
+  });
+})();
+function markDone(k){
+  if(done[k])return; done[k]=true;
+  const row=document.querySelector('.check-item[data-k="'+k+'"]'); if(row)row.classList.add('checked');
+  const n=Object.values(done).filter(Boolean).length;
+  const prog=document.getElementById('check-prog');
+  prog.textContent=n+' / 4 EXPERIENCED';
+  prog.classList.toggle('complete',n===4);
+}
+
+/* ── copy / paste params ── */
+function flash(btn,ok,label){
+  const o=btn.textContent; btn.textContent=label; btn.style.color=ok?'#5AE9FF':'#FF4FA8'; btn.style.borderColor=btn.style.color;
+  setTimeout(()=>{btn.textContent=o;btn.style.color='';btn.style.borderColor='';},1200);
+}
+document.getElementById('btn-copy').addEventListener('click',e=>{
+  const data={ ratio:+state.r.toFixed(4), mode:state.mode, orient:state.orient, depth:state.depth, showSub:state.showSub, showSpiral:state.showSpiral };
+  navigator.clipboard.writeText(JSON.stringify(data,null,2))
+    .then(()=>flash(e.target,true,'✓ COPIED')).catch(()=>flash(e.target,false,'✗'));
+});
+document.getElementById('btn-paste').addEventListener('click',async e=>{
+  try{
+    const o=JSON.parse(await navigator.clipboard.readText());
+    if(typeof o.ratio==='number') state.r=Math.max(MINR,Math.min(MAXR,o.ratio));
+    if(o.orient){ state.orient=o.orient; document.getElementById('tg-orient').classList.toggle('on',state.orient==='port'); }
+    if(typeof o.depth==='number'){ state.depth=o.depth; document.getElementById('depth-slider').value=o.depth; document.getElementById('depth-val').textContent=o.depth; }
+    if(typeof o.showSub==='boolean'){ state.showSub=o.showSub; document.getElementById('tg-sub').classList.toggle('on',o.showSub); }
+    if(typeof o.showSpiral==='boolean'){ state.showSpiral=o.showSpiral; document.getElementById('tg-spiral').classList.toggle('on',o.showSpiral); }
+    if(o.mode) setMode(o.mode);
+    syncUI(); draw(); updateReadouts();
+    flash(e.target,true,'✓ APPLIED');
+  }catch(err){ flash(e.target,false,'✗'); }
+});
+
+/* ── shortcuts ── */
+const SC=[
+  {key:'F',desc:'Snap to φ',jp:'φ にスナップ'},
+  {key:'A',desc:'Abstract view',jp:'抽象（長方形）'},
+  {key:'D',desc:'Design view',jp:'デザイン適用'},
+  {key:'S',desc:'Toggle subdivision',jp:'分割表示'},
+  {key:'P',desc:'Toggle spiral',jp:'螺旋表示'},
+  {key:'O',desc:'Orientation',jp:'縦横切替'},
+  {key:'← →',desc:'Nudge ratio',jp:'比率を微調整'},
+  {key:'?',desc:'This panel',jp:'このパネル'},
+  {key:'Esc',desc:'Index / close',jp:'索引へ / 閉じる'},
+];
+function openShortcuts(){
+  const list=document.getElementById('sc-list'); list.innerHTML='';
+  SC.forEach(s=>{
+    const row=document.createElement('div'); row.className='sc-row';
+    row.innerHTML='<span class="sc-desc">'+s.desc+'<em>'+s.jp+'</em></span><span class="sc-key">'+s.key+'</span>';
+    list.appendChild(row);
+  });
+  document.getElementById('shortcut-modal').classList.add('open');
+}
+function closeShortcuts(){ document.getElementById('shortcut-modal').classList.remove('open'); }
+
+window.addEventListener('keydown',e=>{
+  if(/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName))return;
+  const k=e.key;
+  if(k==='Escape'){ if(document.getElementById('shortcut-modal').classList.contains('open')){closeShortcuts();return;} location.href='index.html'; return; }
+  if(k==='?'){ openShortcuts(); return; }
+  if(k==='f'||k==='F'){ setRatio(PHI,true); markDone('snap'); return; }
+  if(k==='a'||k==='A'){ setMode('abstract'); return; }
+  if(k==='d'||k==='D'||k==='l'||k==='L'){ setMode('design'); return; }
+  if(k==='s'||k==='S'){ document.getElementById('tg-sub').click(); return; }
+  if(k==='p'||k==='P'){ document.getElementById('tg-spiral').click(); return; }
+  if(k==='o'||k==='O'){ document.getElementById('tg-orient').click(); return; }
+  if(k==='ArrowLeft'){ e.preventDefault(); setRatio(state.r-(e.shiftKey?0.05:0.005),false); markDone('drag'); return; }
+  if(k==='ArrowRight'){ e.preventDefault(); setRatio(state.r+(e.shiftKey?0.05:0.005),false); markDone('drag'); return; }
+});
+
+/* ── boot ── */
+function boot(){ resize(); setRatio(1.45,false); }
+if(document.fonts&&document.fonts.ready){ document.fonts.ready.then(boot); setTimeout(boot,400); }
+else boot();
+</script>
+</body>
+</html>

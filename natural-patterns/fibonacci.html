@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>KINETIC_GEOMETRY // FIBONACCI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,700;0,900;1,900&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@400;600;800&family=Cormorant+Garamond:ital,wght@0,700;1,700&display=swap">
+<style>
+:root{
+  --rouge:#FF4FA8; --ice:#5AE9FF; --gold:#FFD27A; --lav:#B58EFF; --magenta:#B850FF;
+  --bg-0:#07030f; --bg-1:#0c061d; --panel:#150927; --panel-2:#100728; --cell:#0d0620;
+  --white:#F8EFFF; --ink:#0a0612;
+  --disp:'Barlow Condensed',sans-serif; --orn:'Cormorant Garamond',serif;
+  --mono:'IBM Plex Mono',monospace; --jp-serif:'Noto Serif JP',serif; --jp:'Noto Sans JP',sans-serif;
+  --grad:linear-gradient(120deg,#FFE9B0,#FFD27A 26%,#FF4FA8 62%,#B58EFF 100%);
+  --grad-btn:linear-gradient(135deg,#FF4FA8,#B850FF);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg-1);color:var(--white);font-family:var(--mono);-webkit-font-smoothing:antialiased;
+  user-select:text;-webkit-user-select:text}
+#main,.ed-btn,.fp,.tg,input[type=range],#sc-open-btn,#topbar .esc,.sc-key,.check-item .bx,.po,.corner,.tab{
+  user-select:none;-webkit-user-select:none}
+#app{height:100vh;display:grid;grid-template-rows:44px 1fr 44px;grid-template-columns:1fr 300px}
+
+#topbar{grid-column:1/3;display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;border-bottom:1px solid rgba(181,142,255,0.14);background:var(--panel-2)}
+#topbar .lec{font-size:10px;letter-spacing:0.28em;color:var(--gold);text-transform:uppercase}
+#topbar .ttl{font-size:10px;letter-spacing:0.3em;color:var(--lav);text-transform:uppercase}
+#topbar .esc{font-size:9px;letter-spacing:0.24em;color:rgba(255,79,168,0.55);cursor:pointer;transition:.15s}
+#topbar .esc:hover{color:var(--rouge)}
+
+#main{position:relative;overflow:hidden;background:radial-gradient(120% 120% at 30% 20%,#100728 0%,#07030f 90%)}
+#stage{position:absolute;inset:0}
+#geo{position:absolute;inset:0;width:100%;height:100%;touch-action:none;z-index:2}
+.stage-grid{position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(181,142,255,0.045) 1px,transparent 1px),linear-gradient(90deg,rgba(181,142,255,0.045) 1px,transparent 1px);
+  background-size:40px 40px}
+.stage-seq{position:absolute;left:14px;bottom:8px;right:14px;font-family:var(--mono);font-size:13px;letter-spacing:.5em;
+  pointer-events:none;color:transparent;-webkit-text-stroke:1px rgba(255,210,122,0.13);white-space:nowrap;overflow:hidden}
+.corner{position:absolute;width:18px;height:18px;border:0 solid rgba(255,210,122,0.5);pointer-events:none}
+.corner.tl{top:14px;left:14px;border-top-width:1px;border-left-width:1px}
+.corner.tr{top:14px;right:14px;border-top-width:1px;border-right-width:1px}
+.corner.bl{bottom:14px;left:14px;border-bottom-width:1px;border-left-width:1px}
+.corner.br{bottom:14px;right:14px;border-bottom-width:1px;border-right-width:1px}
+.po{position:absolute;top:16px;right:18px;text-align:right;pointer-events:none}
+.po-num{font-family:var(--orn);font-style:italic;font-size:46px;line-height:.8;
+  background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.po-num sub{font-size:22px}
+.po-en{font-family:var(--mono);font-size:10px;letter-spacing:0.22em;color:var(--gold);text-transform:uppercase;margin-top:4px}
+.po-jp{font-family:var(--jp);font-size:9px;letter-spacing:0.14em;color:var(--lav)}
+
+/* ── MEMORY = 2 banner ── */
+.mem-banner{position:absolute;top:13px;left:36px;pointer-events:none;z-index:4}
+.mem-banner .mb-eq{font-family:var(--disp);font-style:italic;font-weight:900;font-size:21px;letter-spacing:.06em;
+  background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.mem-banner .mb-jp{font-family:var(--jp);font-size:9px;letter-spacing:.2em;color:var(--lav);margin-top:1px}
+
+/* ── MEMORY HUD (shift register) ── */
+.mem-hud{position:absolute;top:16px;right:16px;width:104px;text-align:center;pointer-events:none;z-index:4;font-family:var(--mono)}
+.mem-hud .mh-ttl{font-size:9px;letter-spacing:.28em;color:var(--gold);text-transform:uppercase}
+.mem-hud .mh-sub{font-family:var(--jp);font-size:8px;letter-spacing:.08em;color:var(--lav);margin-top:2px}
+.mem-reg{margin:8px auto 0;width:74px;border:1px solid rgba(255,210,122,.32);border-radius:3px;overflow:hidden;
+  background:linear-gradient(180deg,rgba(255,79,168,.05),rgba(184,80,255,.02))}
+.mem-cell{height:29px;display:flex;align-items:center;justify-content:center;font-size:16px;letter-spacing:.03em}
+.mem-cell.c0{color:var(--ice);text-shadow:0 0 8px rgba(90,233,255,.35);border-bottom:1px dashed rgba(181,142,255,.3)}
+.mem-cell.c1{color:var(--lav)}
+.mem-hud .mh-next{font-size:7.5px;letter-spacing:.26em;color:var(--rouge);margin-top:8px;text-transform:uppercase}
+.mem-hud .mh-nv{font-family:var(--orn);font-style:italic;font-size:33px;line-height:.9;margin-top:1px;
+  background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.mem-reg.shift .mem-cell.c0{animation:memOut .36s ease}
+.mem-reg.shift .mem-cell.c1{animation:memUp .36s ease}
+.mem-hud.shift .mh-nv{animation:memDrop .36s ease}
+@keyframes memOut{0%{opacity:.35;transform:translateY(-7px)}100%{opacity:1;transform:none}}
+@keyframes memUp{0%{transform:translateY(22px);opacity:.25}100%{transform:none;opacity:1}}
+@keyframes memDrop{0%{transform:translateY(-12px) scale(.6);opacity:0}55%{opacity:1}100%{transform:none;opacity:1}}
+
+/* ── phyllo state caption ── */
+#phstate{position:absolute;top:50%;left:50%;transform:translate(-50%,calc(-50% + 34px));text-align:center;
+  pointer-events:none;z-index:5;opacity:0;transition:opacity .4s}
+#phstate.on{opacity:1}
+#phstate .ps-en{font-family:var(--mono);font-size:10px;letter-spacing:.42em;text-transform:uppercase;color:var(--lav)}
+#phstate .ps-jp{font-family:var(--jp);font-size:9px;letter-spacing:.14em;color:rgba(248,239,255,.55);margin-top:5px}
+
+/* ── flow triad (side) ── */
+.flow-triad{display:flex;align-items:flex-start;justify-content:space-between;gap:4px}
+.flow-triad .ft{flex:1;text-align:center}
+.flow-triad .fe{font-family:var(--mono);font-size:8px;letter-spacing:.12em;color:rgba(181,142,255,.5);text-transform:uppercase;display:block;transition:.3s}
+.flow-triad .ft.on .fe{color:var(--gold)}
+.flow-triad .fj{font-family:var(--jp);font-size:8px;letter-spacing:.04em;color:rgba(248,239,255,.45);display:block;margin-top:3px}
+.flow-triad .arr{color:rgba(255,210,122,.45);font-size:10px;align-self:center;margin-top:-6px}
+#ft-emerge-w.pulse .fe{animation:emerge .6s ease}
+@keyframes emerge{0%{color:var(--ice);text-shadow:0 0 12px rgba(90,233,255,.7);transform:scale(1.18)}100%{color:rgba(181,142,255,.5);text-shadow:none;transform:none}}
+
+/* ── tile legend ── */
+.tile-legend{display:flex;gap:11px;margin-top:11px;flex-wrap:wrap}
+.tile-legend .lg{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:8.5px;letter-spacing:.05em;color:var(--lav)}
+.tile-legend .lg i{width:9px;height:9px;border-radius:2px;display:inline-block}
+
+#lock{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(.9);opacity:0;transition:.25s;z-index:3;
+  pointer-events:none;font-family:var(--disp);font-style:italic;font-weight:900;font-size:30px;letter-spacing:.04em;
+  color:var(--ice);text-shadow:0 0 22px rgba(90,233,255,.8);text-transform:uppercase}
+#lock.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+#hint{position:absolute;left:18px;bottom:30px;font-size:9.5px;letter-spacing:.16em;color:rgba(248,239,255,.5);
+  pointer-events:none;font-family:var(--mono);text-transform:uppercase;z-index:3}
+#hint b{color:var(--ice)}
+
+#side{background:var(--panel-2);border-left:1px solid rgba(181,142,255,.14);overflow-y:auto;overflow-x:hidden}
+#side::-webkit-scrollbar{width:2px}#side::-webkit-scrollbar-thumb{background:var(--rouge)}
+.sp{padding:13px 15px;border-bottom:1px solid rgba(181,142,255,.1)}
+.spl{font-size:9px;letter-spacing:.36em;color:var(--gold);text-transform:uppercase;margin-bottom:11px;
+  display:flex;justify-content:space-between;align-items:baseline}
+.spl .sub{color:var(--lav);letter-spacing:.1em;font-size:8px}
+
+/* tabs */
+.tabs{display:flex;gap:5px}
+.tab{flex:1;font-family:var(--mono);font-size:9px;letter-spacing:.08em;padding:7px 4px;border:1px solid rgba(181,142,255,.3);
+  color:var(--lav);background:transparent;cursor:pointer;border-radius:3px;text-transform:uppercase;text-align:center;transition:.14s}
+.tab:hover{border-color:var(--rouge);color:var(--white)}
+.tab.on{background:var(--grad-btn);border-color:transparent;color:#fff;box-shadow:0 0 12px rgba(255,79,168,.35)}
+.tab small{display:block;font-size:7px;color:rgba(255,255,255,.6);letter-spacing:.04em;margin-top:2px}
+.tab .jp{display:block;font-family:var(--jp);font-size:7.5px;letter-spacing:.02em;margin-top:1px;color:inherit;opacity:.8}
+
+.mctl{display:none}.mctl.on{display:block}
+
+.tr{display:flex;align-items:center;gap:10px;margin-top:9px}
+.tr .lab{font-size:9px;letter-spacing:.18em;color:var(--lav);min-width:62px;text-transform:uppercase}
+.tr .val{font-family:var(--mono);font-size:10px;color:var(--gold);min-width:48px;text-align:right}
+input[type=range]{-webkit-appearance:none;appearance:none;flex:1;height:2px;background:rgba(181,142,255,.25);border-radius:2px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;
+  background:var(--gold);box-shadow:0 0 8px rgba(255,210,122,.5);cursor:pointer;border:none}
+input[type=range]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;background:var(--gold);border:none;cursor:pointer}
+
+.btn-row{display:flex;gap:7px;margin-top:11px}
+.ed-btn{flex:1;font-family:var(--mono);font-size:10px;letter-spacing:.14em;padding:8px;border:1px solid var(--rouge);
+  background:transparent;color:var(--rouge);cursor:pointer;text-transform:uppercase;transition:.15s;border-radius:3px}
+.ed-btn:hover{background:rgba(255,79,168,.1)}
+.ed-btn.prim{background:var(--grad-btn);border-color:transparent;color:#fff}
+.ed-btn.prim:hover{box-shadow:0 0 16px rgba(255,79,168,.5)}
+
+.tg-row{display:flex;align-items:center;justify-content:space-between;margin-top:10px}
+.tg-row .l{font-size:9.5px;letter-spacing:.12em;color:var(--white);text-transform:uppercase}
+.tg{width:34px;height:17px;border-radius:9px;background:rgba(181,142,255,.2);position:relative;cursor:pointer;transition:.18s;flex:0 0 auto}
+.tg::after{content:'';position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:var(--lav);transition:.18s}
+.tg.on{background:var(--grad-btn)}.tg.on::after{left:19px;background:#fff}
+
+.data-row{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;padding:4px 0;
+  border-bottom:1px dotted rgba(181,142,255,.12)}
+.data-row .dk{color:var(--lav);letter-spacing:.06em}
+.data-row .dv{color:var(--gold)}
+.data-row .dv.neon{color:var(--ice);text-shadow:0 0 8px rgba(90,233,255,.4)}
+
+.meter{height:6px;background:rgba(181,142,255,.14);border-radius:4px;position:relative;overflow:hidden;margin-top:8px}
+.meter .fill{position:absolute;top:0;bottom:0;left:0;background:var(--rouge);transition:.1s;width:0%}
+.meter.lit .fill{background:var(--ice);box-shadow:0 0 10px rgba(90,233,255,.7)}
+.mnote{font-family:var(--jp);font-size:11px;line-height:1.7;color:rgba(181,142,255,.9);margin-top:9px}
+.mnote b{color:var(--ice);font-weight:700}
+
+.db{border-left:2px solid var(--gold);padding:4px 0 4px 12px;position:relative}
+.db::before{content:'✦';position:absolute;left:-7px;top:-2px;color:var(--gold);font-size:10px}
+.de{font-family:var(--orn);font-style:italic;font-weight:700;font-size:17px;color:var(--gold);line-height:1.25}
+.dj{font-family:var(--jp-serif);font-size:11.5px;color:var(--white);line-height:1.75;margin-top:6px}
+.dnote{font-family:var(--jp);font-size:10.5px;color:rgba(181,142,255,.78);line-height:1.7;margin-top:9px}
+.xlink{display:inline-block;margin-top:10px;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;
+  color:var(--ice);cursor:pointer;border-bottom:1px dotted rgba(90,233,255,.5);text-transform:uppercase}
+.xlink:hover{color:var(--white)}
+
+.check-item{display:flex;align-items:center;gap:9px;font-size:10px;letter-spacing:.04em;padding:5px 0;color:var(--lav)}
+.check-item .bx{width:13px;height:13px;border:1px solid rgba(181,142,255,.4);border-radius:2px;flex:0 0 auto;
+  display:flex;align-items:center;justify-content:center;font-size:9px;color:transparent}
+.check-item.checked{color:rgba(248,239,255,.5)}
+.check-item.checked .bx{background:var(--grad-btn);border-color:transparent;color:#fff}
+.check-item.checked .tx{text-decoration:line-through;text-decoration-color:rgba(255,210,122,.6)}
+.check-progress{font-size:8px;letter-spacing:.2em;color:var(--rouge);margin-top:8px}
+.check-progress.complete{color:var(--ice);text-shadow:0 0 8px rgba(90,233,255,.5)}
+
+.params{display:flex;gap:7px}
+.params .ed-btn{font-size:9px;padding:7px}
+
+#bottombar{grid-column:1/3;display:flex;align-items:center;justify-content:space-between;padding:0 16px;
+  border-top:1px solid rgba(181,142,255,.14);background:var(--panel-2);font-size:9px;letter-spacing:.16em;color:var(--lav)}
+#bottombar .st{color:var(--ice)}
+#sc-open-btn{font-family:var(--mono);font-size:9px;letter-spacing:.22em;color:rgba(255,79,168,.55);cursor:pointer;
+  border:1px solid rgba(255,79,168,.2);padding:3px 9px;border-radius:3px;transition:.15s}
+#sc-open-btn:hover{border-color:var(--rouge);color:var(--rouge)}
+
+#shortcut-modal{display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.85);align-items:center;justify-content:center}
+#shortcut-modal.open{display:flex}
+#shortcut-box{background:#150927;border:1px solid var(--ice);width:min(460px,92vw);max-height:80vh;overflow-y:auto;padding:20px}
+#shortcut-box::-webkit-scrollbar{width:2px}#shortcut-box::-webkit-scrollbar-thumb{background:var(--ice)}
+.sc-header{font-family:var(--mono);font-size:11px;letter-spacing:.24em;color:var(--ice);display:flex;justify-content:space-between;
+  text-transform:uppercase;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid rgba(90,233,255,.2)}
+.sc-header span{cursor:pointer;color:var(--lav)}
+.sc-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0}
+.sc-desc{font-size:10px;color:var(--white);letter-spacing:.05em}
+.sc-desc em{font-style:normal;color:var(--lav);font-size:8.5px;display:block;font-family:var(--jp)}
+.sc-key{display:inline-block;min-width:22px;padding:3px 8px;background:#1a0835;border:1px solid var(--ice);border-radius:3px;
+  font-family:var(--mono);font-size:10px;text-align:center;color:var(--ice)}
+
+@media (max-width:780px){
+  #app{grid-template-columns:1fr;grid-template-rows:40px 1fr auto 40px}
+  #side{grid-row:3;max-height:44vh;border-left:none;border-top:1px solid rgba(181,142,255,.14)}
+  #topbar{grid-column:1}#bottombar{grid-column:1}
+  .po-num{font-size:34px}.po-num sub{font-size:17px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="topbar">
+    <span class="lec">KINETIC_GEOMETRY // FIBONACCI</span>
+    <span class="ttl">Build it · 触って育てる</span>
+    <span class="esc" onclick="location.href='index.html'">[ESC] INDEX</span>
+  </div>
+
+  <div id="main">
+    <div id="stage">
+      <div class="stage-grid"></div>
+      <div class="stage-seq">1 1 2 3 5 8 13 21 34 55 89 144 233 377 610</div>
+      <canvas id="geo"></canvas>
+      <div id="lock">MOST IRRATIONAL</div>
+      <div id="phstate"><div class="ps-en">CHAOS</div><div class="ps-jp"></div></div>
+      <div id="hint"></div>
+    </div>
+    <div class="corner tl"></div><div class="corner tr"></div>
+    <div class="corner bl"></div><div class="corner br"></div>
+
+    <div class="mem-banner">
+      <div class="mb-eq">MEMORY = 2</div>
+      <div class="mb-jp">過去2つだけで未来が作られる</div>
+    </div>
+
+    <div class="mem-hud" id="mem-hud">
+      <div class="mh-ttl">MEMORY</div>
+      <div class="mh-sub">記憶している2つ</div>
+      <div class="mem-reg" id="mem-reg">
+        <div class="mem-cell c0" id="mem-c0">0</div>
+        <div class="mem-cell c1" id="mem-c1">0</div>
+      </div>
+      <div class="mh-next">NEXT 生成</div>
+      <div class="mh-nv" id="mem-next">0</div>
+    </div>
+  </div>
+
+  <div id="side">
+
+    <div class="sp">
+      <div class="spl">MODE <span class="sub">触る面を選ぶ</span></div>
+      <div class="tabs">
+        <button class="tab on" data-mode="seq">SEQ<span class="jp">数列</span></button>
+        <button class="tab" data-mode="tile">TILE<span class="jp">正方形</span></button>
+        <button class="tab" data-mode="phyllo">PHYLLO<span class="jp">種</span></button>
+      </div>
+    </div>
+
+    <div class="sp">
+      <div class="spl">STRUCTURE <span class="sub">流れ</span></div>
+      <div class="flow-triad">
+        <div class="ft on"><span class="fe">STATE</span><span class="fj" id="ft-state">過去2項</span></div>
+        <span class="arr">▸</span>
+        <div class="ft"><span class="fe">FLOW</span><span class="fj" id="ft-flow">和を計算</span></div>
+        <span class="arr">▸</span>
+        <div class="ft" id="ft-emerge-w"><span class="fe">EMERGENCE</span><span class="fj" id="ft-emerge">次の項</span></div>
+      </div>
+    </div>
+
+    <!-- SEQUENCE controls -->
+    <div class="sp mctl on" data-mode="seq">
+      <div class="spl">SEQUENCE <span class="sub">数列を育てる</span></div>
+      <div class="tr"><span class="lab">Terms 項数</span>
+        <input type="range" id="seq-slider" min="2" max="16" step="1" value="6">
+        <span class="val" id="seq-val">6</span></div>
+      <div class="btn-row">
+        <button class="ed-btn" id="seq-rem">− REMOVE</button>
+        <button class="ed-btn prim" id="seq-add">+ ADD</button>
+      </div>
+      <div class="data-row" style="margin-top:11px"><span class="dk" id="seq-eq">3 + 5 = 8</span><span class="dv" id="seq-tail"></span></div>
+      <div class="data-row"><span class="dk">ratio Fₙ/Fₙ₋₁</span><span class="dv" id="seq-ratio">1.6000</span></div>
+      <div class="data-row"><span class="dk">|ratio − φ|</span><span class="dv neon" id="seq-err">0.0180</span></div>
+      <div class="meter" id="seq-meter"><div class="fill" id="seq-fill"></div></div>
+      <div class="mnote">隣り合う2項の和が次の項。その<b>比</b>は φ の上下を行き来しながら<b>必ず φ に収束</b>する。離散のフィボナッチが、連続の黄金比に追いつく。</div>
+    </div>
+
+    <!-- TILING controls -->
+    <div class="sp mctl" data-mode="tile">
+      <div class="spl">TILING <span class="sub">正方形で積む</span></div>
+      <div class="tr"><span class="lab">Squares 枚</span>
+        <input type="range" id="tile-slider" min="2" max="13" step="1" value="6">
+        <span class="val" id="tile-val">6</span></div>
+      <div class="btn-row">
+        <button class="ed-btn" id="tile-rem">− REMOVE</button>
+        <button class="ed-btn prim" id="tile-add">+ ADD</button>
+      </div>
+      <div class="tg-row"><span class="l">Spiral 螺旋</span><div class="tg on" id="tg-spiral"></div></div>
+      <div class="tg-row"><span class="l">Ideal φ-rect 重ねる</span><div class="tg on" id="tg-ideal"></div></div>
+      <div class="data-row" style="margin-top:11px"><span class="dk">枠の縦横比 Fₙ₊₁/Fₙ</span><span class="dv neon" id="tile-aspect">1.6190</span></div>
+      <div class="data-row"><span class="dk">最新の正方形 side</span><span class="dv" id="tile-side">8</span></div>
+      <div class="tile-legend">
+        <span class="lg"><i style="background:#5AE9FF"></i>前々 prev-2</span>
+        <span class="lg"><i style="background:#B58EFF"></i>前 prev-1</span>
+        <span class="lg"><i style="background:#FFD27A"></i>新規 new</span>
+      </div>
+      <div class="mnote">直前の<b>2つの辺</b>が流れ込んで、新しい正方形の辺になる。巻きながら積むと外枠の<b>縦横比が φ に近づく</b>。</div>
+    </div>
+
+    <!-- PHYLLOTAXIS controls -->
+    <div class="sp mctl" data-mode="phyllo">
+      <div class="spl">PHYLLOTAXIS <span class="sub">ひまわりの種</span></div>
+      <div class="tr"><span class="lab">Angle 発散角</span>
+        <input type="range" id="ph-angle" min="120" max="150" step="0.05" value="137.51">
+        <span class="val" id="ph-angle-val">137.51°</span></div>
+      <button class="ed-btn prim" id="ph-snap" style="width:100%;margin-top:9px">▸ SNAP TO GOLDEN ANGLE</button>
+      <div class="tr"><span class="lab">Seeds 種数</span>
+        <input type="range" id="ph-count" min="80" max="1500" step="20" value="700">
+        <span class="val" id="ph-count-val">700</span></div>
+      <div class="tg-row"><span class="l">Trace 生成螺旋</span><div class="tg" id="tg-trace"></div></div>
+      <div class="data-row" style="margin-top:11px"><span class="dk">golden angle 360/φ²</span><span class="dv neon">137.5078°</span></div>
+      <div class="data-row"><span class="dk">差 |angle − golden|</span><span class="dv" id="ph-diff">0.00°</span></div>
+      <div class="mnote">発散角を<b>137.5°</b>にすると種が最も均等に詰まる。φ は連分数 [1;1,1,1,…]＝<b>最も無理数</b>で、どんな分数にも"はまらない"から螺旋が共鳴せず隙間ができない。少しずらすと放射状の腕が浮き出る。</div>
+    </div>
+
+    <div class="sp">
+      <div class="spl">LEARN <span class="sub">読む</span></div>
+      <div class="db">
+        <div class="de">Fₙ₊₁ / Fₙ → φ</div>
+        <div class="dj">フィボナッチ数列は、足し算だけで黄金比に近づいていく"自然のアルゴリズム"。葉序・松ぼっくり・ひまわりに現れるのも同じ理由。</div>
+      </div>
+      <div class="db" style="margin-top:13px">
+        <div class="de">最小記憶の法則</div>
+        <div class="dj">巨大な螺旋も、外枠も、種の渦も — 保持しているのは<b style="color:var(--ice)">いつも２つだけ</b>。最小の記憶から、世界が生まれ続ける。</div>
+      </div>
+      <div class="dnote" style="margin-top:11px">GOLDEN RATIO ＝ <b style="color:var(--ice)">自己相似</b>の法則 ／ FIBONACCI ＝ <b style="color:var(--ice)">最小記憶</b>の法則。対になって φ に届く。</div>
+      <div class="dnote">※「自然界はすべて φ でできている」式の主張は誇張も多い。確かなのは<b style="color:var(--ice)">最も無理数</b>であることが生む"均等な分配"。デザインでは反復に秩序を与える比として使える。</div>
+      <span class="xlink" onclick="location.href='golden-ratio.html'">← φ 章へ（GOLDEN RATIO）</span>
+      <div id="checklist" style="margin-top:11px"></div>
+      <div class="check-progress" id="check-prog">0 / 4 EXPERIENCED</div>
+    </div>
+
+    <div class="sp">
+      <div class="spl">PARAMS</div>
+      <div class="params">
+        <button class="ed-btn" id="btn-copy">⧉ COPY</button>
+        <button class="ed-btn" id="btn-paste">⤓ PASTE</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="bottombar">
+    <span>STATUS : <span class="st" id="status">SEQUENCE</span></span>
+    <span id="bb-info">ratio <span class="st" id="bb-val">1.6000</span></span>
+    <span id="sc-open-btn" onclick="openShortcuts()">⌨ SHORTCUTS</span>
+  </div>
+
+</div>
+
+<div id="shortcut-modal" onclick="if(event.target.id==='shortcut-modal')closeShortcuts()">
+  <div id="shortcut-box">
+    <div class="sc-header">⌨ KEYBOARD SHORTCUTS <span onclick="closeShortcuts()">✕</span></div>
+    <div id="sc-list"></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+const PHI=(1+Math.sqrt(5))/2;
+const GA=180*(3-Math.sqrt(5));   // golden angle = 137.5078°
+
+const state={ mode:'seq', seqN:6, tileN:6, angle:137.51, phN:700, spiral:true, ideal:true, trace:false };
+const done={ seq:false, tile:false, snap:false, off:false };
+
+let phAmp=0, phRAF=null;
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function phLoop(){ phRAF=null; if(state.mode!=='phyllo') return; draw();
+  if(phAmp>0.05 && !reduceMotion) phRAF=requestAnimationFrame(phLoop); }
+function ensurePhLoop(){ if(!phRAF && state.mode==='phyllo' && phAmp>0.05 && !reduceMotion) phRAF=requestAnimationFrame(phLoop); }
+
+function fibPairForValue(v){ const f=[1,1]; while(f[f.length-1]<v) f.push(f[f.length-1]+f[f.length-2]);
+  return {a:f[f.length-2], b:f[f.length-1], next:f[f.length-1]+f[f.length-2]}; }
+let lastMemNext=null;
+function updateMemHud(){
+  let a,b,nx;
+  if(state.mode==='seq'){ const f=fibArr(Math.max(2,state.seqN)); const n=f.length; a=f[n-2]; b=f[n-1]; nx=a+b; }
+  else if(state.mode==='tile'){ const f=fibArr(state.tileN+1); a=f[state.tileN-2]; b=f[state.tileN-1]; nx=f[state.tileN]; }
+  else { const p=fibPairForValue(Math.max(2,Math.round(Math.sqrt(state.phN)))); a=p.a; b=p.b; nx=p.next; }
+  document.getElementById('mem-c0').textContent=a;
+  document.getElementById('mem-c1').textContent=b;
+  document.getElementById('mem-next').textContent=nx;
+  if(lastMemNext!==null && nx!==lastMemNext){
+    const reg=document.getElementById('mem-reg'), hud=document.getElementById('mem-hud'), emg=document.getElementById('ft-emerge-w');
+    reg.classList.remove('shift');hud.classList.remove('shift');void reg.offsetWidth;
+    reg.classList.add('shift');hud.classList.add('shift');
+    if(emg){emg.classList.remove('pulse');void emg.offsetWidth;emg.classList.add('pulse');}
+    setTimeout(()=>{reg.classList.remove('shift');hud.classList.remove('shift');},380);
+  }
+  lastMemNext=nx;
+}
+const FLOWJP={ seq:['過去2項','和を計算','次の項'], tile:['直前の2辺','寸法が流れる','新しい正方形'], phyllo:['前の配置','角度を継ぐ','次の種'] };
+function setFlowJP(){ const j=FLOWJP[state.mode]||FLOWJP.seq;
+  document.getElementById('ft-state').textContent=j[0];
+  document.getElementById('ft-flow').textContent=j[1];
+  document.getElementById('ft-emerge').textContent=j[2]; }
+
+const cv=document.getElementById('geo'), ctx=cv.getContext('2d');
+let DPR=1, SW=0, SH=0;
+function resize(){
+  const m=document.getElementById('main').getBoundingClientRect();
+  SW=m.width; SH=m.height; DPR=Math.min(window.devicePixelRatio||1,2);
+  cv.width=SW*DPR; cv.height=SH*DPR; cv.style.width=SW+'px'; cv.style.height=SH+'px';
+  ctx.setTransform(DPR,0,0,DPR,0,0); draw();
+}
+window.addEventListener('resize',resize);
+
+const fmt=(n,d=4)=>Number(n).toFixed(d);
+function fibArr(n){ const f=[1,1]; while(f.length<n) f.push(f[f.length-1]+f[f.length-2]); return f.slice(0,Math.max(1,n)); }
+
+/* color gradient sampler gold→rouge→lav */
+const STOPS=[[255,210,122],[255,79,168],[181,142,255]];
+function grad3(t){ if(t<=0)return STOPS[0]; if(t>=1)return STOPS[2];
+  const seg=t*2,i=Math.min(1,Math.floor(seg)),f=seg-i,a=STOPS[i],b=STOPS[i+1];
+  return [Math.round(a[0]+(b[0]-a[0])*f),Math.round(a[1]+(b[1]-a[1])*f),Math.round(a[2]+(b[2]-a[2])*f)]; }
+
+/* ── fib tiling + spiral arcs ── */
+function buildFibTiling(n){
+  const fib=fibArr(Math.max(2,n));
+  const sq=[{x:0,y:0,s:1}]; if(n>=2) sq.push({x:-1,y:0,s:1});
+  let minx=-1,miny=0,maxx=1,maxy=1;
+  const dirs=['down','right','up','left'];
+  for(let i=2;i<n;i++){ const s=fib[i],d=dirs[(i-2)%4];
+    if(d==='left'){ sq.push({x:minx-s,y:miny,s}); minx-=s; }
+    else if(d==='down'){ sq.push({x:minx,y:miny-s,s}); miny-=s; }
+    else if(d==='right'){ sq.push({x:maxx,y:miny,s}); maxx+=s; }
+    else { sq.push({x:minx,y:maxy,s}); maxy+=s; } }
+  return {squares:sq,bbox:{minx,miny,maxx,maxy}};
+}
+function corners(q){return[{x:q.x,y:q.y},{x:q.x+q.s,y:q.y},{x:q.x+q.s,y:q.y+q.s},{x:q.x,y:q.y+q.s}];}
+function near(a,b){return Math.abs(a.x-b.x)<1e-4&&Math.abs(a.y-b.y)<1e-4;}
+function buildArcs(squares){const out=[];const adj={0:[1,3],1:[2,0],2:[3,1],3:[0,2]};let pe=null;
+  for(let i=0;i<squares.length;i++){const cs=corners(squares[i]);const next=squares[i+1]?corners(squares[i+1]):null;let ch=null;
+    for(let c=0;c<4&&!ch;c++){const ce=cs[c];for(const [a,b] of [[cs[adj[c][0]],cs[adj[c][1]]],[cs[adj[c][1]],cs[adj[c][0]]]]){
+      if(pe){if(!near(a,pe))continue;}else if(next){if(!next.some(p=>near(p,b)))continue;}ch={cx:ce.x,cy:ce.y,r:squares[i].s,p0:a,p1:b};break;}}
+    if(!ch)break;out.push(ch);pe=ch.p1;}
+  return out;}
+
+/* ── draw dispatch ── */
+function draw(){ ctx.clearRect(0,0,SW,SH);
+  if(state.mode==='seq') drawSeq();
+  else if(state.mode==='tile') drawTile();
+  else drawPhyllo();
+}
+
+/* ── SEQUENCE : convergence zigzag toward φ ── */
+function drawSeq(){
+  const f=fibArr(state.seqN);
+  const ratios=[]; for(let i=1;i<f.length;i++) ratios.push(f[i]/f[i-1]);
+  const padL=64,padR=70,padT=88,padB=46;
+  const pw=SW-padL-padR, ph=SH-padT-padB;
+  const xmax=15, ymin=0.95, ymax=2.10;
+  const X=k=>padL+(k/(xmax))*pw;                 // k = index of ratio (1-based on n)
+  const Y=v=>padT+(1-(v-ymin)/(ymax-ymin))*ph;
+  // baseline + n axis
+  ctx.strokeStyle='rgba(181,142,255,.18)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(padL,padT);ctx.lineTo(padL,padT+ph);ctx.lineTo(padL+pw,padT+ph);ctx.stroke();
+  // phi line
+  const yPhi=Y(PHI);
+  ctx.strokeStyle='rgba(90,233,255,.55)';ctx.setLineDash([6,5]);ctx.lineWidth=1.3;
+  ctx.beginPath();ctx.moveTo(padL,yPhi);ctx.lineTo(padL+pw,yPhi);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='#5AE9FF';ctx.font='italic 15px Cormorant Garamond, serif';ctx.textAlign='left';ctx.textBaseline='middle';
+  ctx.fillText('φ  '+fmt(PHI,3),padL+pw+6,yPhi);
+  // polyline
+  if(ratios.length){
+    const g=ctx.createLinearGradient(padL,0,padL+pw,0);
+    g.addColorStop(0,'#FFD27A');g.addColorStop(1,'#5AE9FF');
+    ctx.strokeStyle=g;ctx.lineWidth=2;ctx.beginPath();
+    ratios.forEach((v,i)=>{ const x=X(i+1),y=Y(v); i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
+    ctx.stroke();
+    ratios.forEach((v,i)=>{ const x=X(i+1),y=Y(v); const last=(i===ratios.length-1);
+      ctx.beginPath();ctx.arc(x,y,last?5:3,0,7);
+      ctx.fillStyle=last?'#5AE9FF':'#FFD27A';
+      if(last){ctx.shadowColor='rgba(90,233,255,.8)';ctx.shadowBlur=12;}
+      ctx.fill();ctx.shadowBlur=0; });
+  }
+  // HUD equation (kept clear of the MEMORY = 2 banner)
+  const n=f.length;
+  const a=n>=2?f[n-2]:0,b=f[n-1],sum=a+b;
+  ctx.textAlign='left';ctx.textBaseline='alphabetic';
+  ctx.font='italic 900 26px Barlow Condensed, sans-serif';
+  ctx.fillStyle='#FFD27A';ctx.fillText(a+'  +  '+b+'  =  ',padL,84);
+  const w1=ctx.measureText(a+'  +  '+b+'  =  ').width;
+  ctx.fillStyle='#5AE9FF';ctx.fillText(String(sum),padL+w1,84);
+}
+
+/* ── TILING : dimension inheritance, prev-2 → new ── */
+function drawTile(){
+  const {squares,bbox}=buildFibTiling(state.tileN);
+  const W=bbox.maxx-bbox.minx,H=bbox.maxy-bbox.miny;
+  // Pin the math origin (spiral eye) to a fixed screen point so adding/removing
+  // squares reads as a calm zoom about one centre — never a jump across the stage.
+  const marginX=Math.max(74,SW*0.14), marginY=Math.max(58,SH*0.14);
+  const exR=Math.max(bbox.maxx,0), exL=Math.max(-bbox.minx,0), exU=Math.max(bbox.maxy,0), exD=Math.max(-bbox.miny,0);
+  const scX=(SW*0.5-marginX)/Math.max(exR,exL,1e-6);
+  const scY=(SH*0.5-marginY)/Math.max(exU,exD,1e-6);
+  const sc=Math.min(scX,scY);
+  const ox=SW*0.5, oy=SH*0.5;
+  const T=q=>({x:ox+q.x*sc,y:oy-(q.y+q.s)*sc,s:q.s*sc});  // flip y (math→canvas)
+  if(state.ideal){
+    const shortIsW = W<H; let iw,ih;
+    if(shortIsW){ iw=W; ih=W*PHI; } else { ih=H; iw=H*PHI; }
+    const ix=ox+bbox.minx*sc, iyTop=oy-(bbox.miny+ih)*sc, iwx=iw*sc, ihx=ih*sc;
+    ctx.strokeStyle='rgba(90,233,255,.4)';ctx.setLineDash([6,5]);ctx.lineWidth=1.4;
+    ctx.strokeRect(ix,iyTop,iwx,ihx);ctx.setLineDash([]);
+  }
+  // squares — colour by recency: prev-2 ice / prev-1 lav / new gold
+  const COL={0:'255,210,122',1:'181,142,255',2:'90,233,255'};
+  squares.forEach((q,i)=>{ const r=T(q); const e=squares.length-1-i; const col=COL[e];
+    if(col){ ctx.fillStyle='rgba('+col+','+(e===0?0.16:e===1?0.10:0.07)+')'; ctx.fillRect(r.x,r.y,r.s,r.s);
+      ctx.strokeStyle='rgba('+col+',0.92)'; ctx.lineWidth=1.6;
+      if(e===0){ctx.shadowColor='rgba(255,210,122,.5)';ctx.shadowBlur=10;} }
+    else { ctx.strokeStyle='rgba(181,142,255,.3)'; ctx.lineWidth=1; }
+    ctx.strokeRect(r.x,r.y,r.s,r.s); ctx.shadowBlur=0;
+    if(r.s>24){ ctx.fillStyle= col?'rgba('+col+',0.95)':'rgba(181,142,255,.45)';
+      ctx.font=(col?'600 ':'')+'12px IBM Plex Mono, monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(String(q.s),r.x+r.s/2,r.y+r.s/2); } });
+  if(state.spiral){
+    const arcs=buildArcs(squares);
+    const g=ctx.createLinearGradient(0,0,SW,SH);
+    g.addColorStop(0,'#FFD27A');g.addColorStop(.55,'#FF4FA8');g.addColorStop(1,'#B58EFF');
+    ctx.strokeStyle=g;ctx.lineWidth=2.2;ctx.lineCap='round';ctx.shadowColor='rgba(255,79,168,.3)';ctx.shadowBlur=6;
+    arcs.forEach(arc=>{ const p0={x:ox+arc.p0.x*sc,y:oy-arc.p0.y*sc},p1={x:ox+arc.p1.x*sc,y:oy-arc.p1.y*sc},
+      c={x:ox+arc.cx*sc,y:oy-arc.cy*sc},rr=arc.r*sc;
+      const a0=Math.atan2(p0.y-c.y,p0.x-c.x),a1=Math.atan2(p1.y-c.y,p1.x-c.x);
+      let d=a1-a0;while(d<=-Math.PI)d+=2*Math.PI;while(d>Math.PI)d-=2*Math.PI;
+      ctx.beginPath();ctx.arc(c.x,c.y,rr,a0,a1,d<0);ctx.stroke(); });
+    ctx.shadowBlur=0;
+  }
+  // ── data flow: prev-2 + prev-1 → new ──
+  if(squares.length>=3){
+    const C=q=>{const r=T(q);return{x:r.x+r.s/2,y:r.y+r.s/2};};
+    const pp=C(squares[squares.length-3]), pv=C(squares[squares.length-2]), nw=C(squares[squares.length-1]);
+    flowArrow(pp,nw,'90,233,255');
+    flowArrow(pv,nw,'181,142,255');
+    const sa=squares[squares.length-3].s, sb=squares[squares.length-2].s, sn=squares[squares.length-1].s;
+    const rn=T(squares[squares.length-1]);
+    if(rn.s>30){
+      ctx.font='italic 900 17px Barlow Condensed, sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      const lbl=sa+' + '+sb+' = '+sn, tw=ctx.measureText(lbl).width, ly=nw.y - rn.s/2 - 14;
+      ctx.fillStyle='rgba(7,3,15,.72)';ctx.fillRect(nw.x-tw/2-6,ly-10,tw+12,20);
+      ctx.fillStyle='#FFD27A';ctx.shadowColor='rgba(255,210,122,.5)';ctx.shadowBlur=8;
+      ctx.fillText(lbl,nw.x,ly);ctx.shadowBlur=0;
+    }
+  }
+  const bx=ox+bbox.minx*sc, byTop=oy-bbox.maxy*sc;
+  const conv=Math.abs((Math.max(W,H)/Math.min(W,H))-PHI)<0.002;
+  ctx.strokeStyle=conv?'#5AE9FF':'rgba(248,239,255,.7)';ctx.lineWidth=2;
+  if(conv){ctx.shadowColor='rgba(90,233,255,.6)';ctx.shadowBlur=12;}
+  ctx.strokeRect(bx,byTop,W*sc,H*sc);ctx.shadowBlur=0;
+}
+function flowArrow(p0,p1,rgb){
+  const a=Math.atan2(p1.y-p0.y,p1.x-p0.x);
+  const sx=p0.x+Math.cos(a)*9, sy=p0.y+Math.sin(a)*9;
+  const ex=p1.x-Math.cos(a)*9, ey=p1.y-Math.sin(a)*9;
+  if(Math.hypot(ex-sx,ey-sy)<6) return;
+  ctx.strokeStyle='rgba('+rgb+',.85)';ctx.lineWidth=1.6;ctx.setLineDash([5,4]);
+  ctx.shadowColor='rgba('+rgb+',.5)';ctx.shadowBlur=6;
+  ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='rgba('+rgb+',.95)';
+  ctx.beginPath();ctx.moveTo(ex,ey);
+  ctx.lineTo(ex-Math.cos(a-0.4)*8,ey-Math.sin(a-0.4)*8);
+  ctx.lineTo(ex-Math.cos(a+0.4)*8,ey-Math.sin(a+0.4)*8);
+  ctx.closePath();ctx.fill();ctx.shadowBlur=0;
+}
+
+/* ── PHYLLOTAXIS : Vogel seeds — chaos → order → stillness ── */
+function drawPhyllo(){
+  const N=state.phN, aRad=state.angle*Math.PI/180;
+  const c=(0.46*Math.min(SW,SH))/Math.sqrt(N);
+  const cx=SW/2, cy=SH/2;
+  const dot=Math.max(1.4,c*0.62);
+  const jit=phAmp>0.05?phAmp:0;
+  const tms=performance.now()*0.004;
+  const pts=[];
+  for(let k=0;k<N;k++){ const th=k*aRad, r=c*Math.sqrt(k);
+    let px=cx+r*Math.cos(th), py=cy+r*Math.sin(th);
+    if(jit){ const ph=k*1.7; px+=Math.sin(tms+ph)*jit; py+=Math.cos(tms*1.1+ph)*jit; }
+    pts.push([px,py]); }
+  if(state.trace){
+    ctx.strokeStyle='rgba(248,239,255,.18)';ctx.lineWidth=1;ctx.beginPath();
+    pts.forEach((p,i)=> i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.stroke();
+  }
+  for(let k=0;k<N;k++){ const t=k/N, rgb=grad3(t);
+    ctx.beginPath();ctx.arc(pts[k][0],pts[k][1],dot,0,7);
+    ctx.fillStyle='rgb('+rgb[0]+','+rgb[1]+','+rgb[2]+')';ctx.fill(); }
+  // STILLNESS — the field locks and converges
+  if(Math.abs(state.angle-GA)<0.02){
+    const R=c*Math.sqrt(N)+dot*2;
+    ctx.strokeStyle='rgba(90,233,255,.55)';ctx.lineWidth=2;ctx.shadowColor='rgba(90,233,255,.6)';ctx.shadowBlur=18;
+    ctx.beginPath();ctx.arc(cx,cy,R,0,7);ctx.stroke();ctx.shadowBlur=0;
+    const b=R*0.8, L=18;
+    ctx.strokeStyle='rgba(90,233,255,.9)';ctx.lineWidth=1.6;ctx.shadowColor='rgba(90,233,255,.5)';ctx.shadowBlur=8;
+    [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx,sy])=>{ const x=cx+sx*b, y=cy+sy*b;
+      ctx.beginPath();ctx.moveTo(x-sx*L,y);ctx.lineTo(x,y);ctx.lineTo(x,y-sy*L);ctx.stroke(); });
+    ctx.shadowBlur=0;
+  }
+}
+
+/* ── readouts ── */
+function update(){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.mode===state.mode));
+  document.querySelectorAll('.mctl').forEach(m=>m.classList.toggle('on',m.dataset.mode===state.mode));
+  document.getElementById('lock').classList.remove('on');
+  document.getElementById('phstate').classList.remove('on');
+  if(state.mode!=='phyllo') phAmp=0;
+
+  if(state.mode==='seq'){
+    const f=fibArr(state.seqN),n=f.length,a=n>=2?f[n-2]:0,b=f[n-1];
+    document.getElementById('seq-slider').value=state.seqN;
+    document.getElementById('seq-val').textContent=state.seqN;
+    document.getElementById('seq-eq').textContent=a+' + '+b+' = '+(a+b);
+    document.getElementById('seq-tail').textContent=f.slice(-5).join(' · ');
+    const ratio=n>=2?b/a:1; const err=Math.abs(ratio-PHI);
+    document.getElementById('seq-ratio').textContent=fmt(ratio);
+    document.getElementById('seq-err').textContent=fmt(err);
+    const lit=err<0.0005;
+    const meter=document.getElementById('seq-meter');
+    document.getElementById('seq-fill').style.width=Math.max(2,100-Math.min(100,err*160))+'%';
+    meter.classList.toggle('lit',lit);
+    document.getElementById('status').textContent='SEQUENCE';
+    document.getElementById('bb-info').innerHTML='ratio <span class="st" id="bb-val">'+fmt(ratio)+'</span>';
+    if(state.seqN>=10) markDone('seq');
+  }
+  else if(state.mode==='tile'){
+    const f=fibArr(state.tileN+1);
+    const aspect=f[state.tileN]/f[state.tileN-1];
+    document.getElementById('tile-slider').value=state.tileN;
+    document.getElementById('tile-val').textContent=state.tileN;
+    document.getElementById('tile-aspect').textContent=fmt(aspect);
+    document.getElementById('tile-side').textContent=fibArr(state.tileN)[state.tileN-1];
+    document.getElementById('status').textContent='TILING';
+    document.getElementById('bb-info').innerHTML='aspect <span class="st">'+fmt(aspect)+'</span>';
+    if(state.tileN>=8) markDone('tile');
+  }
+  else{
+    const diff=Math.abs(state.angle-GA);
+    document.getElementById('ph-angle').value=state.angle.toFixed(2);
+    document.getElementById('ph-angle-val').textContent=fmt(state.angle,2)+'°';
+    document.getElementById('ph-count').value=state.phN;
+    document.getElementById('ph-count-val').textContent=state.phN;
+    document.getElementById('ph-diff').textContent=fmt(diff,2)+'°';
+    document.getElementById('status').textContent='PHYLLOTAXIS';
+    document.getElementById('bb-info').innerHTML='angle <span class="st">'+fmt(state.angle,2)+'°</span>';
+    const lockEl=document.getElementById('lock'), ps=document.getElementById('phstate');
+    let phase,jp;
+    if(diff<0.02){ phase='STILLNESS'; jp='共鳴が消え、静かに整列した'; phAmp=0;
+      lockEl.textContent='MOST IRRATIONAL'; lockEl.classList.add('on'); markDone('snap'); }
+    else if(diff<0.6){ phase='ORDER'; jp='腕が解け、均等へ寄っていく'; phAmp=Math.min(2.2,diff*1.1); lockEl.classList.remove('on'); }
+    else { phase='CHAOS'; jp='共鳴して放射状の腕が浮かぶ'; phAmp=Math.min(2.2,diff*1.1); lockEl.classList.remove('on'); markDone('off'); }
+    ps.querySelector('.ps-en').textContent=phase;
+    ps.querySelector('.ps-jp').textContent=jp;
+    ps.classList.add('on');
+    ensurePhLoop();
+  }
+  updateMemHud(); setFlowJP();
+}
+function render(){ draw(); update(); }
+
+/* ── mode switch ── */
+function setMode(m){
+  state.mode=m;
+  document.getElementById('hint').innerHTML = m==='seq'
+    ? 'TAP TO ADD — ステージをタップ／<b>+ADD</b>で項を足す'
+    : m==='tile'
+    ? 'TAP TO ADD — 正方形を1枚ずつ積んで枠が <b>φ</b> に近づくのを見る'
+    : 'DRAG TO SCRUB — 左右ドラッグで発散角／<b>137.5°</b>で CHAOS → ORDER → STILLNESS';
+  render();
+}
+
+/* ── pointer ── */
+let downX=0,downAngle=0,moved=false,dragging=false;
+cv.addEventListener('pointerdown',e=>{
+  const rect=cv.getBoundingClientRect();
+  downX=e.clientX-rect.left; downAngle=state.angle; moved=false; dragging=true;
+  cv.setPointerCapture(e.pointerId);
+});
+cv.addEventListener('pointermove',e=>{
+  if(!dragging)return;
+  const rect=cv.getBoundingClientRect(); const dx=(e.clientX-rect.left)-downX;
+  if(Math.abs(dx)>3) moved=true;
+  if(state.mode==='phyllo'){
+    let a=downAngle+dx*0.03;
+    if(Math.abs(a-GA)<0.12) a=GA;
+    state.angle=Math.max(120,Math.min(150,a)); render();
+  }
+});
+cv.addEventListener('pointerup',()=>{
+  dragging=false;
+  if(!moved){
+    if(state.mode==='seq'){ if(state.seqN<16){state.seqN++;render();} }
+    else if(state.mode==='tile'){ if(state.tileN<13){state.tileN++;render();} }
+  }
+});
+cv.addEventListener('pointercancel',()=>{dragging=false;});
+
+/* ── controls ── */
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>setMode(t.dataset.mode)));
+
+document.getElementById('seq-slider').addEventListener('input',e=>{state.seqN=parseInt(e.target.value,10);render();});
+document.getElementById('seq-add').addEventListener('click',()=>{ if(state.seqN<16){state.seqN++;render();} });
+document.getElementById('seq-rem').addEventListener('click',()=>{ if(state.seqN>2){state.seqN--;render();} });
+
+document.getElementById('tile-slider').addEventListener('input',e=>{state.tileN=parseInt(e.target.value,10);render();});
+document.getElementById('tile-add').addEventListener('click',()=>{ if(state.tileN<13){state.tileN++;render();} });
+document.getElementById('tile-rem').addEventListener('click',()=>{ if(state.tileN>2){state.tileN--;render();} });
+function bindTg(id,key){const el=document.getElementById(id);el.addEventListener('click',()=>{state[key]=!state[key];el.classList.toggle('on',state[key]);render();});}
+bindTg('tg-spiral','spiral'); bindTg('tg-ideal','ideal'); bindTg('tg-trace','trace');
+
+document.getElementById('ph-angle').addEventListener('input',e=>{state.angle=parseFloat(e.target.value);render();});
+document.getElementById('ph-count').addEventListener('input',e=>{state.phN=parseInt(e.target.value,10);render();});
+document.getElementById('ph-snap').addEventListener('click',()=>{state.angle=GA;render();markDone('snap');});
+
+/* ── checklist ── */
+const CHECKS=[
+  {k:'seq', t:'数列を10項以上育てて比→φを見る'},
+  {k:'tile',t:'正方形8枚以上で枠→φを見る'},
+  {k:'snap',t:'発散角を137.5°にして均等充填を体感'},
+  {k:'off', t:'137.5°から外して放射状の腕を見る'},
+];
+(function(){const box=document.getElementById('checklist');
+  CHECKS.forEach(c=>{const r=document.createElement('div');r.className='check-item';r.dataset.k=c.k;
+    r.innerHTML='<span class="bx">✓</span><span class="tx">'+c.t+'</span>';box.appendChild(r);});})();
+function markDone(k){ if(done[k])return; done[k]=true;
+  const r=document.querySelector('.check-item[data-k="'+k+'"]'); if(r)r.classList.add('checked');
+  const n=Object.values(done).filter(Boolean).length;
+  const p=document.getElementById('check-prog'); p.textContent=n+' / 4 EXPERIENCED'; p.classList.toggle('complete',n===4); }
+
+/* ── copy / paste ── */
+function flash(btn,ok,label){const o=btn.textContent;btn.textContent=label;btn.style.color=ok?'#5AE9FF':'#FF4FA8';btn.style.borderColor=btn.style.color;
+  setTimeout(()=>{btn.textContent=o;btn.style.color='';btn.style.borderColor='';},1200);}
+document.getElementById('btn-copy').addEventListener('click',e=>{
+  const d={mode:state.mode,seqN:state.seqN,tileN:state.tileN,angle:+state.angle.toFixed(2),phN:state.phN,spiral:state.spiral,ideal:state.ideal,trace:state.trace};
+  navigator.clipboard.writeText(JSON.stringify(d,null,2)).then(()=>flash(e.target,true,'✓ COPIED')).catch(()=>flash(e.target,false,'✗'));
+});
+document.getElementById('btn-paste').addEventListener('click',async e=>{
+  try{ const o=JSON.parse(await navigator.clipboard.readText());
+    if(typeof o.seqN==='number') state.seqN=Math.max(2,Math.min(16,o.seqN));
+    if(typeof o.tileN==='number') state.tileN=Math.max(2,Math.min(13,o.tileN));
+    if(typeof o.angle==='number') state.angle=Math.max(120,Math.min(150,o.angle));
+    if(typeof o.phN==='number') state.phN=Math.max(80,Math.min(1500,o.phN));
+    ['spiral','ideal','trace'].forEach(k=>{ if(typeof o[k]==='boolean'){state[k]=o[k];const el=document.getElementById(k==='spiral'?'tg-spiral':k==='ideal'?'tg-ideal':'tg-trace');if(el)el.classList.toggle('on',o[k]);} });
+    if(o.mode) state.mode=o.mode;
+    setMode(state.mode); flash(e.target,true,'✓ APPLIED');
+  }catch(err){ flash(e.target,false,'✗'); }
+});
+
+/* ── shortcuts ── */
+const SC=[
+  {key:'1 2 3',desc:'Switch mode',jp:'数列 / 正方形 / 種'},
+  {key:'+  Space',desc:'Add term / square',jp:'項・正方形を足す'},
+  {key:'−',desc:'Remove',jp:'減らす'},
+  {key:'G',desc:'Snap golden angle',jp:'発散角を137.5°に'},
+  {key:'← →',desc:'Adjust',jp:'角度/数を微調整'},
+  {key:'?',desc:'This panel',jp:'このパネル'},
+  {key:'Esc',desc:'Index / close',jp:'索引へ / 閉じる'},
+];
+function openShortcuts(){const list=document.getElementById('sc-list');list.innerHTML='';
+  SC.forEach(s=>{const r=document.createElement('div');r.className='sc-row';
+    r.innerHTML='<span class="sc-desc">'+s.desc+'<em>'+s.jp+'</em></span><span class="sc-key">'+s.key+'</span>';list.appendChild(r);});
+  document.getElementById('shortcut-modal').classList.add('open');}
+function closeShortcuts(){document.getElementById('shortcut-modal').classList.remove('open');}
+
+window.addEventListener('keydown',e=>{
+  if(/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName))return;
+  const k=e.key;
+  if(k==='Escape'){ if(document.getElementById('shortcut-modal').classList.contains('open')){closeShortcuts();return;} location.href='index.html'; return; }
+  if(k==='?'){ openShortcuts(); return; }
+  if(k==='1'){ setMode('seq'); return; }
+  if(k==='2'){ setMode('tile'); return; }
+  if(k==='3'){ setMode('phyllo'); return; }
+  if(k==='g'||k==='G'){ state.angle=GA; render(); markDone('snap'); return; }
+  if(k==='+'||k==='='||k===' '){ e.preventDefault();
+    if(state.mode==='seq'&&state.seqN<16)state.seqN++; else if(state.mode==='tile'&&state.tileN<13)state.tileN++; render(); return; }
+  if(k==='-'||k==='_'||k==='Backspace'){ e.preventDefault();
+    if(state.mode==='seq'&&state.seqN>2)state.seqN--; else if(state.mode==='tile'&&state.tileN>2)state.tileN--; render(); return; }
+  if(k==='ArrowLeft'||k==='ArrowRight'){ e.preventDefault(); const dir=k==='ArrowRight'?1:-1;
+    if(state.mode==='phyllo'){ state.angle=Math.max(120,Math.min(150,state.angle+dir*(e.shiftKey?0.5:0.05))); }
+    else if(state.mode==='seq'){ state.seqN=Math.max(2,Math.min(16,state.seqN+dir)); }
+    else { state.tileN=Math.max(2,Math.min(13,state.tileN+dir)); }
+    render(); return; }
+});
+
+/* ── boot ── */
+function boot(){ resize(); setMode('seq'); }
+if(document.fonts&&document.fonts.ready){ document.fonts.ready.then(boot); setTimeout(boot,400); } else boot();
+</script>
+</body>
+</html>

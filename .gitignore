@@ -14,6 +14,9 @@ __pycache__/
 # 12-Principles-of-Animation has its own independent git repo
 12-Principles-of-Animation/
 
+# Trash / scratch folder
+_済/
+
 # Windows
 Thumbs.db
 desktop.ini

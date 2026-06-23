@@ -9,6 +9,11 @@ status: 未着手
 
 戻る → [[Gen-EX]] ｜ 前 → [[L1 PHYSICAL WORLD]] ｜ 次 → [[L3 PERCEPTION]]
 
+## ✅ 試作HTML
+`natural-patterns/` フォルダ（数理パターンのインタラクティブ教材・試作中）。
+- [黄金比](../natural-patterns/golden-ratio.html) / [フィボナッチ](../natural-patterns/fibonacci.html)
+- 今後ここに voronoi / fractal / L-system / reaction-diffusion / noise を追加予定。
+
 ## 核心
 自然界が自律的に形成する数理的規則性。美しさの根底にある幾何学的・動的アルゴリズム。
 

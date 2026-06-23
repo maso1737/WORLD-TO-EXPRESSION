@@ -16,7 +16,7 @@ updated: 2026-06-23
 | LV | ノート | 核心的な問い | 完成HTML |
 |---|---|---|---|
 | 1 | [[L1 PHYSICAL WORLD]] | なぜ動く？ | — |
-| 2 | [[L2 NATURAL PATTERNS]] | なぜその形になる？ | — |
+| 2 | [[L2 NATURAL PATTERNS]] | なぜその形になる？ | [natural-patterns/](../natural-patterns/golden-ratio.html) 🚧 |
 | 3 | [[L3 PERCEPTION]] | なぜ気づく？ | — |
 | 4 | [[L4 GESTALT]] | なぜまとまって見える？ | [cognitive/](../cognitive/index.html) ✅ |
 | 5 | [[L5 VISUAL LANGUAGE]] | なぜ伝わる？ | — |
