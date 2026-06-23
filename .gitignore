@@ -1,0 +1,19 @@
+# Obsidian personal settings (not for sharing)
+.obsidian/
+
+# NotebookLM CLI — virtualenv & build artifacts
+notebooklm-py-main/.venv/
+notebooklm-py-main/__pycache__/
+notebooklm-py-main/*.egg-info/
+notebooklm-py-main/.env
+
+# Python cache
+__pycache__/
+*.pyc
+
+# 12-Principles-of-Animation has its own independent git repo
+12-Principles-of-Animation/
+
+# Windows
+Thumbs.db
+desktop.ini

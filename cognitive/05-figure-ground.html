@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>05 Figure/Ground / 図と地 — COGNITIVE STAGE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:"Bank Gothic";src:url("fonts/bank-gothic-light-bt.ttf") format("truetype");font-weight:300 600;font-display:swap}
+@font-face{font-family:"Square 721";src:url("fonts/Square_721_BT.ttf") format("truetype");font-weight:400 700;font-display:swap}
+:root{
+  --bg:#f2f2ef; --bg-2:#e8e8e4; --ink:#0a0a0a; --ink-2:#1a1a1a;
+  --mute:#999; --mute-2:#c8c8c4; --line:#0a0a0a; --acc:#c8ff1a; --ng:#e64141;
+  --grid:rgba(10,10,10,0.028); --grid-major:rgba(10,10,10,0.05);
+  --mono:"JetBrains Mono","IBM Plex Mono",ui-monospace,monospace;
+  --disp:"Bank Gothic","Square 721",system-ui,sans-serif;
+  --jp:"IBM Plex Sans JP","Noto Sans JP",system-ui,sans-serif;
+  --ez:cubic-bezier(0.2,0,0,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--mono);overflow:hidden;-webkit-font-smoothing:antialiased;
+  font-feature-settings:"ss01","ss02","tnum"}
+#app{height:100vh;display:grid;grid-template-rows:46px 1fr 30px;grid-template-columns:1fr 300px}
+
+/* ===== TOPBAR ===== */
+#topbar{grid-column:1/3;display:grid;grid-template-columns:auto 1fr auto;align-items:stretch;
+  border-bottom:1px solid var(--line);background:var(--bg);z-index:10}
+.tb-brand{display:flex;align-items:center;gap:12px;padding:0 16px;border-right:1px solid var(--line)}
+.tb-mark{width:14px;height:14px;background:var(--acc);flex:none}
+.tb-id{font-family:var(--disp);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;white-space:nowrap}
+.tb-tag{font-family:var(--mono);font-size:9px;letter-spacing:0.18em;color:var(--mute);text-transform:uppercase;
+  padding:3px 8px;border:1px solid var(--mute-2);white-space:nowrap}
+.tb-tag b{color:var(--ink);font-weight:600}
+.tb-mid{display:flex;align-items:center;gap:12px;padding:0 18px;overflow:hidden}
+.tb-title{font-family:var(--disp);font-size:13px;letter-spacing:0.22em;text-transform:uppercase}
+.tb-title em{font-style:normal;font-family:var(--jp);font-size:11px;letter-spacing:0.1em;color:var(--mute);margin-left:8px}
+.tb-esc{display:flex;align-items:center;padding:0 16px;border-left:1px solid var(--line);
+  font-family:var(--mono);font-size:9px;letter-spacing:0.16em;color:var(--ink);text-decoration:none;text-transform:uppercase;gap:6px}
+.tb-esc:hover{background:var(--ink);color:var(--bg)}
+.tb-esc .sq{width:6px;height:6px;background:var(--ink)}
+.tb-esc:hover .sq{background:var(--bg)}
+
+/* ===== MAIN / STAGE ===== */
+#main{position:relative;overflow:hidden;
+  background:
+    linear-gradient(var(--grid-major) 1px,transparent 1px) 0 0/200px 200px,
+    linear-gradient(90deg,var(--grid-major) 1px,transparent 1px) 0 0/200px 200px,
+    linear-gradient(var(--grid) 1px,transparent 1px) 0 0/40px 40px,
+    linear-gradient(90deg,var(--grid) 1px,transparent 1px) 0 0/40px 40px,
+    var(--bg)}
+#stage-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:2}
+
+.gh-rail{position:absolute;top:0;bottom:0;right:0;width:4px;background:var(--acc);z-index:1}
+.gh-num{position:absolute;right:3%;bottom:-2%;font-family:var(--disp);font-weight:300;font-size:34vh;line-height:0.85;
+  color:var(--mute-2);opacity:0.5;pointer-events:none;letter-spacing:-0.05em;z-index:0;user-select:none}
+.gh-ticks{position:absolute;top:14px;left:0;right:0;height:10px;z-index:1;opacity:0.5;
+  background-image:linear-gradient(90deg,var(--mute-2) 1px,transparent 1px);background-size:40px 100%}
+.gh-ticks-maj{position:absolute;top:14px;left:0;right:0;height:16px;z-index:1;opacity:0.16;
+  background-image:linear-gradient(90deg,var(--ink) 1px,transparent 1px);background-size:200px 100%}
+.gh-vticks{position:absolute;right:20px;top:90px;bottom:90px;width:10px;z-index:1;opacity:0.5;
+  background-image:linear-gradient(0deg,var(--mute-2) 1px,transparent 1px);background-size:100% 40px}
+.gh-word{position:absolute;top:14%;right:22px;writing-mode:vertical-rl;font-family:var(--mono);font-size:9px;
+  letter-spacing:0.5em;color:var(--mute);opacity:0.6;text-transform:uppercase;z-index:1}
+.reg{position:absolute;font-family:var(--mono);font-size:13px;color:var(--mute);line-height:1;z-index:1;pointer-events:none}
+.reg.tl{top:14px;left:14px}.reg.tr{top:14px;right:24px}.reg.bl{bottom:14px;left:14px}.reg.br{bottom:14px;right:24px}
+.data{position:absolute;font-family:var(--mono);font-size:8px;letter-spacing:0.1em;color:rgba(10,10,10,0.2);
+  text-transform:uppercase;z-index:1;pointer-events:none;white-space:nowrap}
+.data.d1{top:40px;left:16px}.data.d2{top:54px;left:16px;color:rgba(10,10,10,0.14)}
+.data.d3{bottom:38px;left:16px;writing-mode:vertical-rl;letter-spacing:0.36em;opacity:0.6}
+
+.po{position:absolute;top:38px;right:46px;text-align:right;z-index:3;pointer-events:none}
+.po-num{font-family:var(--disp);font-weight:300;font-size:46px;line-height:0.85;letter-spacing:-0.02em}
+.po-en{font-family:var(--mono);font-size:10px;letter-spacing:0.26em;color:var(--ink);text-transform:uppercase;margin-top:6px}
+.po-jp{font-family:var(--jp);font-size:10px;letter-spacing:0.18em;color:var(--mute);margin-top:2px}
+.po-rule{height:1px;background:var(--ink);margin-top:8px;margin-left:auto;width:54px}
+
+#verdict{position:absolute;left:50%;bottom:30px;transform:translateX(-50%);text-align:center;z-index:3;pointer-events:none}
+#verdict .v-main{font-family:var(--disp);font-size:24px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink);
+  display:inline-block;padding:2px 4px;transition:background 120ms var(--ez)}
+#verdict .v-sub{font-family:var(--jp);font-size:11px;letter-spacing:0.12em;color:var(--mute);margin-top:5px}
+#verdict.edge .v-main{background:var(--acc);color:var(--ink);padding:3px 12px}
+
+/* ===== SIDE PANEL ===== */
+#side{background:#fff;border-left:1px solid var(--line);overflow-y:auto}
+#side::-webkit-scrollbar{width:3px}#side::-webkit-scrollbar-thumb{background:var(--ink)}
+.sp{padding:15px 16px;border-bottom:1px solid var(--mute-2)}
+.spl{font-family:var(--mono);font-size:9px;letter-spacing:0.32em;color:var(--ink);text-transform:uppercase;
+  margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.spl::before{content:"";width:7px;height:7px;background:var(--acc);flex:none}
+.spl em{font-style:normal;font-family:var(--jp);color:var(--mute);letter-spacing:0.1em;margin-left:auto;font-size:9px}
+.tr{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.tr:last-child{margin-bottom:0}
+.tr-lbl{font-size:10px;letter-spacing:0.1em;color:var(--ink);white-space:nowrap;text-transform:uppercase}
+.tr-lbl span{display:block;font-family:var(--jp);font-size:9px;color:var(--mute);letter-spacing:0.06em;margin-top:2px;text-transform:none}
+.tr-val{font-family:var(--disp);font-size:20px;color:var(--ink);min-width:38px;text-align:right;letter-spacing:0.02em;
+  font-feature-settings:"tnum"}
+.tr-val.lime{background:var(--acc);padding:0 5px}
+
+input[type=range]{-webkit-appearance:none;appearance:none;width:110px;height:2px;background:var(--mute-2);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;background:#fff;border:1.5px solid var(--ink);cursor:pointer}
+input[type=range]:hover::-webkit-slider-thumb{background:var(--acc)}
+input[type=range]:active::-webkit-slider-thumb{background:var(--acc)}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;background:#fff;border:1.5px solid var(--ink);cursor:pointer}
+input[type=range]:hover::-moz-range-thumb{background:var(--acc)}
+
+/* segmented toggle */
+.ft-tog{display:flex;border:1px solid var(--ink)}
+.ft-btn{font-family:var(--mono);font-size:9px;letter-spacing:0.14em;text-transform:uppercase;
+  padding:5px 8px;background:var(--bg);border:0;color:var(--mute);cursor:pointer;
+  transition:background .14s var(--ez),color .14s var(--ez);flex:1;white-space:nowrap}
+.ft-btn:hover{background:rgba(10,10,10,0.07)}
+.ft-btn.active{background:var(--ink);color:var(--bg)}
+.ft-btn+.ft-btn{border-left:1px solid var(--ink)}
+/* A/B record toggle — larger, more prominent */
+.ab-tog{display:flex;border:1.5px solid var(--ink);margin-bottom:11px}
+.ab-btn{font-family:var(--disp);font-size:12px;letter-spacing:0.12em;text-transform:uppercase;
+  padding:9px 6px;background:var(--bg);border:0;color:var(--mute);cursor:pointer;
+  transition:background .14s var(--ez),color .14s var(--ez);flex:1;text-align:center}
+.ab-btn:hover{background:rgba(10,10,10,0.07)}
+.ab-btn.active{background:var(--ink);color:var(--bg)}
+.ab-btn.active.lime-active{background:var(--acc);color:var(--ink)}
+.ab-btn+.ab-btn{border-left:1.5px solid var(--ink)}
+.ab-hint{font-family:var(--jp);font-size:9px;color:var(--mute);letter-spacing:0.04em;line-height:1.7}
+
+/* swiss toggle */
+.tg{position:relative;width:36px;height:18px;background:var(--bg);cursor:pointer;border:1px solid var(--ink);flex:none;transition:background .16s var(--ez)}
+.tg::after{content:"";position:absolute;top:1px;left:1px;width:14px;height:14px;background:var(--mute);transition:left .16s var(--ez),background .16s var(--ez)}
+.tg.on{background:var(--acc)}
+.tg.on::after{left:19px;background:var(--ink)}
+
+/* bias bar */
+.ratiobar{height:4px;background:var(--mute-2);margin-top:10px;position:relative}
+.ratiobar::before{content:"";position:absolute;left:50%;top:-3px;width:1px;height:10px;background:var(--ink);opacity:0.5}
+.ratiobar i{position:absolute;top:-5px;width:3px;height:14px;background:var(--ink);transform:translateX(-50%);
+  transition:left .12s var(--ez),background .12s}
+.ratiobar i.lime{background:var(--acc);box-shadow:0 0 0 1px var(--ink)}
+.ratiobar i.muted{background:var(--mute)}
+.rb-ends{display:flex;justify-content:space-between;margin-top:6px;font-family:var(--jp);font-size:9px;letter-spacing:0.04em;color:var(--mute)}
+
+/* read block */
+.db{border-left:2px solid var(--ink);padding:1px 0 1px 13px;position:relative}
+.db::before{content:"✦";position:absolute;left:-8px;top:-1px;color:var(--ink);font-size:10px;background:#fff;line-height:1}
+.de{font-family:var(--disp);font-size:14px;line-height:1.32;letter-spacing:0.03em;color:var(--ink);text-transform:uppercase}
+.dj{font-family:var(--jp);font-size:11.5px;line-height:1.7;color:var(--ink-2);margin-top:9px}
+.dj b{background:var(--acc);color:var(--ink);font-weight:600;padding:0 3px}
+.dnote{font-family:var(--jp);font-size:10px;line-height:1.7;color:var(--mute);margin-top:11px}
+.dnote b{color:var(--ink);font-weight:600}
+
+/* params */
+.ed-row{display:flex;gap:8px}
+.ed-btn{flex:1;font-family:var(--mono);font-size:10px;letter-spacing:0.16em;padding:9px 0;
+  background:var(--bg);border:1px solid var(--ink);color:var(--ink);cursor:pointer;text-transform:uppercase;transition:all .14s var(--ez)}
+.ed-btn:hover{background:var(--ink);color:var(--bg)}
+.ed-btn.ok{background:var(--acc);border-color:var(--ink);color:var(--ink)}
+.ed-btn.ng{background:var(--ng);border-color:var(--ng);color:#fff}
+.ed-hint{font-family:var(--jp);font-size:9px;color:var(--mute);letter-spacing:0.04em;margin-top:9px;line-height:1.6}
+
+/* ===== BOTTOMBAR ===== */
+#bottombar{grid-column:1/3;display:grid;grid-template-columns:auto auto 1fr auto;align-items:stretch;
+  border-top:1px solid var(--line);background:var(--bg);z-index:10}
+.bb-cell{display:flex;align-items:center;gap:8px;padding:0 16px;border-right:1px solid var(--mute-2);
+  font-family:var(--mono);font-size:9px;letter-spacing:0.14em;color:var(--mute);text-transform:uppercase}
+.bb-cell b{color:var(--ink);font-weight:600}
+.bb-cell b.lime{background:var(--acc);padding:0 5px}
+.bb-mid{justify-self:start}
+.sc-chip{display:flex;align-items:center;gap:8px;padding:0 16px;border-left:1px solid var(--mute-2);background:transparent;
+  border-top:0;border-right:0;border-bottom:0;font-family:var(--mono);font-size:9px;letter-spacing:0.14em;color:var(--ink);
+  cursor:pointer;text-transform:uppercase}
+.sc-chip:hover{background:var(--ink);color:var(--bg)}
+
+/* ===== SHORTCUT MODAL ===== */
+#sc-modal{display:none;position:fixed;inset:0;z-index:9000;background:rgba(10,10,10,0.55);align-items:center;justify-content:center}
+#sc-modal.open{display:flex}
+#sc-box{background:#fff;border:1px solid var(--ink);width:min(420px,92vw);max-height:80vh;overflow-y:auto;
+  box-shadow:8px 8px 0 rgba(10,10,10,0.12)}
+.sc-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--ink);
+  background:var(--ink);color:var(--bg);font-family:var(--disp);font-size:12px;letter-spacing:0.2em;text-transform:uppercase}
+.sc-head span{cursor:pointer;font-family:var(--mono);color:var(--bg)}
+.sc-list{padding:8px 18px 16px}
+.sc-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--mute-2)}
+.sc-row:last-child{border-bottom:none}
+.sc-desc{font-family:var(--mono);font-size:10px;letter-spacing:0.06em;color:var(--ink);text-transform:uppercase}
+.sc-desc span{display:block;font-family:var(--jp);font-size:9px;color:var(--mute);letter-spacing:0.04em;text-transform:none;margin-top:2px}
+.sc-key{font-family:var(--mono);font-size:10px;min-width:26px;padding:4px 8px;text-align:center;background:var(--bg);
+  border:1px solid var(--ink);color:var(--ink);letter-spacing:0.08em}
+
+@media (max-width:760px){
+  #app{grid-template-columns:1fr;grid-template-rows:46px 1fr auto 30px}
+  #side{grid-row:3;max-height:48vh;border-left:0;border-top:1px solid var(--line)}
+  #bottombar{grid-template-columns:auto 1fr auto}
+  .po-num{font-size:34px}.gh-num{font-size:24vh}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header id="topbar">
+    <div class="tb-brand">
+      <span class="tb-mark"></span>
+      <span class="tb-id">Cognitive&nbsp;Stage</span>
+      <span class="tb-tag">L1 · <b>GROUP</b></span>
+    </div>
+    <div class="tb-mid">
+      <span class="tb-title">Figure / Ground<em>図と地</em></span>
+    </div>
+    <a class="tb-esc" href="index.html"><span class="sq"></span>ESC · INDEX</a>
+  </header>
+
+  <main id="main">
+    <div class="gh-num">05</div>
+    <div class="gh-ticks"></div><div class="gh-ticks-maj"></div>
+    <div class="gh-vticks"></div>
+    <div class="gh-word">GROUP ⁄ L1 ⁄ N5</div>
+    <div class="gh-rail"></div>
+    <span class="reg tl">+</span><span class="reg tr">+</span><span class="reg bl">+</span><span class="reg br">+</span>
+    <span class="data d1">ID · CS-L1-05 ⁄ FIGURE-GROUND</span>
+    <span class="data d2">SET · GESTALT ⁄ 07</span>
+    <span class="data d3">ENGINE · GROUP ⁄ REGION</span>
+
+    <canvas id="stage-canvas"></canvas>
+
+    <div class="po">
+      <div class="po-num">05</div>
+      <div class="po-en">Figure / Ground</div>
+      <div class="po-jp">図と地</div>
+      <div class="po-rule"></div>
+    </div>
+    <div id="verdict"><div class="v-main">—</div><div class="v-sub">—</div></div>
+  </main>
+
+  <aside id="side">
+
+    <section class="sp">
+      <div class="spl">Control <em>操作</em></div>
+      <div class="tr">
+        <div class="tr-lbl">Area Bias<span>面積の偏り（図地の手がかり）</span></div>
+        <input type="range" id="s-bias" min="0" max="100" value="50">
+        <div class="tr-val" id="v-bias">50</div>
+      </div>
+      <div class="ratiobar"><i id="bias-mark"></i></div>
+      <div class="rb-ends"><span>← 壺が主役</span><span>顔が主役 →</span></div>
+    </section>
+
+    <section class="sp">
+      <div class="spl">Record <em>知覚を記録 — Pattern 4</em></div>
+      <div class="ab-tog">
+        <button class="ab-btn" data-seen="face">FACE<br><span style="font-family:var(--jp);font-size:8px;letter-spacing:0.04em;font-weight:400">顔</span></button>
+        <button class="ab-btn active" data-seen="?">？<br><span style="font-family:var(--jp);font-size:8px;letter-spacing:0.04em;font-weight:400">不明</span></button>
+        <button class="ab-btn" data-seen="vase">VASE<br><span style="font-family:var(--jp);font-size:8px;letter-spacing:0.04em;font-weight:400">壺</span></button>
+      </div>
+      <div class="ab-hint">今あなたに見えているものを記録。手がかりとの一致・不一致が図地の肝。<br>F キー → FACE / V キー → VASE</div>
+    </section>
+
+    <section class="sp">
+      <div class="spl">Proof <em>検証</em></div>
+      <div class="tr">
+        <div class="tr-lbl">Show Cue<span>面積手がかりが示す「図」を重ねる</span></div>
+        <div class="tg on" id="tg-ghost"></div>
+      </div>
+    </section>
+
+    <section class="sp">
+      <div class="spl">Read <em>原理</em></div>
+      <div class="db">
+        <div class="de">Same edge, two figures — brain picks one at a time.</div>
+        <div class="dj">同じ輪郭が「図（前景）」にも「地（背景）」にも見える。<b>面積が小さい方</b>が図になりやすい——<b>areaBias</b> 50付近で両義が最大となり、脳は自発的に反転し始める。</div>
+      </div>
+      <div class="dnote">「図」は輪郭を<b>所有</b>し、「地」は輪郭の向こうに続く面として見える。これが同じ線が2つの役割を持てる理由。</div>
+    </section>
+
+    <section class="sp">
+      <div class="spl">Params <em>受渡</em></div>
+      <div class="ed-row">
+        <button class="ed-btn" id="btn-copy">⧉ Copy</button>
+        <button class="ed-btn" id="btn-paste">⮃ Paste</button>
+      </div>
+      <div class="ed-hint">パラメータをJSONでコピー／貼付。次テーマへ手触りを持ち運ぶ共通規約。</div>
+    </section>
+
+  </aside>
+
+  <footer id="bottombar">
+    <div class="bb-cell">BIAS <b id="bb-bias">50</b></div>
+    <div class="bb-cell">SEEN <b id="bb-seen">？</b></div>
+    <div class="bb-cell bb-mid">CUE <b class="lime" id="bb-cue">—</b></div>
+    <button class="sc-chip" id="sc-open">⌨ SHORTCUTS ?</button>
+  </footer>
+
+</div>
+
+<div id="sc-modal">
+  <div id="sc-box">
+    <div class="sc-head">⌨ Keyboard Shortcuts <span id="sc-close">✕</span></div>
+    <div class="sc-list">
+      <div class="sc-row"><div class="sc-desc">Area Bias −/+<span>面積の偏り</span></div><div class="sc-key">↑ ↓</div></div>
+      <div class="sc-row"><div class="sc-desc">Record: FACE<span>顔として記録</span></div><div class="sc-key">F</div></div>
+      <div class="sc-row"><div class="sc-desc">Record: VASE<span>壺として記録</span></div><div class="sc-key">V</div></div>
+      <div class="sc-row"><div class="sc-desc">Record: ？<span>不明にリセット</span></div><div class="sc-key">U</div></div>
+      <div class="sc-row"><div class="sc-desc">Toggle cue proof<span>手がかり表示</span></div><div class="sc-key">G</div></div>
+      <div class="sc-row"><div class="sc-desc">Reset<span>初期化</span></div><div class="sc-key">R</div></div>
+      <div class="sc-row"><div class="sc-desc">This panel<span>この一覧</span></div><div class="sc-key">?</div></div>
+      <div class="sc-row"><div class="sc-desc">Index<span>戻る</span></div><div class="sc-key">ESC</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────
+const DEFAULTS = { areaBias: 50, seenAs: '?', showGhost: true };
+const state = { ...DEFAULTS };
+
+const cv  = document.getElementById('stage-canvas');
+const ctx = cv.getContext('2d');
+let W = 0, H = 0, DPR = 1;
+
+// ── VASE PROFILE (Gaussian superposition) ──────────────────
+// t: 0=top → 1=bottom. Returns normalised half-width [0.12..1.0].
+function profileW(t) {
+  function G(t0, sig, amp) { return amp * Math.exp(-Math.pow((t - t0) / sig, 2)); }
+  return Math.max(0.12,
+    0.58
+    + G(0.00, 0.09,  0.24)   // top rim swell
+    + G(0.08, 0.05,  0.10)   // rim peak
+    - G(0.27, 0.08,  0.38)   // neck valley
+    + G(0.53, 0.16,  0.43)   // belly bulge
+    - G(0.71, 0.07,  0.17)   // ankle valley
+    + G(0.87, 0.09,  0.20)   // base swell
+  );
+}
+
+// ── BUILD VASE PROFILE POINTS ──────────────────────────────
+function buildVase(cx, top, vh, hwBase, scale, N) {
+  const L = [], R = [];
+  for (let i = 0; i <= N; i++) {
+    const t = i / N;
+    const hw = profileW(t) * hwBase * scale;
+    const y  = top + t * vh;
+    L.push([cx - hw, y]);
+    R.push([cx + hw, y]);
+  }
+  return { L, R };
+}
+
+// ── FILL VASE PATH ─────────────────────────────────────────
+function fillVase(L, R, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(L[0][0], L[0][1]);
+  for (const [x, y] of L) ctx.lineTo(x, y);
+  for (let i = R.length - 1; i >= 0; i--) ctx.lineTo(R[i][0], R[i][1]);
+  ctx.closePath();
+  ctx.fill();
+}
+
+// ── CLIP FACE REGION (box evenodd minus vase) ──────────────
+function clipFaceRegion(L, R, boxX, boxY, boxW, boxH) {
+  ctx.beginPath();
+  ctx.rect(boxX, boxY, boxW, boxH);      // outer box
+  ctx.moveTo(L[0][0], L[0][1]);          // inner vase (hole)
+  for (const [x, y] of L) ctx.lineTo(x, y);
+  for (let i = R.length - 1; i >= 0; i--) ctx.lineTo(R[i][0], R[i][1]);
+  ctx.closePath();
+  ctx.clip('evenodd');
+}
+
+// ── VERDICT ────────────────────────────────────────────────
+// areaBias=0  → narrow vase (vase is smaller region → vase cued as figure)
+// areaBias=50 → balanced   → AMBIGUOUS
+// areaBias=100 → wide vase (faces are smaller regions → face cued as figure)
+function getVerd() {
+  const b = state.areaBias;
+  if (b < 35) return 'vase-cued';
+  if (b > 65) return 'face-cued';
+  return 'ambiguous';
+}
+
+// ── RESIZE ─────────────────────────────────────────────────
+function resize() {
+  const r = document.getElementById('main').getBoundingClientRect();
+  // #main may have no layout yet on first paint — retry next frame.
+  if (r.width < 2 || r.height < 2) { requestAnimationFrame(resize); return; }
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = r.width; H = r.height;
+  cv.width  = Math.round(W * DPR);
+  cv.height = Math.round(H * DPR);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  draw();
+}
+
+// ── DRAW ───────────────────────────────────────────────────
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  const cx    = W / 2, cy = H / 2;
+  const span  = Math.min(W * 0.38, H * 0.44);
+  const scale = 0.25 + (state.areaBias / 100) * 0.75;
+  const hwBase = span * 0.37;
+  const vh    = span * 1.04;
+  const top   = cy - vh / 2;
+  const boxW  = span * 1.66;
+  const boxH  = vh;
+  const boxX  = cx - boxW / 2;
+  const N     = 320;
+  const verd  = getVerd();
+
+  const { L, R } = buildVase(cx, top, vh, hwBase, scale, N);
+
+  // 1. Black box — face regions
+  ctx.fillStyle = '#0a0a0a';
+  ctx.fillRect(boxX, top, boxW, boxH);
+
+  // 2. Light vase — cuts vase out of black
+  fillVase(L, R, '#f2f2ef');
+
+  // 3. Proof overlay (cue prediction)
+  if (state.showGhost) {
+    const isVase = verd === 'vase-cued';
+    const isFace = verd === 'face-cued';
+    const isAmb  = verd === 'ambiguous';
+
+    // Lime tint over vase region
+    if (isVase || isAmb) {
+      fillVase(L, R, `rgba(200,255,26,${isAmb ? 0.22 : 0.40})`);
+    }
+
+    // Lime tint over face regions (box minus vase, evenodd clip)
+    if (isFace || isAmb) {
+      ctx.save();
+      clipFaceRegion(L, R, boxX, top, boxW, boxH);
+      ctx.fillStyle = `rgba(200,255,26,${isAmb ? 0.16 : 0.34})`;
+      ctx.fillRect(boxX, top, boxW, boxH);
+      ctx.restore();
+    }
+  }
+
+  // 4. Thin border around display box
+  ctx.strokeStyle = 'rgba(10,10,10,0.22)';
+  ctx.lineWidth = 0.8;
+  ctx.strokeRect(boxX, top, boxW, boxH);
+
+  // 5. seenAs indicator: thin outline on perceived region
+  if (state.seenAs !== '?') {
+    ctx.save();
+    ctx.strokeStyle = '#c8ff1a';
+    ctx.lineWidth = 2;
+    if (state.seenAs === 'vase') {
+      // Outline the vase path
+      ctx.beginPath();
+      ctx.moveTo(L[0][0], L[0][1]);
+      for (const [x, y] of L) ctx.lineTo(x, y);
+      for (let i = R.length - 1; i >= 0; i--) ctx.lineTo(R[i][0], R[i][1]);
+      ctx.closePath();
+      ctx.stroke();
+    } else {
+      // Outline the face regions (box outline - the visible boundary)
+      ctx.strokeRect(boxX, top, boxW, boxH);
+      // Re-draw vase border in background color to "erase" lime from vase edges
+      ctx.strokeStyle = '#f2f2ef';
+      ctx.beginPath();
+      ctx.moveTo(L[0][0], L[0][1]);
+      for (const [x, y] of L) ctx.lineTo(x, y);
+      for (let i = R.length - 1; i >= 0; i--) ctx.lineTo(R[i][0], R[i][1]);
+      ctx.closePath();
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  updateReadouts(verd);
+}
+
+// ── READOUTS ───────────────────────────────────────────────
+function updateReadouts(verd) {
+  const b = state.areaBias;
+  document.getElementById('v-bias').textContent  = b;
+  document.getElementById('bb-bias').textContent = b;
+  document.getElementById('bb-seen').textContent = state.seenAs === '?' ? '？' :
+    state.seenAs === 'face' ? 'FACE' : 'VASE';
+
+  // Bias bar marker
+  const mark = document.getElementById('bias-mark');
+  mark.style.left = b + '%';
+  mark.classList.remove('lime', 'muted');
+  if (verd !== 'ambiguous') mark.classList.add('lime');
+
+  // Highlight when ambiguous
+  document.getElementById('v-bias').classList.toggle('lime', verd === 'ambiguous');
+
+  // Verdict
+  const V  = document.getElementById('verdict');
+  const vm = V.querySelector('.v-main');
+  const vs = V.querySelector('.v-sub');
+  const bbC = document.getElementById('bb-cue');
+  V.classList.remove('edge');
+
+  if (verd === 'vase-cued') {
+    vm.textContent = 'VASE DOMINANT';
+    bbC.textContent = 'VASE';
+  } else if (verd === 'face-cued') {
+    vm.textContent = 'FACE DOMINANT';
+    bbC.textContent = 'FACE';
+  } else {
+    vm.textContent = 'AMBIGUOUS';
+    V.classList.add('edge');
+    bbC.textContent = 'AMB';
+  }
+
+  // Sub: seenAs record
+  const seenText = {
+    face: '記録: FACE — 顔が見えている',
+    vase: '記録: VASE — 壺が見えている',
+    '?':  'F → FACE / V → VASE を記録',
+  };
+  vs.textContent = seenText[state.seenAs];
+
+  // Sync A/B buttons active state
+  document.querySelectorAll('.ab-btn').forEach(btn => {
+    const isMine = btn.dataset.seen === state.seenAs;
+    btn.classList.toggle('active', isMine);
+    btn.classList.toggle('lime-active', isMine && state.seenAs !== '?');
+  });
+}
+
+// ── CONTROLS ───────────────────────────────────────────────
+document.getElementById('s-bias').addEventListener('input', e => {
+  state.areaBias = +e.target.value; draw();
+});
+
+document.querySelectorAll('.ab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    state.seenAs = btn.dataset.seen; draw();
+  });
+});
+
+const tgGhost = document.getElementById('tg-ghost');
+tgGhost.addEventListener('click', () => {
+  state.showGhost = !state.showGhost;
+  tgGhost.classList.toggle('on', state.showGhost);
+  draw();
+});
+
+function syncUI() {
+  document.getElementById('s-bias').value = state.areaBias;
+  tgGhost.classList.toggle('on', state.showGhost);
+  draw();
+}
+
+function reset() { Object.assign(state, DEFAULTS); syncUI(); }
+
+// ── COPY / PASTE ───────────────────────────────────────────
+function flash(btn, label, cls) {
+  const orig = btn.textContent, oc = btn.className;
+  btn.textContent = label; btn.className = 'ed-btn ' + cls;
+  setTimeout(() => { btn.textContent = orig; btn.className = oc; }, 1200);
+}
+
+document.getElementById('btn-copy').addEventListener('click', async e => {
+  const payload = {
+    app:       'gestalt-05-figure-ground',
+    areaBias:  state.areaBias,
+    seenAs:    state.seenAs,
+    showGhost: state.showGhost
+  };
+  try {
+    await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+    flash(e.currentTarget, '✓ COPIED', 'ok');
+  } catch { flash(e.currentTarget, '✗', 'ng'); }
+});
+
+document.getElementById('btn-paste').addEventListener('click', async e => {
+  try {
+    const o = JSON.parse(await navigator.clipboard.readText());
+    if (typeof o.areaBias  === 'number')  state.areaBias  = Math.max(0, Math.min(100, o.areaBias | 0));
+    if (['face','vase','?'].includes(o.seenAs)) state.seenAs = o.seenAs;
+    if (typeof o.showGhost === 'boolean') state.showGhost = o.showGhost;
+    syncUI();
+    flash(e.currentTarget, '✓ APPLIED', 'ok');
+  } catch { flash(e.currentTarget, '✗', 'ng'); }
+});
+
+// ── SHORTCUT MODAL ─────────────────────────────────────────
+const modal  = document.getElementById('sc-modal');
+const openSc  = () => modal.classList.add('open');
+const closeSc = () => modal.classList.remove('open');
+document.getElementById('sc-open').addEventListener('click', openSc);
+document.getElementById('sc-close').addEventListener('click', closeSc);
+modal.addEventListener('click', e => { if (e.target.id === 'sc-modal') closeSc(); });
+
+// ── KEYBOARD ───────────────────────────────────────────────
+window.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (modal.classList.contains('open')) { closeSc(); return; }
+    window.location.href = 'index.html'; return;
+  }
+  if (e.key === '?') { modal.classList.contains('open') ? closeSc() : openSc(); return; }
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+  const step = 5;
+  if      (e.key === 'ArrowUp')   { e.preventDefault(); state.areaBias = Math.min(100, state.areaBias + step); syncUI(); }
+  else if (e.key === 'ArrowDown') { e.preventDefault(); state.areaBias = Math.max(0,   state.areaBias - step); syncUI(); }
+  else if (e.key === 'f' || e.key === 'F') { state.seenAs = 'face'; draw(); }
+  else if (e.key === 'v' || e.key === 'V') { state.seenAs = 'vase'; draw(); }
+  else if (e.key === 'u' || e.key === 'U') { state.seenAs = '?'; draw(); }
+  else if (e.key === 'g' || e.key === 'G') { state.showGhost = !state.showGhost; syncUI(); }
+  else if (e.key === 'r' || e.key === 'R') { reset(); }
+});
+
+// ── INIT ───────────────────────────────────────────────────
+window.addEventListener('resize', resize);
+resize();
+</script>
+</body>
+</html>

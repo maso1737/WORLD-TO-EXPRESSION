@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COGNITIVE STAGE — 認識エンジン 環マップ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:"Bank Gothic";src:url("fonts/bank-gothic-light-bt.ttf") format("truetype");font-weight:300 600;font-display:swap}
+@font-face{font-family:"Square 721";src:url("fonts/Square_721_BT.ttf") format("truetype");font-weight:400 700;font-display:swap}
+:root{
+  --bg:#f2f2ef; --bg-2:#e8e8e4; --ink:#0a0a0a; --ink-2:#1a1a1a;
+  --mute:#999; --mute-2:#c8c8c4; --line:#0a0a0a; --acc:#c8ff1a;
+  --grid:rgba(10,10,10,0.028); --grid-major:rgba(10,10,10,0.05);
+  --mono:"JetBrains Mono","IBM Plex Mono",ui-monospace,monospace;
+  --disp:"Bank Gothic","Square 721",system-ui,sans-serif;
+  --jp:"IBM Plex Sans JP","Noto Sans JP",system-ui,sans-serif;
+  --ez:cubic-bezier(0.2,0,0,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--mono);overflow:hidden;-webkit-font-smoothing:antialiased;
+  font-feature-settings:"ss01","ss02","tnum"}
+#app{height:100vh;display:grid;grid-template-rows:46px 1fr 30px}
+
+/* ===== TOPBAR ===== */
+#topbar{display:grid;grid-template-columns:auto 1fr auto;align-items:stretch;border-bottom:1px solid var(--line);background:var(--bg);z-index:10}
+.tb-brand{display:flex;align-items:center;gap:12px;padding:0 16px;border-right:1px solid var(--line)}
+.tb-mark{width:14px;height:14px;background:var(--acc);flex:none}
+.tb-id{font-family:var(--disp);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;white-space:nowrap}
+.tb-tag{font-family:var(--mono);font-size:9px;letter-spacing:0.18em;color:var(--mute);text-transform:uppercase;padding:3px 8px;border:1px solid var(--mute-2);white-space:nowrap}
+.tb-mid{display:flex;align-items:center;gap:12px;padding:0 18px;overflow:hidden}
+.tb-title{font-family:var(--disp);font-size:13px;letter-spacing:0.22em;text-transform:uppercase}
+.tb-title em{font-style:normal;font-family:var(--jp);font-size:11px;letter-spacing:0.1em;color:var(--mute);margin-left:8px}
+.tb-right{display:flex;align-items:center;padding:0 16px;border-left:1px solid var(--line);font-family:var(--mono);font-size:9px;letter-spacing:0.16em;color:var(--mute);text-transform:uppercase}
+
+/* ===== STAGE ===== */
+#stage{position:relative;overflow:hidden;
+  background:
+    linear-gradient(var(--grid-major) 1px,transparent 1px) 0 0/200px 200px,
+    linear-gradient(90deg,var(--grid-major) 1px,transparent 1px) 0 0/200px 200px,
+    linear-gradient(var(--grid) 1px,transparent 1px) 0 0/40px 40px,
+    linear-gradient(90deg,var(--grid) 1px,transparent 1px) 0 0/40px 40px,
+    var(--bg)}
+.gh-rail{position:absolute;top:0;bottom:0;right:0;width:4px;background:var(--acc);z-index:1}
+.gh-num{position:absolute;left:2%;bottom:-3%;font-family:var(--disp);font-weight:300;font-size:32vh;line-height:0.85;color:var(--mute-2);opacity:0.4;pointer-events:none;letter-spacing:-0.05em;z-index:0;user-select:none}
+.gh-ticks{position:absolute;top:14px;left:0;right:0;height:10px;z-index:1;opacity:0.45;background-image:linear-gradient(90deg,var(--mute-2) 1px,transparent 1px);background-size:40px 100%}
+.gh-word{position:absolute;top:12%;right:22px;writing-mode:vertical-rl;font-family:var(--mono);font-size:9px;letter-spacing:0.5em;color:var(--mute);opacity:0.55;text-transform:uppercase;z-index:1}
+.reg{position:absolute;font-family:var(--mono);font-size:13px;color:var(--mute);line-height:1;z-index:1;pointer-events:none}
+.reg.tl{top:14px;left:14px}.reg.tr{top:14px;right:24px}.reg.bl{bottom:14px;left:14px}.reg.br{bottom:14px;right:24px}
+.data{position:absolute;font-family:var(--mono);font-size:8px;letter-spacing:0.1em;color:rgba(10,10,10,0.2);text-transform:uppercase;z-index:1;pointer-events:none;white-space:nowrap}
+.data.d1{top:40px;left:16px}.data.d2{bottom:38px;left:16px;writing-mode:vertical-rl;letter-spacing:0.36em;opacity:0.6}
+
+/* plate */
+#plate{position:absolute;top:50%;left:50%;transform:translate(-50%,-52%);
+  width:min(95%,calc(92vh*1200/760));aspect-ratio:1200/760;z-index:2}
+#edges{position:absolute;inset:0;width:100%;height:100%;overflow:visible;z-index:1;pointer-events:none}
+
+/* nodes */
+.nd{position:absolute;transform:translate(-50%,-50%);z-index:3;text-align:center}
+
+/* hub */
+.hub{background:var(--ink);color:var(--bg);padding:13px 18px 15px;min-width:172px;box-shadow:6px 6px 0 rgba(10,10,10,0.1)}
+.hub .h-mk{width:10px;height:10px;background:var(--acc);margin:0 auto 8px}
+.hub .h-en{font-family:var(--disp);font-size:17px;letter-spacing:0.12em;text-transform:uppercase;line-height:1}
+.hub .h-jp{font-family:var(--jp);font-size:10px;letter-spacing:0.18em;color:rgba(242,242,239,0.7);margin-top:6px}
+.hub .h-sub{font-family:var(--mono);font-size:8px;letter-spacing:0.22em;color:rgba(242,242,239,0.5);text-transform:uppercase;margin-top:7px;border-top:1px solid rgba(242,242,239,0.2);padding-top:6px}
+
+/* act */
+.act{background:#fff;border:1px solid var(--ink);min-width:158px;text-align:left;box-shadow:4px 4px 0 rgba(10,10,10,0.07);
+  text-decoration:none;
+  transition:transform .15s var(--ez),box-shadow .15s var(--ez),background .15s var(--ez),color .15s var(--ez)}
+.act:hover{transform:translate(-50%,-50%) scale(1.05);box-shadow:6px 8px 0 rgba(10,10,10,0.14);background:#fff;color:var(--ink)}
+.act:hover .a-hd{background:var(--acc)}
+.act:hover .a-l{color:rgba(10,10,10,0.55)}
+.act:hover .a-l b{color:var(--ink)}
+.act:hover .a-n{color:var(--ink)}
+.act:hover .a-verb{background:var(--ink);color:#fff}
+.act:hover .a-jp{background:var(--acc);color:var(--ink)}
+.act:hover .a-q{border-top-color:var(--mute-2);color:var(--mute)}
+.act:hover .a-q b{background:var(--acc);color:var(--ink)}
+.act:hover .a-cap{background:var(--ink);color:#fff;border-top-color:var(--ink)}
+.act .a-bar{height:5px;background:var(--mute-2)}
+.act.is-live .a-bar{background:var(--acc)}
+.act .a-hd{display:flex;align-items:baseline;justify-content:space-between;padding:8px 11px 0}
+.act .a-l{font-family:var(--mono);font-size:9px;letter-spacing:0.16em;color:var(--mute);text-transform:uppercase}
+.act .a-l b{color:var(--ink);font-weight:600}
+.act .a-n{font-family:var(--disp);font-size:11px;color:var(--ink);letter-spacing:0.04em}
+.act .a-verb{font-family:var(--disp);font-size:19px;letter-spacing:0.08em;text-transform:uppercase;padding:3px 11px 1px;line-height:1.05}
+.act .a-jp{font-family:var(--jp);font-size:10px;color:var(--ink-2);padding:0 11px;letter-spacing:0.04em}
+.act .a-q{font-family:var(--jp);font-size:9px;color:var(--mute);padding:5px 11px 9px;letter-spacing:0.02em;border-top:1px solid var(--mute-2);margin-top:7px}
+.act .a-q b{color:var(--ink);font-weight:600;background:var(--acc);padding:0 3px}
+.act .a-cap{font-family:var(--mono);font-size:8px;letter-spacing:0.14em;color:var(--ink);text-transform:uppercase;
+  padding:5px 11px;border-top:1px solid var(--ink);background:var(--acc)}
+
+/* principle chip */
+.pr{display:block;background:#fff;border:1px solid var(--mute-2);min-width:92px;text-decoration:none;color:var(--ink);
+  box-shadow:2px 2px 0 rgba(10,10,10,0.05);transition:transform .14s var(--ez),box-shadow .14s var(--ez),background .14s var(--ez),color .14s var(--ez)}
+.pr .p-nn{font-family:var(--disp);font-size:14px;letter-spacing:0.02em;padding:5px 8px 0;line-height:1}
+.pr .p-en{font-family:var(--mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--mute);padding:2px 8px 0;white-space:nowrap}
+.pr .p-jp{font-family:var(--jp);font-size:9px;color:var(--ink-2);padding:1px 8px 6px;letter-spacing:0.04em}
+.pr.is-live{border-color:var(--ink)}
+.pr.is-live::before{content:"";display:block;height:4px;background:var(--acc)}
+.pr.is-live .p-en{color:var(--ink)}
+.pr.is-live:hover{transform:translate(-50%,-50%) scale(1.07);box-shadow:3px 6px 0 rgba(10,10,10,0.14);background:#fff;color:var(--ink)}
+.pr.is-live:hover .p-nn{color:var(--ink);background:#fff}
+.pr.is-live:hover .p-en{background:var(--ink);color:#fff}
+.pr.is-live:hover .p-jp{background:var(--acc);color:var(--ink)}
+.pr.is-draft{opacity:0.66}
+.pr.is-draft .p-nn{color:var(--mute)}
+.pr .p-tag{position:absolute;top:-7px;right:-6px;font-family:var(--mono);font-size:7px;letter-spacing:0.1em;
+  background:var(--ink);color:var(--bg);padding:1px 4px;text-transform:uppercase}
+.pr.is-live .p-tag{background:var(--acc);color:var(--ink)}
+
+/* edge labels */
+.elabel{position:absolute;transform:translate(-50%,-50%);z-index:3;font-family:var(--jp);font-size:9px;letter-spacing:0.04em;
+  color:var(--ink);background:var(--bg);padding:2px 6px;border:1px solid var(--acc);white-space:nowrap;pointer-events:none}
+.elabel b{font-family:var(--mono);font-size:8px;letter-spacing:0.1em;color:var(--mute);text-transform:uppercase}
+
+/* ===== FOOTER / LEGEND ===== */
+#foot{display:flex;align-items:stretch;border-top:1px solid var(--line);background:var(--bg);z-index:10}
+.lg{display:flex;align-items:center;gap:9px;padding:0 16px;border-right:1px solid var(--mute-2);
+  font-family:var(--jp);font-size:9px;letter-spacing:0.04em;color:var(--mute)}
+.lg b{font-family:var(--mono);color:var(--ink);font-weight:600;letter-spacing:0.1em;text-transform:uppercase}
+.lg svg{flex:none}
+.foot-r{margin-left:auto;display:flex;align-items:center;padding:0 16px;border-left:1px solid var(--mute-2);
+  font-family:var(--mono);font-size:9px;letter-spacing:0.14em;color:var(--mute);text-transform:uppercase;gap:8px}
+.foot-r .blink{width:6px;height:6px;background:var(--acc);animation:blk 1.2s infinite}
+@keyframes blk{50%{opacity:0.2}}
+
+@media (max-width:820px){
+  .gh-num{font-size:20vh}
+  #plate{width:97%}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="topbar">
+    <div class="tb-brand">
+      <span class="tb-mark"></span>
+      <span class="tb-id">Cognitive&nbsp;Stage</span>
+      <span class="tb-tag">INDEX · 環マップ</span>
+    </div>
+    <div class="tb-mid">
+      <span class="tb-title">4-Layer Ring<em>認識エンジン4層</em></span>
+    </div>
+    <div class="tb-right">SPACE ENGINE ⁄ 空間</div>
+  </header>
+
+  <main id="stage">
+    <div class="gh-num">CS</div>
+    <div class="gh-ticks"></div>
+    <div class="gh-word">RECOGNITION ⁄ ENGINE</div>
+    <div class="gh-rail"></div>
+    <span class="reg tl">+</span><span class="reg tr">+</span><span class="reg bl">+</span><span class="reg br">+</span>
+    <span class="data d1">MAP · CS-RING ⁄ ACT 01–04</span>
+    <span class="data d2">触れば再現できる ⁄ REPRODUCE BY TOUCHING</span>
+
+    <div id="plate">
+      <svg id="edges" viewBox="0 0 1200 760" preserveAspectRatio="none">
+        <defs>
+          <marker id="arrA" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6" fill="none" stroke="#c8ff1a" stroke-width="1.4"/>
+          </marker>
+          <marker id="arrK" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6" fill="none" stroke="#0a0a0a" stroke-width="1.2"/>
+          </marker>
+        </defs>
+        <!-- the ring (環) -->
+        <ellipse cx="600" cy="410" rx="284" ry="216" fill="none" stroke="#0a0a0a" stroke-width="1" stroke-dasharray="3 5" opacity="0.32"/>
+        <g id="g-spokes"></g>
+        <g id="g-branch"></g>
+        <g id="g-loop"></g>
+        <g id="g-flow"></g>
+      </svg>
+      <div id="nodes"></div>
+    </div>
+  </main>
+
+  <footer id="foot">
+    <div class="lg"><svg width="26" height="8"><line x1="0" y1="4" x2="26" y2="4" stroke="#0a0a0a" stroke-width="1.2"/></svg>
+      <b>階層</b> シリーズ→Act→App</div>
+    <div class="lg"><svg width="26" height="8"><line x1="0" y1="4" x2="26" y2="4" stroke="#c8ff1a" stroke-width="1.6" stroke-dasharray="3 3"/></svg>
+      <b>ループ</b> L3解釈が下層を書き換える／降りてくる</div>
+    <div class="lg"><span style="width:10px;height:10px;background:var(--acc);display:inline-block"></span>
+      <b>LIVE</b> 実装済み（クリックで開く）</div>
+    <div class="foot-r"><span class="blink"></span>L1 07 GESTALT · L2 06 FOCUS · 13 LIVE</div>
+  </footer>
+</div>
+
+<script>
+const HUB = { x:600, y:410 };
+const ACTS = [
+  { id:'L1', x:600, y:194, verb:'Group',     jp:'群化', theme:'ゲシュタルト',              q:'何が仲間か',   n:'07', live:true },
+  { id:'L2', x:884, y:410, verb:'Focus',     jp:'焦点', theme:'視覚重力',                  q:'何が主役か',   n:'06', live:true, href:'l2-01-size-weight.html' },
+  { id:'L3', x:600, y:626, verb:'Interpret', jp:'解釈', theme:'錯視・図地・アナモルフォーシス', q:'何通りの解釈', n:'08' },
+  { id:'L4', x:316, y:410, verb:'Edit',      jp:'編集', theme:'間・抑制・余白',            q:'何を捨てるか', n:'04', cap:true },
+];
+const PRIN = [
+  { nn:'01', en:'Proximity',    jp:'近接',     href:'01-proximity.html', live:true },
+  { nn:'02', en:'Similarity',   jp:'類同',     href:'02-similarity.html', live:true },
+  { nn:'03', en:'Continuity',   jp:'連続',     href:'03-continuity.html', live:true },
+  { nn:'04', en:'Closure',      jp:'閉合',     href:'04-closure.html', live:true },
+  { nn:'05', en:'Figure/Ground',jp:'図と地',  href:'05-figure-ground.html', live:true },
+  { nn:'06', en:'Common Fate',  jp:'共通運命', href:'06-common-fate.html', live:true },
+  { nn:'07', en:'Symmetry',     jp:'対称性',   href:'07-symmetry.html',    live:true },
+];
+// principles in a row across the top, branching from L1
+const PX0=176, PX1=1024, PY=64;
+PRIN.forEach((p,i)=>{ p.x = PX0 + i*((PX1-PX0)/(PRIN.length-1)); p.y = PY; });
+
+const L2_PRIN = [
+  { nn:'01', en:'Size Weight',    jp:'視覚的重み', href:'l2-01-size-weight.html',    live:true },
+  { nn:'02', en:'Density',        jp:'密度',       href:'l2-02-density.html',        live:true },
+  { nn:'03', en:'Contrast',       jp:'コントラスト', href:'l2-03-contrast.html',     live:true },
+  { nn:'04', en:'Visual Flow',    jp:'視線誘導',   href:'l2-04-visual-flow.html',    live:true },
+  { nn:'05', en:'Balance',        jp:'バランス',   href:'l2-05-balance.html',        live:true },
+  { nn:'06', en:'Negative Space', jp:'余白',       href:'l2-06-negative-space.html', live:true },
+];
+// L2 principles in a column on the right, branching from L2 (mirror of L1)
+const L2X=1108, L2Y0=150, L2Y1=672;
+L2_PRIN.forEach((p,i)=>{ p.x = L2X; p.y = L2Y0 + i*((L2Y1-L2Y0)/(L2_PRIN.length-1)); });
+
+const nodes = document.getElementById('nodes');
+const VW=1200, VH=760;
+function pct(x,y){ return { left:(x/VW*100)+'%', top:(y/VH*100)+'%' }; }
+function place(el,x,y){ const p=pct(x,y); el.style.left=p.left; el.style.top=p.top; }
+
+// hub
+const hub = document.createElement('div');
+hub.className='nd hub';
+hub.innerHTML = '<div class="h-mk"></div><div class="h-en">Cognitive Stage</div>'+
+  '<div class="h-jp">認識エンジン</div><div class="h-sub">取扱説明書 ⁄ Reproduce by touching</div>';
+place(hub,HUB.x,HUB.y); nodes.appendChild(hub);
+
+// acts
+ACTS.forEach(a=>{
+  const el=document.createElement(a.href?'a':'div');
+  el.className='nd act'+(a.live||a.href?' is-live':'');
+  if(a.href){ el.href=a.href; }
+  el.innerHTML =
+    '<div class="a-bar"></div>'+
+    '<div class="a-hd"><span class="a-l">ACT · <b>'+a.id+'</b></span><span class="a-n">'+a.n+' APP</span></div>'+
+    '<div class="a-verb">'+a.verb+'</div>'+
+    '<div class="a-jp">'+a.jp+' — '+a.theme+'</div>'+
+    '<div class="a-q">問 · <b>'+a.q+'</b></div>'+
+    (a.cap?'<div class="a-cap">Capstone · L1–L3 統合</div>':'');
+  place(el,a.x,a.y); nodes.appendChild(el);
+});
+
+// principles
+PRIN.forEach(p=>{
+  const el=document.createElement(p.live?'a':'div');
+  el.className='nd pr'+(p.live?' is-live':' is-draft');
+  if(p.live){ el.href=p.href; }
+  el.style.position='absolute';
+  el.innerHTML =
+    '<div class="p-nn">'+p.nn+'</div>'+
+    '<div class="p-en">'+p.en+'</div>'+
+    '<div class="p-jp">'+p.jp+'</div>'+
+    '<span class="p-tag">'+(p.live?'LIVE':'未')+'</span>';
+  place(el,p.x,p.y); nodes.appendChild(el);
+});
+
+// L2 principles (right column)
+L2_PRIN.forEach(p=>{
+  const el=document.createElement(p.live?'a':'div');
+  el.className='nd pr'+(p.live?' is-live':' is-draft');
+  if(p.live){ el.href=p.href; }
+  el.style.position='absolute';
+  el.innerHTML =
+    '<div class="p-nn">'+p.nn+'</div>'+
+    '<div class="p-en">'+p.en+'</div>'+
+    '<div class="p-jp">'+p.jp+'</div>'+
+    '<span class="p-tag">'+(p.live?'LIVE':'未')+'</span>';
+  place(el,p.x,p.y); nodes.appendChild(el);
+});
+
+// ===== EDGES =====
+const SVGNS='http://www.w3.org/2000/svg';
+function line(g,x1,y1,x2,y2,attrs){
+  const l=document.createElementNS(SVGNS,'line');
+  l.setAttribute('x1',x1);l.setAttribute('y1',y1);l.setAttribute('x2',x2);l.setAttribute('y2',y2);
+  for(const k in attrs) l.setAttribute(k,attrs[k]);
+  g.appendChild(l);
+}
+function path(g,d,attrs){
+  const p=document.createElementNS(SVGNS,'path');
+  p.setAttribute('d',d); p.setAttribute('fill','none');
+  for(const k in attrs) p.setAttribute(k,attrs[k]);
+  g.appendChild(p);
+}
+// shorten a segment from center so it meets node edges, not centers
+function trim(x1,y1,x2,y2,r1,r2){
+  const dx=x2-x1, dy=y2-y1, len=Math.hypot(dx,dy)||1;
+  return [x1+dx/len*r1, y1+dy/len*r1, x2-dx/len*r2, y2-dy/len*r2];
+}
+
+const gSpokes=document.getElementById('g-spokes');
+const gBranch=document.getElementById('g-branch');
+const gLoop=document.getElementById('g-loop');
+
+// spokes hub -> acts
+ACTS.forEach(a=>{
+  const [x1,y1,x2,y2]=trim(HUB.x,HUB.y,a.x,a.y,58,78);
+  line(gSpokes,x1,y1,x2,y2,{stroke:'#0a0a0a','stroke-width':'1.1',opacity:'0.6'});
+});
+// branches L1 -> principles
+const L1=ACTS[0];
+PRIN.forEach(p=>{
+  const [x1,y1,x2,y2]=trim(L1.x,L1.y,p.x,p.y,40,30);
+  line(gBranch,x1,y1,x2,y2,{stroke:'#0a0a0a','stroke-width':'1',opacity:'0.4'});
+});
+// branches L2 -> L2 principles (right column)
+const L2n=ACTS[1];
+L2_PRIN.forEach(p=>{
+  const [x1,y1,x2,y2]=trim(L2n.x,L2n.y,p.x,p.y,40,30);
+  line(gBranch,x1,y1,x2,y2,{stroke:'#0a0a0a','stroke-width':'1',opacity:'0.4'});
+});
+// loop feedback (lime dashed, arrowed): L3 -> L1, L3 -> L2
+const L2=ACTS[1], L3=ACTS[2];
+path(gLoop,'M '+(L3.x-74)+' '+(L3.y-28)+' Q 250 410 '+(L1.x-62)+' '+(L1.y+46),
+  {stroke:'#c8ff1a','stroke-width':'1.8','stroke-dasharray':'4 4','marker-end':'url(#arrA)'});
+path(gLoop,'M '+(L3.x+74)+' '+(L3.y-28)+' Q 856 540 '+(L2.x-16)+' '+(L2.y+66),
+  {stroke:'#c8ff1a','stroke-width':'1.8','stroke-dasharray':'4 4',opacity:'0.85','marker-end':'url(#arrA)'});
+
+// flow arrows along ring (clockwise L1->L2->L3->L4)
+const gFlow=document.getElementById('g-flow');
+function ringPt(deg){ const a=deg*Math.PI/180; return [600+284*Math.cos(a),410+216*Math.sin(a)]; }
+[[-45,'#0a0a0a'],[45,'#0a0a0a'],[135,'#0a0a0a'],[225,'#0a0a0a']].forEach(([d])=>{
+  const [x,y]=ringPt(d); const [x2,y2]=ringPt(d+6);
+  line(gFlow,x,y,x2,y2,{stroke:'#0a0a0a','stroke-width':'1.4',opacity:'0.5','marker-end':'url(#arrK)'});
+});
+
+// loop labels
+function addLabel(x,y,html){
+  const el=document.createElement('div'); el.className='elabel'; el.innerHTML=html; place(el,x,y); nodes.appendChild(el);
+}
+addLabel(296,300,'<b>LOOP</b> 解釈→群化を書き換える');
+addLabel(812,516,'<b>LOOP</b> 解釈→焦点');
+</script>
+</body>
+</html>

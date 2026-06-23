@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>04 Closure / 閉合 — COGNITIVE STAGE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:"Bank Gothic";src:url("fonts/bank-gothic-light-bt.ttf") format("truetype");font-weight:300 600;font-display:swap}
+@font-face{font-family:"Square 721";src:url("fonts/Square_721_BT.ttf") format("truetype");font-weight:400 700;font-display:swap}
+:root{
+  --bg:#f2f2ef; --bg-2:#e8e8e4; --ink:#0a0a0a; --ink-2:#1a1a1a;
+  --mute:#999; --mute-2:#c8c8c4; --line:#0a0a0a; --acc:#c8ff1a; --ng:#e64141;
+  --grid:rgba(10,10,10,0.028); --grid-major:rgba(10,10,10,0.05);
+  --mono:"JetBrains Mono","IBM Plex Mono",ui-monospace,monospace;
+  --disp:"Bank Gothic","Square 721",system-ui,sans-serif;
+  --jp:"IBM Plex Sans JP","Noto Sans JP",system-ui,sans-serif;
+  --ez:cubic-bezier(0.2,0,0,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--mono);overflow:hidden;-webkit-font-smoothing:antialiased;
+  font-feature-settings:"ss01","ss02","tnum"}
+#app{height:100vh;display:grid;grid-template-rows:46px 1fr 30px;grid-template-columns:1fr 300px}
+
+/* ===== TOPBAR ===== */
+#topbar{grid-column:1/3;display:grid;grid-template-columns:auto 1fr auto;align-items:stretch;
+  border-bottom:1px solid var(--line);background:var(--bg);z-index:10}
+.tb-brand{display:flex;align-items:center;gap:12px;padding:0 16px;border-right:1px solid var(--line)}
+.tb-mark{width:14px;height:14px;background:var(--acc);flex:none}
+.tb-id{font-family:var(--disp);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;white-space:nowrap}
+.tb-tag{font-family:var(--mono);font-size:9px;letter-spacing:0.18em;color:var(--mute);text-transform:uppercase;
+  padding:3px 8px;border:1px solid var(--mute-2);white-space:nowrap}
+.tb-tag b{color:var(--ink);font-weight:600}
+.tb-mid{display:flex;align-items:center;gap:12px;padding:0 18px;overflow:hidden}
+.tb-title{font-family:var(--disp);font-size:13px;letter-spacing:0.22em;text-transform:uppercase}
+.tb-title em{font-style:normal;font-family:var(--jp);font-size:11px;letter-spacing:0.1em;color:var(--mute);margin-left:8px}
+.tb-esc{display:flex;align-items:center;padding:0 16px;border-left:1px solid var(--line);
+  font-family:var(--mono);font-size:9px;letter-spacing:0.16em;color:var(--ink);text-decoration:none;text-transform:uppercase;gap:6px}
+.tb-esc:hover{background:var(--ink);color:var(--bg)}
+.tb-esc .sq{width:6px;height:6px;background:var(--ink)}
+.tb-esc:hover .sq{background:var(--bg)}
+
+/* ===== MAIN / STAGE ===== */
+#main{position:relative;overflow:hidden;
+  background:
+    linear-gradient(var(--grid-major) 1px,transparent 1px) 0 0/200px 200px,
+    linear-gradient(90deg,var(--grid-major) 1px,transparent 1px) 0 0/200px 200px,
+    linear-gradient(var(--grid) 1px,transparent 1px) 0 0/40px 40px,
+    linear-gradient(90deg,var(--grid) 1px,transparent 1px) 0 0/40px 40px,
+    var(--bg)}
+#stage-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:2}
+
+.gh-rail{position:absolute;top:0;bottom:0;right:0;width:4px;background:var(--acc);z-index:1}
+.gh-num{position:absolute;right:3%;bottom:-2%;font-family:var(--disp);font-weight:300;font-size:34vh;line-height:0.85;
+  color:var(--mute-2);opacity:0.5;pointer-events:none;letter-spacing:-0.05em;z-index:0;user-select:none}
+.gh-ticks{position:absolute;top:14px;left:0;right:0;height:10px;z-index:1;opacity:0.5;
+  background-image:linear-gradient(90deg,var(--mute-2) 1px,transparent 1px);background-size:40px 100%}
+.gh-ticks-maj{position:absolute;top:14px;left:0;right:0;height:16px;z-index:1;opacity:0.16;
+  background-image:linear-gradient(90deg,var(--ink) 1px,transparent 1px);background-size:200px 100%}
+.gh-vticks{position:absolute;right:20px;top:90px;bottom:90px;width:10px;z-index:1;opacity:0.5;
+  background-image:linear-gradient(0deg,var(--mute-2) 1px,transparent 1px);background-size:100% 40px}
+.gh-word{position:absolute;top:14%;right:22px;writing-mode:vertical-rl;font-family:var(--mono);font-size:9px;
+  letter-spacing:0.5em;color:var(--mute);opacity:0.6;text-transform:uppercase;z-index:1}
+.reg{position:absolute;font-family:var(--mono);font-size:13px;color:var(--mute);line-height:1;z-index:1;pointer-events:none}
+.reg.tl{top:14px;left:14px}.reg.tr{top:14px;right:24px}.reg.bl{bottom:14px;left:14px}.reg.br{bottom:14px;right:24px}
+.data{position:absolute;font-family:var(--mono);font-size:8px;letter-spacing:0.1em;color:rgba(10,10,10,0.2);
+  text-transform:uppercase;z-index:1;pointer-events:none;white-space:nowrap}
+.data.d1{top:40px;left:16px}.data.d2{top:54px;left:16px;color:rgba(10,10,10,0.14)}
+.data.d3{bottom:38px;left:16px;writing-mode:vertical-rl;letter-spacing:0.36em;opacity:0.6}
+
+.po{position:absolute;top:38px;right:46px;text-align:right;z-index:3;pointer-events:none}
+.po-num{font-family:var(--disp);font-weight:300;font-size:46px;line-height:0.85;letter-spacing:-0.02em}
+.po-en{font-family:var(--mono);font-size:10px;letter-spacing:0.26em;color:var(--ink);text-transform:uppercase;margin-top:6px}
+.po-jp{font-family:var(--jp);font-size:10px;letter-spacing:0.18em;color:var(--mute);margin-top:2px}
+.po-rule{height:1px;background:var(--ink);margin-top:8px;margin-left:auto;width:54px}
+
+#verdict{position:absolute;left:50%;bottom:30px;transform:translateX(-50%);text-align:center;z-index:3;pointer-events:none}
+#verdict .v-main{font-family:var(--disp);font-size:24px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink);
+  display:inline-block;padding:2px 4px;transition:background 120ms var(--ez)}
+#verdict .v-sub{font-family:var(--jp);font-size:11px;letter-spacing:0.12em;color:var(--mute);margin-top:5px}
+#verdict.edge .v-main{background:var(--acc);color:var(--ink);padding:3px 12px}
+
+/* ===== SIDE PANEL ===== */
+#side{background:#fff;border-left:1px solid var(--line);overflow-y:auto}
+#side::-webkit-scrollbar{width:3px}#side::-webkit-scrollbar-thumb{background:var(--ink)}
+.sp{padding:15px 16px;border-bottom:1px solid var(--mute-2)}
+.spl{font-family:var(--mono);font-size:9px;letter-spacing:0.32em;color:var(--ink);text-transform:uppercase;
+  margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.spl::before{content:"";width:7px;height:7px;background:var(--acc);flex:none}
+.spl em{font-style:normal;font-family:var(--jp);color:var(--mute);letter-spacing:0.1em;margin-left:auto;font-size:9px}
+.tr{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.tr:last-child{margin-bottom:0}
+.tr-lbl{font-size:10px;letter-spacing:0.1em;color:var(--ink);white-space:nowrap;text-transform:uppercase}
+.tr-lbl span{display:block;font-family:var(--jp);font-size:9px;color:var(--mute);letter-spacing:0.06em;margin-top:2px;text-transform:none}
+.tr-val{font-family:var(--disp);font-size:20px;color:var(--ink);min-width:38px;text-align:right;letter-spacing:0.02em;
+  font-feature-settings:"tnum"}
+.tr-val.lime{background:var(--acc);padding:0 5px}
+
+input[type=range]{-webkit-appearance:none;appearance:none;width:110px;height:2px;background:var(--mute-2);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;background:#fff;border:1.5px solid var(--ink);cursor:pointer}
+input[type=range]:hover::-webkit-slider-thumb{background:var(--acc)}
+input[type=range]:active::-webkit-slider-thumb{background:var(--acc)}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;background:#fff;border:1.5px solid var(--ink);cursor:pointer}
+input[type=range]:hover::-moz-range-thumb{background:var(--acc)}
+
+/* segmented toggle */
+.ft-tog{display:flex;border:1px solid var(--ink)}
+.ft-btn{font-family:var(--mono);font-size:9px;letter-spacing:0.14em;text-transform:uppercase;
+  padding:5px 10px;background:var(--bg);border:0;color:var(--mute);cursor:pointer;
+  transition:background .14s var(--ez),color .14s var(--ez);flex:1;white-space:nowrap}
+.ft-btn:hover{background:rgba(10,10,10,0.07)}
+.ft-btn.active{background:var(--ink);color:var(--bg)}
+.ft-btn+.ft-btn{border-left:1px solid var(--ink)}
+
+/* swiss toggle */
+.tg{position:relative;width:36px;height:18px;background:var(--bg);cursor:pointer;border:1px solid var(--ink);flex:none;transition:background .16s var(--ez)}
+.tg::after{content:"";position:absolute;top:1px;left:1px;width:14px;height:14px;background:var(--mute);transition:left .16s var(--ez),background .16s var(--ez)}
+.tg.on{background:var(--acc)}
+.tg.on::after{left:19px;background:var(--ink)}
+
+/* gap / threshold bar */
+.ratiobar{height:4px;background:var(--mute-2);margin-top:10px;position:relative}
+.ratiobar::before{content:"";position:absolute;left:50%;top:-3px;width:1px;height:10px;background:var(--ink);opacity:0.5}
+.ratiobar i{position:absolute;top:-5px;width:3px;height:14px;background:var(--ink);transform:translateX(-50%);
+  transition:left .12s var(--ez),background .12s}
+.ratiobar i.lime{background:var(--acc);box-shadow:0 0 0 1px var(--ink)}
+.ratiobar i.muted{background:var(--mute)}
+.rb-ends{display:flex;justify-content:space-between;margin-top:6px;font-family:var(--jp);font-size:9px;letter-spacing:0.04em;color:var(--mute)}
+
+/* read block */
+.db{border-left:2px solid var(--ink);padding:1px 0 1px 13px;position:relative}
+.db::before{content:"✦";position:absolute;left:-8px;top:-1px;color:var(--ink);font-size:10px;background:#fff;line-height:1}
+.de{font-family:var(--disp);font-size:14px;line-height:1.32;letter-spacing:0.03em;color:var(--ink);text-transform:uppercase}
+.dj{font-family:var(--jp);font-size:11.5px;line-height:1.7;color:var(--ink-2);margin-top:9px}
+.dj b{background:var(--acc);color:var(--ink);font-weight:600;padding:0 3px}
+.dnote{font-family:var(--jp);font-size:10px;line-height:1.7;color:var(--mute);margin-top:11px}
+.dnote b{color:var(--ink);font-weight:600}
+
+/* params */
+.ed-row{display:flex;gap:8px}
+.ed-btn{flex:1;font-family:var(--mono);font-size:10px;letter-spacing:0.16em;padding:9px 0;
+  background:var(--bg);border:1px solid var(--ink);color:var(--ink);cursor:pointer;text-transform:uppercase;transition:all .14s var(--ez)}
+.ed-btn:hover{background:var(--ink);color:var(--bg)}
+.ed-btn.ok{background:var(--acc);border-color:var(--ink);color:var(--ink)}
+.ed-btn.ng{background:var(--ng);border-color:var(--ng);color:#fff}
+.ed-hint{font-family:var(--jp);font-size:9px;color:var(--mute);letter-spacing:0.04em;margin-top:9px;line-height:1.6}
+
+/* ===== BOTTOMBAR ===== */
+#bottombar{grid-column:1/3;display:grid;grid-template-columns:auto auto 1fr auto;align-items:stretch;
+  border-top:1px solid var(--line);background:var(--bg);z-index:10}
+.bb-cell{display:flex;align-items:center;gap:8px;padding:0 16px;border-right:1px solid var(--mute-2);
+  font-family:var(--mono);font-size:9px;letter-spacing:0.14em;color:var(--mute);text-transform:uppercase}
+.bb-cell b{color:var(--ink);font-weight:600}
+.bb-cell b.lime{background:var(--acc);padding:0 5px}
+.bb-mid{justify-self:start}
+.sc-chip{display:flex;align-items:center;gap:8px;padding:0 16px;border-left:1px solid var(--mute-2);background:transparent;
+  border-top:0;border-right:0;border-bottom:0;font-family:var(--mono);font-size:9px;letter-spacing:0.14em;color:var(--ink);
+  cursor:pointer;text-transform:uppercase}
+.sc-chip:hover{background:var(--ink);color:var(--bg)}
+
+/* ===== SHORTCUT MODAL ===== */
+#sc-modal{display:none;position:fixed;inset:0;z-index:9000;background:rgba(10,10,10,0.55);align-items:center;justify-content:center}
+#sc-modal.open{display:flex}
+#sc-box{background:#fff;border:1px solid var(--ink);width:min(420px,92vw);max-height:80vh;overflow-y:auto;
+  box-shadow:8px 8px 0 rgba(10,10,10,0.12)}
+.sc-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--ink);
+  background:var(--ink);color:var(--bg);font-family:var(--disp);font-size:12px;letter-spacing:0.2em;text-transform:uppercase}
+.sc-head span{cursor:pointer;font-family:var(--mono);color:var(--bg)}
+.sc-list{padding:8px 18px 16px}
+.sc-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--mute-2)}
+.sc-row:last-child{border-bottom:none}
+.sc-desc{font-family:var(--mono);font-size:10px;letter-spacing:0.06em;color:var(--ink);text-transform:uppercase}
+.sc-desc span{display:block;font-family:var(--jp);font-size:9px;color:var(--mute);letter-spacing:0.04em;text-transform:none;margin-top:2px}
+.sc-key{font-family:var(--mono);font-size:10px;min-width:26px;padding:4px 8px;text-align:center;background:var(--bg);
+  border:1px solid var(--ink);color:var(--ink);letter-spacing:0.08em}
+
+@media (max-width:760px){
+  #app{grid-template-columns:1fr;grid-template-rows:46px 1fr auto 30px}
+  #side{grid-row:3;max-height:44vh;border-left:0;border-top:1px solid var(--line)}
+  #bottombar{grid-template-columns:auto 1fr auto}
+  .po-num{font-size:34px}.gh-num{font-size:24vh}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header id="topbar">
+    <div class="tb-brand">
+      <span class="tb-mark"></span>
+      <span class="tb-id">Cognitive&nbsp;Stage</span>
+      <span class="tb-tag">L1 · <b>GROUP</b></span>
+    </div>
+    <div class="tb-mid">
+      <span class="tb-title">Closure<em>閉合</em></span>
+    </div>
+    <a class="tb-esc" href="index.html"><span class="sq"></span>ESC · INDEX</a>
+  </header>
+
+  <main id="main">
+    <div class="gh-num">04</div>
+    <div class="gh-ticks"></div><div class="gh-ticks-maj"></div>
+    <div class="gh-vticks"></div>
+    <div class="gh-word">GROUP ⁄ L1 ⁄ N4</div>
+    <div class="gh-rail"></div>
+    <span class="reg tl">+</span><span class="reg tr">+</span><span class="reg bl">+</span><span class="reg br">+</span>
+    <span class="data d1">ID · CS-L1-04 ⁄ CLOSURE</span>
+    <span class="data d2">SET · GESTALT ⁄ 07</span>
+    <span class="data d3">ENGINE · GROUP ⁄ FORM</span>
+
+    <canvas id="stage-canvas"></canvas>
+
+    <div class="po">
+      <div class="po-num">04</div>
+      <div class="po-en">Closure</div>
+      <div class="po-jp">閉合</div>
+      <div class="po-rule"></div>
+    </div>
+    <div id="verdict"><div class="v-main">—</div><div class="v-sub">—</div></div>
+  </main>
+
+  <aside id="side">
+
+    <section class="sp">
+      <div class="spl">Control <em>操作</em></div>
+
+      <div class="tr">
+        <div class="tr-lbl">Gap<span>輪郭の断裂量（off = 100）</span></div>
+        <input type="range" id="s-gap" min="0" max="100" value="30">
+        <div class="tr-val" id="v-gap">30</div>
+      </div>
+
+      <div class="tr">
+        <div class="tr-lbl">Mode<span>輪郭 / カニッツァ</span></div>
+        <div class="ft-tog">
+          <button class="ft-btn active" data-v="outline">OUTLINE</button>
+          <button class="ft-btn" data-v="kanizsa">KANIZSA</button>
+        </div>
+      </div>
+
+      <div class="tr" id="shape-row">
+        <div class="tr-lbl">Shape<span>形状</span></div>
+        <div class="ft-tog">
+          <button class="ft-btn active" data-shape="circle">●</button>
+          <button class="ft-btn" data-shape="square">■</button>
+        </div>
+      </div>
+
+      <div class="ratiobar"><i id="gap-mark"></i></div>
+      <div class="rb-ends"><span>← SOLID</span><span>OPEN →</span></div>
+    </section>
+
+    <section class="sp">
+      <div class="spl">Proof <em>検証</em></div>
+      <div class="tr">
+        <div class="tr-lbl">Show Ghost<span>脳が補完する輪郭を重ねる</span></div>
+        <div class="tg on" id="tg-ghost"></div>
+      </div>
+    </section>
+
+    <section class="sp">
+      <div class="spl">Read <em>原理</em></div>
+      <div class="db">
+        <div class="de">Brain closes the gaps — minimum info, full form.</div>
+        <div class="dj">輪郭に隙間があっても脳は欠けを補って図形として閉じる。<b>gap</b>を上げると隙間が広がる——閾値を超えると補完できなくなり「弧の集まり」へ崩れる。KANIZSAモードでは<b>存在しない輪郭</b>まで生成する。</div>
+      </div>
+      <div class="dnote">閉合の限界＝<b>最小情報量</b>。これを手で確認することがロゴ・アイコン設計の省略限界を理解する最短ルート。</div>
+    </section>
+
+    <section class="sp">
+      <div class="spl">Params <em>受渡</em></div>
+      <div class="ed-row">
+        <button class="ed-btn" id="btn-copy">⧉ Copy</button>
+        <button class="ed-btn" id="btn-paste">⮃ Paste</button>
+      </div>
+      <div class="ed-hint">パラメータをJSONでコピー／貼付。次テーマへ手触りを持ち運ぶ共通規約。</div>
+    </section>
+
+  </aside>
+
+  <footer id="bottombar">
+    <div class="bb-cell">GAP <b id="bb-gap">30</b></div>
+    <div class="bb-cell">MODE <b id="bb-mode">OUT</b></div>
+    <div class="bb-cell bb-mid">STATE <b class="lime" id="bb-state">—</b></div>
+    <button class="sc-chip" id="sc-open">⌨ SHORTCUTS ?</button>
+  </footer>
+
+</div>
+
+<div id="sc-modal">
+  <div id="sc-box">
+    <div class="sc-head">⌨ Keyboard Shortcuts <span id="sc-close">✕</span></div>
+    <div class="sc-list">
+      <div class="sc-row"><div class="sc-desc">Gap −/+<span>断裂量</span></div><div class="sc-key">↑ ↓</div></div>
+      <div class="sc-row"><div class="sc-desc">Toggle mode (outline/kanizsa)<span>モード切替</span></div><div class="sc-key">M</div></div>
+      <div class="sc-row"><div class="sc-desc">Toggle shape (●/■)<span>形状切替（outline時）</span></div><div class="sc-key">S</div></div>
+      <div class="sc-row"><div class="sc-desc">Toggle ghost<span>補完輪郭の表示</span></div><div class="sc-key">G</div></div>
+      <div class="sc-row"><div class="sc-desc">Reset<span>初期化</span></div><div class="sc-key">R</div></div>
+      <div class="sc-row"><div class="sc-desc">This panel<span>この一覧</span></div><div class="sc-key">?</div></div>
+      <div class="sc-row"><div class="sc-desc">Index<span>戻る</span></div><div class="sc-key">ESC</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────
+const DEFAULTS = { gap: 30, mode: 'outline', shape: 'circle', showGhost: true };
+const state = { ...DEFAULTS };
+
+const cv  = document.getElementById('stage-canvas');
+const ctx = cv.getContext('2d');
+let W = 0, H = 0, DPR = 1;
+
+// N arc/side fragments for outline mode
+const N_FRAGS = 4;
+
+// ── GEOMETRY ───────────────────────────────────────────────
+function getGeo() {
+  const cx = W / 2, cy = H / 2;
+  const span = Math.min(W * 0.40, H * 0.42);
+  return {
+    cx, cy, span,
+    R:      span * 0.27,   // outline circle/square half-size
+    R_pac:  span * 0.10,   // kanizsa pac-man radius
+    R_tri:  span * (0.18 + (state.gap / 100) * 0.25) // kanizsa: center→pac-man distance
+  };
+}
+
+// ── VERDICT ────────────────────────────────────────────────
+function getVerd() {
+  const g = state.gap / 100;
+  if (state.mode === 'outline') {
+    if (g < 0.03)  return 'complete';
+    if (g < 0.58)  return 'closed';
+    if (g < 0.76)  return 'threshold';
+    return 'fragments';
+  } else {
+    // kanizsa: small gap = pac-mans close = strong triangle
+    if (g < 0.05)  return 'touching';
+    if (g < 0.62)  return 'illusory';
+    if (g < 0.78)  return 'threshold';
+    return 'fragments';
+  }
+}
+
+// ── RESIZE ─────────────────────────────────────────────────
+function resize() {
+  const r = document.getElementById('main').getBoundingClientRect();
+  // #main may have no layout yet on first paint — retry next frame.
+  if (r.width < 2 || r.height < 2) { requestAnimationFrame(resize); return; }
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = r.width; H = r.height;
+  cv.width  = Math.round(W * DPR);
+  cv.height = Math.round(H * DPR);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  draw();
+}
+
+// ── DRAW HELPERS ───────────────────────────────────────────
+function offStateBox(cx, cy, size) {
+  const pad = size * 0.18;
+  const bx = cx - size / 2 - pad, by = cy - size / 2 - pad;
+  const bw = size + 2 * pad, bh = size + 2 * pad;
+  ctx.save();
+  ctx.fillStyle = 'rgba(200,255,26,0.09)';
+  ctx.fillRect(bx, by, bw, bh);
+  ctx.setLineDash([6, 5]);
+  ctx.strokeStyle = 'rgba(10,10,10,0.22)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(bx + 0.5, by + 0.5, bw - 1, bh - 1);
+  ctx.restore();
+}
+
+// ── OUTLINE: CIRCLE ────────────────────────────────────────
+function drawCircle(cx, cy, R) {
+  const gFrac     = state.gap / 100;
+  const secAngle  = (2 * Math.PI) / N_FRAGS;
+  const gapAngle  = gFrac * secAngle;
+  const arcAngle  = secAngle - gapAngle;
+
+  // Ghost (full circle in lime dashes, behind arcs)
+  if (state.showGhost && state.gap > 2) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(200,255,26,0.80)';
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, 0, 2 * Math.PI);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Solid arcs in ink (cover ghost in arc regions)
+  if (arcAngle > 0.01) {
+    ctx.save();
+    ctx.strokeStyle = '#0a0a0a';
+    ctx.lineWidth = 10;
+    ctx.lineCap = 'round';
+    for (let i = 0; i < N_FRAGS; i++) {
+      const secStart = -Math.PI / 2 + i * secAngle;
+      const arcStart = secStart + gapAngle / 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R, arcStart, arcStart + arcAngle);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+}
+
+// ── OUTLINE: SQUARE ────────────────────────────────────────
+function drawSquare(cx, cy, S) {
+  const gFrac = state.gap / 100;
+  const ds    = gFrac / 2;       // draw start (fraction along each side)
+  const de    = 1 - gFrac / 2;  // draw end
+
+  // Ghost: full square in lime dashes
+  if (state.showGhost && state.gap > 2) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(200,255,26,0.80)';
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([5, 5]);
+    ctx.strokeRect(cx - S, cy - S, 2 * S, 2 * S);
+    ctx.restore();
+  }
+
+  // Sides in ink
+  if (de > ds) {
+    const sides = [
+      [cx - S, cy - S, cx + S, cy - S],  // top
+      [cx + S, cy - S, cx + S, cy + S],  // right
+      [cx + S, cy + S, cx - S, cy + S],  // bottom
+      [cx - S, cy + S, cx - S, cy - S],  // left
+    ];
+    ctx.save();
+    ctx.strokeStyle = '#0a0a0a';
+    ctx.lineWidth = 10;
+    ctx.lineCap = 'round';
+    sides.forEach(([x1, y1, x2, y2]) => {
+      ctx.beginPath();
+      ctx.moveTo(x1 + ds * (x2 - x1), y1 + ds * (y2 - y1));
+      ctx.lineTo(x1 + de * (x2 - x1), y1 + de * (y2 - y1));
+      ctx.stroke();
+    });
+    ctx.restore();
+  }
+}
+
+// ── KANIZSA ────────────────────────────────────────────────
+// theta = mouth half-angle; at theta=π/6, lips exactly face adjacent pac-mans
+// for an equilateral triangle — classic Kanizsa configuration.
+const KANIZSA_THETA = Math.PI / 6; // 30° half-angle → 60° mouth (optimal for equilateral)
+
+function drawKanizsa(cx, cy, R_pac, R_tri) {
+  // Vertex positions (equilateral triangle, top vertex at -90°)
+  const verts = [0, 1, 2].map(i => {
+    const a = -Math.PI / 2 + i * (2 * Math.PI / 3);
+    return { x: cx + R_tri * Math.cos(a), y: cy + R_tri * Math.sin(a) };
+  });
+
+  // Mouth angle for each pac-man: pointing toward centroid
+  const mouthA = verts.map(v => Math.atan2(cy - v.y, cx - v.x));
+
+  // Ghost: illusory triangle outline in lime dashes
+  if (state.showGhost && state.gap > 4 && state.gap < 90) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(200,255,26,0.82)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 6]);
+    ctx.beginPath();
+    ctx.moveTo(verts[0].x, verts[0].y);
+    ctx.lineTo(verts[1].x, verts[1].y);
+    ctx.lineTo(verts[2].x, verts[2].y);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Pac-mans in ink
+  verts.forEach((v, i) => {
+    ctx.save();
+    ctx.fillStyle = '#0a0a0a';
+    ctx.beginPath();
+    ctx.moveTo(v.x, v.y);
+    // CW arc from (mouth + theta) to (mouth - theta): the body (2π − 2θ arc)
+    ctx.arc(v.x, v.y, R_pac, mouthA[i] + KANIZSA_THETA, mouthA[i] - KANIZSA_THETA, false);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  });
+}
+
+// ── MAIN DRAW ──────────────────────────────────────────────
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  const { cx, cy, span, R, R_pac, R_tri } = getGeo();
+  const verd = getVerd();
+
+  // Off-state visual (gap > 78)
+  if (state.gap > 78) {
+    offStateBox(cx, cy, R * 2.5);
+  }
+
+  if (state.mode === 'outline') {
+    if (state.shape === 'circle') {
+      drawCircle(cx, cy, R);
+    } else {
+      drawSquare(cx, cy, R * 0.88);
+    }
+  } else {
+    drawKanizsa(cx, cy, R_pac, R_tri);
+  }
+
+  updateReadouts(verd);
+}
+
+// ── READOUTS ───────────────────────────────────────────────
+function updateReadouts(verd) {
+  const g = state.gap;
+  document.getElementById('v-gap').textContent  = g;
+  document.getElementById('bb-gap').textContent = g;
+  document.getElementById('bb-mode').textContent = state.mode === 'outline' ? 'OUT' : 'KAN';
+
+  // Gap bar marker
+  const mark = document.getElementById('gap-mark');
+  mark.style.left = g + '%';
+  mark.classList.remove('lime', 'muted');
+  if (verd === 'closed' || verd === 'illusory' || verd === 'touching') mark.classList.add('lime');
+  if (verd === 'fragments') mark.classList.add('muted');
+
+  // Highlight value at threshold
+  document.getElementById('v-gap').classList.toggle('lime', verd === 'threshold');
+
+  // Verdict
+  const V   = document.getElementById('verdict');
+  const vm  = V.querySelector('.v-main');
+  const vs  = V.querySelector('.v-sub');
+  const bbS = document.getElementById('bb-state');
+  V.classList.remove('edge');
+
+  const T = {
+    complete:  ['COMPLETE',         '隙間なし — 閉合不要',                 'COMP'],
+    closed:    ['CLOSED',           '脳が輪郭の隙間を補完している',         'CLO'],
+    threshold: ['THRESHOLD',        '閉合が崩れ始める — 境界点',           'THR'],
+    fragments: ['FRAGMENTS',        '断片のみ — 閉合できない（off）',       'FRAG'],
+    touching:  ['ELEMENTS CLOSE',   'パックマンが密集 — 強い錯覚三角形',   'CLO'],
+    illusory:  ['ILLUSORY TRIANGLE','存在しない輪郭を脳が生成している',     'ILL'],
+  };
+  const [main, sub, bb] = T[verd] || ['—', '—', '—'];
+  vm.textContent = main;
+  vs.textContent = sub;
+  bbS.textContent = bb;
+  if (verd === 'threshold') V.classList.add('edge');
+}
+
+// ── UI SYNC ────────────────────────────────────────────────
+function syncShapeRow() {
+  document.getElementById('shape-row').style.display =
+    state.mode === 'outline' ? 'flex' : 'none';
+}
+
+const sGap = document.getElementById('s-gap');
+sGap.addEventListener('input', e => { state.gap = +e.target.value; draw(); });
+
+// Mode buttons
+document.querySelectorAll('.ft-btn[data-v]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    state.mode = btn.dataset.v;
+    document.querySelectorAll('.ft-btn[data-v]').forEach(b =>
+      b.classList.toggle('active', b.dataset.v === state.mode));
+    syncShapeRow();
+    draw();
+  });
+});
+
+// Shape buttons
+document.querySelectorAll('.ft-btn[data-shape]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    state.shape = btn.dataset.shape;
+    document.querySelectorAll('.ft-btn[data-shape]').forEach(b =>
+      b.classList.toggle('active', b.dataset.shape === state.shape));
+    draw();
+  });
+});
+
+// Ghost toggle
+const tgGhost = document.getElementById('tg-ghost');
+tgGhost.addEventListener('click', () => {
+  state.showGhost = !state.showGhost;
+  tgGhost.classList.toggle('on', state.showGhost);
+  draw();
+});
+
+function syncUI() {
+  sGap.value = state.gap;
+  document.querySelectorAll('.ft-btn[data-v]').forEach(b =>
+    b.classList.toggle('active', b.dataset.v === state.mode));
+  document.querySelectorAll('.ft-btn[data-shape]').forEach(b =>
+    b.classList.toggle('active', b.dataset.shape === state.shape));
+  tgGhost.classList.toggle('on', state.showGhost);
+  syncShapeRow();
+  draw();
+}
+
+function reset() { Object.assign(state, DEFAULTS); syncUI(); }
+
+// ── COPY / PASTE ───────────────────────────────────────────
+function flash(btn, label, cls) {
+  const orig = btn.textContent, oc = btn.className;
+  btn.textContent = label; btn.className = 'ed-btn ' + cls;
+  setTimeout(() => { btn.textContent = orig; btn.className = oc; }, 1200);
+}
+
+document.getElementById('btn-copy').addEventListener('click', async e => {
+  const payload = {
+    app:       'gestalt-04-closure',
+    shape:     state.shape,
+    gap:       state.gap,
+    mode:      state.mode,
+    showGhost: state.showGhost
+  };
+  try {
+    await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+    flash(e.currentTarget, '✓ COPIED', 'ok');
+  } catch { flash(e.currentTarget, '✗', 'ng'); }
+});
+
+document.getElementById('btn-paste').addEventListener('click', async e => {
+  try {
+    const o = JSON.parse(await navigator.clipboard.readText());
+    if (typeof o.gap       === 'number')  state.gap       = Math.max(0, Math.min(100, o.gap | 0));
+    if (o.mode === 'outline' || o.mode === 'kanizsa') state.mode = o.mode;
+    if (o.shape === 'circle' || o.shape === 'square') state.shape = o.shape;
+    if (typeof o.showGhost === 'boolean') state.showGhost = o.showGhost;
+    syncUI();
+    flash(e.currentTarget, '✓ APPLIED', 'ok');
+  } catch { flash(e.currentTarget, '✗', 'ng'); }
+});
+
+// ── SHORTCUT MODAL ─────────────────────────────────────────
+const modal  = document.getElementById('sc-modal');
+const openSc  = () => modal.classList.add('open');
+const closeSc = () => modal.classList.remove('open');
+document.getElementById('sc-open').addEventListener('click', openSc);
+document.getElementById('sc-close').addEventListener('click', closeSc);
+modal.addEventListener('click', e => { if (e.target.id === 'sc-modal') closeSc(); });
+
+// ── KEYBOARD ───────────────────────────────────────────────
+window.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (modal.classList.contains('open')) { closeSc(); return; }
+    window.location.href = 'index.html'; return;
+  }
+  if (e.key === '?') { modal.classList.contains('open') ? closeSc() : openSc(); return; }
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+  const step = 5;
+  if      (e.key === 'ArrowUp')   { e.preventDefault(); state.gap = Math.min(100, state.gap + step); syncUI(); }
+  else if (e.key === 'ArrowDown') { e.preventDefault(); state.gap = Math.max(0,   state.gap - step); syncUI(); }
+  else if (e.key === 'm' || e.key === 'M') {
+    state.mode = state.mode === 'outline' ? 'kanizsa' : 'outline'; syncUI();
+  }
+  else if (e.key === 's' || e.key === 'S') {
+    if (state.mode === 'outline') { state.shape = state.shape === 'circle' ? 'square' : 'circle'; syncUI(); }
+  }
+  else if (e.key === 'g' || e.key === 'G') { state.showGhost = !state.showGhost; syncUI(); }
+  else if (e.key === 'r' || e.key === 'R') { reset(); }
+});
+
+// ── INIT ───────────────────────────────────────────────────
+syncShapeRow();
+window.addEventListener('resize', resize);
+resize();
+</script>
+</body>
+</html>
