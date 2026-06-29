@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FEW / MANY — Subitizing ⁄ 数の知覚</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=IBM+Plex+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
+<style>
+@font-face{
+  font-family:"Bank Gothic";
+  src:url("fonts/bank-gothic-light-bt.ttf") format("truetype");
+  font-weight:300 600; font-display:swap;
+}
+@font-face{
+  font-family:"Square 721";
+  src:url("fonts/Square_721_BT.ttf") format("truetype");
+  font-weight:400 700; font-display:swap;
+}
+:root{
+  /* GEN-EX dark stage variant (tokens follow Mind Maps DS, inverted ground) */
+  --bg:#0a0a0a;
+  --bg-2:#121212;
+  --ink:#f2f2ef;          /* ink is light on dark */
+  --ink-2:#cfcfca;
+  --mute:#6b6b66;
+  --mute-2:#3a3a37;
+  --line:#2a2a27;
+  --acc:#ffd400;          /* signal yellow — Gen-EX */
+  --acc-ink:#0a0a0a;
+  --ok:#9bff5a;
+  --ng:#ff4d4d;
+  --grid:rgba(242,242,239,0.035);
+  --grid-major:rgba(242,242,239,0.06);
+  --panel-bg:#0e0e0e;
+  --ez:cubic-bezier(0.2,0,0,1);
+  --mono:"JetBrains Mono","IBM Plex Mono",ui-monospace,monospace;
+  --display:"Bank Gothic","Square 721","Space Grotesk",system-ui,sans-serif;
+  --sans:"Square 721","Bank Gothic","Helvetica Neue",system-ui,sans-serif;
+  --jp:"IBM Plex Sans JP","Noto Sans JP",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);
+  font-family:var(--sans);font-feature-settings:"ss01","ss02","tnum"}
+#app{
+  height:100vh;display:grid;
+  grid-template-rows:46px 1fr 30px;
+  grid-template-columns:1fr 320px;
+  grid-template-areas:"top top" "stage aside" "bot bot";
+}
+/* ---------- topbar ---------- */
+.topbar{grid-area:top;display:flex;align-items:center;gap:18px;
+  padding:0 16px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:baseline;gap:8px}
+.mark{font-family:var(--display);font-weight:600;letter-spacing:.14em;font-size:14px}
+.layer-tag{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.18em}
+.ttl{flex:1;font-family:var(--mono);font-size:11px;color:var(--ink-2);letter-spacing:.16em;text-transform:uppercase}
+.esc{font-family:var(--mono);font-size:10px;color:var(--mute);text-decoration:none;
+  border:1px solid var(--line);padding:4px 8px;letter-spacing:.12em}
+.esc:hover{color:var(--acc);border-color:var(--acc)}
+/* ---------- stage ---------- */
+.stage{grid-area:stage;position:relative;overflow:hidden;
+  background:
+    linear-gradient(var(--grid) 1px,transparent 1px) 0 0/28px 28px,
+    linear-gradient(90deg,var(--grid) 1px,transparent 1px) 0 0/28px 28px,
+    linear-gradient(var(--grid-major) 1px,transparent 1px) 0 0/140px 140px,
+    linear-gradient(90deg,var(--grid-major) 1px,transparent 1px) 0 0/140px 140px,
+    var(--bg);
+}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block}
+/* corner registration marks + iso label */
+.reg{position:absolute;color:var(--mute);font-family:var(--mono);font-size:10px;pointer-events:none;user-select:none}
+.reg.tl{top:8px;left:10px}.reg.tr{top:8px;right:10px}
+.reg.bl{bottom:8px;left:10px}.reg.br{bottom:8px;right:10px}
+.iso{position:absolute;top:8px;left:50%;transform:translateX(-50%);
+  font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--mute);pointer-events:none}
+.prompt{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);
+  font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--mute);text-align:center;pointer-events:none}
+.verdict{position:absolute;left:50%;top:14px;transform:translateX(-50%);
+  font-family:var(--display);font-weight:600;letter-spacing:.1em;font-size:13px;
+  padding:5px 14px;border:1px solid var(--line);background:var(--bg-2);
+  opacity:0;transition:opacity var(--t,200ms) var(--ez);pointer-events:none}
+.verdict.show{opacity:1}
+.verdict.ok{color:var(--acc-ink);background:var(--ok);border-color:var(--ok)}
+.verdict.ng{color:#fff;background:var(--ng);border-color:var(--ng)}
+/* ---------- aside ---------- */
+.aside{grid-area:aside;border-left:1px solid var(--line);background:var(--panel-bg);
+  overflow-y:auto;padding:14px 14px 24px}
+.aside::-webkit-scrollbar{width:3px}.aside::-webkit-scrollbar-thumb{background:var(--mute-2)}
+.sec{margin-bottom:18px}
+.lt{display:inline-block;font-family:var(--mono);font-size:9px;color:var(--acc-ink);
+  background:var(--acc);padding:1px 5px;margin-right:7px;letter-spacing:.1em}
+.sh{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.16em;
+  text-transform:uppercase;margin-bottom:10px;border-bottom:1px solid var(--line);padding-bottom:5px}
+.row{margin-bottom:13px}
+.row label{display:flex;justify-content:space-between;font-family:var(--mono);
+  font-size:11px;color:var(--ink-2);margin-bottom:5px;letter-spacing:.06em}
+.row .val{color:var(--acc)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:2px;
+  background:var(--mute-2);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;
+  background:var(--acc);border:1px solid var(--acc-ink);cursor:pointer;border-radius:0}
+input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acc);
+  border:1px solid var(--acc-ink);cursor:pointer;border-radius:0}
+.hint{font-family:var(--jp);font-size:10.5px;color:var(--mute);line-height:1.55;margin-top:4px}
+.btn{width:100%;font-family:var(--display);font-weight:600;letter-spacing:.14em;font-size:13px;
+  background:var(--acc);color:var(--acc-ink);border:none;padding:12px;cursor:pointer;
+  transition:transform var(--t-click,240ms) var(--ez)}
+.btn:hover{filter:brightness(1.08)}
+.btn:active{transform:scale(.98)}
+.btn.ghost{background:transparent;color:var(--ink-2);border:1px solid var(--line);font-size:11px;font-weight:400;padding:8px}
+.btn.ghost:hover{border-color:var(--acc);color:var(--acc)}
+/* number pad */
+.pad{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:8px}
+.pad button{font-family:var(--mono);font-size:13px;aspect-ratio:1;border:1px solid var(--line);
+  background:var(--bg-2);color:var(--ink-2);cursor:pointer;transition:all 120ms var(--ez)}
+.pad button:hover{border-color:var(--acc);color:var(--acc)}
+.pad button.sub{border-color:var(--mute)}
+.pad button:disabled{opacity:.3;cursor:not-allowed}
+.toggle{display:flex;align-items:center;gap:8px;cursor:pointer;font-family:var(--mono);font-size:11px;color:var(--ink-2)}
+.toggle .box{width:16px;height:16px;border:1px solid var(--line);display:grid;place-items:center;font-size:11px;color:var(--acc)}
+.toggle.on .box{background:var(--acc);color:var(--acc-ink)}
+/* stats bars */
+.stats{font-family:var(--mono);font-size:10px;color:var(--mute)}
+.bar{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.bar .n{width:26px;color:var(--ink-2);text-align:right}
+.bar .track{flex:1;height:9px;background:var(--bg-2);position:relative;border:1px solid var(--mute-2)}
+.bar .fill{position:absolute;inset:0;width:0;background:var(--acc);transition:width 300ms var(--ez)}
+.bar.zone .n{color:var(--acc)}
+.bar .pct{width:34px;color:var(--ink-2)}
+/* copy/paste */
+.params{font-family:var(--mono);font-size:10px;color:var(--mute);background:var(--bg-2);
+  border:1px solid var(--line);padding:8px;word-break:break-all;line-height:1.5;cursor:pointer}
+.params:hover{border-color:var(--acc)}
+.params .ok{color:var(--ok)}.params .ng{color:var(--ng)}
+/* ---------- bottombar ---------- */
+.bottombar{grid-area:bot;display:flex;align-items:center;gap:16px;padding:0 16px;
+  border-top:1px solid var(--line);font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.1em}
+.bottombar .sp{flex:1}
+.bottombar b{color:var(--ink-2);font-weight:400}
+.bottombar .k{cursor:pointer}.bottombar .k:hover{color:var(--acc)}
+/* shortcuts modal */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.78);display:none;place-items:center;z-index:20}
+.modal.show{display:grid}
+.modal .box{background:var(--panel-bg);border:1px solid var(--acc);padding:26px 30px;max-width:380px;font-family:var(--mono);font-size:12px}
+.modal h3{font-family:var(--display);letter-spacing:.14em;margin-bottom:14px;color:var(--acc)}
+.modal .kv{display:flex;justify-content:space-between;margin-bottom:7px;color:var(--ink-2)}
+.modal .kv span:first-child{color:var(--acc)}
+.modal .close{margin-top:16px;color:var(--mute)}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="brand"><span class="mark">GEN-EX</span><span class="layer-tag">L3_PERCEPTION</span></div>
+    <div class="ttl">FEW ⁄ MANY — Subitizing</div>
+    <a class="esc" href="index.html">[ESC] INDEX</a>
+  </div>
+
+  <!-- STAGE -->
+  <div class="stage" id="stage">
+    <canvas id="cv"></canvas>
+    <div class="iso">SUBITIZING RANGE ⁄ n ≤ 4</div>
+    <div class="reg tl">+ &nbsp;00</div>
+    <div class="reg tr">FLASH ⁄ GLANCE</div>
+    <div class="reg bl">PERCEPTION ⁄ COUNT</div>
+    <div class="reg br">PSYCHOPHYS &nbsp;+</div>
+    <div class="verdict" id="verdict"></div>
+    <div class="prompt" id="prompt">[ FLASH ] を押す → 一瞬だけ見える → 個数を当てる</div>
+  </div>
+
+  <!-- ASIDE -->
+  <div class="aside">
+    <div class="sec">
+      <div class="sh"><span class="lt">A</span>CONTROL</div>
+      <div class="row">
+        <label>DOT COUNT <span class="val" id="vCount">5</span></label>
+        <input type="range" id="count" min="1" max="12" value="5">
+        <div class="hint">画面に出るドットの数。<b style="color:var(--acc)">4以下</b>は数えずに即わかる（サビタイジング）。超えると…？</div>
+      </div>
+      <div class="row">
+        <label>FLASH TIME <span class="val" id="vFlash">250 ms</span></label>
+        <input type="range" id="flash" min="80" max="2100" step="10" value="250">
+        <div class="hint">提示時間。短いほど「数える」時間がなく、知覚そのものが試される。最大で <b>HOLD（消えない）</b>。</div>
+      </div>
+      <button class="btn" id="go">▶ FLASH</button>
+    </div>
+
+    <div class="sec">
+      <div class="sh"><span class="lt">B</span>YOUR GUESS</div>
+      <div class="hint" style="margin-top:0">見えた数だと思うものをクリック：</div>
+      <div class="pad" id="pad"></div>
+    </div>
+
+    <div class="sec">
+      <div class="sh"><span class="lt">C</span>PROOF ⁄ REVEAL</div>
+      <div class="toggle" id="tProof"><span class="box"></span>正解時に①②③…の数え順を重ねる</div>
+      <div class="hint">サビタイジングが「飛ばしている」逐次カウントの経路を可視化。</div>
+    </div>
+
+    <div class="sec">
+      <div class="sh"><span class="lt">D</span>ACCURACY BY COUNT</div>
+      <div class="stats" id="stats"></div>
+      <button class="btn ghost" id="reset" style="margin-top:8px">RESET STATS</button>
+      <div class="hint" id="cliff">試行を重ねると、4と5の間に「崖」が現れる。</div>
+    </div>
+
+    <div class="sec">
+      <div class="sh"><span class="lt">E</span>COPY ⁄ PASTE PARAMS</div>
+      <div class="params" id="params" title="クリックでコピー">{ }</div>
+    </div>
+  </div>
+
+  <!-- BOTTOMBAR -->
+  <div class="bottombar">
+    <span>MODE: <b id="bMode">IDLE</b></span>
+    <span>TRIAL: <b id="bTrial">0</b></span>
+    <span>LAST: <b id="bLast">—</b></span>
+    <span class="sp"></span>
+    <span class="k" id="kShort">[?] SHORTCUTS</span>
+  </div>
+</div>
+
+<!-- SHORTCUTS -->
+<div class="modal" id="modal">
+  <div class="box">
+    <h3>SHORTCUTS</h3>
+    <div class="kv"><span>SPACE / F</span><span>FLASH</span></div>
+    <div class="kv"><span>1 – 9, 0(=10)</span><span>個数を回答</span></div>
+    <div class="kv"><span>↑ ↓</span><span>DOT COUNT 増減</span></div>
+    <div class="kv"><span>P</span><span>PROOF 切替</span></div>
+    <div class="kv"><span>R</span><span>RESET STATS</span></div>
+    <div class="kv"><span>ESC</span><span>INDEX へ戻る</span></div>
+    <div class="close">［?］ または クリックで閉じる</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var cv=document.getElementById('cv'),ctx=cv.getContext('2d'),stage=document.getElementById('stage');
+  var DPR=Math.max(1,window.devicePixelRatio||1);
+  var state={count:5,flashMs:250,hold:false,proof:false,phase:'idle',dots:[],guess:null,correct:null,trial:0};
+  var stats={}; // count -> {n, hit}
+  var flashTimer=null;
+
+  function resize(){
+    var r=stage.getBoundingClientRect();
+    cv.width=Math.round(r.width*DPR);cv.height=Math.round(r.height*DPR);
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    draw();
+  }
+  window.addEventListener('resize',resize);
+
+  function W(){return cv.width/DPR;}
+  function H(){return cv.height/DPR;}
+
+  // generate non-overlapping dot positions
+  function genDots(n){
+    var dots=[],pad=70,minD=46,tries;
+    var w=W(),h=H();
+    for(var i=0;i<n;i++){
+      tries=0;
+      while(tries++<400){
+        var x=pad+Math.random()*(w-2*pad),y=pad+Math.random()*(h-2*pad),ok=true;
+        for(var j=0;j<dots.length;j++){
+          var dx=dots[j].x-x,dy=dots[j].y-y;
+          if(dx*dx+dy*dy<minD*minD){ok=false;break;}
+        }
+        if(ok){dots.push({x:x,y:y});break;}
+      }
+      if(tries>=400)dots.push({x:pad+Math.random()*(w-2*pad),y:pad+Math.random()*(h-2*pad)});
+    }
+    return dots;
+  }
+
+  function clear(){ctx.clearRect(0,0,W(),H());}
+
+  function drawDot(d,glow,color){
+    color=color||getCss('--acc');
+    if(glow){
+      ctx.save();
+      ctx.shadowColor=color;ctx.shadowBlur=22;
+      ctx.fillStyle=color;
+      ctx.beginPath();ctx.arc(d.x,d.y,11,0,7);ctx.fill();
+      ctx.restore();
+    }else{
+      ctx.fillStyle=color;
+      ctx.beginPath();ctx.arc(d.x,d.y,11,0,7);ctx.fill();
+    }
+  }
+
+  function getCss(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+
+  function draw(){
+    clear();
+    if(state.phase==='flash'){
+      for(var i=0;i<state.dots.length;i++)drawDot(state.dots[i],true,getCss('--ink'));
+    }else if(state.phase==='reveal'){
+      var col=state.correct?getCss('--ok'):getCss('--ng');
+      for(var k=0;k<state.dots.length;k++){
+        drawDot(state.dots[k],true,col);
+        if(state.proof&&state.correct){
+          ctx.fillStyle=getCss('--acc-ink');
+          ctx.font='600 12px '+getCss('--mono');
+          ctx.textAlign='center';ctx.textBaseline='middle';
+          ctx.fillText(String(k+1),state.dots[k].x,state.dots[k].y);
+        }
+      }
+      // proof: connect serial-count path
+      if(state.proof&&state.correct&&state.dots.length>1){
+        ctx.strokeStyle=getCss('--acc');ctx.lineWidth=1;ctx.setLineDash([4,4]);
+        ctx.beginPath();ctx.moveTo(state.dots[0].x,state.dots[0].y);
+        for(var m=1;m<state.dots.length;m++)ctx.lineTo(state.dots[m].x,state.dots[m].y);
+        ctx.stroke();ctx.setLineDash([]);
+      }
+    }
+    // 'hidden' and 'idle' => empty stage
+  }
+
+  function flash(){
+    if(flashTimer){clearTimeout(flashTimer);flashTimer=null;}
+    state.dots=genDots(state.count);
+    state.guess=null;state.correct=null;
+    state.phase='flash';
+    setVerdict('');
+    setMode(state.hold?'HOLD':'FLASH');
+    setPrompt(state.hold?'数えてよい（HOLDモード）→ 個数を回答':'…一瞬！ 見えた数を回答');
+    draw();
+    if(!state.hold){
+      flashTimer=setTimeout(function(){
+        state.phase='hidden';setMode('GUESS?');
+        setPrompt('何個だった？ 右の数字をクリック');
+        draw();
+      },state.flashMs);
+    }else{
+      state.phase='hidden'; // dots stay because hold => but we keep drawing flash?
+    }
+    // HOLD: keep dots visible until guess
+    if(state.hold){state.phase='flash';draw();setMode('HOLD');}
+    refreshPad(true);
+  }
+
+  function submitGuess(g){
+    if(state.phase==='idle'||state.guess!==null)return;
+    if(state.dots.length===0)return;
+    state.guess=g;
+    state.correct=(g===state.count);
+    state.phase='reveal';
+    state.trial++;
+    // record
+    var c=state.count;
+    if(!stats[c])stats[c]={n:0,hit:0};
+    stats[c].n++; if(state.correct)stats[c].hit++;
+    setVerdict(state.correct?('正解 ⁄ '+state.count):('実際は '+state.count+' ⁄ あなた '+g));
+    setMode('REVEAL');
+    setPrompt(state.correct?'✓ 数えずに掴めた？ それがサビタイジング':'✗ '+(state.count>4?'5以上は「見積もり」モードに入る':'もう一度'));
+    document.getElementById('bLast').textContent=(state.correct?'✓ ':'✗ ')+g+'/'+state.count;
+    document.getElementById('bTrial').textContent=state.trial;
+    draw();renderStats();renderParams();refreshPad(false);
+  }
+
+  // ---------- UI helpers ----------
+  function setVerdict(t){var v=document.getElementById('verdict');
+    v.textContent=t;v.className='verdict'+(t?' show':'')+(state.correct===true?' ok':state.correct===false?' ng':'');}
+  function setMode(t){document.getElementById('bMode').textContent=t;}
+  function setPrompt(t){document.getElementById('prompt').textContent=t;}
+
+  function buildPad(){
+    var pad=document.getElementById('pad');pad.innerHTML='';
+    for(var i=1;i<=12;i++){(function(n){
+      var b=document.createElement('button');b.textContent=n;
+      if(n<=4)b.className='sub';
+      b.addEventListener('click',function(){submitGuess(n);});
+      pad.appendChild(b);
+    })(i);}
+  }
+  function refreshPad(active){
+    var btns=document.getElementById('pad').children;
+    for(var i=0;i<btns.length;i++)btns[i].disabled=!active;
+  }
+
+  function renderStats(){
+    var el=document.getElementById('stats');el.innerHTML='';
+    for(var c=1;c<=12;c++){
+      var s=stats[c],pct=s&&s.n?Math.round(100*s.hit/s.n):0,has=s&&s.n;
+      var bar=document.createElement('div');bar.className='bar'+(c<=4?' zone':'');
+      bar.innerHTML='<span class="n">'+c+'</span>'+
+        '<span class="track"><span class="fill" style="width:'+(has?pct:0)+'%;background:'+(c<=4?'var(--acc)':'var(--ink-2)')+'"></span></span>'+
+        '<span class="pct">'+(has?pct+'%':'—')+'</span>';
+      el.appendChild(bar);
+    }
+  }
+
+  function renderParams(){
+    var p={app:'percept-few-many',count:state.count,flashMs:state.hold?'HOLD':state.flashMs,
+      guess:state.guess,actual:state.count,result:state.correct?'ok':'ng',trial:state.trial};
+    var el=document.getElementById('params');
+    var cls=state.correct?'ok':'ng';
+    el.innerHTML='{ '+Object.keys(p).map(function(k){
+      var v=p[k];
+      if(k==='result')return k+':<span class="'+cls+'">"'+v+'"</span>';
+      return k+':'+(typeof v==='string'?'"'+v+'"':v);
+    }).join(', ')+' }';
+    el.onclick=function(){
+      var txt=JSON.stringify(p);
+      navigator.clipboard&&navigator.clipboard.writeText(txt);
+      var o=el.style.borderColor;el.style.borderColor='var(--acc)';
+      setTimeout(function(){el.style.borderColor=o;},1200);
+    };
+  }
+
+  // ---------- bindings ----------
+  var cEl=document.getElementById('count'),fEl=document.getElementById('flash');
+  cEl.addEventListener('input',function(){state.count=+cEl.value;document.getElementById('vCount').textContent=state.count;});
+  fEl.addEventListener('input',function(){
+    var v=+fEl.value;
+    if(v>=2100){state.hold=true;document.getElementById('vFlash').textContent='HOLD';}
+    else{state.hold=false;state.flashMs=v;document.getElementById('vFlash').textContent=v+' ms';}
+  });
+  document.getElementById('go').addEventListener('click',flash);
+  document.getElementById('reset').addEventListener('click',function(){stats={};state.trial=0;
+    document.getElementById('bTrial').textContent='0';document.getElementById('bLast').textContent='—';renderStats();});
+  var tp=document.getElementById('tProof');
+  tp.addEventListener('click',function(){state.proof=!state.proof;tp.classList.toggle('on',state.proof);
+    tp.querySelector('.box').textContent=state.proof?'✓':'';draw();});
+
+  // shortcuts
+  var modal=document.getElementById('modal');
+  function toggleModal(){modal.classList.toggle('show');}
+  document.getElementById('kShort').addEventListener('click',toggleModal);
+  modal.addEventListener('click',function(){modal.classList.remove('show');});
+  document.addEventListener('keydown',function(e){
+    var k=e.key;
+    if(k==='Escape'){if(modal.classList.contains('show')){modal.classList.remove('show');}else{location.href='index.html';}return;}
+    if(k==='?'){toggleModal();return;}
+    if(k===' '||k==='f'||k==='F'){e.preventDefault();flash();return;}
+    if(k==='p'||k==='P'){tp.click();return;}
+    if(k==='r'||k==='R'){document.getElementById('reset').click();return;}
+    if(k==='ArrowUp'){cEl.value=Math.min(12,state.count+1);cEl.dispatchEvent(new Event('input'));return;}
+    if(k==='ArrowDown'){cEl.value=Math.max(1,state.count-1);cEl.dispatchEvent(new Event('input'));return;}
+    if(/^[0-9]$/.test(k)){var n=(k==='0')?10:+k;submitGuess(n);}
+  });
+
+  // init
+  buildPad();renderStats();renderParams();refreshPad(false);
+  resize();
+  setMode('IDLE');
+})();
+</script>
+</body>
+</html>

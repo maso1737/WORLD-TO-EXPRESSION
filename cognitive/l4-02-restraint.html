@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>L4·02 Restraint / 抑制 — COGNITIVE STAGE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:"Bank Gothic";src:url("fonts/bank-gothic-light-bt.ttf") format("truetype");font-weight:300 600;font-display:swap}
+@font-face{font-family:"Square 721";src:url("fonts/Square_721_BT.ttf") format("truetype");font-weight:400 700;font-display:swap}
+:root{
+  --bg:#f2f2ef; --bg-2:#e8e8e4; --ink:#0a0a0a; --ink-2:#1a1a1a;
+  --mute:#999; --mute-2:#c8c8c4; --line:#0a0a0a; --acc:#c8ff1a; --ng:#e64141;
+  --grid:rgba(10,10,10,0.028); --grid-major:rgba(10,10,10,0.05);
+  --mono:"JetBrains Mono","IBM Plex Mono",ui-monospace,monospace;
+  --disp:"Bank Gothic","Square 721",system-ui,sans-serif;
+  --jp:"IBM Plex Sans JP","Noto Sans JP",system-ui,sans-serif;
+  --ez:cubic-bezier(0.2,0,0,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--mono);overflow:hidden;-webkit-font-smoothing:antialiased;font-feature-settings:"ss01","ss02","tnum"}
+#app{height:100vh;display:grid;grid-template-rows:46px 1fr 30px;grid-template-columns:1fr 300px}
+
+/* ===== TOPBAR ===== */
+#topbar{grid-column:1/3;display:grid;grid-template-columns:auto 1fr auto;align-items:stretch;border-bottom:1px solid var(--line);background:var(--bg);z-index:10}
+.tb-brand{display:flex;align-items:center;gap:12px;padding:0 16px;border-right:1px solid var(--line)}
+.tb-mark{width:14px;height:14px;background:var(--acc);flex:none}
+.tb-id{font-family:var(--disp);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;white-space:nowrap}
+.tb-tag{font-family:var(--mono);font-size:9px;letter-spacing:0.18em;color:var(--mute);text-transform:uppercase;padding:3px 8px;border:1px solid var(--mute-2);white-space:nowrap}
+.tb-tag b{color:var(--ink);font-weight:600}
+.tb-mid{display:flex;align-items:center;gap:12px;padding:0 18px;overflow:hidden}
+.tb-title{font-family:var(--disp);font-size:13px;letter-spacing:0.22em;text-transform:uppercase}
+.tb-title em{font-style:normal;font-family:var(--jp);font-size:11px;letter-spacing:0.1em;color:var(--mute);margin-left:8px}
+.tb-esc{display:flex;align-items:center;padding:0 16px;border-left:1px solid var(--line);font-family:var(--mono);font-size:9px;letter-spacing:0.16em;color:var(--ink);text-decoration:none;text-transform:uppercase;gap:6px}
+.tb-esc:hover{background:var(--ink);color:var(--bg)}
+.tb-esc .sq{width:6px;height:6px;background:var(--ink)}
+.tb-esc:hover .sq{background:var(--bg)}
+
+/* ===== MAIN / STAGE ===== */
+#main{position:relative;overflow:hidden;background:
+    linear-gradient(var(--grid-major) 1px,transparent 1px) 0 0/200px 200px,
+    linear-gradient(90deg,var(--grid-major) 1px,transparent 1px) 0 0/200px 200px,
+    linear-gradient(var(--grid) 1px,transparent 1px) 0 0/40px 40px,
+    linear-gradient(90deg,var(--grid) 1px,transparent 1px) 0 0/40px 40px,
+    var(--bg)}
+#stage-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:2}
+.gh-rail{position:absolute;top:0;bottom:0;right:0;width:4px;background:var(--acc);z-index:1}
+.gh-num{position:absolute;right:3%;bottom:-2%;font-family:var(--disp);font-weight:300;font-size:34vh;line-height:0.85;color:var(--mute-2);opacity:0.5;pointer-events:none;letter-spacing:-0.05em;z-index:0;user-select:none}
+.gh-ticks{position:absolute;top:14px;left:0;right:0;height:10px;z-index:1;opacity:0.5;background-image:linear-gradient(90deg,var(--mute-2) 1px,transparent 1px);background-size:40px 100%}
+.gh-ticks-maj{position:absolute;top:14px;left:0;right:0;height:16px;z-index:1;opacity:0.16;background-image:linear-gradient(90deg,var(--ink) 1px,transparent 1px);background-size:200px 100%}
+.gh-vticks{position:absolute;right:20px;top:90px;bottom:90px;width:10px;z-index:1;opacity:0.5;background-image:linear-gradient(0deg,var(--mute-2) 1px,transparent 1px);background-size:100% 40px}
+.gh-word{position:absolute;top:14%;right:22px;writing-mode:vertical-rl;font-family:var(--mono);font-size:9px;letter-spacing:0.5em;color:var(--mute);opacity:0.6;text-transform:uppercase;z-index:1}
+.reg{position:absolute;font-family:var(--mono);font-size:13px;color:var(--mute);line-height:1;z-index:1;pointer-events:none}
+.reg.tl{top:14px;left:14px}.reg.tr{top:14px;right:24px}.reg.bl{bottom:14px;left:14px}.reg.br{bottom:14px;right:24px}
+.data{position:absolute;font-family:var(--mono);font-size:8px;letter-spacing:0.1em;color:rgba(10,10,10,0.2);text-transform:uppercase;z-index:1;pointer-events:none;white-space:nowrap}
+.data.d1{top:40px;left:16px}.data.d2{top:54px;left:16px;color:rgba(10,10,10,0.14)}
+.data.d3{bottom:38px;left:16px;writing-mode:vertical-rl;letter-spacing:0.36em;opacity:0.6}
+.po{position:absolute;top:38px;right:46px;text-align:right;z-index:3;pointer-events:none}
+.po-num{font-family:var(--disp);font-weight:300;font-size:46px;line-height:0.85;letter-spacing:-0.02em}
+.po-en{font-family:var(--mono);font-size:10px;letter-spacing:0.26em;color:var(--ink);text-transform:uppercase;margin-top:6px}
+.po-jp{font-family:var(--jp);font-size:10px;letter-spacing:0.18em;color:var(--mute);margin-top:2px}
+.po-rule{height:1px;background:var(--ink);margin-top:8px;margin-left:auto;width:54px}
+#verdict{position:absolute;left:50%;bottom:30px;transform:translateX(-50%);text-align:center;z-index:3;pointer-events:none}
+#verdict .v-main{font-family:var(--disp);font-size:24px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink);display:inline-block;padding:2px 4px;transition:background 120ms var(--ez),color 120ms var(--ez)}
+#verdict .v-sub{font-family:var(--jp);font-size:11px;letter-spacing:0.12em;color:var(--mute);margin-top:5px}
+#verdict.tuned .v-main{background:var(--acc);color:var(--ink);padding:3px 12px}
+#verdict.fail .v-main{color:var(--ng)}
+
+/* ===== SIDE PANEL ===== */
+#side{background:#fff;border-left:1px solid var(--line);overflow-y:auto}
+#side::-webkit-scrollbar{width:3px}#side::-webkit-scrollbar-thumb{background:var(--ink)}
+.sp{padding:15px 16px;border-bottom:1px solid var(--mute-2)}
+.spl{font-family:var(--mono);font-size:9px;letter-spacing:0.32em;color:var(--ink);text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.spl::before{content:"";width:7px;height:7px;background:var(--acc);flex:none}
+.spl em{font-style:normal;font-family:var(--jp);color:var(--mute);letter-spacing:0.1em;margin-left:auto;font-size:9px}
+.tr{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.tr:last-child{margin-bottom:0}
+.tr-lbl{font-size:10px;letter-spacing:0.1em;color:var(--ink);white-space:nowrap;text-transform:uppercase}
+.tr-lbl span{display:block;font-family:var(--jp);font-size:9px;color:var(--mute);letter-spacing:0.06em;margin-top:2px;text-transform:none}
+.tr-val{font-family:var(--disp);font-size:20px;color:var(--ink);min-width:38px;text-align:right;letter-spacing:0.02em;font-feature-settings:"tnum"}
+.tr-val.lime{background:var(--acc);padding:0 5px}
+.tr-val.red{color:var(--ng)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:120px;height:2px;background:var(--mute-2);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;background:#fff;border:1.5px solid var(--ink);cursor:pointer}
+input[type=range]:hover::-webkit-slider-thumb{background:var(--acc)}
+input[type=range]:active::-webkit-slider-thumb{background:var(--acc)}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;background:#fff;border:1.5px solid var(--ink);cursor:pointer}
+input[type=range]:hover::-moz-range-thumb{background:var(--acc)}
+.tg{position:relative;width:36px;height:18px;background:var(--bg);cursor:pointer;border:1px solid var(--ink);flex:none;transition:background .16s var(--ez)}
+.tg::after{content:"";position:absolute;top:1px;left:1px;width:14px;height:14px;background:var(--mute);transition:left .16s var(--ez),background .16s var(--ez)}
+.tg.on{background:var(--acc)}
+.tg.on::after{left:19px;background:var(--ink)}
+
+/* sweet-zone meter — mountain window (両端=失敗 / 中央=効く) */
+.sz{margin-top:4px}
+.sz-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.sz-lbl{font-size:9px;letter-spacing:0.1em;color:var(--mute);text-transform:uppercase}
+.sz-val{font-family:var(--disp);font-size:16px;color:var(--mute)}
+.sz-val.lime{background:var(--acc);color:var(--ink);padding:0 4px}
+.sz-track{height:14px;background:var(--mute-2);position:relative;overflow:hidden}
+.sz-fail{position:absolute;top:0;bottom:0;width:100%;left:0;background:repeating-linear-gradient(45deg,rgba(230,65,65,0.16) 0 4px,transparent 4px 8px)}
+.sz-band{position:absolute;top:0;bottom:0;background:rgba(200,255,26,0.34);border-left:1px solid var(--ink);border-right:1px solid var(--ink)}
+.sz-peak{position:absolute;top:-1px;bottom:-1px;width:1px;background:rgba(10,10,10,0.35);left:50%}
+.sz-mark{position:absolute;top:-4px;width:3px;height:22px;background:var(--ink);transform:translateX(-50%);transition:left .1s var(--ez),background .1s}
+.sz-mark.lime{background:var(--acc);box-shadow:0 0 0 1px var(--ink)}
+.sz-mark.red{background:var(--ng)}
+.sz-ends{display:flex;justify-content:space-between;margin-top:7px;font-family:var(--jp);font-size:9px;letter-spacing:0.04em;color:var(--mute)}
+.sz-ends b{font-family:var(--mono);color:var(--ink);letter-spacing:0.06em}
+.sz-ends .mid{color:var(--ink);font-family:var(--mono);letter-spacing:0.08em}
+
+/* count readout */
+.grp{display:flex;align-items:baseline;justify-content:space-between;margin-top:2px}
+.grp-lbl{font-size:10px;letter-spacing:0.1em;color:var(--ink);text-transform:uppercase}
+.grp-lbl span{display:block;font-family:var(--jp);font-size:9px;color:var(--mute);letter-spacing:0.06em;margin-top:2px;text-transform:none}
+.grp-val{font-family:var(--disp);font-size:30px;color:var(--ink);letter-spacing:0.02em;line-height:1}
+.grp-val.lime{background:var(--acc);padding:0 6px}
+.grp-val.red{color:var(--ng)}
+.grp-val em{font-style:normal;font-size:11px;color:var(--mute);margin-left:6px}
+
+/* read block */
+.db{border-left:2px solid var(--ink);padding:1px 0 1px 13px;position:relative}
+.db::before{content:"✦";position:absolute;left:-8px;top:-1px;color:var(--ink);font-size:10px;background:#fff;line-height:1}
+.de{font-family:var(--disp);font-size:14px;line-height:1.32;letter-spacing:0.03em;color:var(--ink);text-transform:uppercase}
+.dj{font-family:var(--jp);font-size:11.5px;line-height:1.7;color:var(--ink-2);margin-top:9px}
+.dj b{background:var(--acc);color:var(--ink);font-weight:600;padding:0 3px}
+.dnote{font-family:var(--jp);font-size:10px;line-height:1.7;color:var(--mute);margin-top:11px}
+.dnote b{color:var(--ink);font-weight:600}
+.xref{display:flex;align-items:center;gap:8px;margin-top:11px;font-family:var(--mono);font-size:9px;letter-spacing:0.08em;color:var(--ink);text-transform:uppercase;text-decoration:none;border:1px solid var(--mute-2);padding:7px 9px;transition:all .14s var(--ez)}
+.xref:hover{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.xref b{font-weight:600}
+.xref .ar{margin-left:auto}
+
+/* params */
+.ed-row{display:flex;gap:8px}
+.ed-btn{flex:1;font-family:var(--mono);font-size:10px;letter-spacing:0.16em;padding:9px 0;background:var(--bg);border:1px solid var(--ink);color:var(--ink);cursor:pointer;text-transform:uppercase;transition:all .14s var(--ez)}
+.ed-btn:hover{background:var(--ink);color:var(--bg)}
+.ed-btn.ok{background:var(--acc);border-color:var(--ink);color:var(--ink)}
+.ed-btn.ng{background:var(--ng);border-color:var(--ng);color:#fff}
+.ed-hint{font-family:var(--jp);font-size:9px;color:var(--mute);letter-spacing:0.04em;margin-top:9px;line-height:1.6}
+
+/* ===== BOTTOMBAR ===== */
+#bottombar{grid-column:1/3;display:grid;grid-template-columns:auto auto auto 1fr auto;align-items:stretch;border-top:1px solid var(--line);background:var(--bg);z-index:10}
+.bb-cell{display:flex;align-items:center;gap:8px;padding:0 16px;border-right:1px solid var(--mute-2);font-family:var(--mono);font-size:9px;letter-spacing:0.14em;color:var(--mute);text-transform:uppercase}
+.bb-cell b{color:var(--ink);font-weight:600}
+.bb-cell b.lime{background:var(--acc);padding:0 5px}
+.bb-cell b.red{color:var(--ng)}
+.sc-chip{display:flex;align-items:center;gap:8px;padding:0 16px;border-left:1px solid var(--mute-2);background:transparent;border-top:0;border-right:0;border-bottom:0;font-family:var(--mono);font-size:9px;letter-spacing:0.14em;color:var(--ink);cursor:pointer;text-transform:uppercase}
+.sc-chip:hover{background:var(--ink);color:var(--bg)}
+
+/* ===== SHORTCUT MODAL ===== */
+#sc-modal{display:none;position:fixed;inset:0;z-index:9000;background:rgba(10,10,10,0.55);align-items:center;justify-content:center}
+#sc-modal.open{display:flex}
+#sc-box{background:#fff;border:1px solid var(--ink);width:min(420px,92vw);max-height:80vh;overflow-y:auto;box-shadow:8px 8px 0 rgba(10,10,10,0.12)}
+.sc-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--ink);background:var(--ink);color:var(--bg);font-family:var(--disp);font-size:12px;letter-spacing:0.2em;text-transform:uppercase}
+.sc-head span{cursor:pointer;font-family:var(--mono);color:var(--bg)}
+.sc-list{padding:8px 18px 16px}
+.sc-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--mute-2)}
+.sc-row:last-child{border-bottom:none}
+.sc-desc{font-family:var(--mono);font-size:10px;letter-spacing:0.06em;color:var(--ink);text-transform:uppercase}
+.sc-desc span{display:block;font-family:var(--jp);font-size:9px;color:var(--mute);letter-spacing:0.04em;text-transform:none;margin-top:2px}
+.sc-key{font-family:var(--mono);font-size:10px;min-width:26px;padding:4px 8px;text-align:center;background:var(--bg);border:1px solid var(--ink);color:var(--ink);letter-spacing:0.08em}
+
+@media (max-width:760px){
+  #app{grid-template-columns:1fr;grid-template-rows:46px 1fr auto 30px}
+  #side{grid-row:3;max-height:44vh;border-left:0;border-top:1px solid var(--line)}
+  .po-num{font-size:34px}.gh-num{font-size:24vh}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header id="topbar">
+    <div class="tb-brand">
+      <span class="tb-mark"></span>
+      <span class="tb-id">Cognitive&nbsp;Stage</span>
+      <span class="tb-tag">L4 · <b>EDIT</b></span>
+    </div>
+    <div class="tb-mid">
+      <span class="tb-title">Restraint<em>抑制</em></span>
+    </div>
+    <a class="tb-esc" href="index.html"><span class="sq"></span>ESC · INDEX</a>
+  </header>
+
+  <main id="main">
+    <div class="gh-num">02</div>
+    <div class="gh-ticks"></div><div class="gh-ticks-maj"></div>
+    <div class="gh-vticks"></div>
+    <div class="gh-word">EDIT ⁄ L4 ⁄ 02</div>
+    <div class="gh-rail"></div>
+    <span class="reg tl">+</span><span class="reg tr">+</span><span class="reg bl">+</span><span class="reg br">+</span>
+    <span class="data d1">ID · CS-L4-02 ⁄ RESTRAINT</span>
+    <span class="data d2">SET · EDIT ⁄ 04</span>
+    <span class="data d3">ENGINE · EDIT ⁄ SUBTRACT</span>
+
+    <canvas id="stage-canvas"></canvas>
+
+    <div class="po">
+      <div class="po-num">02</div>
+      <div class="po-en">Restraint</div>
+      <div class="po-jp">抑制</div>
+      <div class="po-rule"></div>
+    </div>
+    <div id="verdict"><div class="v-main">—</div><div class="v-sub">—</div></div>
+  </main>
+
+  <aside id="side">
+    <section class="sp">
+      <div class="spl">Control <em>操作</em></div>
+      <div class="tr">
+        <div class="tr-lbl">Decoration<span>強調・装飾の総量</span></div>
+        <input type="range" id="s-deco" min="0" max="100" value="40">
+        <div class="tr-val" id="v-deco">40</div>
+      </div>
+      <div class="sz">
+        <div class="sz-head">
+          <span class="sz-lbl" id="sz-lbl">EFFICACY · 効き</span>
+          <span class="sz-val" id="sz-eff">0%</span>
+        </div>
+        <div class="sz-track">
+          <span class="sz-fail"></span>
+          <span class="sz-band" id="sz-band"></span>
+          <span class="sz-peak" id="sz-peak"></span>
+          <i class="sz-mark" id="sz-mark"></i>
+        </div>
+        <div class="sz-ends"><span>← <b>MUTE</b> 無</span><span class="mid">TUNED 効</span><span>盛 <b>NOISY</b> →</span></div>
+      </div>
+    </section>
+
+    <section class="sp">
+      <div class="spl">Emphasis <em>強調</em></div>
+      <div class="grp">
+        <div class="grp-lbl">Emphasized<span>強調が当たる要素の数</span></div>
+        <div class="grp-val" id="v-emph">1<em id="v-total">/8</em></div>
+      </div>
+      <div class="tr" style="margin-top:16px">
+        <div class="tr-lbl">Show Focus<span>視線が最初に行く先を重ねる</span></div>
+        <div class="tg on" id="tg-focus"></div>
+      </div>
+    </section>
+
+    <section class="sp">
+      <div class="spl">Read <em>原理</em></div>
+      <div class="db">
+        <div class="de">Emphasis is subtraction. Shout everywhere and nothing is heard.</div>
+        <div class="dj">強調は「足す」より<b>「減らす」</b>で効く。1つだけ強調が当たれば主役は<b>切り抜ける</b>。だが装飾を全要素にばらまくと、全員が叫んで主役は<b>埋没</b>（盛りすぎ）。逆に強調を全部削れば、全要素フラットで<b>主役が無い</b>（伝達不能）。</div>
+      </div>
+      <div class="dnote">下層 L2 が「主役のコントラストを<b>足す</b>」なら、抑制は<b>周りを削って</b>同じ焦点を作る作為版。両端＝失敗の<b>二重閾値</b>。proof は「視線の最初の落下点」を示す——強調が散ると<b>リングも散る</b>＝注目の希薄化。</div>
+      <a class="xref" href="l2-03-contrast.html"><span>↓</span>L2·03 <b>コントラスト</b>／差を"足す"の作為版（こちらは"削る"）<span class="ar">→</span></a>
+    </section>
+
+    <section class="sp">
+      <div class="spl">Params <em>受渡</em></div>
+      <div class="ed-row">
+        <button class="ed-btn" id="btn-copy">⧉ Copy</button>
+        <button class="ed-btn" id="btn-paste">⮃ Paste</button>
+      </div>
+      <div class="ed-hint">パラメータをJSONでコピー／貼付。次テーマへ手触りを持ち運ぶ共通規約。</div>
+    </section>
+  </aside>
+
+  <footer id="bottombar">
+    <div class="bb-cell">DECORATION <b id="bb-deco">40</b></div>
+    <div class="bb-cell">EMPHASIZED <b id="bb-emph">1</b></div>
+    <div class="bb-cell">EFFICACY <b id="bb-eff">100%</b></div>
+    <div class="bb-cell" style="flex:1">ZONE <b class="lime" id="bb-zone">—</b></div>
+    <button class="sc-chip" id="sc-open">⌨ SHORTCUTS ?</button>
+  </footer>
+
+</div>
+
+<div id="sc-modal">
+  <div id="sc-box">
+    <div class="sc-head">⌨ Keyboard Shortcuts <span id="sc-close">✕</span></div>
+    <div class="sc-list">
+      <div class="sc-row"><div class="sc-desc">Decoration −/+<span>強調量（粗調整）</span></div><div class="sc-key">↑ ↓</div></div>
+      <div class="sc-row"><div class="sc-desc">Fine adjust<span>微調整</span></div><div class="sc-key">← →</div></div>
+      <div class="sc-row"><div class="sc-desc">Toggle focus<span>視線先の表示</span></div><div class="sc-key">P</div></div>
+      <div class="sc-row"><div class="sc-desc">Reset<span>初期化</span></div><div class="sc-key">R</div></div>
+      <div class="sc-row"><div class="sc-desc">This panel<span>この一覧</span></div><div class="sc-key">?</div></div>
+      <div class="sc-row"><div class="sc-desc">Index<span>戻る</span></div><div class="sc-key">ESC</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────
+const DEFAULTS = { decoration: 40, showFocus: true };
+const state = { ...DEFAULTS };
+
+// ── MODEL ──────────────────────────────────────────────────
+// M UI-like cards. ONE is the intended hero. `decoration` spreads emphasis:
+//   d < LO         → 0 emphasized → all flat, no hero (MUTE)
+//   LO ≤ d ≤ HI    → 1 emphasized → only the hero cuts through (TUNED)
+//   d > HI         → 2..M emphasized → hero diluted into noise (NOISY)
+// Cards light up by priority order; hero is priority 0 so it joins first
+// and stays lit — but loses its monopoly on attention as others join.
+const M = 8, HERO = 3;
+const ORDER = [3, 5, 1, 6, 0, 7, 2, 4];   // index → light-up sequence (hero first)
+const RANK = ORDER.reduce((a, idx, r) => (a[idx] = r, a), {});
+const LO = 22, HI = 58, SOFT = 8;
+
+const cv  = document.getElementById('stage-canvas');
+const ctx = cv.getContext('2d');
+let W = 0, H = 0, DPR = 1;
+const ACC = '#c8ff1a', INK = '#0a0a0a', NG = '#e64141';
+
+// ── HELPERS ────────────────────────────────────────────────
+function sweetZone(v, lo, hi, soft){
+  if (v < lo) return Math.max(0, 1 - (lo - v) / soft);
+  if (v > hi) return Math.max(0, 1 - (v - hi) / soft);
+  return 1;
+}
+function zoneOf(d){ return d < LO ? 'mute' : d > HI ? 'noisy' : 'tuned'; }
+function emphCount(d){
+  if (d < LO) return 0;
+  if (d <= HI) return 1;
+  return 1 + Math.round((d - HI) / (100 - HI) * (M - 1));   // 1 → M
+}
+function roundRect(x, y, w, h, r){
+  r = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+// ── RESIZE ─────────────────────────────────────────────────
+function resize(){
+  const r = document.getElementById('main').getBoundingClientRect();
+  if (r.width < 2 || r.height < 2) { requestAnimationFrame(resize); return; }   // blank-on-load guard
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = r.width; H = r.height;
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  draw();
+}
+
+// ── DRAW ───────────────────────────────────────────────────
+function draw(){
+  ctx.clearRect(0, 0, W, H);
+  const d = state.decoration, zone = zoneOf(d), eff = sweetZone(d, LO, HI, SOFT);
+  const count = emphCount(d);
+
+  const cardW = Math.min(W * 0.46, 430);
+  const rowH = Math.min(46, (H * 0.84 - (M - 1) * 14) / M);
+  const gap = 14;
+  const stackH = M * rowH + (M - 1) * gap;
+  const x = (W - cardW) / 2;
+  const y0 = (H - stackH) / 2;
+
+  // failure frame (red dashed) at the two failing ends
+  if (zone !== 'tuned'){
+    ctx.save();
+    ctx.setLineDash([7, 6]);
+    ctx.strokeStyle = 'rgba(230,65,65,0.55)';
+    ctx.lineWidth = 1.2;
+    const pad = 22;
+    ctx.strokeRect(x - pad, y0 - pad, cardW + pad * 2, stackH + pad * 2);
+    ctx.restore();
+  }
+
+  for (let i = 0; i < M; i++){
+    const y = y0 + i * (rowH + gap);
+    const emph = RANK[i] < count;
+    const isHero = i === HERO;
+    const soloHero = emph && isHero && count === 1;
+
+    if (emph){
+      // emphasized card — ink fill, lime accent bar, light text lines
+      ctx.save();
+      if (soloHero){ ctx.shadowColor = 'rgba(10,10,10,0.28)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 6; }
+      roundRect(x, y, cardW, rowH, 4);
+      ctx.fillStyle = INK; ctx.fill();
+      ctx.restore();
+      // lime accent bar
+      ctx.fillStyle = ACC;
+      ctx.fillRect(x, y + 6, 5, rowH - 12);
+      // title + subtitle text lines (light)
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(x + 18, y + rowH * 0.30 - 4, cardW * 0.52, 7);
+      ctx.fillStyle = 'rgba(255,255,255,0.45)';
+      ctx.fillRect(x + 18, y + rowH * 0.66 - 3, cardW * 0.34, 5);
+    } else {
+      // quiet card — pale fill, gray text lines
+      roundRect(x, y, cardW, rowH, 4);
+      ctx.fillStyle = '#ececea'; ctx.fill();
+      ctx.strokeStyle = 'rgba(10,10,10,0.10)'; ctx.lineWidth = 1; ctx.stroke();
+      ctx.fillStyle = 'rgba(10,10,10,0.22)';
+      ctx.fillRect(x + 18, y + rowH * 0.30 - 4, cardW * 0.46, 7);
+      ctx.fillStyle = 'rgba(10,10,10,0.12)';
+      ctx.fillRect(x + 18, y + rowH * 0.66 - 3, cardW * 0.30, 5);
+    }
+
+    // a small marker on the hero card so it's identifiable even when quiet
+    if (isHero){
+      ctx.save();
+      ctx.fillStyle = emph ? ACC : 'rgba(10,10,10,0.30)';
+      ctx.font = '600 9px "JetBrains Mono",monospace';
+      ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      ctx.fillText('HERO ▸', x - 12, y + rowH / 2);
+      ctx.restore();
+    }
+
+    // proof: focus ring where the eye first lands (= every emphasized card)
+    if (state.showFocus && emph){
+      ctx.save();
+      ctx.strokeStyle = ACC;
+      ctx.lineWidth = count === 1 ? 2.5 : 1.5;
+      ctx.setLineDash(count === 1 ? [] : [5, 4]);
+      roundRect(x - 5, y - 5, cardW + 10, rowH + 10, 7);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  updateReadouts(d, zone, eff, count);
+}
+
+// ── READOUTS ───────────────────────────────────────────────
+function updateReadouts(d, zone, eff, count){
+  const effPct = Math.round(eff * 100);
+  const tuned = zone === 'tuned';
+
+  document.getElementById('v-deco').textContent = d;
+  document.getElementById('bb-deco').textContent = d;
+  document.getElementById('v-deco').classList.toggle('lime', tuned);
+  document.getElementById('v-deco').classList.toggle('red', !tuned);
+
+  // sweet-zone meter
+  const band = document.getElementById('sz-band');
+  band.style.left = LO + '%'; band.style.width = (HI - LO) + '%';
+  const mark = document.getElementById('sz-mark');
+  mark.style.left = d + '%';
+  mark.classList.toggle('lime', tuned);
+  mark.classList.toggle('red', !tuned);
+  const effEl = document.getElementById('sz-eff');
+  effEl.textContent = effPct + '%';
+  effEl.classList.toggle('lime', tuned);
+  document.getElementById('bb-eff').textContent = effPct + '%';
+  document.getElementById('bb-eff').classList.toggle('lime', tuned);
+
+  // emphasized count
+  const ev = document.getElementById('v-emph');
+  ev.firstChild.nodeValue = count;
+  ev.classList.toggle('lime', tuned);
+  ev.classList.toggle('red', !tuned);
+  document.getElementById('bb-emph').textContent = count;
+  document.getElementById('bb-emph').classList.toggle('lime', tuned);
+  document.getElementById('bb-emph').classList.toggle('red', !tuned);
+
+  // verdict
+  const V  = document.getElementById('verdict');
+  const vm = V.querySelector('.v-main'), vs = V.querySelector('.v-sub');
+  const bz = document.getElementById('bb-zone');
+  V.classList.remove('tuned', 'fail');
+  const T = {
+    mute:  ['MUTE',  '削りすぎ — 全要素フラットで主役が無い（伝達不能）', 'MUTE'],
+    tuned: ['TUNED', '効く窓 — 1つだけ強調が通り主役が切り抜ける',       'TUNED'],
+    noisy: ['NOISY', '盛りすぎ — 全員が叫んで主役が埋没（ノイズ）',       'NOISY'],
+  };
+  const [main, sub, bzv] = T[zone];
+  vm.textContent = main; vs.textContent = sub; bz.textContent = bzv;
+  if (tuned){ V.classList.add('tuned'); bz.classList.add('lime'); bz.classList.remove('red'); }
+  else      { V.classList.add('fail');  bz.classList.remove('lime'); bz.classList.add('red'); }
+}
+
+// ── CONTROLS ───────────────────────────────────────────────
+const sDeco = document.getElementById('s-deco');
+sDeco.addEventListener('input', e => { state.decoration = +e.target.value; draw(); });
+const tgFocus = document.getElementById('tg-focus');
+tgFocus.addEventListener('click', () => { state.showFocus = !state.showFocus; tgFocus.classList.toggle('on', state.showFocus); draw(); });
+
+function syncUI(){
+  sDeco.value = state.decoration;
+  tgFocus.classList.toggle('on', state.showFocus);
+  draw();
+}
+function reset(){ Object.assign(state, DEFAULTS); syncUI(); }
+
+// ── COPY / PASTE ───────────────────────────────────────────
+function flash(btn, label, cls){
+  const orig = btn.textContent, oc = btn.className;
+  btn.textContent = label; btn.className = 'ed-btn ' + cls;
+  setTimeout(() => { btn.textContent = orig; btn.className = oc; }, 1200);
+}
+document.getElementById('btn-copy').addEventListener('click', async e => {
+  const payload = { app:'edit-02-restraint', decoration:state.decoration, showFocus:state.showFocus };
+  try { await navigator.clipboard.writeText(JSON.stringify(payload, null, 2)); flash(e.currentTarget,'✓ COPIED','ok'); }
+  catch { flash(e.currentTarget,'✗','ng'); }
+});
+document.getElementById('btn-paste').addEventListener('click', async e => {
+  try {
+    const o = JSON.parse(await navigator.clipboard.readText());
+    if (typeof o.decoration === 'number') state.decoration = Math.max(0, Math.min(100, o.decoration | 0));
+    if (typeof o.showFocus === 'boolean') state.showFocus = o.showFocus;
+    syncUI(); flash(e.currentTarget,'✓ APPLIED','ok');
+  } catch { flash(e.currentTarget,'✗','ng'); }
+});
+
+// ── SHORTCUT MODAL ─────────────────────────────────────────
+const modal = document.getElementById('sc-modal');
+const openSc  = () => modal.classList.add('open');
+const closeSc = () => modal.classList.remove('open');
+document.getElementById('sc-open').addEventListener('click', openSc);
+document.getElementById('sc-close').addEventListener('click', closeSc);
+modal.addEventListener('click', e => { if (e.target.id === 'sc-modal') closeSc(); });
+
+// ── KEYBOARD ───────────────────────────────────────────────
+window.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { if (modal.classList.contains('open')) { closeSc(); return; } window.location.href='index.html'; return; }
+  if (e.key === '?') { modal.classList.contains('open') ? closeSc() : openSc(); return; }
+  if (e.target && (e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')) return;
+  if (e.key==='ArrowUp')        { e.preventDefault(); state.decoration=Math.min(100,state.decoration+5); syncUI(); }
+  else if(e.key==='ArrowDown')  { e.preventDefault(); state.decoration=Math.max(0,state.decoration-5); syncUI(); }
+  else if(e.key==='ArrowRight') { e.preventDefault(); state.decoration=Math.min(100,state.decoration+1); syncUI(); }
+  else if(e.key==='ArrowLeft')  { e.preventDefault(); state.decoration=Math.max(0,state.decoration-1); syncUI(); }
+  else if(e.key==='p'||e.key==='P'){ state.showFocus=!state.showFocus; tgFocus.classList.toggle('on',state.showFocus); draw(); }
+  else if(e.key==='r'||e.key==='R'){ reset(); }
+});
+
+// ── INIT ───────────────────────────────────────────────────
+window.addEventListener('resize', resize);
+resize();
+</script>
+</body>
+</html>

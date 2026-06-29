@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @dsCard group="Components" viewport="420x560" name="Toggle" subtitle="On/off toggle — acc highlight on active" -->
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    @font-face{font-family:"Bank Gothic";src:url("fonts/bank-gothic-light-bt.ttf") format("truetype");font-weight:300 600;font-display:swap}
+    :root{
+      --bg:#f2f2ef;--ink:#0a0a0a;--mute:#999;--mute-2:#c8c8c4;--line:#0a0a0a;
+      --acc:{{ accentColor }};--acc-ink:{{ accentInk }};
+      --panel-bg:#ffffff;--ez:cubic-bezier(0.2,0,0,1);
+      --mono:"JetBrains Mono",ui-monospace,monospace;
+    }
+  </style>
+</helmet>
+
+<div style="background:var(--bg);min-height:100vh;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:48px;padding:48px">
+
+  <div style="font-family:var(--mono);font-size:9px;letter-spacing:0.22em;color:var(--mute);text-transform:uppercase;border-bottom:1px solid var(--mute-2);padding-bottom:8px;width:100%">
+    MindMaps_9bcdb2 · Toggle Component
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:20px;width:280px">
+
+    <sc-for list="{{ toggles }}" as="tg">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px">
+        <!-- Label -->
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <span style="font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink)">{{ tg.label }}</span>
+          <span style="font-family:var(--mono);font-size:8px;letter-spacing:0.06em;color:var(--mute)">{{ tg.sub }}</span>
+        </div>
+        <!-- Toggle pill: 36×18, acc when on -->
+        <div onClick="{{ tg.toggle }}"
+          style="position:relative;width:36px;height:18px;flex:none;cursor:pointer;border:1px solid var(--line);background:{{ tg.on ? 'var(--acc)' : 'var(--bg)' }};transition:background 160ms var(--ez)">
+          <div style="position:absolute;top:1px;left:{{ tg.on ? '19px' : '1px' }};width:14px;height:14px;background:{{ tg.on ? 'var(--ink)' : 'var(--mute)' }};transition:left 160ms var(--ez),background 160ms var(--ez)"></div>
+        </div>
+      </div>
+    </sc-for>
+
+  </div>
+
+  <!-- Acc hint -->
+  <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
+    <span style="font-family:var(--mono);font-size:8px;letter-spacing:0.18em;color:var(--mute);text-transform:uppercase">ACCENT PREVIEW</span>
+    <div style="display:flex;gap:8px">
+      <button onClick="{{ setAccent }}" data-acc="lime"   style="width:26px;height:26px;background:#c8ff1a;border:2px solid var(--line);cursor:pointer"></button>
+      <button onClick="{{ setAccent }}" data-acc="yellow" style="width:26px;height:26px;background:#ffd400;border:2px solid var(--line);cursor:pointer"></button>
+      <button onClick="{{ setAccent }}" data-acc="pink"   style="width:26px;height:26px;background:#ff4da6;border:2px solid var(--line);cursor:pointer"></button>
+      <button onClick="{{ setAccent }}" data-acc="orange" style="width:26px;height:26px;background:#ff7300;border:2px solid var(--line);cursor:pointer"></button>
+      <button onClick="{{ setAccent }}" data-acc="ink"    style="width:26px;height:26px;background:#0a0a0a;border:2px solid var(--line);cursor:pointer"></button>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;$preview&quot;: { &quot;width&quot;: 420, &quot;height&quot;: 560 }
+}">
+const ACCENTS = { lime:'#c8ff1a', yellow:'#ffd400', pink:'#ff4da6', orange:'#ff7300', ink:'#0a0a0a' };
+class Component extends DCLogic {
+  state = {
+    accent: 'yellow',
+    t1: true, t2: false, t3: true, t4: false,
+  };
+  renderVals() {
+    const { accent, t1, t2, t3, t4 } = this.state;
+    const acc = ACCENTS[accent] || ACCENTS.yellow;
+    const ink = accent === 'ink' ? '#ffffff' : '#0a0a0a';
+    const mk = (label, sub, key, on) => ({
+      label, sub, on,
+      toggle: () => this.setState({ [key]: !on }),
+    });
+    return {
+      accentColor: acc,
+      accentInk:   ink,
+      toggles: [
+        mk('Centroid Overlay', '重心点と幾何中心を重ねる', 't1', t1),
+        mk('Cluster Bound',    'クラスター境界をライム円で', 't2', t2),
+        mk('Flow Vector',      '視線の合力をライム矢印で',  't3', t3),
+        mk('Scale Display',    '天秤で釣り合いを表示',      't4', t4),
+      ],
+      setAccent: e => this.setState({ accent: e.currentTarget.dataset.acc }),
+    };
+  }
+}
+</script>
+</body>
+</html>

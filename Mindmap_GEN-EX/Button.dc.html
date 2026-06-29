@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @dsCard group="Components" viewport="420x580" name="Button" subtitle="Primary action button — ink bg / acc hover" -->
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    @font-face{font-family:"Bank Gothic";src:url("fonts/bank-gothic-light-bt.ttf") format("truetype");font-weight:300 600;font-display:swap}
+    @font-face{font-family:"Square 721";src:url("fonts/Square_721_BT.ttf") format("truetype");font-weight:400 700;font-display:swap}
+    :root{
+      --bg:#f2f2ef;--ink:#0a0a0a;--mute:#999;--mute-2:#c8c8c4;--line:#0a0a0a;
+      --acc:{{ accentColor }};--acc-ink:{{ accentInk }};
+      --ez:cubic-bezier(0.2,0,0,1);
+      --mono:"JetBrains Mono",ui-monospace,monospace;
+      --disp:"Bank Gothic","Square 721",system-ui,sans-serif;
+    }
+  </style>
+</helmet>
+
+<div style="background:var(--bg);min-height:100vh;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:48px;padding:48px">
+
+  <!-- Frame label -->
+  <div style="font-family:var(--mono);font-size:9px;letter-spacing:0.22em;color:var(--mute);text-transform:uppercase;border-bottom:1px solid var(--mute-2);padding-bottom:8px;width:100%">
+    MindMaps_9bcdb2 · Button Component
+  </div>
+
+  <!-- Variant row -->
+  <div style="display:flex;flex-direction:column;gap:24px">
+
+    <!-- Primary: ink bg, acc hover -->
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <span style="font-family:var(--mono);font-size:8px;letter-spacing:0.18em;color:var(--mute);text-transform:uppercase">PRIMARY</span>
+      <button
+        style="appearance:none;background:var(--ink);color:var(--bg);border:none;
+               padding:12px 24px;font-family:var(--mono);font-size:10px;letter-spacing:0.18em;
+               text-transform:uppercase;cursor:pointer;display:flex;align-items:center;gap:8px;
+               transition:background 120ms var(--ez),color 120ms var(--ez)"
+        style-hover="background:var(--acc);color:var(--acc-ink)">
+        + NEW CATEGORY
+        <span style="width:6px;height:6px;background:var(--acc);display:inline-block;transition:background 120ms var(--ez)" style-hover="background:var(--acc-ink)"></span>
+      </button>
+    </div>
+
+    <!-- Ghost: bordered, acc hover fill -->
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <span style="font-family:var(--mono);font-size:8px;letter-spacing:0.18em;color:var(--mute);text-transform:uppercase">GHOST</span>
+      <button
+        style="appearance:none;background:transparent;color:var(--ink);border:1px solid var(--line);
+               padding:10px 20px;font-family:var(--mono);font-size:10px;letter-spacing:0.16em;
+               text-transform:uppercase;cursor:pointer;
+               transition:background 120ms var(--ez),color 120ms var(--ez)"
+        style-hover="background:var(--ink);color:var(--bg)">
+        Export
+      </button>
+    </div>
+
+    <!-- Accent: acc bg, acc-ink text -->
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <span style="font-family:var(--mono);font-size:8px;letter-spacing:0.18em;color:var(--mute);text-transform:uppercase">ACCENT</span>
+      <button
+        style="appearance:none;background:var(--acc);color:var(--acc-ink);border:1px solid var(--line);
+               padding:10px 20px;font-family:var(--mono);font-size:10px;letter-spacing:0.16em;
+               text-transform:uppercase;cursor:pointer;
+               transition:opacity 120ms var(--ez)"
+        style-hover="opacity:0.82">
+        Confirm
+      </button>
+    </div>
+
+    <!-- Zoom mini: icon buttons -->
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <span style="font-family:var(--mono);font-size:8px;letter-spacing:0.18em;color:var(--mute);text-transform:uppercase">ZOOM MINI</span>
+      <div style="display:flex;flex-direction:column;border:1px solid var(--line);width:28px">
+        <button style="appearance:none;background:var(--bg);border:none;border-bottom:1px solid var(--line);width:28px;height:28px;font-family:var(--mono);font-size:12px;color:var(--ink);cursor:pointer;transition:background 120ms var(--ez),color 120ms var(--ez)" style-hover="background:var(--ink);color:var(--bg)">+</button>
+        <button style="appearance:none;background:var(--bg);border:none;width:28px;height:28px;font-family:var(--mono);font-size:12px;color:var(--ink);cursor:pointer;transition:background 120ms var(--ez),color 120ms var(--ez)" style-hover="background:var(--ink);color:var(--bg)">−</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Accent live switcher -->
+  <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+    <span style="font-family:var(--mono);font-size:8px;letter-spacing:0.18em;color:var(--mute);text-transform:uppercase">ACCENT PREVIEW</span>
+    <div style="display:flex;gap:8px">
+      <button onClick="{{ setAccent }}" data-acc="lime"
+        style="width:26px;height:26px;background:#c8ff1a;border:2px solid var(--line);cursor:pointer"></button>
+      <button onClick="{{ setAccent }}" data-acc="yellow"
+        style="width:26px;height:26px;background:#ffd400;border:2px solid var(--line);cursor:pointer"></button>
+      <button onClick="{{ setAccent }}" data-acc="pink"
+        style="width:26px;height:26px;background:#ff4da6;border:2px solid var(--line);cursor:pointer"></button>
+      <button onClick="{{ setAccent }}" data-acc="orange"
+        style="width:26px;height:26px;background:#ff7300;border:2px solid var(--line);cursor:pointer"></button>
+      <button onClick="{{ setAccent }}" data-acc="ink"
+        style="width:26px;height:26px;background:#0a0a0a;border:2px solid var(--line);cursor:pointer"></button>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;$preview&quot;: { &quot;width&quot;: 420, &quot;height&quot;: 580 }
+}">
+const ACCENTS = { lime:'#c8ff1a', yellow:'#ffd400', pink:'#ff4da6', orange:'#ff7300', ink:'#0a0a0a' };
+class Component extends DCLogic {
+  state = { accent: 'yellow' };
+  renderVals() {
+    const acc = this.state.accent;
+    const color = ACCENTS[acc] || ACCENTS.yellow;
+    const ink   = acc === 'ink' ? '#ffffff' : '#0a0a0a';
+    return {
+      accentColor: color,
+      accentInk:   ink,
+      setAccent: (e) => {
+        const a = e.currentTarget.dataset.acc;
+        this.setState({ accent: a });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

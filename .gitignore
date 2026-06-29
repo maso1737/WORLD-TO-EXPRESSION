@@ -17,6 +17,13 @@ __pycache__/
 # Trash / scratch folder
 _済/
 
+# Design-tool process leftovers (keep on disk, don't publish)
+Mind Maps.zip
+Mindmap_GEN-EX/uploads/
+Mindmap_GEN-EX/.thumbnail
+Mindmap_GEN-EX/**/.thumbnail
+Mindmap_GEN-EX/index-bundle.html
+
 # Windows
 Thumbs.db
 desktop.ini

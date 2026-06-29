@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @dsCard group="Components" viewport="420x540" name="Segment" subtitle="Segmented selector — tw__seg pattern" -->
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    @font-face{font-family:"Bank Gothic";src:url("fonts/bank-gothic-light-bt.ttf") format("truetype");font-weight:300 600;font-display:swap}
+    :root{
+      --bg:#f2f2ef;--ink:#0a0a0a;--mute:#999;--mute-2:#c8c8c4;--line:#0a0a0a;
+      --acc:{{ accentColor }};--acc-ink:{{ accentInk }};
+      --panel-bg:#ffffff;--ez:cubic-bezier(0.2,0,0,1);
+      --mono:"JetBrains Mono",ui-monospace,monospace;
+    }
+  </style>
+</helmet>
+
+<div style="background:var(--bg);min-height:100vh;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:48px;padding:48px">
+
+  <div style="font-family:var(--mono);font-size:9px;letter-spacing:0.22em;color:var(--mute);text-transform:uppercase;border-bottom:1px solid var(--mute-2);padding-bottom:8px;width:100%">
+    MindMaps_9bcdb2 · Segment Component
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:32px;width:280px">
+
+    <!-- 2-option segment (e.g. Layout) -->
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <span style="font-family:var(--mono);font-size:8px;letter-spacing:0.18em;color:var(--mute);text-transform:uppercase">2 OPTIONS</span>
+      <div style="display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border:1px solid var(--line)">
+        <button onClick="{{ onLayout }}" data-v="light"
+          style="appearance:none;border:none;border-right:1px solid var(--line);padding:7px 4px;font-family:var(--mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;background:{{ layout === 'light' ? '#0a0a0a' : 'var(--bg)' }};color:{{ layout === 'light' ? 'var(--bg)' : 'var(--ink)' }}">
+          LIGHT
+        </button>
+        <button onClick="{{ onLayout }}" data-v="dark"
+          style="appearance:none;border:none;padding:7px 4px;font-family:var(--mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;background:{{ layout === 'dark' ? '#0a0a0a' : 'var(--bg)' }};color:{{ layout === 'dark' ? 'var(--bg)' : 'var(--ink)' }}">
+          DARK
+        </button>
+      </div>
+    </div>
+
+    <!-- 4-option segment (e.g. Accent color) — acc-highlighted active -->
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <span style="font-family:var(--mono);font-size:8px;letter-spacing:0.18em;color:var(--mute);text-transform:uppercase">ACCENT SELECTOR (4 OPT)</span>
+      <div style="display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border:1px solid var(--line)">
+        <sc-for list="{{ accOpts }}" as="opt">
+          <button onClick="{{ setAccent }}" data-acc="{{ opt.key }}"
+            style="appearance:none;border:none;border-right:1px solid var(--line);padding:7px 2px;font-family:var(--mono);font-size:9px;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;background:{{ opt.bg }};color:{{ opt.fg }}">
+            {{ opt.label }}
+          </button>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- 3-option segment (e.g. View mode) -->
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <span style="font-family:var(--mono);font-size:8px;letter-spacing:0.18em;color:var(--mute);text-transform:uppercase">3 OPTIONS</span>
+      <div style="display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border:1px solid var(--line)">
+        <sc-for list="{{ viewOpts }}" as="o">
+          <button onClick="{{ onView }}" data-v="{{ o.v }}"
+            style="appearance:none;border:none;border-right:1px solid var(--line);padding:7px 2px;font-family:var(--mono);font-size:9px;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;background:{{ o.active ? '#0a0a0a' : 'var(--bg)' }};color:{{ o.active ? 'var(--bg)' : 'var(--ink)' }}">
+            {{ o.v }}
+          </button>
+        </sc-for>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;$preview&quot;: { &quot;width&quot;: 420, &quot;height&quot;: 540 }
+}">
+const ACCENTS = { lime:'#c8ff1a', yellow:'#ffd400', pink:'#ff4da6', orange:'#ff7300', ink:'#0a0a0a' };
+class Component extends DCLogic {
+  state = { accent:'yellow', layout:'light', view:'MAP' };
+  renderVals() {
+    const { accent, layout, view } = this.state;
+    const acc   = ACCENTS[accent] || ACCENTS.yellow;
+    const ink   = accent === 'ink' ? '#ffffff' : '#0a0a0a';
+    const KEYS  = ['lime','yellow','pink','ink'];
+    const accOpts = KEYS.map(k => {
+      const isOn = k === accent;
+      return {
+        key: k,
+        label: k === 'yellow' ? 'YEL' : k === 'orange' ? 'ORG' : k.toUpperCase().slice(0,3),
+        bg: isOn ? acc : 'var(--bg)',
+        fg: isOn ? ink : 'var(--ink)',
+      };
+    });
+    const VIEWS = ['MAP','LIST','GRID'];
+    const viewOpts = VIEWS.map(v => ({ v, active: v === view }));
+    return {
+      accentColor: acc, accentInk: ink,
+      layout, accOpts, viewOpts,
+      onLayout: e => this.setState({ layout: e.currentTarget.dataset.v }),
+      setAccent: e => this.setState({ accent: e.currentTarget.dataset.acc }),
+      onView:    e => this.setState({ view: e.currentTarget.dataset.v }),
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -26,7 +26,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--mono);overflow:hidd
 #app{height:100vh;display:grid;grid-template-rows:46px 1fr 30px}
 
 /* ===== TOPBAR ===== */
-#topbar{display:grid;grid-template-columns:auto 1fr auto;align-items:stretch;border-bottom:1px solid var(--line);background:var(--bg);z-index:10}
+#topbar{display:grid;grid-template-columns:auto 1fr auto auto;align-items:stretch;border-bottom:1px solid var(--line);background:var(--bg);z-index:10}
 .tb-brand{display:flex;align-items:center;gap:12px;padding:0 16px;border-right:1px solid var(--line)}
 .tb-mark{width:14px;height:14px;background:var(--acc);flex:none}
 .tb-id{font-family:var(--disp);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;white-space:nowrap}
@@ -35,6 +35,9 @@ body{background:var(--bg);color:var(--ink);font-family:var(--mono);overflow:hidd
 .tb-title{font-family:var(--disp);font-size:13px;letter-spacing:0.22em;text-transform:uppercase}
 .tb-title em{font-style:normal;font-family:var(--jp);font-size:11px;letter-spacing:0.1em;color:var(--mute);margin-left:8px}
 .tb-right{display:flex;align-items:center;padding:0 16px;border-left:1px solid var(--line);font-family:var(--mono);font-size:9px;letter-spacing:0.16em;color:var(--mute);text-transform:uppercase}
+.tb-fit{display:flex;align-items:center;gap:6px;padding:0 14px;border-left:1px solid var(--line);border-right:0;border-top:0;border-bottom:0;font-family:var(--mono);font-size:9px;letter-spacing:0.16em;color:var(--ink);background:transparent;text-transform:uppercase;cursor:pointer;white-space:nowrap}
+.tb-fit:hover{background:var(--acc)}
+.tb-fit.is-fs{background:var(--ink);color:var(--bg)}
 
 /* ===== STAGE ===== */
 #stage{position:relative;overflow:hidden;
@@ -53,10 +56,15 @@ body{background:var(--bg);color:var(--ink);font-family:var(--mono);overflow:hidd
 .data{position:absolute;font-family:var(--mono);font-size:8px;letter-spacing:0.1em;color:rgba(10,10,10,0.2);text-transform:uppercase;z-index:1;pointer-events:none;white-space:nowrap}
 .data.d1{top:40px;left:16px}.data.d2{bottom:38px;left:16px;writing-mode:vertical-rl;letter-spacing:0.36em;opacity:0.6}
 
-/* plate */
-#plate{position:absolute;top:50%;left:50%;transform:translate(-50%,-52%);
-  width:min(95%,calc(92vh*1200/760));aspect-ratio:1200/760;z-index:2}
+/* plate — transform managed by JS pan/zoom */
+#plate{position:absolute;top:0;left:0;
+  width:min(95%,calc(92vh*1200/760));aspect-ratio:1200/760;z-index:2;
+  transform-origin:0 0;will-change:transform;cursor:grab}
+#plate.panning{cursor:grabbing}
 #edges{position:absolute;inset:0;width:100%;height:100%;overflow:visible;z-index:1;pointer-events:none}
+/* zoom hint */
+#zoom-hint{position:absolute;bottom:8px;right:12px;z-index:5;font-family:var(--mono);font-size:8px;
+  letter-spacing:0.12em;color:var(--mute);text-transform:uppercase;pointer-events:none;opacity:0.7}
 
 /* nodes */
 .nd{position:absolute;transform:translate(-50%,-50%);z-index:3;text-align:center}
@@ -70,7 +78,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--mono);overflow:hidd
 
 /* act */
 .act{background:#fff;border:1px solid var(--ink);min-width:158px;text-align:left;box-shadow:4px 4px 0 rgba(10,10,10,0.07);
-  text-decoration:none;
+  text-decoration:none;color:var(--ink);
   transition:transform .15s var(--ez),box-shadow .15s var(--ez),background .15s var(--ez),color .15s var(--ez)}
 .act:hover{transform:translate(-50%,-50%) scale(1.05);box-shadow:6px 8px 0 rgba(10,10,10,0.14);background:#fff;color:var(--ink)}
 .act:hover .a-hd{background:var(--acc)}
@@ -96,7 +104,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--mono);overflow:hidd
   padding:5px 11px;border-top:1px solid var(--ink);background:var(--acc)}
 
 /* principle chip */
-.pr{display:block;background:#fff;border:1px solid var(--mute-2);min-width:92px;text-decoration:none;color:var(--ink);
+.pr{display:block;background:#fff;border:1px solid var(--mute-2);min-width:92px;text-decoration:none;color:var(--ink) !important;
   box-shadow:2px 2px 0 rgba(10,10,10,0.05);transition:transform .14s var(--ez),box-shadow .14s var(--ez),background .14s var(--ez),color .14s var(--ez)}
 .pr .p-nn{font-family:var(--disp);font-size:14px;letter-spacing:0.02em;padding:5px 8px 0;line-height:1}
 .pr .p-en{font-family:var(--mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--mute);padding:2px 8px 0;white-space:nowrap}
@@ -147,6 +155,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--mono);overflow:hidd
     <div class="tb-mid">
       <span class="tb-title">4-Layer Ring<em>認識エンジン4層</em></span>
     </div>
+    <button id="btn-fit" class="tb-fit">⛶ FIT</button>
     <div class="tb-right">SPACE ENGINE ⁄ 空間</div>
   </header>
 
@@ -159,6 +168,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--mono);overflow:hidd
     <span class="data d1">MAP · CS-RING ⁄ ACT 01–04</span>
     <span class="data d2">触れば再現できる ⁄ REPRODUCE BY TOUCHING</span>
 
+    <div id="zoom-hint">drag to pan · H to reset</div>
     <div id="plate">
       <svg id="edges" viewBox="0 0 1200 760" preserveAspectRatio="none">
         <defs>
@@ -170,7 +180,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--mono);overflow:hidd
           </marker>
         </defs>
         <!-- the ring (環) -->
-        <ellipse cx="600" cy="410" rx="284" ry="216" fill="none" stroke="#0a0a0a" stroke-width="1" stroke-dasharray="3 5" opacity="0.32"/>
+        <ellipse cx="600" cy="389" rx="284" ry="216" fill="none" stroke="#0a0a0a" stroke-width="1" stroke-dasharray="3 5" opacity="0.32"/>
         <g id="g-spokes"></g>
         <g id="g-branch"></g>
         <g id="g-loop"></g>
@@ -187,17 +197,17 @@ body{background:var(--bg);color:var(--ink);font-family:var(--mono);overflow:hidd
       <b>ループ</b> L3解釈が下層を書き換える／降りてくる</div>
     <div class="lg"><span style="width:10px;height:10px;background:var(--acc);display:inline-block"></span>
       <b>LIVE</b> 実装済み（クリックで開く）</div>
-    <div class="foot-r"><span class="blink"></span>L1 07 GESTALT · L2 06 FOCUS · 13 LIVE</div>
+    <div class="foot-r"><span class="blink"></span>L1 07 · L2 06 · L3 08 · L4 04 · 25 LIVE</div>
   </footer>
 </div>
 
 <script>
-const HUB = { x:600, y:410 };
+const HUB = { x:600, y:389 };
 const ACTS = [
-  { id:'L1', x:600, y:194, verb:'Group',     jp:'群化', theme:'ゲシュタルト',              q:'何が仲間か',   n:'07', live:true },
-  { id:'L2', x:884, y:410, verb:'Focus',     jp:'焦点', theme:'視覚重力',                  q:'何が主役か',   n:'06', live:true, href:'l2-01-size-weight.html' },
-  { id:'L3', x:600, y:626, verb:'Interpret', jp:'解釈', theme:'錯視・図地・アナモルフォーシス', q:'何通りの解釈', n:'08' },
-  { id:'L4', x:316, y:410, verb:'Edit',      jp:'編集', theme:'間・抑制・余白',            q:'何を捨てるか', n:'04', cap:true },
+  { id:'L1', x:600, y:173, verb:'Group',     jp:'群化', theme:'ゲシュタルト',              q:'何が仲間か',   n:'07', live:true },
+  { id:'L2', x:884, y:389, verb:'Focus',     jp:'焦点', theme:'視覚重力',                  q:'何が主役か',   n:'06', live:true, href:'l2-01-size-weight.html' },
+  { id:'L3', x:600, y:605, verb:'Interpret', jp:'解釈', theme:'錯視・図地・アナモルフォーシス', q:'何通りの解釈', n:'08', live:true, href:'l3-01-muller-lyer.html' },
+  { id:'L4', x:316, y:389, verb:'Edit',      jp:'編集', theme:'間・抑制・余白・情報量',    q:'何を捨てるか', n:'04', live:true, href:'l4-01-ma.html', cap:true },
 ];
 const PRIN = [
   { nn:'01', en:'Proximity',    jp:'近接',     href:'01-proximity.html', live:true },
@@ -221,8 +231,30 @@ const L2_PRIN = [
   { nn:'06', en:'Negative Space', jp:'余白',       href:'l2-06-negative-space.html', live:true },
 ];
 // L2 principles in a column on the right, branching from L2 (mirror of L1)
-const L2X=1108, L2Y0=150, L2Y1=672;
+const L2X=1108, L2Y0=176, L2Y1=648;
 L2_PRIN.forEach((p,i)=>{ p.x = L2X; p.y = L2Y0 + i*((L2Y1-L2Y0)/(L2_PRIN.length-1)); });
+
+const L3_PRIN = [
+  { nn:'01', en:'Müller-Lyer',     jp:'ミュラー・リヤー',   href:'l3-01-muller-lyer.html',     live:true },
+  { nn:'02', en:'Ponzo',           jp:'ポンゾ',             href:'l3-02-ponzo.html',           live:true },
+  { nn:'03', en:'Ebbinghaus',      jp:'エビングハウス',     href:'l3-03-ebbinghaus.html',      live:true },
+  { nn:'04', en:'Café Wall',       jp:'カフェウォール',     href:'l3-04-cafe-wall.html',       live:true },
+  { nn:'05', en:"Benham's Top",    jp:'ベンハムのコマ',     href:'l3-05-benhams-top.html',     live:true },
+  { nn:'06', en:'Motion Illusion', jp:'モーション錯視',     href:'l3-06-motion-illusion.html', live:true },
+  { nn:'07', en:'Rubin',           jp:'図地反転',           href:'l3-07-rubin.html',           live:true },
+  { nn:'08', en:'Anamorphosis',    jp:'アナモルフォーシス', href:'l3-08-anamorphosis.html',    live:true },
+];
+const L3PX0=176, L3PX1=996, L3PY=714;
+L3_PRIN.forEach((p,i)=>{ p.x = L3PX0 + i*((L3PX1-L3PX0)/(L3_PRIN.length-1)); p.y = L3PY; });
+
+const L4_PRIN = [
+  { nn:'01', en:'Ma',           jp:'間',     href:'l4-01-ma.html',          live:true },
+  { nn:'02', en:'Restraint',    jp:'抑制',   href:'l4-02-restraint.html',   live:true },
+  { nn:'03', en:'Whitespace',   jp:'余白',   href:'l4-03-whitespace.html',  live:true },
+  { nn:'04', en:'Signal/Noise', jp:'情報量', href:'l4-04-signal-noise.html',live:true },
+];
+const L4X=92, L4Y0=244, L4Y1=534;
+L4_PRIN.forEach((p,i)=>{ p.x = L4X; p.y = L4Y0 + i*((L4Y1-L4Y0)/(L4_PRIN.length-1)); });
 
 const nodes = document.getElementById('nodes');
 const VW=1200, VH=760;
@@ -279,6 +311,34 @@ L2_PRIN.forEach(p=>{
   place(el,p.x,p.y); nodes.appendChild(el);
 });
 
+// L4 principles (left column)
+L4_PRIN.forEach(p=>{
+  const el=document.createElement(p.live?'a':'div');
+  el.className='nd pr'+(p.live?' is-live':' is-draft');
+  if(p.live){ el.href=p.href; }
+  el.style.position='absolute';
+  el.innerHTML =
+    '<div class="p-nn">'+p.nn+'</div>'+
+    '<div class="p-en">'+p.en+'</div>'+
+    '<div class="p-jp">'+p.jp+'</div>'+
+    '<span class="p-tag">'+(p.live?'LIVE':'未')+'</span>';
+  place(el,p.x,p.y); nodes.appendChild(el);
+});
+
+// L3 principles (bottom row)
+L3_PRIN.forEach(p=>{
+  const el=document.createElement(p.live?'a':'div');
+  el.className='nd pr'+(p.live?' is-live':' is-draft');
+  if(p.live){ el.href=p.href; }
+  el.style.position='absolute';
+  el.innerHTML =
+    '<div class="p-nn">'+p.nn+'</div>'+
+    '<div class="p-en">'+p.en+'</div>'+
+    '<div class="p-jp">'+p.jp+'</div>'+
+    '<span class="p-tag">'+(p.live?'LIVE':'未')+'</span>';
+  place(el,p.x,p.y); nodes.appendChild(el);
+});
+
 // ===== EDGES =====
 const SVGNS='http://www.w3.org/2000/svg';
 function line(g,x1,y1,x2,y2,attrs){
@@ -320,16 +380,28 @@ L2_PRIN.forEach(p=>{
   const [x1,y1,x2,y2]=trim(L2n.x,L2n.y,p.x,p.y,40,30);
   line(gBranch,x1,y1,x2,y2,{stroke:'#0a0a0a','stroke-width':'1',opacity:'0.4'});
 });
+// branches L3 -> L3 principles (bottom row)
+const L3n=ACTS[2];
+L3_PRIN.forEach(p=>{
+  const [x1,y1,x2,y2]=trim(L3n.x,L3n.y,p.x,p.y,40,30);
+  line(gBranch,x1,y1,x2,y2,{stroke:'#0a0a0a','stroke-width':'1',opacity:'0.4'});
+});
+// branches L4 -> L4 principles (left column)
+const L4n=ACTS[3];
+L4_PRIN.forEach(p=>{
+  const [x1,y1,x2,y2]=trim(L4n.x,L4n.y,p.x,p.y,42,30);
+  line(gBranch,x1,y1,x2,y2,{stroke:'#0a0a0a','stroke-width':'1',opacity:'0.4'});
+});
 // loop feedback (lime dashed, arrowed): L3 -> L1, L3 -> L2
 const L2=ACTS[1], L3=ACTS[2];
-path(gLoop,'M '+(L3.x-74)+' '+(L3.y-28)+' Q 250 410 '+(L1.x-62)+' '+(L1.y+46),
+path(gLoop,'M '+(L3.x-74)+' '+(L3.y-28)+' Q 250 389 '+(L1.x-62)+' '+(L1.y+46),
   {stroke:'#c8ff1a','stroke-width':'1.8','stroke-dasharray':'4 4','marker-end':'url(#arrA)'});
 path(gLoop,'M '+(L3.x+74)+' '+(L3.y-28)+' Q 856 540 '+(L2.x-16)+' '+(L2.y+66),
   {stroke:'#c8ff1a','stroke-width':'1.8','stroke-dasharray':'4 4',opacity:'0.85','marker-end':'url(#arrA)'});
 
 // flow arrows along ring (clockwise L1->L2->L3->L4)
 const gFlow=document.getElementById('g-flow');
-function ringPt(deg){ const a=deg*Math.PI/180; return [600+284*Math.cos(a),410+216*Math.sin(a)]; }
+function ringPt(deg){ const a=deg*Math.PI/180; return [600+284*Math.cos(a),389+216*Math.sin(a)]; }
 [[-45,'#0a0a0a'],[45,'#0a0a0a'],[135,'#0a0a0a'],[225,'#0a0a0a']].forEach(([d])=>{
   const [x,y]=ringPt(d); const [x2,y2]=ringPt(d+6);
   line(gFlow,x,y,x2,y2,{stroke:'#0a0a0a','stroke-width':'1.4',opacity:'0.5','marker-end':'url(#arrK)'});
@@ -341,6 +413,79 @@ function addLabel(x,y,html){
 }
 addLabel(296,300,'<b>LOOP</b> 解釈→群化を書き換える');
 addLabel(812,516,'<b>LOOP</b> 解釈→焦点');
+addLabel(840,660,'<b>XREF</b> L3·07↔L1·05 図と地');
+addLabel(1040,600,'<b>XREF</b> L3·08↔L2 視点');
+addLabel(92,300,'<b>XREF</b> L4·01 間↔L1·01 近接');
+addLabel(92,395,'<b>XREF</b> L4·02 抑制↔L2·03 コントラスト');
+addLabel(92,488,'<b>XREF</b> L4·03 余白↔L2·06 余白');
+addLabel(92,572,'<b>XREF</b> L4·04 情報量↔L1–L3 統合');
+
+// ===== PAN / ZOOM =====
+const stage = document.getElementById('stage');
+const plate = document.getElementById('plate');
+let px=0, py=0, sc=1;
+let dragging=false, dragX=0, dragY=0, dragPx=0, dragPy=0;
+
+function setT(){
+  plate.style.transform = `translate(${px}px,${py}px) scale(${sc})`;
+}
+function initCenter(){
+  const sw=stage.clientWidth, sh=stage.clientHeight;
+  const pw=plate.offsetWidth, ph=plate.offsetHeight;
+  sc=1; px=(sw-pw)/2; py=(sh-ph)/2;
+  setT();
+}
+
+stage.addEventListener('mousedown', e=>{
+  if(e.button!==0) return;
+  dragging=true; dragX=e.clientX; dragY=e.clientY; dragPx=px; dragPy=py;
+  plate.classList.add('panning');
+});
+window.addEventListener('mousemove', e=>{
+  if(!dragging) return;
+  px=dragPx+(e.clientX-dragX); py=dragPy+(e.clientY-dragY); setT();
+});
+window.addEventListener('mouseup', ()=>{ dragging=false; plate.classList.remove('panning'); });
+
+// touch pan
+let tLast=null;
+stage.addEventListener('touchstart', e=>{ if(e.touches.length===1) tLast=e.touches[0]; },{passive:true});
+stage.addEventListener('touchmove', e=>{
+  if(e.touches.length===1 && tLast){
+    px+=e.touches[0].clientX-tLast.clientX;
+    py+=e.touches[0].clientY-tLast.clientY;
+    tLast=e.touches[0]; setT(); e.preventDefault();
+  }
+},{passive:false});
+stage.addEventListener('touchend', ()=>{ tLast=null; });
+
+// keyboard H = home/reset, +/- zoom
+window.addEventListener('keydown', e=>{
+  if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')) return;
+  if(e.key==='h'||e.key==='H'){ initCenter(); }
+  else if(e.key==='='||e.key==='+'){ const f=1.15; const cx=stage.clientWidth/2,cy=stage.clientHeight/2; px=cx-(cx-px)*f; py=cy-(cy-py)*f; sc=Math.min(4,sc*f); setT(); }
+  else if(e.key==='-'){ const f=1/1.15; const cx=stage.clientWidth/2,cy=stage.clientHeight/2; px=cx-(cx-px)*f; py=cy-(cy-py)*f; sc=Math.max(0.28,sc*f); setT(); }
+});
+
+window.addEventListener('resize', initCenter);
+initCenter();
+
+// ===== FULLSCREEN =====
+const btnFit = document.getElementById('btn-fit');
+btnFit.addEventListener('click', ()=>{
+  if(!document.fullscreenElement){
+    document.documentElement.requestFullscreen().catch(()=>{});
+  } else {
+    document.exitFullscreen();
+  }
+});
+document.addEventListener('fullscreenchange', ()=>{
+  const fs = !!document.fullscreenElement;
+  btnFit.classList.toggle('is-fs', fs);
+  btnFit.textContent = fs ? '⛶ EXIT' : '⛶ FIT';
+  // re-center after fullscreen resize
+  setTimeout(initCenter, 120);
+});
 </script>
 </body>
 </html>

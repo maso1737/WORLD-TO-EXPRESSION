@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @dsCard group="Brand" viewport="1280x900" name="Gen-EX Logo" subtitle="Identity system — mark, lockups, colorways" -->
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    @font-face {
+      font-family: "Bank Gothic";
+      src: url("../fonts/bank-gothic-light-bt.ttf") format("truetype");
+      font-weight: 300 600; font-style: normal; font-display: swap;
+    }
+    *{ box-sizing: border-box; margin:0; padding:0; }
+    @keyframes genexBlink {
+      0%, 84%, 100% { transform: scaleY(1); }   /* 開いた目 */
+      87%           { transform: scaleY(0.04); } /* 閉じ目（一気に閉じる） */
+      92%           { transform: scaleY(0.8); }  /* 8割中目 */
+      96%           { transform: scaleY(1); }    /* 全開 */
+    }
+    @keyframes genexPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.25; }
+    }
+  </style>
+  <template id="__bundler_thumbnail">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 140">
+      <rect width="200" height="140" fill="#0a0a0a"/>
+      <path d="M 128 52 A 30 30 0 1 0 128 90" stroke="#fff" stroke-width="8.5" stroke-linecap="round" fill="none"/>
+      <path d="M 128 90 L 115 84" stroke="#fff" stroke-width="8.5" stroke-linecap="round" fill="none"/>
+      <rect x="100" y="58" width="8" height="22" rx="4" fill="#fff"/>
+      <circle cx="92" cy="68" r="5.5" fill="#ffd400"/>
+      <circle cx="112" cy="84" r="3.8" fill="#ffd400"/>
+    </svg>
+  </template>
+</helmet>
+
+<div style="min-width:100%; min-height:100vh; box-sizing:border-box; padding:56px 40px 80px; background:#f2f2ef; font-family:'JetBrains Mono', ui-monospace, monospace; color:#0a0a0a; background-image: linear-gradient(rgba(10,10,10,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(10,10,10,0.035) 1px, transparent 1px); background-size: 40px 40px, 40px 40px;">
+  <div style="max-width:1180px; margin:0 auto;">
+
+    <!-- MASTHEAD -->
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; padding-bottom:14px; border-bottom:1px solid #0a0a0a; margin-bottom:40px;">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <span style="width:14px; height:14px; background:#ffd400; display:inline-block;"></span>
+        <span style="font-size:12px; font-weight:600; letter-spacing:0.22em; text-transform:uppercase;">GEN-EX&nbsp;&nbsp;⁄&nbsp;&nbsp;IDENTITY SYSTEM</span>
+      </div>
+      <span style="font-size:10px; letter-spacing:0.14em; color:#9a9a96; text-transform:uppercase;">REV 01.0 — 2026 ⁄ A2 · ISO 216</span>
+    </div>
+
+    <!-- 01 · HERO PRIMARY LOCKUP -->
+    <section style="margin-bottom:28px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <span style="font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#0a0a0a;"><b style="background:#ffd400; padding:2px 7px;">01</b>&nbsp;&nbsp;PRIMARY LOCKUP</span>
+        <span style="font-size:9px; letter-spacing:0.14em; color:#9a9a96; text-transform:uppercase;">MARK + WORDMARK · HORIZONTAL</span>
+      </div>
+      <div style="position:relative; background:#ffffff; box-shadow: inset 0 0 0 1px #0a0a0a; padding:72px 80px; overflow:hidden;">
+        <span style="position:absolute; left:14px; top:14px; font-size:14px; color:#0a0a0a;">+</span>
+        <span style="position:absolute; right:14px; top:14px; font-size:14px; color:#0a0a0a;">+</span>
+        <span style="position:absolute; left:14px; bottom:14px; font-size:14px; color:#0a0a0a;">+</span>
+        <span style="position:absolute; right:14px; bottom:14px; font-size:14px; color:#0a0a0a;">+</span>
+        <span style="position:absolute; right:0; top:0; bottom:0; width:4px; background:#ffd400;"></span>
+        <span style="position:absolute; left:40px; top:40px; font-size:8px; letter-spacing:0.4em; color:#cfcfca; writing-mode:vertical-rl;">ANTIREAL ⁄ DAILY ⁄ SERIES</span>
+        <div style="display:flex; align-items:center; gap:48px; justify-content:center;">
+          <div style="width:148px; height:148px; flex:none;">
+            <dc-import name="GenexMark" color="#0a0a0a" eye="#ffd400" hint-size="148px,148px"></dc-import>
+          </div>
+          <div style="display:inline-flex; flex-direction:column; gap:14px;">
+            <div style="font-family:'Bank Gothic','JetBrains Mono',sans-serif; font-size:88px; font-weight:400; line-height:0.82; letter-spacing:0.02em; color:#0a0a0a;">GEN-EX</div>
+            <div style="display:flex; align-items:center; gap:12px;">
+              <span style="width:34px; height:6px; background:#ffd400; flex:none;"></span>
+              <span style="font-size:13px; font-weight:500; letter-spacing:0.42em; text-transform:uppercase; color:#0a0a0a;">REALTIME EXPRESSION LAB</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 02 · COLOR VARIANTS -->
+    <section style="margin-bottom:28px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <span style="font-size:10px; letter-spacing:0.16em; text-transform:uppercase;"><b style="background:#ffd400; padding:2px 7px;">02</b>&nbsp;&nbsp;MARK · COLORWAYS</span>
+        <span style="font-size:9px; letter-spacing:0.14em; color:#9a9a96; text-transform:uppercase;">04 VARIANTS · ANY 1 LICENSED USE</span>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:0; box-shadow: inset 0 0 0 1px #0a0a0a;">
+        <div style="background:#ffffff; padding:36px 24px 16px; border-right:1px solid #0a0a0a; display:flex; flex-direction:column; align-items:center; gap:22px;">
+          <div style="width:92px; height:92px;"><dc-import name="GenexMark" color="#0a0a0a" eye="#ffd400" hint-size="92px,92px"></dc-import></div>
+          <div style="text-align:center;">
+            <div style="font-size:9px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase;">PRIMARY</div>
+            <div style="font-size:8px; letter-spacing:0.1em; color:#9a9a96; margin-top:3px;">INK + YELLOW EYES</div>
+          </div>
+        </div>
+        <div style="background:#0a0a0a; padding:36px 24px 16px; border-right:1px solid #0a0a0a; display:flex; flex-direction:column; align-items:center; gap:22px;">
+          <div style="width:92px; height:92px;"><dc-import name="GenexMark" color="#ffd400" eye="#ffffff" hint-size="92px,92px"></dc-import></div>
+          <div style="text-align:center;">
+            <div style="font-size:9px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#f2f2ef;">YELLOW</div>
+            <div style="font-size:8px; letter-spacing:0.1em; color:#6e6e6a; margin-top:3px;">ON INK · DARK UI</div>
+          </div>
+        </div>
+        <div style="background:#ffffff; padding:36px 24px 16px; border-right:1px solid #0a0a0a; display:flex; flex-direction:column; align-items:center; gap:22px;">
+          <div style="width:92px; height:92px;"><dc-import name="GenexMark" color="#0a0a0a" eye="#0a0a0a" hint-size="92px,92px"></dc-import></div>
+          <div style="text-align:center;">
+            <div style="font-size:9px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase;">MONO · BLACK</div>
+            <div style="font-size:8px; letter-spacing:0.1em; color:#9a9a96; margin-top:3px;">1-COLOR · PRINT</div>
+          </div>
+        </div>
+        <div style="background:#0a0a0a; padding:36px 24px 16px; display:flex; flex-direction:column; align-items:center; gap:22px;">
+          <div style="width:92px; height:92px;"><dc-import name="GenexMark" color="#f2f2ef" eye="#f2f2ef" hint-size="92px,92px"></dc-import></div>
+          <div style="text-align:center;">
+            <div style="font-size:9px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:#f2f2ef;">MONO · WHITE</div>
+            <div style="font-size:8px; letter-spacing:0.1em; color:#6e6e6a; margin-top:3px;">REVERSED · 1-COLOR</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 03 · LOCKUPS + 04 CONSTRUCTION -->
+    <div style="display:grid; grid-template-columns:1.32fr 1fr; gap:28px; margin-bottom:28px;">
+      <section>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <span style="font-size:10px; letter-spacing:0.16em; text-transform:uppercase;"><b style="background:#ffd400; padding:2px 7px;">03</b>&nbsp;&nbsp;LOCKUPS</span>
+          <span style="font-size:9px; letter-spacing:0.14em; color:#9a9a96; text-transform:uppercase;">04 CONFIG</span>
+        </div>
+        <div style="box-shadow: inset 0 0 0 1px #0a0a0a;">
+          <div style="background:#ffffff; padding:30px 34px; border-bottom:1px solid #0a0a0a; display:flex; align-items:center; gap:28px;">
+            <div style="width:62px; height:62px; flex:none;"><dc-import name="GenexMark" color="#0a0a0a" eye="#ffd400" hint-size="62px,62px"></dc-import></div>
+            <div style="font-family:'Bank Gothic',sans-serif; font-size:42px; line-height:0.82; letter-spacing:0.02em;">GEN-EX</div>
+            <span style="margin-left:auto; font-size:8px; letter-spacing:0.12em; color:#9a9a96; text-transform:uppercase; writing-mode:vertical-rl;">HORIZONTAL</span>
+          </div>
+          <div style="background:#ffffff; padding:30px 34px; border-bottom:1px solid #0a0a0a; display:flex; align-items:center; gap:28px;">
+            <div style="width:62px; height:62px; flex:none;"><dc-import name="GenexMark" color="#0a0a0a" eye="#ffd400" hint-size="62px,62px"></dc-import></div>
+            <div style="display:inline-flex; flex-direction:column; gap:8px;">
+              <div style="font-family:'Bank Gothic',sans-serif; font-size:42px; line-height:0.82; letter-spacing:0.02em;">GEN-EX</div>
+              <span style="font-size:9.5px; font-weight:500; letter-spacing:0.34em; text-transform:uppercase; color:#0a0a0a;">REALTIME EXPRESSION LAB</span>
+            </div>
+            <span style="margin-left:auto; font-size:8px; letter-spacing:0.12em; color:#9a9a96; text-transform:uppercase; writing-mode:vertical-rl;">FULL · TAGLINE</span>
+          </div>
+          <div style="background:#ffffff; padding:30px 34px; display:flex; align-items:center; gap:28px;">
+            <div style="width:62px; height:62px; flex:none;"><dc-import name="GenexMark" color="#0a0a0a" eye="#ffd400" hint-size="62px,62px"></dc-import></div>
+            <span style="font-size:11px; letter-spacing:0.18em; text-transform:uppercase; color:#9a9a96;">MARK · STANDALONE</span>
+            <span style="margin-left:auto; font-size:8px; letter-spacing:0.12em; color:#9a9a96; text-transform:uppercase; writing-mode:vertical-rl;">ICON · APP</span>
+          </div>
+        </div>
+      </section>
+      <section>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <span style="font-size:10px; letter-spacing:0.16em; text-transform:uppercase;"><b style="background:#ffd400; padding:2px 7px;">04</b>&nbsp;&nbsp;CONSTRUCTION</span>
+          <span style="font-size:9px; letter-spacing:0.14em; color:#9a9a96; text-transform:uppercase;">CLEARSPACE = X</span>
+        </div>
+        <div style="position:relative; background:#ffffff; box-shadow: inset 0 0 0 1px #0a0a0a; padding:38px; height:calc(100% - 28px); display:flex; align-items:center; justify-content:center;">
+          <span style="position:absolute; left:12px; top:10px; font-size:8px; letter-spacing:0.12em; color:#9a9a96;">GRID · 120 UNIT</span>
+          <span style="position:absolute; right:12px; bottom:10px; font-size:8px; letter-spacing:0.12em; color:#9a9a96;">Ø 88 · SW 12.5</span>
+          <div style="position:relative; width:180px; height:180px;">
+            <div style="position:absolute; inset:0; background-image: linear-gradient(rgba(10,10,10,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(10,10,10,0.07) 1px, transparent 1px); background-size: 20px 20px;"></div>
+            <div style="position:absolute; inset:-18px; border:1px dashed #cfcfca;"></div>
+            <div style="position:absolute; left:50%; top:0; bottom:0; width:1px; background:rgba(10,10,10,0.18);"></div>
+            <div style="position:absolute; top:50%; left:0; right:0; height:1px; background:rgba(10,10,10,0.18);"></div>
+            <div style="position:absolute; inset:0;"><dc-import name="GenexMark" color="#0a0a0a" eye="#ffd400" hint-size="180px,180px"></dc-import></div>
+            <span style="position:absolute; left:-16px; top:-30px; font-size:8px; color:#9a9a96;">X</span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- 05 · DARK APPLICATION + 06 TOKENS -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:28px;">
+      <section>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <span style="font-size:10px; letter-spacing:0.16em; text-transform:uppercase;"><b style="background:#ffd400; padding:2px 7px;">05</b>&nbsp;&nbsp;DARK APPLICATION</span>
+          <span style="font-size:9px; letter-spacing:0.14em; color:#9a9a96; text-transform:uppercase;">UI · SPLASH</span>
+        </div>
+        <div style="position:relative; background:#0a0a0a; box-shadow: inset 0 0 0 1px #0a0a0a; padding:54px 48px; overflow:hidden; height:calc(100% - 28px); display:flex; flex-direction:column; justify-content:center; gap:26px;">
+          <span style="position:absolute; right:0; top:0; bottom:0; width:4px; background:#ffd400;"></span>
+          <span style="position:absolute; left:18px; top:16px; font-size:8px; letter-spacing:0.3em; color:#3a3a38; text-transform:uppercase;">170823 ⁄ INC_SET</span>
+          <div style="display:flex; align-items:center; gap:26px;">
+            <div style="width:72px; height:72px; flex:none;"><dc-import name="GenexMark" color="#ffd400" eye="#ffffff" hint-size="72px,72px"></dc-import></div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <div style="font-family:'Bank Gothic',sans-serif; font-size:46px; line-height:0.82; letter-spacing:0.02em; color:#f2f2ef;">GEN-EX</div>
+              <span style="font-size:9px; font-weight:500; letter-spacing:0.32em; text-transform:uppercase; color:#8a8a86;">REALTIME EXPRESSION LAB</span>
+            </div>
+          </div>
+          <div style="display:flex; gap:14px; align-items:center; font-size:8px; letter-spacing:0.14em; color:#6e6e6a; text-transform:uppercase;">
+            <span style="width:40px; height:5px; background:#ffd400;"></span>
+            <span>REVERSED · MIN WIDTH 96PX</span>
+          </div>
+        </div>
+      </section>
+      <section>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <span style="font-size:10px; letter-spacing:0.16em; text-transform:uppercase;"><b style="background:#ffd400; padding:2px 7px;">06</b>&nbsp;&nbsp;PALETTE</span>
+          <span style="font-size:9px; letter-spacing:0.14em; color:#9a9a96; text-transform:uppercase;">03 TOKEN</span>
+        </div>
+        <div style="box-shadow: inset 0 0 0 1px #0a0a0a; background:#fff;">
+          <div style="display:flex; align-items:center; gap:18px; padding:18px 22px; border-bottom:1px solid #0a0a0a;">
+            <span style="width:46px; height:46px; background:#ffd400; flex:none; box-shadow: inset 0 0 0 1px #0a0a0a;"></span>
+            <div style="flex:1;"><div style="font-size:11px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase;">SIGNAL YELLOW</div><div style="font-size:9px; color:#9a9a96; letter-spacing:0.08em;">ACCENT · EYES · RAIL</div></div>
+            <span style="font-size:11px; letter-spacing:0.08em;">#FFD400</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:18px; padding:18px 22px; border-bottom:1px solid #0a0a0a;">
+            <span style="width:46px; height:46px; background:#0a0a0a; flex:none;"></span>
+            <div style="flex:1;"><div style="font-size:11px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase;">INK</div><div style="font-size:9px; color:#9a9a96; letter-spacing:0.08em;">MARK · TYPE · RULE</div></div>
+            <span style="font-size:11px; letter-spacing:0.08em;">#0A0A0A</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:18px; padding:18px 22px;">
+            <span style="width:46px; height:46px; background:#f2f2ef; flex:none; box-shadow: inset 0 0 0 1px #0a0a0a;"></span>
+            <div style="flex:1;"><div style="font-size:11px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase;">PAPER</div><div style="font-size:9px; color:#9a9a96; letter-spacing:0.08em;">SURFACE · GROUND</div></div>
+            <span style="font-size:11px; letter-spacing:0.08em;">#F2F2EF</span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- 07 · IN-APP / HEADER -->
+    <section style="margin-top:28px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <span style="font-size:10px; letter-spacing:0.16em; text-transform:uppercase;"><b style="background:#ffd400; padding:2px 7px;">07</b>&nbsp;&nbsp;IN-APP · HEADER</span>
+        <span style="font-size:9px; letter-spacing:0.14em; color:#9a9a96; text-transform:uppercase;">ACCENT MIGRATION · LIME → SIGNAL YELLOW</span>
+      </div>
+      <div style="box-shadow: inset 0 0 0 1px #0a0a0a; background:#f2f2ef;">
+        <div style="display:flex; align-items:stretch; height:56px; border-bottom:1px solid #0a0a0a;">
+          <div style="display:flex; align-items:center; gap:12px; padding:0 18px; border-right:1px solid #0a0a0a;">
+            <div style="width:25px; height:25px;"><dc-import name="GenexMark" color="#0a0a0a" eye="#ffd400" hint-size="25px,25px"></dc-import></div>
+            <span style="font-family:'Bank Gothic',sans-serif; font-size:15px; letter-spacing:0.1em; color:#0a0a0a;">GEN-EX</span>
+            <span style="font-size:9px; color:#9a9a96; letter-spacing:0.1em;">v01.0 — 2026</span>
+          </div>
+          <div style="flex:1; display:flex; align-items:center; gap:14px; padding:0 18px; font-size:10px; letter-spacing:0.08em; color:#9a9a96; text-transform:uppercase;">
+            <span style="color:#0a0a0a;">REALTIME</span><span>⁄</span><span>EXPRESSION SET 04</span><span>⁄</span><span>N1</span>
+          </div>
+          <div style="display:flex; align-items:stretch; border-left:1px solid #0a0a0a; font-size:10px; letter-spacing:0.08em; text-transform:uppercase;">
+            <div style="display:flex; align-items:center; gap:6px; padding:0 14px; border-right:1px solid #0a0a0a; color:#0a0a0a;"><span style="width:6px; height:6px; background:#0a0a0a;"></span>+ NODE</div>
+            <div style="display:flex; align-items:center; padding:0 14px; border-right:1px solid #0a0a0a; color:#0a0a0a;">FIT</div>
+            <div style="display:flex; align-items:center; padding:0 14px; border-right:1px solid #0a0a0a; color:#0a0a0a;">EXPORT.JSON</div>
+            <div style="display:flex; align-items:center; gap:6px; padding:0 14px; background:#ffd400; color:#0a0a0a;"><span style="width:6px; height:6px; background:#0a0a0a;"></span>TWEAKS</div>
+          </div>
+        </div>
+        <div style="position:relative; height:148px; overflow:hidden; background-image: linear-gradient(rgba(10,10,10,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(10,10,10,0.05) 1px, transparent 1px); background-size: 40px 40px;">
+          <span style="position:absolute; right:0; top:0; bottom:0; width:4px; background:#ffd400;"></span>
+          <span style="position:absolute; left:14px; top:10px; font-size:8px; letter-spacing:0.12em; color:#9a9a96;">[ 55°36'24.2&quot;N ]</span>
+          <span style="position:absolute; right:30px; bottom:10px; font-size:8px; letter-spacing:0.12em; color:#9a9a96;">TC 00:14:23:08</span>
+          <svg style="position:absolute; left:0; top:0; width:100%; height:100%; pointer-events:none;" preserveAspectRatio="none"><line x1="190" y1="58" x2="300" y2="92" stroke="#0a0a0a" stroke-width="1" opacity="0.5"></line></svg>
+          <div style="position:absolute; left:60px; top:38px; background:#0a0a0a; color:#f2f2ef; padding:10px 14px; min-width:128px;">
+            <div style="font-size:8px; letter-spacing:0.1em; color:rgba(255,255,255,0.55); text-transform:uppercase; margin-bottom:4px;">ROOT · N1</div>
+            <div style="font-family:'Bank Gothic',sans-serif; font-size:18px; letter-spacing:0.04em;">EXPRESSION</div>
+          </div>
+          <div style="position:absolute; left:300px; top:74px;">
+            <div style="width:54px; height:6px; background:#ffd400; margin-bottom:6px;"></div>
+            <div style="font-family:'Bank Gothic',sans-serif; font-size:14px; letter-spacing:0.06em; color:#0a0a0a;">REALTIME RIG</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 08 · APP ICON + 09 MOTION -->
+    <div style="display:grid; grid-template-columns:1.42fr 1fr; gap:28px; margin-top:28px;">
+      <section>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <span style="font-size:10px; letter-spacing:0.16em; text-transform:uppercase;"><b style="background:#ffd400; padding:2px 7px;">08</b>&nbsp;&nbsp;APP ICON · FAVICON</span>
+          <span style="font-size:9px; letter-spacing:0.14em; color:#9a9a96; text-transform:uppercase;">SAFE AREA 18% · MASKABLE</span>
+        </div>
+        <div style="box-shadow: inset 0 0 0 1px #0a0a0a; background:#fff; padding:28px 30px; display:flex; align-items:center; gap:34px;">
+          <div style="flex:none; text-align:center;">
+            <div style="width:128px; height:128px; border-radius:28px; background:#0a0a0a; display:flex; align-items:center; justify-content:center;">
+              <div style="width:80px; height:80px;"><dc-import name="GenexMark" color="#ffd400" eye="#ffffff" hint-size="80px,80px"></dc-import></div>
+            </div>
+            <div style="font-size:8px; letter-spacing:0.12em; color:#9a9a96; margin-top:8px; text-transform:uppercase;">512 · iOS / ANDROID</div>
+          </div>
+          <div style="flex:1; display:flex; flex-direction:column; gap:16px;">
+            <div style="display:flex; align-items:flex-end; gap:18px;">
+              <div style="text-align:center;">
+                <div style="width:64px; height:64px; border-radius:14px; background:#0a0a0a; display:flex; align-items:center; justify-content:center;"><div style="width:40px; height:40px;"><dc-import name="GenexMark" color="#ffd400" eye="#ffffff" hint-size="40px,40px"></dc-import></div></div>
+                <div style="font-size:8px; color:#9a9a96; margin-top:5px;">64</div>
+              </div>
+              <div style="text-align:center;">
+                <div style="width:48px; height:48px; border-radius:10px; background:#0a0a0a; display:flex; align-items:center; justify-content:center;"><div style="width:30px; height:30px;"><dc-import name="GenexMark" color="#ffd400" eye="#ffffff" hint-size="30px,30px"></dc-import></div></div>
+                <div style="font-size:8px; color:#9a9a96; margin-top:5px;">48</div>
+              </div>
+              <div style="text-align:center;">
+                <div style="width:32px; height:32px; border-radius:7px; background:#0a0a0a; display:flex; align-items:center; justify-content:center;"><div style="width:21px; height:21px;"><dc-import name="GenexMark" color="#ffd400" eye="#ffd400" hint-size="21px,21px"></dc-import></div></div>
+                <div style="font-size:8px; color:#9a9a96; margin-top:5px;">32</div>
+              </div>
+              <div style="text-align:center;">
+                <div style="width:16px; height:16px; border-radius:4px; background:#0a0a0a; display:flex; align-items:center; justify-content:center;"><div style="width:12px; height:12px;"><dc-import name="GenexMark" color="#ffd400" eye="#ffd400" hint-size="12px,12px"></dc-import></div></div>
+                <div style="font-size:8px; color:#9a9a96; margin-top:5px;">16</div>
+              </div>
+            </div>
+            <div style="display:flex; gap:12px; padding-top:14px; border-top:1px solid #e2e2dd;">
+              <div style="width:44px; height:44px; border-radius:10px; background:#ffd400; display:flex; align-items:center; justify-content:center; box-shadow: inset 0 0 0 1px #0a0a0a;"><div style="width:28px; height:28px;"><dc-import name="GenexMark" color="#0a0a0a" eye="#0a0a0a" hint-size="28px,28px"></dc-import></div></div>
+              <div style="width:44px; height:44px; border-radius:10px; background:#f2f2ef; display:flex; align-items:center; justify-content:center; box-shadow: inset 0 0 0 1px #0a0a0a;"><div style="width:28px; height:28px;"><dc-import name="GenexMark" color="#0a0a0a" eye="#ffd400" hint-size="28px,28px"></dc-import></div></div>
+              <div style="width:44px; height:44px; border-radius:10px; background:#0a0a0a; display:flex; align-items:center; justify-content:center;"><div style="width:28px; height:28px;"><dc-import name="GenexMark" color="#f2f2ef" eye="#ffd400" hint-size="28px,28px"></dc-import></div></div>
+              <span style="font-size:8px; letter-spacing:0.1em; color:#9a9a96; align-self:center; text-transform:uppercase;">TILE COLORWAYS</span>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <span style="font-size:10px; letter-spacing:0.16em; text-transform:uppercase;"><b style="background:#ffd400; padding:2px 7px;">09</b>&nbsp;&nbsp;MOTION</span>
+          <span style="font-size:9px; letter-spacing:0.14em; color:#9a9a96; text-transform:uppercase;">LIVE · LOOP 3.6S</span>
+        </div>
+        <div style="position:relative; background:#0a0a0a; box-shadow: inset 0 0 0 1px #0a0a0a; padding:26px 28px; height:calc(100% - 28px); display:flex; flex-direction:column; justify-content:center; gap:20px; overflow:hidden;">
+          <span style="position:absolute; right:0; top:0; bottom:0; width:4px; background:#ffd400;"></span>
+          <div style="display:flex; align-items:center; gap:22px;">
+            <div style="width:88px; height:88px; flex:none;">
+              <svg viewBox="0 0 120 120" width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block; overflow:visible">
+                <g transform="rotate(-9 60 60)">
+                  <path d="M 94.67 32.91 A 44 44 0 1 0 94.67 87.09" stroke="#f2f2ef" stroke-width="12.5" stroke-linecap="round" fill="none"></path>
+                  <path d="M 94.67 87.09 L 75 78.5" stroke="#f2f2ef" stroke-width="12.5" stroke-linecap="round" fill="none"></path>
+                  <rect x="54" y="41" width="11.5" height="28" rx="5.75" fill="#f2f2ef" style="transform-box:fill-box; transform-origin:center; animation:genexBlink 3.6s ease-in-out infinite;"></rect>
+                  <circle cx="42" cy="72" r="8" fill="#ffd400"></circle>
+                </g>
+              </svg>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:9px;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="width:7px; height:7px; border-radius:50%; background:#ffd400; display:inline-block; animation:genexPulse 1.4s ease-in-out infinite;"></span>
+                <span style="font-size:10px; letter-spacing:0.16em; color:#f2f2ef; text-transform:uppercase;">LIVE</span>
+              </div>
+              <div style="font-size:9px; line-height:1.7; letter-spacing:0.08em; color:#8a8a86; text-transform:uppercase;">EYE BLINK = REALTIME<br>EXPRESSION SIGNAL.<br>LOADING · ACTIVE STATE.</div>
+            </div>
+          </div>
+          <div style="display:flex; gap:14px; align-items:center; font-size:8px; letter-spacing:0.14em; color:#6e6e6a; text-transform:uppercase;">
+            <span style="width:40px; height:5px; background:#ffd400;"></span>
+            <span>BLINK 0.4S · HOLD 3.2S · LOOP</span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

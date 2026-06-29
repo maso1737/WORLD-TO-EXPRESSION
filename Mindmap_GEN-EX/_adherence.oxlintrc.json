@@ -1,0 +1,112 @@
+{
+  "plugins": [
+    "react",
+    "import"
+  ],
+  "rules": {
+    "react/forbid-elements": [
+      "warn",
+      {
+        "forbid": []
+      }
+    ],
+    "no-restricted-imports": [
+      "warn",
+      {
+        "patterns": [
+          {
+            "group": [
+              "app.js",
+              "extras.js",
+              "skills/genex-mindmap/app/**",
+              "wipeout.js"
+            ],
+            "message": "Import design-system components from 'index.js', not component internals."
+          }
+        ]
+      }
+    ],
+    "no-restricted-syntax": [
+      "warn",
+      {
+        "selector": "Literal[value=/#[0-9a-fA-F]{3,8}\\b/]",
+        "message": "Raw hex color — use a design-system color token via var()."
+      },
+      {
+        "selector": "Literal[value=/font-family\\s*:\\s*(?!['\\\"]?(?:JetBrains Mono|IBM Plex Sans JP|Bank Gothic|Square 721))/i]",
+        "message": "Font not provided by the design system. Available: JetBrains Mono, IBM Plex Sans JP, Bank Gothic, Square 721."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/index.js"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ],
+  "x-omelette": {
+    "components": {},
+    "tokens": [
+      "--acc",
+      "--acc-ink",
+      "--bauhaus",
+      "--bg",
+      "--bg-2",
+      "--display",
+      "--ez",
+      "--grid",
+      "--grid-major",
+      "--hatch",
+      "--ink",
+      "--ink-2",
+      "--jp",
+      "--line",
+      "--mono",
+      "--mute",
+      "--mute-2",
+      "--node-bg",
+      "--panel-bg",
+      "--sans",
+      "--shadow",
+      "--t-click",
+      "--t-hover",
+      "--t-layout"
+    ],
+    "tokenKinds": {
+      "--bg": "color",
+      "--bg-2": "color",
+      "--ink": "color",
+      "--ink-2": "color",
+      "--mute": "color",
+      "--mute-2": "color",
+      "--line": "color",
+      "--acc": "color",
+      "--acc-ink": "color",
+      "--hatch": "color",
+      "--grid": "color",
+      "--grid-major": "color",
+      "--node-bg": "color",
+      "--panel-bg": "color",
+      "--shadow": "shadow",
+      "--ez": "other",
+      "--t-hover": "other",
+      "--t-click": "other",
+      "--t-layout": "other",
+      "--mono": "font",
+      "--sans": "font",
+      "--display": "font",
+      "--bauhaus": "font",
+      "--jp": "font"
+    },
+    "fontFamilies": [
+      "Bank Gothic",
+      "IBM Plex Sans JP",
+      "JetBrains Mono",
+      "Square 721"
+    ]
+  }
+}

@@ -17,7 +17,7 @@ updated: 2026-06-23
 |---|---|---|---|
 | 1 | [[L1 PHYSICAL WORLD]] | なぜ動く？ | — |
 | 2 | [[L2 NATURAL PATTERNS]] | なぜその形になる？ | [natural-patterns/](../natural-patterns/golden-ratio.html) 🚧 |
-| 3 | [[L3 PERCEPTION]] | なぜ気づく？ | — |
+| 3 | [[L3 PERCEPTION]] | なぜ気づく？ | [few-many](../cognitive/few-many.html) 🚧 |
 | 4 | [[L4 GESTALT]] | なぜまとまって見える？ | [cognitive/](../cognitive/index.html) ✅ |
 | 5 | [[L5 VISUAL LANGUAGE]] | なぜ伝わる？ | — |
 | 6 | [[L6 ANIMATION 12 PRINCIPLES]] | なぜ生きて見える？ | [12原則/](../12-Principles-of-Animation/index.html) ✅ |
@@ -42,4 +42,5 @@ updated: 2026-06-23
 
 ## 🗓 最近の作業ログ
 
+- [[2026-06-29]] — FEW/MANY試作 + GEN-EXデザイン言語の整理
 - [[2026-06-23]] — vault 初期構築
