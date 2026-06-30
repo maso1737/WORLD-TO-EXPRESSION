@@ -24,7 +24,7 @@
   --bg-2:#121212;
   --ink:#f2f2ef;          /* ink is light on dark */
   --ink-2:#cfcfca;
-  --mute:#6b6b66;
+  --mute:#9a9a93;
   --mute-2:#3a3a37;
   --line:#2a2a27;
   --acc:#ffd400;          /* signal yellow — Gen-EX */
@@ -114,7 +114,7 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acc)
   border:1px solid var(--acc-ink);cursor:pointer;border-radius:0}
 input[type=range]:disabled{opacity:.32;cursor:not-allowed}
 .row.off label .val{color:var(--mute)}
-.hint{font-family:var(--jp);font-size:10.5px;color:var(--mute);line-height:1.55;margin-top:4px}
+.hint{font-family:var(--jp);font-size:10.5px;color:var(--ink-2);line-height:1.55;margin-top:4px}
 .btn{width:100%;font-family:var(--display);font-weight:600;letter-spacing:.14em;font-size:13px;
   background:var(--acc);color:var(--acc-ink);border:none;padding:12px;cursor:pointer;
   transition:transform var(--t-click,240ms) var(--ez)}
@@ -225,6 +225,7 @@ input[type=range]:disabled{opacity:.32;cursor:not-allowed}
     <div class="sec">
       <div class="sh"><span class="lt">E</span>COPY ⁄ PASTE PARAMS</div>
       <div class="params" id="params" title="クリックでコピー">{ }</div>
+      <button class="btn ghost" id="paste">▸ PASTE（クリップボードから復元）</button>
     </div>
   </div>
 
@@ -463,6 +464,18 @@ input[type=range]:disabled{opacity:.32;cursor:not-allowed}
     tp.querySelector('.box').textContent=state.proof?'✓':'';draw();});
 
   // shortcuts
+  function flashParams(ok){var el=document.getElementById('params');var o=el.style.borderColor;
+    el.style.borderColor=ok?'var(--acc)':'var(--mute)';setTimeout(function(){el.style.borderColor=o;},900);}
+  function applyParams(p){
+    if(p&&typeof p.count==='number'){if(state.random)tr.click();
+      cEl.value=Math.max(1,Math.min(12,p.count|0));cEl.dispatchEvent(new Event('input'));}
+    if(p&&p.flashMs!==undefined){fEl.value=(p.flashMs==='HOLD'||+p.flashMs>=2100)?2100:Math.max(80,Math.min(2100,+p.flashMs));fEl.dispatchEvent(new Event('input'));}
+  }
+  document.getElementById('paste').addEventListener('click',function(){
+    if(!navigator.clipboard||!navigator.clipboard.readText){flashParams(false);return;}
+    navigator.clipboard.readText().then(function(t){try{applyParams(JSON.parse(t));flashParams(true);}catch(e){flashParams(false);}},function(){flashParams(false);});
+  });
+
   var modal=document.getElementById('modal');
   function toggleModal(){modal.classList.toggle('show');}
   document.getElementById('kShort').addEventListener('click',toggleModal);

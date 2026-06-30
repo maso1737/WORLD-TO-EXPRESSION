@@ -11,7 +11,7 @@
 @font-face{font-family:"Bank Gothic";src:url("../cognitive/fonts/bank-gothic-light-bt.ttf") format("truetype");font-weight:300 600;font-display:swap}
 @font-face{font-family:"Square 721";src:url("../cognitive/fonts/Square_721_BT.ttf") format("truetype");font-weight:400 700;font-display:swap}
 :root{
-  --bg:#0a0a0a;--bg-2:#121212;--ink:#f2f2ef;--ink-2:#cfcfca;--mute:#6b6b66;--mute-2:#3a3a37;
+  --bg:#0a0a0a;--bg-2:#121212;--ink:#f2f2ef;--ink-2:#cfcfca;--mute:#9a9a93;--mute-2:#3a3a37;
   --line:#2a2a27;--acc:#ffd400;--acc-ink:#0a0a0a;
   --grid:rgba(242,242,239,0.035);--grid-major:rgba(242,242,239,0.06);--panel-bg:#0e0e0e;
   --ez:cubic-bezier(0.2,0,0,1);
@@ -51,7 +51,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
 input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:2px;background:var(--mute-2);outline:none;cursor:pointer}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;background:var(--acc);border:1px solid var(--acc-ink);cursor:pointer;border-radius:0}
 input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acc);border:1px solid var(--acc-ink);cursor:pointer;border-radius:0}
-.hint{font-family:var(--jp);font-size:10.5px;color:var(--mute);line-height:1.55;margin-top:4px}
+.hint{font-family:var(--jp);font-size:10.5px;color:var(--ink-2);line-height:1.55;margin-top:4px}
 .hint b{color:var(--acc);font-weight:500}
 .presets{display:grid;grid-template-columns:1fr 1fr;gap:5px}
 .presets button{font-family:var(--mono);font-size:9.5px;letter-spacing:.04em;text-align:left;padding:7px 8px;border:1px solid var(--line);background:var(--bg-2);color:var(--ink-2);cursor:pointer;transition:all 120ms var(--ez);line-height:1.3}
@@ -149,6 +149,7 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acc)
     <div class="sec">
       <div class="sh"><span class="lt">E</span>COPY ⁄ PASTE PARAMS</div>
       <div class="params" id="params" title="クリックでコピー">{ }</div>
+      <button class="btn" id="paste">▸ PASTE（クリップボードから復元）</button>
     </div>
   </div>
 
@@ -298,6 +299,14 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acc)
   var tb=document.getElementById('tBin');
   tb.addEventListener('click',function(){S.bin=!S.bin;tb.classList.toggle('on',S.bin);
     tb.querySelector('.box').textContent=S.bin?'✓':'';});
+
+  function flashParams(ok){var el=document.getElementById('params');var o=el.style.borderColor;
+    el.style.borderColor=ok?'var(--acc)':'var(--mute)';setTimeout(function(){el.style.borderColor=o;},900);}
+  function applyParams(p){if(p&&typeof p.feed==='number'&&typeof p.kill==='number'){setFK(p.feed,p.kill);reseed();}}
+  document.getElementById('paste').addEventListener('click',function(){
+    if(!navigator.clipboard||!navigator.clipboard.readText){flashParams(false);return;}
+    navigator.clipboard.readText().then(function(t){try{applyParams(JSON.parse(t));flashParams(true);}catch(e){flashParams(false);}},function(){flashParams(false);});
+  });
 
   var modal=document.getElementById('modal');
   function toggleModal(){modal.classList.toggle('show');}
