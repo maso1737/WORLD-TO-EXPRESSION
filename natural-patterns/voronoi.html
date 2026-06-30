@@ -131,6 +131,7 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acc)
     <div class="sec">
       <div class="sh"><span class="lt">D</span>COPY ⁄ PASTE PARAMS</div>
       <div class="params" id="params" title="クリックでコピー">{ }</div>
+      <button class="btn" id="paste">▸ PASTE（クリップボードから復元）</button>
     </div>
   </div>
 
@@ -160,11 +161,18 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acc)
   "use strict";
   var cv=document.getElementById('cv'),ctx=cv.getContext('2d'),stage=document.getElementById('stage');
   var DPR=Math.max(1,window.devicePixelRatio||1);
-  var OW=200,OH=130;                       // voronoi compute resolution
-  var off=document.createElement('canvas'),offctx=off.getContext('2d'),img;
-  off.width=OW;off.height=OH;
+  var OW=280,OH=190;                       // voronoi compute resolution (OH set from aspect)
+  var off=document.createElement('canvas'),offctx=off.getContext('2d'),img=null;
   var assign=new Int32Array(OW*OH);
   var sites=[];
+  function setupGrid(){
+    var r=stage.getBoundingClientRect();
+    OH=Math.round(OW*r.height/Math.max(1,r.width));   // match stage aspect → no stretch
+    if(OH<90)OH=90;if(OH>460)OH=460;
+    off.width=OW;off.height=OH;
+    assign=new Int32Array(OW*OH);
+    img=offctx.createImageData(OW,OH);
+  }
   var S={n:3,relax:true,numbers:false,seed:1};
 
   function hash01(i){var x=Math.sin(i*12.9898+S.seed*7.123)*43758.5453;return x-Math.floor(x);}
@@ -198,7 +206,7 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acc)
   function cssW(){return cv.width/DPR;} function cssH(){return cv.height/DPR;}
 
   function render(){
-    if(!img)img=offctx.createImageData(OW,OH);
+    if(!img)setupGrid();
     var d=img.data,n=sites.length;
     for(var y=0;y<OH;y++){var row=y*OW;
       for(var x=0;x<OW;x++){
@@ -212,7 +220,7 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acc)
       }
     }
     offctx.putImageData(img,0,0);
-    ctx.imageSmoothingEnabled=true;ctx.clearRect(0,0,cssW(),cssH());
+    ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,cssW(),cssH());   // crisp, no anti-alias
     ctx.drawImage(off,0,0,cssW(),cssH());
     if(S.numbers){
       var sxk=cssW()/OW,syk=cssH()/OH;
@@ -270,6 +278,20 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acc)
     sites.push({x:gx,y:gy});S.n=sites.length;nEl.value=S.n;document.getElementById('vN').textContent=S.n;
     computeAssign();render();});
 
+  function flashParams(ok){var el=document.getElementById('params');var o=el.style.borderColor;
+    el.style.borderColor=ok?'var(--acc)':'var(--mute)';setTimeout(function(){el.style.borderColor=o;},900);}
+  function applyParams(p){
+    if(p&&typeof p.cells==='number'){S.n=Math.max(1,Math.min(120,p.cells|0));nEl.value=S.n;document.getElementById('vN').textContent=S.n;}
+    if(p&&typeof p.relax==='boolean'){S.relax=p.relax;tr.classList.toggle('on',S.relax);tr.querySelector('.box').textContent=S.relax?'✓':'';}
+    regen();
+  }
+  document.getElementById('paste').addEventListener('click',function(){
+    if(!navigator.clipboard||!navigator.clipboard.readText){flashParams(false);return;}
+    navigator.clipboard.readText().then(function(t){
+      try{applyParams(JSON.parse(t));flashParams(true);}catch(e){flashParams(false);}
+    },function(){flashParams(false);});
+  });
+
   var modal=document.getElementById('modal');
   function toggleModal(){modal.classList.toggle('show');}
   document.getElementById('kShort').addEventListener('click',toggleModal);
@@ -284,10 +306,10 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acc)
     if(k==='ArrowRight'){nEl.value=Math.min(120,S.n+1);nEl.dispatchEvent(new Event('input'));e.preventDefault();return;}
     if(k==='ArrowLeft'){nEl.value=Math.max(1,S.n-1);nEl.dispatchEvent(new Event('input'));e.preventDefault();return;}
   });
-  window.addEventListener('resize',function(){resizeCv();render();});
+  window.addEventListener('resize',function(){resizeCv();setupGrid();regen();});
 
   // init
-  resizeCv();regen();
+  resizeCv();setupGrid();regen();
 })();
 </script>
 </body>
