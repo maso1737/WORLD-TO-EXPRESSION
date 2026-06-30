@@ -13,6 +13,9 @@ status: 未着手
 - [FEW / MANY — Subitizing](../cognitive/few-many.html) 🆕 … 一瞬ドットを提示し個数を当てる。4以下=即座(サビタイジング)／5以上=見積もりモードの「崖」を試行統計で体感。FLASH TIME を HOLD にすると数えられて崖が消える＝off状態。
   - 由来: [[2026-06-23 NotebookLM ①②差分統合分析]] の統合テーマD-3
   - GEN-EXデザイン言語のダーク版（光の瞬間提示を活かすため暗ベース）
+- [TENSION × ANIMACY](../cognitive/tension-animacy.html) 🆕 … **L3×[[L6 ANIMATION 12 PRINCIPLES]] のクロスレベル**。形の緊張(①鋭角・偏位)×動きの生命感(②予備動作・イージング・変形)を2軸スライダーで掛け合わせ、ただの図形が「生き物」に変わる臨界点を体感。
+  - 由来: [[2026-06-23 NotebookLM ①②差分統合分析]] の統合テーマD-1（最優先）
+  - 四隅プリセット DEAD BOX / BOUNCY BALL / TENSE CORPSE / PREDATOR で「両方そろった時だけ CREATURE」を確認
 
 ## 核心
 脳が感覚情報を受け取る無意識かつ根源的な知覚プロセス（知覚心理学・生態心理学）。単一オブジェクトのプロパティ操作だけで体感できる「感覚の最小単位」。

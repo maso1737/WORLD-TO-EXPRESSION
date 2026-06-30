@@ -23,6 +23,9 @@ status: 完成HTMLあり（GitHub連携）
 - Anticipation（主運動前の逆ベクトル・ディレイ）
 - Timing & Spacing（ベジェ制御点 cp1, cp2）
 
+## 🔗 クロスレベル試作
+- [TENSION × ANIMACY](../cognitive/tension-animacy.html) … [[L3 PERCEPTION]]×L6。予備動作・イージング・Squash&Stretch（②の核）が、形の緊張（①）と合わさって「生命感(animacy)」を生む臨界点を体感。詳細 → [[2026-06-23 NotebookLM ①②差分統合分析]] D-1
+
 ## 関連プリミティブ
 - P-17 Elastic Squash / P-18 Anticipation Delay / P-19 Easing Curvature / P-30 Micro Jitter
 
