@@ -35,7 +35,7 @@ status: 未着手
 - [[②Gen-EX Realtime Expression Lab 設計ドキュメント]] §LEVEL 3
 
 ## ①固有の深掘り知見（[[2026-06-23 NotebookLM ①②差分統合分析]]より）
-- **サビタイジング**: 4個以下は瞬時カウント、超えると「見積もりモード」へ不連続に切り替わる → FEW/MANY教材の設計仕様
+- **サビタイジング**: 4個以下は瞬時カウント、超えると「見積もりモード」へ不連続に切り替わる → [few-many](../cognitive/few-many.html) と [Voronoi 個×密度](../natural-patterns/voronoi.html)（D-3, L2×L3）の両方でこの4の壁を扱う
 - **視覚的緊張の数式** $S_{\text{tension}}$: 鋭角さ・偏位が Arousal を誘発（マルコ・コスタ）
 - **境界拡張（Boundary Extension）**: 脳が枠外を補完・拡張する記憶エラー → CROPテーマの認知的裏付け
 - **ゲシュタルト4大メタ原理**: 創発・具現化・多安定性・不変性

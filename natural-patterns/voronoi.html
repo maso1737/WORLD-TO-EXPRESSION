@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INDIVIDUAL × TEXTURE — 個と密度の境界 (Voronoi)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=IBM+Plex+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:"Bank Gothic";src:url("../cognitive/fonts/bank-gothic-light-bt.ttf") format("truetype");font-weight:300 600;font-display:swap}
+@font-face{font-family:"Square 721";src:url("../cognitive/fonts/Square_721_BT.ttf") format("truetype");font-weight:400 700;font-display:swap}
+:root{
+  --bg:#0a0a0a;--bg-2:#121212;--ink:#f2f2ef;--ink-2:#cfcfca;--mute:#6b6b66;--mute-2:#3a3a37;
+  --line:#2a2a27;--acc:#ffd400;--acc-ink:#0a0a0a;
+  --grid:rgba(242,242,239,0.035);--grid-major:rgba(242,242,239,0.06);--panel-bg:#0e0e0e;
+  --ez:cubic-bezier(0.2,0,0,1);
+  --mono:"JetBrains Mono","IBM Plex Mono",ui-monospace,monospace;
+  --display:"Bank Gothic","Square 721","Space Grotesk",system-ui,sans-serif;
+  --sans:"Square 721","Bank Gothic","Helvetica Neue",system-ui,sans-serif;
+  --jp:"IBM Plex Sans JP","Noto Sans JP",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--sans);font-feature-settings:"ss01","ss02","tnum"}
+#app{height:100vh;display:grid;grid-template-rows:46px 1fr 30px;grid-template-columns:1fr 320px;grid-template-areas:"top top" "stage aside" "bot bot"}
+.topbar{grid-area:top;display:flex;align-items:center;gap:18px;padding:0 16px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:baseline;gap:8px}
+.mark{font-family:var(--display);font-weight:600;letter-spacing:.14em;font-size:14px}
+.layer-tag{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.16em}
+.ttl{flex:1;font-family:var(--mono);font-size:11px;color:var(--ink-2);letter-spacing:.16em;text-transform:uppercase}
+.esc{font-family:var(--mono);font-size:10px;color:var(--mute);text-decoration:none;border:1px solid var(--line);padding:4px 8px;letter-spacing:.12em}
+.esc:hover{color:var(--acc);border-color:var(--acc)}
+.stage{grid-area:stage;position:relative;overflow:hidden;cursor:crosshair}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block}
+.reg{position:absolute;color:var(--mute);font-family:var(--mono);font-size:10px;letter-spacing:.08em;pointer-events:none;user-select:none}
+.reg.tl{top:8px;left:10px}.reg.tr{top:8px;right:10px}.reg.bl{bottom:8px;left:10px}.reg.br{bottom:8px;right:10px}
+.iso{position:absolute;top:9px;left:50%;transform:translateX(-50%);white-space:nowrap;font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--mute);pointer-events:none}
+.prompt{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);width:92%;text-align:center;pointer-events:none}
+.prompt .pj{display:block;font-family:var(--jp);font-size:10.5px;letter-spacing:.06em;color:var(--mute);margin-bottom:6px}
+.prompt .pe{display:block;font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:.18em;color:var(--ink-2);text-transform:uppercase}
+.tagline{position:absolute;left:50%;top:44px;transform:translateX(-50%);white-space:nowrap;font-family:var(--display);font-weight:600;letter-spacing:.18em;font-size:14px;padding:5px 16px;border:1px solid var(--line);background:var(--bg-2);transition:all .25s var(--ez);pointer-events:none}
+@media (max-width:880px){.reg.tl,.reg.tr{display:none}.iso{font-size:9px;letter-spacing:.12em}.prompt .pe{font-size:15px;letter-spacing:.12em}}
+.aside{grid-area:aside;border-left:1px solid var(--line);background:var(--panel-bg);overflow-y:auto;padding:14px 14px 24px}
+.aside::-webkit-scrollbar{width:3px}.aside::-webkit-scrollbar-thumb{background:var(--mute-2)}
+.sec{margin-bottom:18px}
+.lt{display:inline-block;font-family:var(--mono);font-size:9px;color:var(--acc-ink);background:var(--acc);padding:1px 5px;margin-right:7px;letter-spacing:.1em}
+.sh{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.16em;text-transform:uppercase;margin-bottom:10px;border-bottom:1px solid var(--line);padding-bottom:5px}
+.row{margin-bottom:13px}
+.row label{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--ink-2);margin-bottom:5px;letter-spacing:.06em}
+.row .val{color:var(--acc)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:2px;background:var(--mute-2);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;background:var(--acc);border:1px solid var(--acc-ink);cursor:pointer;border-radius:0}
+input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acc);border:1px solid var(--acc-ink);cursor:pointer;border-radius:0}
+.hint{font-family:var(--jp);font-size:10.5px;color:var(--mute);line-height:1.55;margin-top:4px}
+.hint b{color:var(--acc);font-weight:500}
+.btn{width:100%;font-family:var(--display);font-weight:600;letter-spacing:.14em;font-size:11px;background:transparent;color:var(--ink-2);border:1px solid var(--line);padding:9px;cursor:pointer;margin-top:8px}
+.btn:hover{border-color:var(--acc);color:var(--acc)}
+.toggle{display:flex;align-items:center;gap:8px;cursor:pointer;font-family:var(--mono);font-size:11px;color:var(--ink-2)}
+.toggle .box{width:16px;height:16px;border:1px solid var(--line);display:grid;place-items:center;font-size:11px;color:var(--acc)}
+.toggle.on .box{background:var(--acc);color:var(--acc-ink)}
+.meter{margin:8px 0}
+.meter .top{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--mute);margin-bottom:5px}
+.meter .top b{font-family:var(--display);font-size:13px;letter-spacing:.12em;color:var(--ink-2)}
+.meter .track{height:14px;background:var(--bg-2);border:1px solid var(--mute-2);position:relative}
+.meter .fill{position:absolute;inset:0;width:0;background:var(--acc);transition:width .2s var(--ez)}
+.meter .marks{position:absolute;inset:0;pointer-events:none}
+.meter .marks i{position:absolute;top:0;bottom:0;width:1px;background:var(--mute-2)}
+.kv{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--mute);margin-bottom:4px}
+.kv b{color:var(--ink-2);font-weight:400}
+.params{font-family:var(--mono);font-size:10px;color:var(--mute);background:var(--bg-2);border:1px solid var(--line);padding:8px;word-break:break-all;line-height:1.5;cursor:pointer}
+.params:hover{border-color:var(--acc)}
+.bottombar{grid-area:bot;display:flex;align-items:center;gap:16px;padding:0 16px;border-top:1px solid var(--line);font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.1em}
+.bottombar .sp{flex:1}.bottombar b{color:var(--ink-2);font-weight:400}.bottombar .k{cursor:pointer}.bottombar .k:hover{color:var(--acc)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.78);display:none;place-items:center;z-index:20}
+.modal.show{display:grid}
+.modal .box{background:var(--panel-bg);border:1px solid var(--acc);padding:26px 30px;max-width:400px;font-family:var(--mono);font-size:12px}
+.modal h3{font-family:var(--display);letter-spacing:.14em;margin-bottom:14px;color:var(--acc)}
+.modal .kv2{display:flex;justify-content:space-between;margin-bottom:7px;color:var(--ink-2)}
+.modal .kv2 span:first-child{color:var(--acc)}
+.modal .close{margin-top:16px;color:var(--mute)}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="brand"><span class="mark">GEN-EX</span><span class="layer-tag">L2×L3</span></div>
+    <div class="ttl">INDIVIDUAL × TEXTURE — 個と密度の境界</div>
+    <a class="esc" href="../cognitive/index.html">[ESC] INDEX</a>
+  </div>
+
+  <div class="stage" id="stage">
+    <canvas id="cv"></canvas>
+    <div class="iso">PROCEDURAL ⁄ VORONOI — 個体識別の限界</div>
+    <div class="reg tl">+ &nbsp;00</div>
+    <div class="reg tr">CELL ⁄ N</div>
+    <div class="reg bl">NATURAL_PATTERN × PERCEPTION</div>
+    <div class="reg br">SUBITIZE &nbsp;+</div>
+    <div class="tagline" id="tagline">SUBITIZE</div>
+    <div class="prompt" id="prompt"><span class="pj">CELL COUNT を上げる → どこで「数える」が「テクスチャ」に変わる？</span><span class="pe">COUNT ⁄ UP</span></div>
+  </div>
+
+  <div class="aside">
+    <div class="sec">
+      <div class="sh"><span class="lt">A</span>GENERATOR</div>
+      <div class="row">
+        <label>CELL COUNT <span class="val" id="vN">3</span></label>
+        <input type="range" id="n" min="1" max="120" value="3">
+        <div class="hint">ボロノイ細胞の数。<b>4以下</b>は数えずに即把握（サビタイジング）→ 増やすと「個」が崩れ「<b>素材・密度</b>」になる。境界はどこ？</div>
+      </div>
+      <div class="toggle on" id="tRelax"><span class="box">✓</span>RELAX（Lloyd緩和＝有機的な等密度セル）</div>
+      <button class="btn" id="reseed">↻ RESEED</button>
+    </div>
+
+    <div class="sec">
+      <div class="sh"><span class="lt">B</span>PERCEPTION READOUT</div>
+      <div class="meter">
+        <div class="top"><span>INDIVIDUATION 個体性</span><b id="mLabel">—</b></div>
+        <div class="track"><div class="fill" id="mFill"></div><div class="marks"><i style="left:3.3%"></i><i style="left:10%"></i></div></div>
+      </div>
+      <div class="kv"><span>CELLS（細胞数）</span><b id="rN">3</b></div>
+      <div class="kv"><span>MODE（知覚モード）</span><b id="rMode">—</b></div>
+      <div class="hint">①の<b>サビタイジング</b>（[[few-many]] の4の壁）と同じ境界が、生成パターンの中にも現れる。</div>
+    </div>
+
+    <div class="sec">
+      <div class="sh"><span class="lt">C</span>PROOF ⁄ REVEAL</div>
+      <div class="toggle" id="tNum"><span class="box"></span>各セルに番号をふる（数え切れるか試す）</div>
+      <div class="hint">少数なら一目。ある数を超えると番号が頭に入らない＝個体識別の限界。</div>
+    </div>
+
+    <div class="sec">
+      <div class="sh"><span class="lt">D</span>COPY ⁄ PASTE PARAMS</div>
+      <div class="params" id="params" title="クリックでコピー">{ }</div>
+    </div>
+  </div>
+
+  <div class="bottombar">
+    <span>RES: <b id="bRes">—</b></span>
+    <span>RELAX: <b id="bRelax">ON</b></span>
+    <span class="sp"></span>
+    <span class="k" id="kShort">[?] SHORTCUTS</span>
+  </div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="box">
+    <h3>SHORTCUTS</h3>
+    <div class="kv2"><span>CLICK STAGE</span><span>その場所に細胞を1つ追加</span></div>
+    <div class="kv2"><span>← →</span><span>CELL COUNT 増減</span></div>
+    <div class="kv2"><span>R</span><span>RESEED（種の配置替え）</span></div>
+    <div class="kv2"><span>L</span><span>RELAX 切替</span></div>
+    <div class="kv2"><span>N</span><span>番号表示 切替</span></div>
+    <div class="kv2"><span>ESC</span><span>INDEX へ戻る</span></div>
+    <div class="close">［?］ または クリックで閉じる</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var cv=document.getElementById('cv'),ctx=cv.getContext('2d'),stage=document.getElementById('stage');
+  var DPR=Math.max(1,window.devicePixelRatio||1);
+  var OW=200,OH=130;                       // voronoi compute resolution
+  var off=document.createElement('canvas'),offctx=off.getContext('2d'),img;
+  off.width=OW;off.height=OH;
+  var assign=new Int32Array(OW*OH);
+  var sites=[];
+  var S={n:3,relax:true,numbers:false,seed:1};
+
+  function hash01(i){var x=Math.sin(i*12.9898+S.seed*7.123)*43758.5453;return x-Math.floor(x);}
+  function makeSites(n){var arr=[];for(var s=0;s<n;s++)arr.push({x:hash01(s+1)*OW,y:hash01(s+101)*OH});return arr;}
+
+  function computeAssign(){
+    var n=sites.length;
+    for(var y=0;y<OH;y++){var row=y*OW;
+      for(var x=0;x<OW;x++){
+        var best=1e9,bi=0;
+        for(var s=0;s<n;s++){var dx=sites[s].x-x,dy=sites[s].y-y,d=dx*dx+dy*dy;if(d<best){best=d;bi=s;}}
+        assign[row+x]=bi;
+      }
+    }
+  }
+  function relaxOnce(){
+    computeAssign();var n=sites.length;
+    var sx=new Float64Array(n),sy=new Float64Array(n),c=new Float64Array(n);
+    for(var y=0;y<OH;y++){var row=y*OW;for(var x=0;x<OW;x++){var idx=assign[row+x];sx[idx]+=x;sy[idx]+=y;c[idx]++;}}
+    for(var s=0;s<n;s++)if(c[s]>0){sites[s].x=sx[s]/c[s];sites[s].y=sy[s]/c[s];}
+  }
+  function regen(){
+    sites=makeSites(S.n);
+    if(S.relax){var it=S.n>60?4:6;for(var i=0;i<it;i++)relaxOnce();}
+    computeAssign();
+    render();
+  }
+
+  function resizeCv(){var r=stage.getBoundingClientRect();cv.width=Math.round(r.width*DPR);cv.height=Math.round(r.height*DPR);
+    ctx.setTransform(DPR,0,0,DPR,0,0);}
+  function cssW(){return cv.width/DPR;} function cssH(){return cv.height/DPR;}
+
+  function render(){
+    if(!img)img=offctx.createImageData(OW,OH);
+    var d=img.data,n=sites.length;
+    for(var y=0;y<OH;y++){var row=y*OW;
+      for(var x=0;x<OW;x++){
+        var i=row+x,a=assign[i];
+        // border = neighbor belongs to a different cell
+        var bd=(x+1<OW&&assign[i+1]!==a)||(y+1<OH&&assign[i+OW]!==a)||(x>0&&assign[i-1]!==a)||(y>0&&assign[i-OW]!==a);
+        var p=i*4;
+        if(bd){d[p]=10;d[p+1]=10;d[p+2]=10;d[p+3]=255;}
+        else{var b=0.32+0.6*hash01(a*3.17+5);
+          d[p]=Math.round(18+(255-18)*b);d[p+1]=Math.round(18+(212-18)*b);d[p+2]=Math.round(8*b);d[p+3]=255;}
+      }
+    }
+    offctx.putImageData(img,0,0);
+    ctx.imageSmoothingEnabled=true;ctx.clearRect(0,0,cssW(),cssH());
+    ctx.drawImage(off,0,0,cssW(),cssH());
+    if(S.numbers){
+      var sxk=cssW()/OW,syk=cssH()/OH;
+      ctx.font='600 12px '+getCss('--mono');ctx.textAlign='center';ctx.textBaseline='middle';
+      for(var s=0;s<n;s++){
+        var px=sites[s].x*sxk,py=sites[s].y*syk;
+        ctx.fillStyle='rgba(10,10,10,0.85)';ctx.beginPath();ctx.arc(px,py,9,0,7);ctx.fill();
+        ctx.fillStyle=getCss('--acc');ctx.fillText(String(s+1),px,py);
+      }
+    }
+    hud();
+  }
+  function getCss(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+
+  function modeOf(n){return n<=4?['SUBITIZE 即・個別','一目で「いくつ」が分かる']:n<=12?['COUNT 逐次・個別','数えれば分かる（順番に追う）']:['TEXTURE 密度・素材','もう数えない＝「柄・素材」として見える'];}
+  function hud(){
+    var n=S.n,m=modeOf(n);
+    document.getElementById('rN').textContent=n;
+    document.getElementById('rMode').textContent=m[0];
+    document.getElementById('mLabel').textContent=m[0];
+    document.getElementById('tagline').textContent=m[0];
+    var indiv=Math.max(0,Math.min(1,1-(n-1)/30));    // individuation drops as cells multiply
+    document.getElementById('mFill').style.width=Math.round(indiv*100)+'%';
+    var tag=document.getElementById('tagline');
+    var creature=n<=12;
+    tag.style.color=n<=4?getCss('--acc-ink'):getCss('--ink-2');
+    tag.style.background=n<=4?getCss('--acc'):getCss('--bg-2');
+    tag.style.borderColor=n<=4?getCss('--acc'):getCss('--line');
+    document.getElementById('bRes').textContent=OW+'×'+OH;
+    document.getElementById('bRelax').textContent=S.relax?'ON':'OFF';
+    renderParams(m[0]);
+  }
+  function renderParams(mode){
+    var p={app:'pattern-voronoi-individuation',cells:S.n,relax:S.relax,mode:mode.split(' ')[0]};
+    var el=document.getElementById('params');
+    el.textContent='{ '+Object.keys(p).map(function(k){var v=p[k];return k+':'+(typeof v==='string'?'"'+v+'"':v);}).join(', ')+' }';
+    el.onclick=function(){navigator.clipboard&&navigator.clipboard.writeText(JSON.stringify(p));
+      var o=el.style.borderColor;el.style.borderColor='var(--acc)';setTimeout(function(){el.style.borderColor=o;},1000);};
+  }
+
+  // bindings
+  var nEl=document.getElementById('n');
+  nEl.addEventListener('input',function(){S.n=+nEl.value;document.getElementById('vN').textContent=S.n;regen();});
+  var tr=document.getElementById('tRelax');
+  tr.addEventListener('click',function(){S.relax=!S.relax;tr.classList.toggle('on',S.relax);
+    tr.querySelector('.box').textContent=S.relax?'✓':'';regen();});
+  document.getElementById('reseed').addEventListener('click',function(){S.seed=(S.seed*1.618+0.37)%97+1;regen();});
+  var tn=document.getElementById('tNum');
+  tn.addEventListener('click',function(){S.numbers=!S.numbers;tn.classList.toggle('on',S.numbers);
+    tn.querySelector('.box').textContent=S.numbers?'✓':'';render();});
+
+  stage.addEventListener('click',function(e){
+    if(S.n>=120)return;var r=stage.getBoundingClientRect();
+    var gx=(e.clientX-r.left)/r.width*OW,gy=(e.clientY-r.top)/r.height*OH;
+    sites.push({x:gx,y:gy});S.n=sites.length;nEl.value=S.n;document.getElementById('vN').textContent=S.n;
+    computeAssign();render();});
+
+  var modal=document.getElementById('modal');
+  function toggleModal(){modal.classList.toggle('show');}
+  document.getElementById('kShort').addEventListener('click',toggleModal);
+  modal.addEventListener('click',function(){modal.classList.remove('show');});
+  document.addEventListener('keydown',function(e){
+    var k=e.key;
+    if(k==='Escape'){if(modal.classList.contains('show'))modal.classList.remove('show');else location.href='../cognitive/index.html';return;}
+    if(k==='?'){toggleModal();return;}
+    if(k==='l'||k==='L'){tr.click();return;}
+    if(k==='n'||k==='N'){tn.click();return;}
+    if(k==='r'||k==='R'){document.getElementById('reseed').click();return;}
+    if(k==='ArrowRight'){nEl.value=Math.min(120,S.n+1);nEl.dispatchEvent(new Event('input'));e.preventDefault();return;}
+    if(k==='ArrowLeft'){nEl.value=Math.max(1,S.n-1);nEl.dispatchEvent(new Event('input'));e.preventDefault();return;}
+  });
+  window.addEventListener('resize',function(){resizeCv();render();});
+
+  // init
+  resizeCv();regen();
+})();
+</script>
+</body>
+</html>

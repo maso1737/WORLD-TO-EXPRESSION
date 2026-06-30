@@ -13,7 +13,8 @@ status: 未着手
 `natural-patterns/` フォルダ（数理パターンのインタラクティブ教材・試作中）。
 - [黄金比](../natural-patterns/golden-ratio.html) / [フィボナッチ](../natural-patterns/fibonacci.html)
 - [ORDER × CHAOS 反応拡散](../natural-patterns/reaction-diffusion.html) 🆕 … **L2×[[L3 PERCEPTION]] クロス**。Gray-Scott反応拡散を FEED/KILL の2スライダーで操作し「均一(無)→斑点→縞→混沌」の相転移を体感。空間エントロピー＝①認知負荷を数値化（VOID/ORDER/COMPLEX）。ドラッグで種まき・二値化proof。由来=[[2026-06-23 NotebookLM ①②差分統合分析]] D-2
-- 今後ここに voronoi / fractal / L-system / noise を追加予定。
+- [INDIVIDUAL × TEXTURE (Voronoi)](../natural-patterns/voronoi.html) 🆕 … **L2×[[L3 PERCEPTION]] クロス**。ボロノイ細胞数を増やすと「数えられる個体(SUBITIZE/COUNT)→テクスチャ(密度)」へ変わる境界を体感。①サビタイジングの4の壁×②プロシージャル生成。RELAX(Lloyd緩和)・クリック追加・番号proof。由来=[[2026-06-23 NotebookLM ①②差分統合分析]] D-3
+- 今後ここに fractal / L-system / noise を追加予定。
 
 ## 核心
 自然界が自律的に形成する数理的規則性。美しさの根底にある幾何学的・動的アルゴリズム。

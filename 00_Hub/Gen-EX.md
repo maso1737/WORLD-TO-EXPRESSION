@@ -26,6 +26,7 @@ updated: 2026-06-23
 **クロスレベル試作**（由来 → [[2026-06-23 NotebookLM ①②差分統合分析]]）:
 - [TENSION × ANIMACY](../cognitive/tension-animacy.html)（L3×L6・D-1）— 形の緊張×動きの生命感で「生き物」が立ち上がる
 - [ORDER × CHAOS 反応拡散](../natural-patterns/reaction-diffusion.html)（L2×L3・D-2）— FEED/KILLで均一→縞→混沌の相転移、エントロピー＝認知負荷
+- [INDIVIDUAL × TEXTURE 個と密度](../natural-patterns/voronoi.html)（L2×L3・D-3）— ボロノイ細胞数で「個体→テクスチャ」の境界、サビタイジングの4の壁
 
 ## ⚠️ ①②の階層モデル差分メモ
 ①は**4階層**（知覚→ゲシュタルト→視覚言語→グラフィックデザイン）、②は**7階層**（上記＋物理・自然パターン・12原則・表現）。①は認知科学の深い理論的裏付けが強み、②は自然界数理パターンとアニメーション技法の実装体系が強み。詳細 → [[2026-06-23 NotebookLM ①②差分統合分析]]
