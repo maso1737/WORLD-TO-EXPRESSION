@@ -29,8 +29,8 @@
   --line:#2a2a27;
   --acc:#ffd400;          /* signal yellow — Gen-EX */
   --acc-ink:#0a0a0a;
-  --ok:#9bff5a;
-  --ng:#ff4d4d;
+  --ok:#ffd400;           /* 正解 = テーマカラー黄 */
+  --ng:#6b6b66;           /* 失敗 = グレー（赤は使わない） */
   --grid:rgba(242,242,239,0.035);
   --grid-major:rgba(242,242,239,0.06);
   --panel-bg:#0e0e0e;
@@ -103,6 +103,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
   background:var(--acc);border:1px solid var(--acc-ink);cursor:pointer;border-radius:0}
 input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acc);
   border:1px solid var(--acc-ink);cursor:pointer;border-radius:0}
+input[type=range]:disabled{opacity:.32;cursor:not-allowed}
+.row.off label .val{color:var(--mute)}
 .hint{font-family:var(--jp);font-size:10.5px;color:var(--mute);line-height:1.55;margin-top:4px}
 .btn{width:100%;font-family:var(--display);font-weight:600;letter-spacing:.14em;font-size:13px;
   background:var(--acc);color:var(--acc-ink);border:none;padding:12px;cursor:pointer;
@@ -176,8 +178,12 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acc)
     <div class="sec">
       <div class="sh"><span class="lt">A</span>CONTROL</div>
       <div class="row">
-        <label>DOT COUNT <span class="val" id="vCount">5</span></label>
-        <input type="range" id="count" min="1" max="12" value="5">
+        <div class="toggle on" id="tRandom"><span class="box">✓</span>RANDOM COUNT（見せる用・数を隠す）</div>
+        <div class="hint">ONの間は FLASH ごとに個数がランダム（出題者にもバレない）。OFFにすると下の DOT COUNT で指定できる。</div>
+      </div>
+      <div class="row" id="rowCount">
+        <label>DOT COUNT <span class="val" id="vCount">?</span></label>
+        <input type="range" id="count" min="1" max="12" value="5" disabled>
         <div class="hint">画面に出るドットの数。<b style="color:var(--acc)">4以下</b>は数えずに即わかる（サビタイジング）。超えると…？</div>
       </div>
       <div class="row">
@@ -242,7 +248,7 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acc)
   "use strict";
   var cv=document.getElementById('cv'),ctx=cv.getContext('2d'),stage=document.getElementById('stage');
   var DPR=Math.max(1,window.devicePixelRatio||1);
-  var state={count:5,flashMs:250,hold:false,proof:false,phase:'idle',dots:[],guess:null,correct:null,trial:0};
+  var state={count:5,random:true,flashMs:250,hold:false,proof:false,phase:'idle',dots:[],guess:null,correct:null,trial:0};
   var stats={}; // count -> {n, hit}
   var flashTimer=null;
 
@@ -322,6 +328,7 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acc)
 
   function flash(){
     if(flashTimer){clearTimeout(flashTimer);flashTimer=null;}
+    if(state.random)state.count=Math.floor(Math.random()*12)+1;
     state.dots=genDots(state.count);
     state.guess=null;state.correct=null;
     state.phase='flash';
@@ -414,7 +421,21 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acc)
 
   // ---------- bindings ----------
   var cEl=document.getElementById('count'),fEl=document.getElementById('flash');
-  cEl.addEventListener('input',function(){state.count=+cEl.value;document.getElementById('vCount').textContent=state.count;});
+  function updateCountUI(){
+    var v=document.getElementById('vCount'),row=document.getElementById('rowCount');
+    cEl.disabled=state.random;
+    row.classList.toggle('off',state.random);
+    v.textContent=state.random?'?':state.count;
+  }
+  cEl.addEventListener('input',function(){if(state.random)return;state.count=+cEl.value;updateCountUI();});
+  var tr=document.getElementById('tRandom');
+  tr.addEventListener('click',function(){
+    state.random=!state.random;
+    tr.classList.toggle('on',state.random);
+    tr.querySelector('.box').textContent=state.random?'✓':'';
+    if(!state.random)state.count=+cEl.value;
+    updateCountUI();
+  });
   fEl.addEventListener('input',function(){
     var v=+fEl.value;
     if(v>=2100){state.hold=true;document.getElementById('vFlash').textContent='HOLD';}
@@ -445,7 +466,7 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acc)
   });
 
   // init
-  buildPad();renderStats();renderParams();refreshPad(false);
+  buildPad();renderStats();renderParams();refreshPad(false);updateCountUI();
   resize();
   setMode('IDLE');
 })();
