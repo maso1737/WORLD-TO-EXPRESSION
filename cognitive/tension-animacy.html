@@ -119,8 +119,8 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acc)
     <div class="sec">
       <div class="sh"><span class="lt">A</span>TWO AXES</div>
       <div class="row">
-        <label>① FORM TENSION <span class="val" id="vTen">50</span></label>
-        <input type="range" id="ten" min="0" max="100" value="50">
+        <label>① FORM TENSION <span class="val" id="vTen">0</span></label>
+        <input type="range" id="ten" min="0" max="100" value="0">
         <div class="hint">形の緊張。0=丸く対称（安らぎ）→ 100=<b>鋭角・非対称</b>（警戒・刺突）。①視覚的緊張 S_tension。</div>
       </div>
       <div class="row">
@@ -192,7 +192,7 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acc)
   "use strict";
   var cv=document.getElementById('cv'),ctx=cv.getContext('2d'),stage=document.getElementById('stage');
   var DPR=Math.max(1,window.devicePixelRatio||1);
-  var S={ten:0.5,life:0.5,proof:false,auto:true};
+  var S={ten:0,life:0.5,proof:false,auto:true};
   // motion state
   var M={x:0,y:0,px:0,py:0,sx:0,sy:0,tx:0,ty:0,t:1,dur:0.7,resting:true,restT:0,restDur:0.5,
          vx:0,vy:0,speed:0,heading:0,act:0,anim:0};
@@ -284,15 +284,15 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acc)
         ctx.lineTo(M.x+Math.cos(M.heading)*vl,M.y+Math.sin(M.heading)*vl);ctx.stroke();
       }
     }
-    // body
-    var col=mixColor(M.anim);
+    // body — always theme colour; glow grows with animacy from 0 (none at the open circle)
+    var col=getCss('--acc');
     ctx.save();
     ctx.translate(M.x,M.y);ctx.rotate(M.heading);ctx.scale(stretch,perp);
     var pts=shapePath(S.ten,R);
     ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);
     for(var i=1;i<pts.length;i++)ctx.lineTo(pts[i][0],pts[i][1]);
     ctx.closePath();
-    ctx.shadowColor=col;ctx.shadowBlur=10+M.anim*26;
+    ctx.shadowColor=col;ctx.shadowBlur=M.anim*30;
     ctx.fillStyle=col;ctx.fill();
     // focus point (intent) near nose when animate
     if(M.anim>0.45){
