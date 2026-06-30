@@ -70,18 +70,27 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);
 }
 #cv{position:absolute;inset:0;width:100%;height:100%;display:block}
 /* corner registration marks + iso label */
-.reg{position:absolute;color:var(--mute);font-family:var(--mono);font-size:10px;pointer-events:none;user-select:none}
+.reg{position:absolute;color:var(--mute);font-family:var(--mono);font-size:10px;letter-spacing:.08em;pointer-events:none;user-select:none}
 .reg.tl{top:8px;left:10px}.reg.tr{top:8px;right:10px}
 .reg.bl{bottom:8px;left:10px}.reg.br{bottom:8px;right:10px}
-.iso{position:absolute;top:8px;left:50%;transform:translateX(-50%);
-  font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--mute);pointer-events:none}
-.prompt{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);
-  font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--mute);text-align:center;pointer-events:none}
-.verdict{position:absolute;left:50%;top:14px;transform:translateX(-50%);
+.iso{position:absolute;top:9px;left:50%;transform:translateX(-50%);white-space:nowrap;
+  font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--mute);pointer-events:none}
+.prompt{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);
+  width:92%;text-align:center;pointer-events:none}
+.prompt .pj{display:block;font-family:var(--jp);font-size:10.5px;letter-spacing:.06em;color:var(--mute);margin-bottom:6px}
+.prompt .pe{display:block;font-family:var(--display);font-weight:600;font-size:18px;
+  letter-spacing:.18em;color:var(--ink-2);text-transform:uppercase}
+.verdict{position:absolute;left:50%;top:46px;transform:translateX(-50%);white-space:nowrap;
   font-family:var(--display);font-weight:600;letter-spacing:.1em;font-size:13px;
   padding:5px 14px;border:1px solid var(--line);background:var(--bg-2);
   opacity:0;transition:opacity var(--t,200ms) var(--ez);pointer-events:none}
 .verdict.show{opacity:1}
+/* narrow stage: drop top registration marks so they never collide with the ISO label */
+@media (max-width:880px){
+  .reg.tl,.reg.tr{display:none}
+  .iso{font-size:9px;letter-spacing:.12em}
+  .prompt .pe{font-size:15px;letter-spacing:.12em}
+}
 .verdict.ok{color:var(--acc-ink);background:var(--ok);border-color:var(--ok)}
 .verdict.ng{color:#fff;background:var(--ng);border-color:var(--ng)}
 /* ---------- aside ---------- */
@@ -170,7 +179,7 @@ input[type=range]:disabled{opacity:.32;cursor:not-allowed}
     <div class="reg bl">PERCEPTION ⁄ COUNT</div>
     <div class="reg br">PSYCHOPHYS &nbsp;+</div>
     <div class="verdict" id="verdict"></div>
-    <div class="prompt" id="prompt">[ FLASH ] を押す → 一瞬だけ見える → 個数を当てる</div>
+    <div class="prompt" id="prompt"><span class="pj">［FLASH］を押すと一瞬だけ見える → 個数を当てる</span><span class="pe">PRESS FLASH</span></div>
   </div>
 
   <!-- ASIDE -->
@@ -334,12 +343,13 @@ input[type=range]:disabled{opacity:.32;cursor:not-allowed}
     state.phase='flash';
     setVerdict('');
     setMode(state.hold?'HOLD':'FLASH');
-    setPrompt(state.hold?'数えてよい（HOLDモード）→ 個数を回答':'…一瞬！ 見えた数を回答');
+    if(state.hold)setPrompt('COUNT FREELY','HOLDモード：数えてOK → 個数を回答');
+    else setPrompt('WATCH…','一瞬だけ！ 見えた数を覚える');
     draw();
     if(!state.hold){
       flashTimer=setTimeout(function(){
         state.phase='hidden';setMode('GUESS?');
-        setPrompt('何個だった？ 右の数字をクリック');
+        setPrompt('HOW MANY?','何個だった？ 右の数字をクリック');
         draw();
       },state.flashMs);
     }else{
@@ -361,9 +371,11 @@ input[type=range]:disabled{opacity:.32;cursor:not-allowed}
     var c=state.count;
     if(!stats[c])stats[c]={n:0,hit:0};
     stats[c].n++; if(state.correct)stats[c].hit++;
-    setVerdict(state.correct?('正解 ⁄ '+state.count):('実際は '+state.count+' ⁄ あなた '+g));
+    setVerdict(state.correct?('CORRECT ⁄ '+state.count):('ACTUAL '+state.count+' ⁄ YOU '+g));
     setMode('REVEAL');
-    setPrompt(state.correct?'✓ 数えずに掴めた？ それがサビタイジング':'✗ '+(state.count>4?'5以上は「見積もり」モードに入る':'もう一度'));
+    if(state.correct)setPrompt('GOT IT — SUBITIZED','数えずに掴めた？ それがサビタイジング');
+    else setPrompt(state.count>4?'OFF — ESTIMATION ZONE':'OFF — TRY AGAIN',
+      state.count>4?'5以上は「見積もり」モードに入る':'もう一度');
     document.getElementById('bLast').textContent=(state.correct?'✓ ':'✗ ')+g+'/'+state.count;
     document.getElementById('bTrial').textContent=state.trial;
     draw();renderStats();renderParams();refreshPad(false);
@@ -373,7 +385,9 @@ input[type=range]:disabled{opacity:.32;cursor:not-allowed}
   function setVerdict(t){var v=document.getElementById('verdict');
     v.textContent=t;v.className='verdict'+(t?' show':'')+(state.correct===true?' ok':state.correct===false?' ng':'');}
   function setMode(t){document.getElementById('bMode').textContent=t;}
-  function setPrompt(t){document.getElementById('prompt').textContent=t;}
+  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function setPrompt(en,jp){document.getElementById('prompt').innerHTML=
+    '<span class="pj">'+esc(jp||'')+'</span><span class="pe">'+esc(en||'')+'</span>';}
 
   function buildPad(){
     var pad=document.getElementById('pad');pad.innerHTML='';
