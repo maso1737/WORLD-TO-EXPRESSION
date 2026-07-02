@@ -85,7 +85,7 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acc)
   <div class="topbar">
     <div class="brand"><span class="mark">GEN-EX</span><span class="layer-tag">L2×L3</span></div>
     <div class="ttl">INDIVIDUAL × TEXTURE — 個と密度の境界</div>
-    <a class="esc" href="../cognitive/index.html">[ESC] INDEX</a>
+    <a class="esc" href="../index.html">[ESC] INDEX</a>
   </div>
 
   <div class="stage" id="stage">
@@ -298,7 +298,7 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acc)
   modal.addEventListener('click',function(){modal.classList.remove('show');});
   document.addEventListener('keydown',function(e){
     var k=e.key;
-    if(k==='Escape'){if(modal.classList.contains('show'))modal.classList.remove('show');else location.href='../cognitive/index.html';return;}
+    if(k==='Escape'){if(modal.classList.contains('show'))modal.classList.remove('show');else location.href='../index.html';return;}
     if(k==='?'){toggleModal();return;}
     if(k==='l'||k==='L'){tr.click();return;}
     if(k==='n'||k==='N'){tn.click();return;}

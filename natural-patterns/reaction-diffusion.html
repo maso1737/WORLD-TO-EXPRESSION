@@ -90,7 +90,7 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acc)
   <div class="topbar">
     <div class="brand"><span class="mark">GEN-EX</span><span class="layer-tag">L2×L3</span></div>
     <div class="ttl">ORDER × CHAOS — 反応拡散の相転移</div>
-    <a class="esc" href="../cognitive/index.html">[ESC] INDEX</a>
+    <a class="esc" href="../index.html">[ESC] INDEX</a>
   </div>
 
   <div class="stage" id="stage">
@@ -314,7 +314,7 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acc)
   modal.addEventListener('click',function(){modal.classList.remove('show');});
   document.addEventListener('keydown',function(e){
     var kk=e.key;
-    if(kk==='Escape'){if(modal.classList.contains('show'))modal.classList.remove('show');else location.href='../cognitive/index.html';return;}
+    if(kk==='Escape'){if(modal.classList.contains('show'))modal.classList.remove('show');else location.href='../index.html';return;}
     if(kk==='?'){toggleModal();return;}
     if(kk==='b'||kk==='B'){tb.click();return;}
     if(kk==='r'||kk==='R'){reseed();return;}

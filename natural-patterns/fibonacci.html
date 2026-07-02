@@ -213,7 +213,7 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;bac
   <div id="topbar">
     <span class="lec">KINETIC_GEOMETRY // FIBONACCI</span>
     <span class="ttl">Build it · 触って育てる</span>
-    <span class="esc" onclick="location.href='index.html'">[ESC] INDEX</span>
+    <span class="esc" onclick="location.href='../index.html'">[ESC] INDEX</span>
   </div>
 
   <div id="main">
@@ -773,7 +773,7 @@ function closeShortcuts(){document.getElementById('shortcut-modal').classList.re
 window.addEventListener('keydown',e=>{
   if(/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName))return;
   const k=e.key;
-  if(k==='Escape'){ if(document.getElementById('shortcut-modal').classList.contains('open')){closeShortcuts();return;} location.href='index.html'; return; }
+  if(k==='Escape'){ if(document.getElementById('shortcut-modal').classList.contains('open')){closeShortcuts();return;} location.href='../index.html'; return; }
   if(k==='?'){ openShortcuts(); return; }
   if(k==='1'){ setMode('seq'); return; }
   if(k==='2'){ setMode('tile'); return; }
