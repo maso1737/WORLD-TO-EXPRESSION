@@ -47,15 +47,15 @@ body{background:var(--bg);color:var(--ink);font-family:var(--mono);overflow:hidd
     linear-gradient(90deg,var(--grid) 1px,transparent 1px) 0 0/40px 40px,
     var(--bg)}
 /* 3-D anamorphic scene */
-#scene{position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center}
+#scene{position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;perspective:900px;perspective-origin:50% 46%}
 #floor{position:relative;width:560px;height:360px;overflow:visible;
   background:
     repeating-linear-gradient(0deg, rgba(10,10,10,0.13) 0 1px, transparent 1px 36px),
     repeating-linear-gradient(90deg, rgba(10,10,10,0.13) 0 1px, transparent 1px 36px),
     #eceae6;
-  clip-path:polygon(11% 0, 89% 0, 100% 100%, 0 100%)}
-#floor::after{content:"";position:absolute;inset:0;clip-path:polygon(11% 0, 89% 0, 100% 100%, 0 100%);box-shadow:0 0 0 1px rgba(10,10,10,0.35) inset;pointer-events:none}
-#art{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transform:scaleY(2.7);transform-origin:50% 50%;transition:transform .08s linear;
+  box-shadow:0 0 0 1px rgba(10,10,10,0.35) inset;
+  transform-origin:50% 100%;transform:rotateX(44deg);transition:transform .08s linear}
+#art{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transform:scaleY(3.6);transform-origin:50% 50%;
   font-family:var(--disp);font-weight:300;font-size:96px;letter-spacing:0.04em;color:var(--ink);white-space:nowrap;user-select:none;line-height:1}
 #vp{position:absolute;inset:0;z-index:3;pointer-events:none;display:none}
 .gh-rail{position:absolute;top:0;bottom:0;right:0;width:4px;background:var(--acc);z-index:1}
@@ -78,6 +78,19 @@ body{background:var(--bg);color:var(--ink);font-family:var(--mono);overflow:hidd
 #verdict .v-main{font-family:var(--disp);font-size:24px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink);display:inline-block;padding:2px 4px;transition:background 120ms var(--ez)}
 #verdict .v-sub{font-family:var(--jp);font-size:11px;letter-spacing:0.12em;color:var(--mute);margin-top:5px}
 #verdict.edge .v-main{background:var(--acc);color:var(--ink);padding:3px 12px}
+
+/* PLAN VIEW inset — proof that the artwork itself never changes */
+#planview{position:absolute;left:16px;bottom:38px;width:152px;height:100px;background:#fff;border:1px solid var(--ink);z-index:4;overflow:hidden;box-shadow:3px 3px 0 rgba(10,10,10,0.10)}
+#pv-art{position:absolute;inset:0 0 16px 0;display:flex;align-items:center;justify-content:center;
+  font-family:var(--disp);font-weight:300;font-size:26px;letter-spacing:0.03em;color:var(--ink);white-space:nowrap;
+  transform:scaleY(3.6);transform-origin:50% 50%}
+#pv-lbl{position:absolute;left:0;right:0;bottom:0;height:16px;background:var(--ink);color:var(--bg);
+  font-family:var(--mono);font-size:7px;letter-spacing:0.14em;text-transform:uppercase;display:flex;align-items:center;justify-content:center}
+/* snap flash — lime frame pulse when entering the design viewpoint */
+#snapflash{position:absolute;inset:0;z-index:6;pointer-events:none;box-shadow:0 0 0 0 rgba(200,255,26,0) inset;opacity:0}
+#snapflash.fire{animation:snapfire .3s var(--ez)}
+@keyframes snapfire{0%{opacity:1;box-shadow:0 0 0 6px var(--acc) inset}100%{opacity:0;box-shadow:0 0 0 6px var(--acc) inset}}
+#main.dragging{cursor:ns-resize}
 
 /* SIDE */
 #side{background:#fff;border-left:1px solid var(--line);overflow-y:auto}
@@ -199,6 +212,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;backg
       <text id="vp-lbl" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="600" fill="#0a0a0a"></text>
     </svg>
 
+    <div id="planview"><div id="pv-art">GEN·EX</div><div id="pv-lbl">Plan View · Artwork Fixed</div></div>
+    <div id="snapflash"></div>
+
     <div class="po">
       <div class="po-num">08</div>
       <div class="po-en">Anamorphosis</div>
@@ -213,11 +229,12 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;backg
       <div class="spl">Control <em>操作</em></div>
       <div class="tr">
         <div class="tr-lbl">View Angle<span>視点の仰角（90°=正面）</span></div>
-        <input type="range" id="s-ang" min="8" max="90" value="46">
-        <div class="tr-val" id="v-ang">46°</div>
+        <input type="range" id="s-ang" min="8" max="90" value="70">
+        <div class="tr-val" id="v-ang">70°</div>
       </div>
       <div class="ratiobar"><span class="mk" id="ang-design"></span><i id="ang-mark"></i></div>
       <div class="rb-ends"><span>← <b>OBLIQUE</b> 斜め</span><span>正面 <b>FRONT</b> →</span></div>
+      <div class="ed-hint">ステージを<b>下ドラッグ</b>で視点を下げる（＝斜めから覗く）。設計角±3°に入ると像が立ち上がり一閃。</div>
     </section>
 
     <section class="sp">
@@ -243,7 +260,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;backg
       <div class="spl">Read <em>原理</em></div>
       <div class="db">
         <div class="de">The image is fixed. Only the viewpoint is wrong.</div>
-        <div class="dj">床に引き伸ばして描かれた像は<b>一切変わらない</b>。正面（90°）から見ると<b>縦に潰れて読めない</b>が、設計された<b>斜めの一点</b>に視点が来ると、遠近の圧縮が引き伸ばしを<b>ちょうど打ち消し</b>、像が立ち上がる。<b>正しい解釈＝正しい視点</b>。正面＝崩れたまま（off）。</div>
+        <div class="dj">床に引き伸ばして描かれた像は<b>一切変わらない</b>。正面（90°）から見ると<b>縦に間延びして読めない</b>が、設計された<b>斜めの一点</b>に視点が来ると、遠近の圧縮が引き伸ばしを<b>ちょうど打ち消し</b>、像が立ち上がる。<b>正しい解釈＝正しい視点</b>。正面＝崩れたまま（off）。</div>
       </div>
       <div class="dnote">ピクセルは固定、変わるのは<b>視点だけ</b>。正しい位置に立つと、何が「図」で何が主役かが書き換わる—これが L4 へ続く解釈のループ。</div>
       <a class="xref" href="l2-01-size-weight.html"><span>↔</span>L2·FOCUS <b>視覚重力</b>／視点が主役を書き換える<span class="ar">→</span></a>
@@ -273,6 +290,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;backg
   <div id="sc-box">
     <div class="sc-head">⌨ Keyboard Shortcuts <span id="sc-close">✕</span></div>
     <div class="sc-list">
+      <div class="sc-row"><div class="sc-desc">Lower viewpoint<span>ステージ縦ドラッグ＝視点を下げる</span></div><div class="sc-key">DRAG</div></div>
       <div class="sc-row"><div class="sc-desc">View angle −/+<span>視点の仰角</span></div><div class="sc-key">↑ ↓</div></div>
       <div class="sc-row"><div class="sc-desc">Fine adjust<span>微調整</span></div><div class="sc-key">← →</div></div>
       <div class="sc-row"><div class="sc-desc">Toggle viewpoint marker<span>視点提示</span></div><div class="sc-key">P</div></div>
@@ -285,9 +303,9 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;backg
 
 <script>
 // ── STATE ──────────────────────────────────────────────────
-const DESIGN_ANGLE = 20;     // the one correct viewpoint
-const K_STRETCH    = 2.7;    // anamorphic vertical pre-stretch
-const DEFAULTS = { viewAngle: 46, showViewpoint: false };
+const DESIGN_ANGLE = 10;     // the one correct viewpoint (grazing → strong foreshortening cancels a big pre-stretch)
+const K_STRETCH    = 3.6;    // anamorphic vertical pre-stretch (baked into #art/#pv-art CSS; tuned so letters read upright at DESIGN_ANGLE)
+const DEFAULTS = { viewAngle: 70, showViewpoint: false };
 const state = { ...DEFAULTS };
 
 let W = 0, H = 0;
@@ -301,22 +319,30 @@ function legibility() { const dev = Math.abs(state.viewAngle - DESIGN_ANGLE); re
 
 // ── VERDICT ────────────────────────────────────────────────
 function getVerd() {
-  const a = state.viewAngle;
-  if (a <= 28) return 'revealed';
-  if (a <= 42) return 'threshold';
-  if (a <= 66) return 'emerging';
+  const dev = Math.abs(state.viewAngle - DESIGN_ANGLE);
+  if (dev <= 6)  return 'revealed';
+  if (dev <= 14) return 'threshold';
+  if (dev <= 40) return 'emerging';
   return 'distorted';
 }
 
 // ── APPLY 3-D TRANSFORM ────────────────────────────────────
-// physically-correct apparent vertical scale: sin θ / sin θ0
-// 90° (front) → tall & distorted ; θ0 (design) → 1.0 (resolves)
-function apparentScaleY() {
-  const s = Math.sin(state.viewAngle * Math.PI / 180) / Math.sin(DESIGN_ANGLE * Math.PI / 180);
-  return Math.max(0.3, s);
-}
+// The artwork is PAINTED once with a fixed vertical pre-stretch (K_STRETCH,
+// baked into #art / #pv-art in CSS) and NEVER changes. Only the floor tilts:
+// rotateX(90-viewAngle). At viewAngle=90 the floor faces us flat → the stretch
+// is fully visible (distorted). At the design angle the foreshortening cancels
+// the stretch → the letters read upright.
+const SNAP = 3;                       // ± window around DESIGN_ANGLE for the reveal snap
+let wasInSnap = false;                // edge-trigger state for the flash
 function applyScene() {
-  artEl.style.transform = `scaleY(${apparentScaleY().toFixed(3)})`;
+  floor.style.transform = `rotateX(${90 - state.viewAngle}deg)`;
+  const inSnap = Math.abs(state.viewAngle - DESIGN_ANGLE) <= SNAP;
+  if (inSnap && !wasInSnap) fireSnap();
+  wasInSnap = inSnap;
+}
+function fireSnap() {
+  const f = document.getElementById('snapflash');
+  f.classList.remove('fire'); void f.offsetWidth; f.classList.add('fire');
 }
 
 // ── VIEWPOINT OVERLAY (schematic sight-line) ───────────────
@@ -392,7 +418,7 @@ function updateReadouts(verd) {
   V.classList.remove('edge');
 
   const T = {
-    distorted: ['DISTORTED', '正面 — 像は縦に潰れ読めない（off）',      'DST'],
+    distorted: ['DISTORTED', '像は縦に間延び — 視点がずれている（off）', 'DST'],
     emerging:  ['EMERGING',  '視点が傾き、像の輪郭が立ち上がる',        'EMG'],
     threshold: ['THRESHOLD', '崩壊／整合の境界点',                      'THR'],
     revealed:  ['REVEALED',  '正しい視点 — 像が現れる',                 'REV'],
@@ -414,6 +440,25 @@ tgVp.addEventListener('click', () => {
   tgVp.classList.toggle('on', state.showViewpoint);
   render();
 });
+
+// ── STAGE DRAG — lower the viewpoint by dragging down ──────
+const mainEl = document.getElementById('main');
+let drag = null;   // { y0, ang0 }
+const DRAG_GAIN = 0.32;   // °/px
+mainEl.addEventListener('pointerdown', e => {
+  drag = { y0: e.clientY, ang0: state.viewAngle };
+  mainEl.classList.add('dragging');
+  mainEl.setPointerCapture(e.pointerId);
+});
+mainEl.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const dy = e.clientY - drag.y0;            // drag DOWN (dy>0) → viewpoint lowers → smaller angle
+  state.viewAngle = Math.max(8, Math.min(90, Math.round(drag.ang0 - dy * DRAG_GAIN)));
+  syncUI();
+});
+const endDrag = e => { if (!drag) return; drag = null; mainEl.classList.remove('dragging'); if (e.pointerId!=null) try{mainEl.releasePointerCapture(e.pointerId);}catch{} };
+mainEl.addEventListener('pointerup', endDrag);
+mainEl.addEventListener('pointercancel', endDrag);
 
 function syncUI() {
   document.getElementById('s-ang').value = state.viewAngle;
