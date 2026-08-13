@@ -159,7 +159,7 @@ input[type=range]:hover::-moz-range-thumb{background:var(--acc)}
 .ed-hint{font-family:var(--jp);font-size:9px;color:var(--mute);letter-spacing:0.04em;margin-top:9px;line-height:1.6}
 
 /* ===== BOTTOMBAR ===== */
-#bottombar{grid-column:1/3;display:grid;grid-template-columns:auto auto 1fr auto;align-items:stretch;
+#bottombar{grid-column:1/3;display:grid;grid-template-columns:auto auto auto auto 1fr auto;align-items:stretch;
   border-top:1px solid var(--line);background:var(--bg);z-index:10}
 .bb-cell{display:flex;align-items:center;gap:8px;padding:0 16px;border-right:1px solid var(--mute-2);
   font-family:var(--mono);font-size:9px;letter-spacing:0.14em;color:var(--mute);text-transform:uppercase}
@@ -190,7 +190,8 @@ input[type=range]:hover::-moz-range-thumb{background:var(--acc)}
 @media (max-width:760px){
   #app{grid-template-columns:1fr;grid-template-rows:46px 1fr auto 30px}
   #side{grid-row:3;max-height:48vh;border-left:0;border-top:1px solid var(--line)}
-  #bottombar{grid-template-columns:auto 1fr auto}
+  #bottombar{grid-template-columns:auto auto 1fr auto}
+  #bb-bias-cell,#bb-seen-cell{display:none}
   .po-num{font-size:34px}.gh-num{font-size:24vh}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -238,12 +239,26 @@ input[type=range]:hover::-moz-range-thumb{background:var(--acc)}
     <section class="sp">
       <div class="spl">Control <em>操作</em></div>
       <div class="tr">
-        <div class="tr-lbl">Area Bias<span>面積の偏り（図地の手がかり）</span></div>
+        <div class="tr-lbl">Shape Cue<span>輪郭の形（壺寄り⇔顔寄り）</span></div>
+        <input type="range" id="s-shape" min="0" max="100" value="50">
+        <div class="tr-val" id="v-shape">50</div>
+      </div>
+      <div class="ratiobar"><i id="shape-mark"></i></div>
+      <div class="rb-ends"><span>← <b>VASE</b> 壺</span><span>両義</span><span>顔 <b>FACE</b> →</span></div>
+
+      <div class="tr" style="margin-top:16px">
+        <div class="tr-lbl">Area Bias<span>面積の偏り（弱い手がかり）</span></div>
         <input type="range" id="s-bias" min="0" max="100" value="50">
         <div class="tr-val" id="v-bias">50</div>
       </div>
       <div class="ratiobar"><i id="bias-mark"></i></div>
-      <div class="rb-ends"><span>← 壺が主役</span><span>顔が主役 →</span></div>
+      <div class="rb-ends"><span>← 中央が細い</span><span>中央が太い →</span></div>
+
+      <div class="tr" style="margin-top:16px">
+        <div class="tr-lbl">Tone<span>どちら側を暗くするか</span></div>
+        <div class="tg" id="tg-tone"></div>
+      </div>
+      <div class="ab-hint" style="margin-top:8px">OFF＝両側が暗い（顔）／ON＝中央が暗い（壺）。<b>Shape Cue 50 で切り替えると、輪郭はそのままに見え方が反転する。</b></div>
     </section>
 
     <section class="sp">
@@ -259,18 +274,22 @@ input[type=range]:hover::-moz-range-thumb{background:var(--acc)}
     <section class="sp">
       <div class="spl">Proof <em>検証</em></div>
       <div class="tr">
-        <div class="tr-lbl">Show Cue<span>面積手がかりが示す「図」を重ねる</span></div>
-        <div class="tg on" id="tg-ghost"></div>
+        <div class="tr-lbl">Show Cue<span>手がかりが示す「図」を重ねる</span></div>
+        <div class="tg" id="tg-ghost"></div>
       </div>
+      <div class="ed-row" style="margin-top:14px">
+        <button class="ed-btn" id="btn-nudge">⇄ Flip Nudge</button>
+      </div>
+      <div class="ed-hint">見えない側を一瞬だけ光らせて反転を誘導する。「顔が見つからない」ときに押す。</div>
     </section>
 
     <section class="sp">
       <div class="spl">Read <em>原理</em></div>
       <div class="db">
-        <div class="de">Same edge, two figures — brain picks one at a time.</div>
-        <div class="dj">同じ輪郭が「図（前景）」にも「地（背景）」にも見える。<b>面積が小さい方</b>が図になりやすい——<b>areaBias</b> 50付近で両義が最大となり、脳は自発的に反転し始める。</div>
+        <div class="de">One contour, two owners. Whoever owns the edge becomes the figure.</div>
+        <div class="dj">1本の輪郭を、中央（壺）と両側（顔）が<b>奪い合う</b>。輪郭を<b>所有</b>した側が「図」になり、残りは「地」として輪郭の向こうへ退く。<b>Shape Cue</b> で形の手がかりが、<b>Tone</b> で明暗の手がかりが所有権を動かす。</div>
       </div>
-      <div class="dnote">「図」は輪郭を<b>所有</b>し、「地」は輪郭の向こうに続く面として見える。これが同じ線が2つの役割を持てる理由。</div>
+      <div class="dnote">Shape Cue <b>50</b> は両者が拮抗する点。ここで <b>Tone</b> を切り替えると、輪郭は1ピクセルも変わらないのに壺⇔顔が入れ替わる——<b>変わったのは絵ではなく解釈</b>。</div>
     </section>
 
     <section class="sp">
@@ -285,8 +304,10 @@ input[type=range]:hover::-moz-range-thumb{background:var(--acc)}
   </aside>
 
   <footer id="bottombar">
-    <div class="bb-cell">BIAS <b id="bb-bias">50</b></div>
-    <div class="bb-cell">SEEN <b id="bb-seen">？</b></div>
+    <div class="bb-cell">SHAPE <b id="bb-shape">50</b></div>
+    <div class="bb-cell" id="bb-bias-cell">BIAS <b id="bb-bias">50</b></div>
+    <div class="bb-cell">TONE <b id="bb-tone">SIDES</b></div>
+    <div class="bb-cell" id="bb-seen-cell">SEEN <b id="bb-seen">？</b></div>
     <div class="bb-cell bb-mid">CUE <b class="lime" id="bb-cue">—</b></div>
     <button class="sc-chip" id="sc-open">⌨ SHORTCUTS ?</button>
   </footer>
@@ -297,7 +318,10 @@ input[type=range]:hover::-moz-range-thumb{background:var(--acc)}
   <div id="sc-box">
     <div class="sc-head">⌨ Keyboard Shortcuts <span id="sc-close">✕</span></div>
     <div class="sc-list">
-      <div class="sc-row"><div class="sc-desc">Area Bias −/+<span>面積の偏り</span></div><div class="sc-key">↑ ↓</div></div>
+      <div class="sc-row"><div class="sc-desc">Shape Cue −/+<span>輪郭の形</span></div><div class="sc-key">↑ ↓</div></div>
+      <div class="sc-row"><div class="sc-desc">Area Bias −/+<span>面積の偏り</span></div><div class="sc-key">← →</div></div>
+      <div class="sc-row"><div class="sc-desc">Toggle tone<span>明暗を入れ替える</span></div><div class="sc-key">I</div></div>
+      <div class="sc-row"><div class="sc-desc">Flip nudge<span>反転を誘導</span></div><div class="sc-key">N</div></div>
       <div class="sc-row"><div class="sc-desc">Record: FACE<span>顔として記録</span></div><div class="sc-key">F</div></div>
       <div class="sc-row"><div class="sc-desc">Record: VASE<span>壺として記録</span></div><div class="sc-key">V</div></div>
       <div class="sc-row"><div class="sc-desc">Record: ？<span>不明にリセット</span></div><div class="sc-key">U</div></div>
@@ -310,36 +334,125 @@ input[type=range]:hover::-moz-range-thumb{background:var(--acc)}
 </div>
 
 <script>
+// ─────────────────────────────────────────────────────────────────────────────
+// RUBIN PROFILE — 共有アセット（05-figure-ground.html / l3-07-rubin.html）
+// 出典: cognitive/svg/tsubo_face.svg（Illustrator, viewBox 0 0 1000 1000）
+//   VASE_HW  = tsubo_marge レイヤー   FACE_HW = face_marge レイヤー
+// 各値 = その高さでの「中央領域の半幅」。viewBox幅1000で正規化済み（0..0.5）。
+// 元データは完全左右対称・各走査線で単一区間であることを検証済み。
+// t: 0 = 上端, 1 = 下端。N+1 = 321 サンプル等間隔。
+//
+// 使い方: shapeCue 0 → 壺として読める / 50 → 両義（真のルビン図）/ 100 → 顔として読める
+// ─────────────────────────────────────────────────────────────────────────────
+const VASE_HW = [
+  0.1544, 0.1570, 0.1596, 0.1621, 0.1646, 0.1669, 0.1692, 0.1715, 0.1736, 0.1757, 0.1777, 0.1797,
+  0.1815, 0.1832, 0.1848, 0.1864, 0.1878, 0.1890, 0.1901, 0.1910, 0.1917, 0.1921, 0.1922, 0.1920,
+  0.1912, 0.1897, 0.1877, 0.1854, 0.1828, 0.1800, 0.1770, 0.1738, 0.1705, 0.1670, 0.1635, 0.1598,
+  0.1562, 0.1524, 0.1487, 0.1450, 0.1412, 0.1375, 0.1339, 0.1303, 0.1267, 0.1232, 0.1198, 0.1166,
+  0.1134, 0.1103, 0.1073, 0.1045, 0.1017, 0.0991, 0.0967, 0.0944, 0.0922, 0.0903, 0.0884, 0.0868,
+  0.0852, 0.0839, 0.0827, 0.0817, 0.0809, 0.0803, 0.0798, 0.0795, 0.0794, 0.0795, 0.0798, 0.1027,
+  0.1201, 0.1330, 0.1439, 0.1536, 0.1626, 0.1710, 0.1789, 0.1864, 0.1937, 0.2006, 0.2074, 0.2139,
+  0.2203, 0.2265, 0.2326, 0.2385, 0.2443, 0.2500, 0.2555, 0.2610, 0.2663, 0.2716, 0.2767, 0.2818,
+  0.2868, 0.2916, 0.2930, 0.2941, 0.2951, 0.2960, 0.2969, 0.2977, 0.2984, 0.2992, 0.2998, 0.3005,
+  0.3011, 0.3017, 0.3022, 0.3027, 0.3029, 0.3030, 0.3031, 0.3031, 0.3030, 0.3030, 0.3029, 0.3028,
+  0.3026, 0.3025, 0.3023, 0.3022, 0.3020, 0.3018, 0.3016, 0.3014, 0.3012, 0.3009, 0.3007, 0.3005,
+  0.3002, 0.2999, 0.2997, 0.2994, 0.2992, 0.2989, 0.2986, 0.2983, 0.2980, 0.2977, 0.2974, 0.2971,
+  0.2968, 0.2965, 0.2962, 0.2959, 0.2955, 0.2952, 0.2949, 0.2946, 0.2942, 0.2939, 0.2935, 0.2932,
+  0.2928, 0.2925, 0.2921, 0.2918, 0.2914, 0.2910, 0.2907, 0.2903, 0.2899, 0.2895, 0.2891, 0.2887,
+  0.2883, 0.2879, 0.2875, 0.2871, 0.2867, 0.2863, 0.2859, 0.2855, 0.2850, 0.2846, 0.2842, 0.2837,
+  0.2833, 0.2828, 0.2824, 0.2819, 0.2815, 0.2810, 0.2805, 0.2800, 0.2796, 0.2791, 0.2786, 0.2781,
+  0.2775, 0.2770, 0.2765, 0.2759, 0.2754, 0.2748, 0.2743, 0.2737, 0.2731, 0.2725, 0.2718, 0.2712,
+  0.2706, 0.2699, 0.2692, 0.2684, 0.2676, 0.2668, 0.2660, 0.2650, 0.2640, 0.2629, 0.2617, 0.2606,
+  0.2593, 0.2580, 0.2566, 0.2552, 0.2537, 0.2522, 0.2506, 0.2490, 0.2473, 0.2456, 0.2439, 0.2421,
+  0.2402, 0.2384, 0.2364, 0.2345, 0.2324, 0.2304, 0.2283, 0.2262, 0.2240, 0.2218, 0.2195, 0.2172,
+  0.2149, 0.2125, 0.2101, 0.2076, 0.2051, 0.2025, 0.1999, 0.1972, 0.1945, 0.1912, 0.1875, 0.1835,
+  0.1794, 0.1753, 0.1711, 0.1668, 0.1625, 0.1582, 0.1539, 0.1496, 0.1452, 0.1409, 0.1365, 0.1321,
+  0.1277, 0.1233, 0.1188, 0.1144, 0.1100, 0.1056, 0.1011, 0.0967, 0.0923, 0.0882, 0.0856, 0.0840,
+  0.0831, 0.0828, 0.0829, 0.0835, 0.0844, 0.0855, 0.0869, 0.0885, 0.0904, 0.0924, 0.0947, 0.0991,
+  0.1061, 0.1130, 0.1197, 0.1262, 0.1326, 0.1389, 0.1450, 0.1510, 0.1569, 0.1626, 0.1682, 0.1737,
+  0.1790, 0.1842, 0.1892, 0.1940, 0.1986, 0.2031, 0.2074, 0.2114, 0.2153, 0.2189, 0.2222, 0.2253,
+  0.2281, 0.2305, 0.2326, 0.2342, 0.2355, 0.2362, 0.2363, 0.2357, 0.2344
+];
+
+const FACE_HW = [
+  0.2344, 0.2328, 0.2313, 0.2298, 0.2282, 0.2267, 0.2251, 0.2236, 0.2220, 0.2205, 0.2189, 0.2173,
+  0.2157, 0.2142, 0.2126, 0.2110, 0.2094, 0.2078, 0.2062, 0.2046, 0.2029, 0.2013, 0.1996, 0.1979,
+  0.1962, 0.1945, 0.1929, 0.1914, 0.1900, 0.1887, 0.1874, 0.1862, 0.1851, 0.1840, 0.1830, 0.1820,
+  0.1810, 0.1800, 0.1791, 0.1782, 0.1774, 0.1765, 0.1757, 0.1749, 0.1741, 0.1734, 0.1726, 0.1719,
+  0.1712, 0.1705, 0.1699, 0.1692, 0.1686, 0.1680, 0.1674, 0.1668, 0.1663, 0.1657, 0.1652, 0.1647,
+  0.1642, 0.1637, 0.1632, 0.1628, 0.1623, 0.1619, 0.1615, 0.1612, 0.1608, 0.1605, 0.1602, 0.1599,
+  0.1596, 0.1593, 0.1591, 0.1589, 0.1587, 0.1585, 0.1583, 0.1582, 0.1581, 0.1581, 0.1580, 0.1580,
+  0.1580, 0.1581, 0.1582, 0.1584, 0.1585, 0.1588, 0.1590, 0.1594, 0.1598, 0.1602, 0.1607, 0.1613,
+  0.1618, 0.1624, 0.1630, 0.1636, 0.1643, 0.1649, 0.1655, 0.1661, 0.1668, 0.1674, 0.1680, 0.1686,
+  0.1692, 0.1697, 0.1703, 0.1708, 0.1714, 0.1719, 0.1724, 0.1729, 0.1733, 0.1737, 0.1741, 0.1745,
+  0.1748, 0.1751, 0.1753, 0.1755, 0.1757, 0.1758, 0.1759, 0.1758, 0.1752, 0.1744, 0.1734, 0.1721,
+  0.1707, 0.1692, 0.1675, 0.1657, 0.1639, 0.1619, 0.1599, 0.1578, 0.1557, 0.1535, 0.1513, 0.1491,
+  0.1468, 0.1444, 0.1421, 0.1397, 0.1372, 0.1348, 0.1323, 0.1298, 0.1273, 0.1248, 0.1223, 0.1197,
+  0.1171, 0.1146, 0.1120, 0.1094, 0.1068, 0.1042, 0.1016, 0.0990, 0.0964, 0.0937, 0.0911, 0.0885,
+  0.0859, 0.0833, 0.0807, 0.0781, 0.0756, 0.0730, 0.0704, 0.0679, 0.0654, 0.0629, 0.0604, 0.0580,
+  0.0556, 0.0532, 0.0509, 0.0486, 0.0464, 0.0442, 0.0421, 0.0401, 0.0382, 0.0365, 0.0349, 0.0335,
+  0.0323, 0.0316, 0.0317, 0.0327, 0.0342, 0.0362, 0.0385, 0.0412, 0.0444, 0.0480, 0.0520, 0.0565,
+  0.0615, 0.0670, 0.0731, 0.0796, 0.0868, 0.0946, 0.1031, 0.1123, 0.1225, 0.1338, 0.1404, 0.1408,
+  0.1411, 0.1413, 0.1414, 0.1414, 0.1414, 0.1412, 0.1411, 0.1408, 0.1404, 0.1400, 0.1395, 0.1389,
+  0.1382, 0.1374, 0.1366, 0.1356, 0.1346, 0.1335, 0.1323, 0.1309, 0.1295, 0.1286, 0.1320, 0.1357,
+  0.1395, 0.1434, 0.1474, 0.1514, 0.1555, 0.1596, 0.1638, 0.1680, 0.1692, 0.1673, 0.1654, 0.1636,
+  0.1620, 0.1604, 0.1589, 0.1576, 0.1564, 0.1553, 0.1545, 0.1540, 0.1538, 0.1542, 0.1558, 0.1602,
+  0.1651, 0.1692, 0.1727, 0.1759, 0.1786, 0.1811, 0.1833, 0.1854, 0.1872, 0.1889, 0.1905, 0.1920,
+  0.1933, 0.1946, 0.1958, 0.1969, 0.1979, 0.1989, 0.1998, 0.2007, 0.2015, 0.2023, 0.2030, 0.2037,
+  0.2044, 0.2050, 0.2056, 0.2062, 0.2068, 0.2074, 0.2079, 0.2084, 0.2089, 0.2095, 0.2100, 0.2105,
+  0.2110, 0.2115, 0.2120, 0.2126, 0.2131, 0.2137, 0.2143, 0.2150, 0.2157, 0.2164, 0.2172, 0.2180,
+  0.2189, 0.2200, 0.2212, 0.2225, 0.2240, 0.2257, 0.2279, 0.2306, 0.2343
+];
+
+const PROF_N = VASE_HW.length - 1;
+
+// 図形の高さ ÷ viewBox幅。半幅は viewBox幅で正規化してあるので、
+// 元の比率を保つには「高さ」からスケールする: hwPx = contourHW(t,...) * (描画高 / PROF_ASPECT)
+const PROF_ASPECT = 0.9025;
+
+// 半幅テーブルの線形補間
+function hwOf(tbl, t) {
+  const x = Math.max(0, Math.min(1, t)) * PROF_N;
+  const i = Math.floor(x), f = x - i;
+  return tbl[i] + (tbl[Math.min(PROF_N, i + 1)] - tbl[i]) * f;
+}
+
+// shapeCue: 0..100（0=壺寄り, 50=両義, 100=顔寄り）
+// scale: 面積キュー（1.0 が原寸。>1 で中央領域が太る＝側の顔が細くなる）
+// 戻り値: 中央領域の半幅（プレート幅に対する比）
+function contourHW(t, shapeCue, scale = 1) {
+  const m = shapeCue / 100;
+  return (hwOf(VASE_HW, t) * (1 - m) + hwOf(FACE_HW, t) * m) * scale;
+}
+
+
 // ── STATE ──────────────────────────────────────────────────
-const DEFAULTS = { areaBias: 50, seenAs: '?', showGhost: true };
+const DEFAULTS = { shapeCue: 50, areaBias: 50, tone: 'sides', seenAs: '?', showGhost: false };
 const state = { ...DEFAULTS };
 
 const cv  = document.getElementById('stage-canvas');
 const ctx = cv.getContext('2d');
 let W = 0, H = 0, DPR = 1;
 
-// ── VASE PROFILE (Gaussian superposition) ──────────────────
-// t: 0=top → 1=bottom. Returns normalised half-width [0.12..1.0].
-function profileW(t) {
-  function G(t0, sig, amp) { return amp * Math.exp(-Math.pow((t - t0) / sig, 2)); }
-  return Math.max(0.12,
-    0.58
-    + G(0.00, 0.09,  0.24)   // top rim swell
-    + G(0.08, 0.05,  0.10)   // rim peak
-    - G(0.27, 0.08,  0.38)   // neck valley
-    + G(0.53, 0.16,  0.43)   // belly bulge
-    - G(0.71, 0.07,  0.17)   // ankle valley
-    + G(0.87, 0.09,  0.20)   // base swell
-  );
-}
+const INK = '#0a0a0a', PAPER = '#f2f2ef';
+// plate width / height. Must clear the widest contour (areaScale 1.3 → 0.873×H).
+const PLATE_RATIO = 1.06;
 
-// ── BUILD VASE PROFILE POINTS ──────────────────────────────
-function buildVase(cx, top, vh, hwBase, scale, N) {
+// areaBias 0..100 → 0.70..1.30 : widens/narrows the middle region (the area cue)
+function areaScale() { return 0.70 + (state.areaBias / 100) * 0.60; }
+
+// ── BUILD CONTOUR POINTS ───────────────────────────────────
+// One shared contour. The middle region is the vase; the two side
+// regions are the faces. Which one reads as figure is the question.
+function buildContour(cx, top, plateH, N) {
+  // half-widths are normalised to the artwork's viewBox width, so scale off the
+  // HEIGHT to keep the original proportions
+  const k = plateH / PROF_ASPECT;
   const L = [], R = [];
   for (let i = 0; i <= N; i++) {
-    const t = i / N;
-    const hw = profileW(t) * hwBase * scale;
-    const y  = top + t * vh;
+    const t  = i / N;
+    const hw = contourHW(t, state.shapeCue, areaScale()) * k;
+    const y  = top + t * plateH;
     L.push([cx - hw, y]);
     R.push([cx + hw, y]);
   }
@@ -369,14 +482,35 @@ function clipFaceRegion(L, R, boxX, boxY, boxW, boxH) {
 }
 
 // ── VERDICT ────────────────────────────────────────────────
-// areaBias=0  → narrow vase (vase is smaller region → vase cued as figure)
-// areaBias=50 → balanced   → AMBIGUOUS
-// areaBias=100 → wide vase (faces are smaller regions → face cued as figure)
+// Two cues push on the same contour and are summed:
+//   shapeCue  0 → 壺の形 / 50 → 両義 / 100 → 顔の形   (weight 1.0)
+//   areaBias  0 → 中央が細い（壺が小さい）/ 100 → 中央が太い  (weight 0.5)
+// At the default areaBias=50 the ambiguous band is shapeCue 20…80.
+function cueScore() {
+  return (state.shapeCue - 50) / 50 + ((state.areaBias - 50) / 50) * 0.5;
+}
 function getVerd() {
-  const b = state.areaBias;
-  if (b < 35) return 'vase-cued';
-  if (b > 65) return 'face-cued';
+  const s = cueScore();
+  if (s < -0.6) return 'vase-cued';
+  if (s >  0.6) return 'face-cued';
   return 'ambiguous';
+}
+
+// ── FLIP NUDGE (flash the current ground so it can be seen as figure) ──
+let nudgeStart = 0, nudgeRaf = null;
+function nudgeAlpha() {
+  if (!nudgeStart) return 0;
+  return Math.max(0, 1 - (performance.now() - nudgeStart) / 300);
+}
+function flipNudge() {
+  nudgeStart = performance.now();
+  if (nudgeRaf) return;
+  const step = () => {
+    if (nudgeAlpha() <= 0) { nudgeRaf = null; nudgeStart = 0; draw(); return; }
+    draw();
+    nudgeRaf = requestAnimationFrame(step);
+  };
+  nudgeRaf = requestAnimationFrame(step);
 }
 
 // ── RESIZE ─────────────────────────────────────────────────
@@ -396,26 +530,25 @@ function resize() {
 function draw() {
   ctx.clearRect(0, 0, W, H);
 
-  const cx    = W / 2, cy = H / 2;
-  const span  = Math.min(W * 0.38, H * 0.44);
-  const scale = 0.25 + (state.areaBias / 100) * 0.75;
-  const hwBase = span * 0.37;
-  const vh    = span * 1.04;
-  const top   = cy - vh / 2;
-  const boxW  = span * 1.66;
-  const boxH  = vh;
-  const boxX  = cx - boxW / 2;
-  const N     = 320;
-  const verd  = getVerd();
+  const cx = W / 2, cy = H / 2;
+  // plate keeps a fixed portrait ratio so the profile never distorts
+  let plateH = Math.min(H * 0.86, 620);
+  let plateW = plateH * PLATE_RATIO;
+  if (plateW > W * 0.60) { plateW = W * 0.60; plateH = plateW / PLATE_RATIO; }
+  const top    = cy - plateH / 2;
+  const boxX   = cx - plateW / 2;
+  const N      = 320;
+  const verd   = getVerd();
+  const midDark = state.tone === 'mid';
 
-  const { L, R } = buildVase(cx, top, vh, hwBase, scale, N);
+  const { L, R } = buildContour(cx, top, plateH, N);
 
-  // 1. Black box — face regions
-  ctx.fillStyle = '#0a0a0a';
-  ctx.fillRect(boxX, top, boxW, boxH);
+  // 1. Plate base — carries the SIDE regions' tone
+  ctx.fillStyle = midDark ? PAPER : INK;
+  ctx.fillRect(boxX, top, plateW, plateH);
 
-  // 2. Light vase — cuts vase out of black
-  fillVase(L, R, '#f2f2ef');
+  // 2. Middle region — the opposite tone. Same contour, tones swapped by TONE.
+  fillVase(L, R, midDark ? INK : PAPER);
 
   // 3. Proof overlay (cue prediction)
   if (state.showGhost) {
@@ -423,51 +556,55 @@ function draw() {
     const isFace = verd === 'face-cued';
     const isAmb  = verd === 'ambiguous';
 
-    // Lime tint over vase region
+    // Lime tint over the middle (vase) region
     if (isVase || isAmb) {
       fillVase(L, R, `rgba(200,255,26,${isAmb ? 0.22 : 0.40})`);
     }
 
-    // Lime tint over face regions (box minus vase, evenodd clip)
+    // Lime tint over the side (face) regions (plate minus middle, evenodd clip)
     if (isFace || isAmb) {
       ctx.save();
-      clipFaceRegion(L, R, boxX, top, boxW, boxH);
+      clipFaceRegion(L, R, boxX, top, plateW, plateH);
       ctx.fillStyle = `rgba(200,255,26,${isAmb ? 0.16 : 0.34})`;
-      ctx.fillRect(boxX, top, boxW, boxH);
+      ctx.fillRect(boxX, top, plateW, plateH);
       ctx.restore();
     }
   }
 
-  // 4. Thin border around display box
+  // 4. Flip nudge — flash whichever region currently reads as GROUND
+  const na = nudgeAlpha();
+  if (na > 0) {
+    const a = (0.30 * na).toFixed(3);
+    if (midDark) {
+      // middle is dark = figure → ground is the sides
+      ctx.save();
+      clipFaceRegion(L, R, boxX, top, plateW, plateH);
+      ctx.fillStyle = `rgba(200,255,26,${a})`;
+      ctx.fillRect(boxX, top, plateW, plateH);
+      ctx.restore();
+    } else {
+      fillVase(L, R, `rgba(200,255,26,${a})`);
+    }
+  }
+
+  // 5. Thin border around display plate
   ctx.strokeStyle = 'rgba(10,10,10,0.22)';
   ctx.lineWidth = 0.8;
-  ctx.strokeRect(boxX, top, boxW, boxH);
+  ctx.strokeRect(boxX, top, plateW, plateH);
 
-  // 5. seenAs indicator: thin outline on perceived region
+  // 6. seenAs indicator — the region you report owns the edge, so outline it
   if (state.seenAs !== '?') {
     ctx.save();
     ctx.strokeStyle = '#c8ff1a';
     ctx.lineWidth = 2;
-    if (state.seenAs === 'vase') {
-      // Outline the vase path
-      ctx.beginPath();
-      ctx.moveTo(L[0][0], L[0][1]);
-      for (const [x, y] of L) ctx.lineTo(x, y);
-      for (let i = R.length - 1; i >= 0; i--) ctx.lineTo(R[i][0], R[i][1]);
-      ctx.closePath();
-      ctx.stroke();
-    } else {
-      // Outline the face regions (box outline - the visible boundary)
-      ctx.strokeRect(boxX, top, boxW, boxH);
-      // Re-draw vase border in background color to "erase" lime from vase edges
-      ctx.strokeStyle = '#f2f2ef';
-      ctx.beginPath();
-      ctx.moveTo(L[0][0], L[0][1]);
-      for (const [x, y] of L) ctx.lineTo(x, y);
-      for (let i = R.length - 1; i >= 0; i--) ctx.lineTo(R[i][0], R[i][1]);
-      ctx.closePath();
-      ctx.stroke();
-    }
+    ctx.beginPath();
+    ctx.moveTo(L[0][0], L[0][1]);
+    for (const [x, y] of L) ctx.lineTo(x, y);
+    for (let i = R.length - 1; i >= 0; i--) ctx.lineTo(R[i][0], R[i][1]);
+    ctx.closePath();
+    ctx.stroke();
+    // faces = the side regions, so close them off with the outer edge too
+    if (state.seenAs === 'face') ctx.strokeRect(boxX, top, plateW, plateH);
     ctx.restore();
   }
 
@@ -476,19 +613,26 @@ function draw() {
 
 // ── READOUTS ───────────────────────────────────────────────
 function updateReadouts(verd) {
-  const b = state.areaBias;
+  const b = state.areaBias, s = state.shapeCue;
+  document.getElementById('v-shape').textContent  = s;
+  document.getElementById('bb-shape').textContent = s;
   document.getElementById('v-bias').textContent  = b;
   document.getElementById('bb-bias').textContent = b;
   document.getElementById('bb-seen').textContent = state.seenAs === '?' ? '？' :
     state.seenAs === 'face' ? 'FACE' : 'VASE';
+  document.getElementById('bb-tone').textContent = state.tone === 'mid' ? 'MID' : 'SIDES';
 
-  // Bias bar marker
+  // Slider bar markers
+  const sMark = document.getElementById('shape-mark');
+  sMark.style.left = s + '%';
+  sMark.classList.toggle('lime', verd === 'ambiguous');
   const mark = document.getElementById('bias-mark');
   mark.style.left = b + '%';
   mark.classList.remove('lime', 'muted');
   if (verd !== 'ambiguous') mark.classList.add('lime');
 
   // Highlight when ambiguous
+  document.getElementById('v-shape').classList.toggle('lime', verd === 'ambiguous');
   document.getElementById('v-bias').classList.toggle('lime', verd === 'ambiguous');
 
   // Verdict
@@ -518,6 +662,13 @@ function updateReadouts(verd) {
   };
   vs.textContent = seenText[state.seenAs];
 
+  // TONE flip takes over the verdict for a beat — the point of the page
+  if (performance.now() < flipMsgUntil) {
+    vm.textContent = 'FLIPPED';
+    vs.textContent = '輪郭は不変、明暗だけが変わった';
+    V.classList.add('edge');
+  }
+
   // Sync A/B buttons active state
   document.querySelectorAll('.ab-btn').forEach(btn => {
     const isMine = btn.dataset.seen === state.seenAs;
@@ -527,6 +678,9 @@ function updateReadouts(verd) {
 }
 
 // ── CONTROLS ───────────────────────────────────────────────
+document.getElementById('s-shape').addEventListener('input', e => {
+  state.shapeCue = +e.target.value; draw();
+});
 document.getElementById('s-bias').addEventListener('input', e => {
   state.areaBias = +e.target.value; draw();
 });
@@ -544,13 +698,29 @@ tgGhost.addEventListener('click', () => {
   draw();
 });
 
+// TONE — swaps which side of the SAME contour is dark
+let flipMsgUntil = 0, flipTimer = null;
+const tgTone = document.getElementById('tg-tone');
+function toggleTone() {
+  state.tone = state.tone === 'mid' ? 'sides' : 'mid';
+  tgTone.classList.toggle('on', state.tone === 'mid');
+  flipMsgUntil = performance.now() + 1500;
+  clearTimeout(flipTimer);
+  flipTimer = setTimeout(draw, 1550);
+  draw();
+}
+tgTone.addEventListener('click', toggleTone);
+document.getElementById('btn-nudge').addEventListener('click', flipNudge);
+
 function syncUI() {
+  document.getElementById('s-shape').value = state.shapeCue;
   document.getElementById('s-bias').value = state.areaBias;
   tgGhost.classList.toggle('on', state.showGhost);
+  tgTone.classList.toggle('on', state.tone === 'mid');
   draw();
 }
 
-function reset() { Object.assign(state, DEFAULTS); syncUI(); }
+function reset() { Object.assign(state, DEFAULTS); flipMsgUntil = 0; syncUI(); }
 
 // ── COPY / PASTE ───────────────────────────────────────────
 function flash(btn, label, cls) {
@@ -562,7 +732,9 @@ function flash(btn, label, cls) {
 document.getElementById('btn-copy').addEventListener('click', async e => {
   const payload = {
     app:       'gestalt-05-figure-ground',
+    shapeCue:  state.shapeCue,
     areaBias:  state.areaBias,
+    tone:      state.tone,
     seenAs:    state.seenAs,
     showGhost: state.showGhost
   };
@@ -575,7 +747,9 @@ document.getElementById('btn-copy').addEventListener('click', async e => {
 document.getElementById('btn-paste').addEventListener('click', async e => {
   try {
     const o = JSON.parse(await navigator.clipboard.readText());
+    if (typeof o.shapeCue  === 'number')  state.shapeCue  = Math.max(0, Math.min(100, o.shapeCue | 0));
     if (typeof o.areaBias  === 'number')  state.areaBias  = Math.max(0, Math.min(100, o.areaBias | 0));
+    if (['mid','sides'].includes(o.tone)) state.tone = o.tone;
     if (['face','vase','?'].includes(o.seenAs)) state.seenAs = o.seenAs;
     if (typeof o.showGhost === 'boolean') state.showGhost = o.showGhost;
     syncUI();
@@ -600,8 +774,12 @@ window.addEventListener('keydown', e => {
   if (e.key === '?') { modal.classList.contains('open') ? closeSc() : openSc(); return; }
   if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
   const step = 5;
-  if      (e.key === 'ArrowUp')   { e.preventDefault(); state.areaBias = Math.min(100, state.areaBias + step); syncUI(); }
-  else if (e.key === 'ArrowDown') { e.preventDefault(); state.areaBias = Math.max(0,   state.areaBias - step); syncUI(); }
+  if      (e.key === 'ArrowUp')    { e.preventDefault(); state.shapeCue = Math.min(100, state.shapeCue + step); syncUI(); }
+  else if (e.key === 'ArrowDown')  { e.preventDefault(); state.shapeCue = Math.max(0,   state.shapeCue - step); syncUI(); }
+  else if (e.key === 'ArrowRight') { e.preventDefault(); state.areaBias = Math.min(100, state.areaBias + step); syncUI(); }
+  else if (e.key === 'ArrowLeft')  { e.preventDefault(); state.areaBias = Math.max(0,   state.areaBias - step); syncUI(); }
+  else if (e.key === 'i' || e.key === 'I') { toggleTone(); }
+  else if (e.key === 'n' || e.key === 'N') { flipNudge(); }
   else if (e.key === 'f' || e.key === 'F') { state.seenAs = 'face'; draw(); }
   else if (e.key === 'v' || e.key === 'V') { state.seenAs = 'vase'; draw(); }
   else if (e.key === 'u' || e.key === 'U') { state.seenAs = '?'; draw(); }
