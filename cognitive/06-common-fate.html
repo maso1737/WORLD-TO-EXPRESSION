@@ -188,13 +188,17 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;backg
       </div>
       <div class="ratiobar"><i id="coh-mark"></i></div>
       <div class="rb-ends"><span>← NOISE</span><span>FATE →</span></div>
+      <div class="tr" style="margin-top:15px">
+        <div class="tr-lbl">Freeze<span>動きを止める — 群が消える</span></div>
+        <div class="tg" id="tg-freeze"></div>
+      </div>
     </section>
 
     <section class="sp">
       <div class="spl">Proof <em>検証</em></div>
       <div class="tr">
-        <div class="tr-lbl">Show Group<span>コヒーレントドットを lime で可視化</span></div>
-        <div class="tg on" id="tg-group"></div>
+        <div class="tr-lbl">Show Group<span>コヒーレントドットを lime で可視化（答え合わせ）</span></div>
+        <div class="tg" id="tg-group"></div>
       </div>
     </section>
 
@@ -233,6 +237,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;backg
     <div class="sc-list">
       <div class="sc-row"><div class="sc-desc">Coherence −/+<span>コヒーレンス</span></div><div class="sc-key">↑ ↓</div></div>
       <div class="sc-row"><div class="sc-desc">Speed −/+<span>速度</span></div><div class="sc-key">← →</div></div>
+      <div class="sc-row"><div class="sc-desc">Freeze / play<span>動きを止める＝群が消える</span></div><div class="sc-key">SPACE</div></div>
       <div class="sc-row"><div class="sc-desc">Toggle group proof<span>グループ表示</span></div><div class="sc-key">G</div></div>
       <div class="sc-row"><div class="sc-desc">Reset<span>初期化</span></div><div class="sc-key">R</div></div>
       <div class="sc-row"><div class="sc-desc">This panel<span>この一覧</span></div><div class="sc-key">?</div></div>
@@ -243,7 +248,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;backg
 
 <script>
 // ── STATE ──────────────────────────────────────────────────
-const DEFAULTS = { dotCount: 180, coherence: 60, speed: 40, showGroup: true };
+const DEFAULTS = { dotCount: 180, coherence: 60, speed: 40, showGroup: false, frozen: false };
 const state = { ...DEFAULTS };
 
 const cv  = document.getElementById('stage-canvas');
@@ -282,6 +287,7 @@ function reassignCoherence() {
 
 // ── VERDICT ────────────────────────────────────────────────
 function getVerd() {
+  if (state.frozen) return 'frozen';
   const c = state.coherence;
   if (c === 0 || state.speed === 0) return 'noise';
   if (c < 36) return 'weak';
@@ -312,35 +318,40 @@ function tick(ts) {
   const dt = Math.min((ts - lastTime) / 1000, 0.05); // cap at 50ms
   lastTime = ts;
 
-  // Rotate shared direction slowly
-  cohAngle += dt * 0.28; // ~0.28 rad/s ≈ one full rotation ~22s
+  // FREEZE: hold every dot in place — the common-fate cue (shared motion) vanishes,
+  // so the group dissolves back into an indistinguishable static cloud. Still draw
+  // so the FROZEN verdict + readouts refresh.
+  if (!state.frozen) {
+    // Rotate shared direction slowly
+    cohAngle += dt * 0.28; // ~0.28 rad/s ≈ one full rotation ~22s
 
-  const spd = state.speed / 100 * 3.2; // max ~3.2 px/frame @60fps
-  const cohVx = Math.cos(cohAngle) * spd;
-  const cohVy = Math.sin(cohAngle) * spd;
+    const spd = state.speed / 100 * 3.2; // max ~3.2 px/frame @60fps
+    const cohVx = Math.cos(cohAngle) * spd;
+    const cohVy = Math.sin(cohAngle) * spd;
 
-  // Update positions
-  dots.forEach(d => {
-    if (state.speed === 0) return;
-    if (d.coherent) {
-      d.x += cohVx;
-      d.y += cohVy;
-    } else {
-      // random dots: perturb slightly for organic feel
-      d.vx += (Math.random() - 0.5) * 0.4;
-      d.vy += (Math.random() - 0.5) * 0.4;
-      const len = Math.sqrt(d.vx * d.vx + d.vy * d.vy) || 1;
-      d.vx = (d.vx / len) * spd;
-      d.vy = (d.vy / len) * spd;
-      d.x += d.vx;
-      d.y += d.vy;
-    }
-    // Wraparound
-    if (d.x < -4) d.x += W + 8;
-    if (d.x > W + 4) d.x -= W + 8;
-    if (d.y < -4) d.y += H + 8;
-    if (d.y > H + 4) d.y -= H + 8;
-  });
+    // Update positions
+    dots.forEach(d => {
+      if (state.speed === 0) return;
+      if (d.coherent) {
+        d.x += cohVx;
+        d.y += cohVy;
+      } else {
+        // random dots: perturb slightly for organic feel
+        d.vx += (Math.random() - 0.5) * 0.4;
+        d.vy += (Math.random() - 0.5) * 0.4;
+        const len = Math.sqrt(d.vx * d.vx + d.vy * d.vy) || 1;
+        d.vx = (d.vx / len) * spd;
+        d.vy = (d.vy / len) * spd;
+        d.x += d.vx;
+        d.y += d.vy;
+      }
+      // Wraparound
+      if (d.x < -4) d.x += W + 8;
+      if (d.x > W + 4) d.x -= W + 8;
+      if (d.y < -4) d.y += H + 8;
+      if (d.y > H + 4) d.y -= H + 8;
+    });
+  }
 
   draw();
 }
@@ -358,6 +369,20 @@ function draw() {
     ctx.lineWidth = 1.5;
     const pad = 24;
     ctx.strokeRect(pad, pad, W - pad * 2, H - pad * 2);
+    ctx.restore();
+  }
+  // frozen cue — static neutral frame + label; the motion cue is gone
+  if (verd === 'frozen') {
+    ctx.save();
+    ctx.setLineDash([2, 5]);
+    ctx.strokeStyle = 'rgba(10,10,10,0.35)';
+    ctx.lineWidth = 1;
+    const pad = 24;
+    ctx.strokeRect(pad, pad, W - pad * 2, H - pad * 2);
+    ctx.setLineDash([]);
+    ctx.font = "600 10px 'JetBrains Mono', monospace";
+    ctx.fillStyle = 'rgba(10,10,10,0.5)';
+    ctx.fillText('❚❚ FROZEN', pad + 6, pad + 18);
     ctx.restore();
   }
 
@@ -388,7 +413,7 @@ function updateReadouts(verd) {
   mark.style.left = state.coherence + '%';
   mark.classList.remove('lime', 'muted');
   if (verd === 'fate') mark.classList.add('lime');
-  if (verd === 'noise') mark.classList.add('muted');
+  if (verd === 'noise' || verd === 'frozen') mark.classList.add('muted');
 
   document.getElementById('v-coh').classList.toggle('lime', verd === 'threshold');
 
@@ -399,6 +424,7 @@ function updateReadouts(verd) {
   V.classList.remove('edge');
 
   const T = {
+    frozen:    ['FROZEN',       '動きが消えると群も消える — 手がかりは運動だけ', 'FRZ'],
     noise:     ['NOISE',        '動きなし / coherence=0 — 群は消える',    'NOI'],
     weak:      ['WEAK SIGNAL',  'コヒーレンスが低い — 群が見えにくい',     'WEK'],
     threshold: ['THRESHOLD',    '閾値付近 — 群が浮かび上がる直前',         'THR'],
@@ -426,10 +452,18 @@ tgGroup.addEventListener('click', () => {
   tgGroup.classList.toggle('on', state.showGroup);
 });
 
+const tgFreeze = document.getElementById('tg-freeze');
+function setFrozen(v) {
+  state.frozen = v;
+  tgFreeze.classList.toggle('on', state.frozen);
+}
+tgFreeze.addEventListener('click', () => setFrozen(!state.frozen));
+
 function syncUI() {
   document.getElementById('s-coh').value = state.coherence;
   document.getElementById('s-spd').value = state.speed;
   tgGroup.classList.toggle('on', state.showGroup);
+  tgFreeze.classList.toggle('on', state.frozen);
   reassignCoherence();
 }
 
@@ -442,7 +476,7 @@ function flash(btn, label, cls) {
   setTimeout(() => { btn.textContent = orig; btn.className = oc; }, 1200);
 }
 document.getElementById('btn-copy').addEventListener('click', async e => {
-  const p = { app:'gestalt-06-common-fate', coherence:state.coherence, speed:state.speed, dotCount:state.dotCount, showGroup:state.showGroup };
+  const p = { app:'gestalt-06-common-fate', coherence:state.coherence, speed:state.speed, dotCount:state.dotCount, showGroup:state.showGroup, frozen:state.frozen };
   try { await navigator.clipboard.writeText(JSON.stringify(p, null, 2)); flash(e.currentTarget,'✓ COPIED','ok'); }
   catch { flash(e.currentTarget,'✗','ng'); }
 });
@@ -453,6 +487,7 @@ document.getElementById('btn-paste').addEventListener('click', async e => {
     if (typeof o.speed     === 'number') state.speed     = Math.max(0,Math.min(100,o.speed|0));
     if (typeof o.dotCount  === 'number') state.dotCount  = Math.max(40,Math.min(400,o.dotCount|0));
     if (typeof o.showGroup === 'boolean') state.showGroup = o.showGroup;
+    if (typeof o.frozen    === 'boolean') state.frozen    = o.frozen;
     syncUI(); buildDots(); flash(e.currentTarget,'✓ APPLIED','ok');
   } catch { flash(e.currentTarget,'✗','ng'); }
 });
@@ -474,6 +509,7 @@ window.addEventListener('keydown', e => {
   else if(e.key==='ArrowDown') { e.preventDefault(); state.coherence=Math.max(0,state.coherence-5); syncUI(); }
   else if(e.key==='ArrowRight'){ e.preventDefault(); state.speed=Math.min(100,state.speed+5); syncUI(); }
   else if(e.key==='ArrowLeft') { e.preventDefault(); state.speed=Math.max(0,state.speed-5); syncUI(); }
+  else if(e.key===' '){ e.preventDefault(); setFrozen(!state.frozen); }
   else if(e.key==='g'||e.key==='G'){ state.showGroup=!state.showGroup; tgGroup.classList.toggle('on',state.showGroup); }
   else if(e.key==='r'||e.key==='R'){ reset(); }
 });

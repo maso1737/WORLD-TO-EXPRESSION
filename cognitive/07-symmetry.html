@@ -197,6 +197,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;backg
       </div>
       <div class="ratiobar"><i id="sym-mark"></i></div>
       <div class="rb-ends"><span>← CHAOS</span><span>MIRROR →</span></div>
+      <div class="ed-hint">左の輪郭を<b>縦ドラッグで変形</b>（上=膨らむ／下=凹む）。対称度が高いほど反対側が連動する。R でリセット。</div>
     </section>
 
     <section class="sp">
@@ -239,6 +240,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;backg
   <div id="sc-box">
     <div class="sc-head">⌨ Keyboard Shortcuts <span id="sc-close">✕</span></div>
     <div class="sc-list">
+      <div class="sc-row"><div class="sc-desc">Sculpt left contour<span>左輪郭を縦ドラッグで変形</span></div><div class="sc-key">DRAG</div></div>
       <div class="sc-row"><div class="sc-desc">Symmetry −/+<span>対称度</span></div><div class="sc-key">↑ ↓</div></div>
       <div class="sc-row"><div class="sc-desc">Complexity cycle<span>輪郭複雑さ切替</span></div><div class="sc-key">C</div></div>
       <div class="sc-row"><div class="sc-desc">Toggle axis proof<span>軸表示</span></div><div class="sc-key">A</div></div>
@@ -317,6 +319,15 @@ function generateProfiles() {
   }
 }
 
+// ── STAGE GEOMETRY (shared by draw + hit-testing) ──────────
+function geom() {
+  const cx    = W / 2;
+  const span  = Math.min(H * 0.72, W * 0.52);
+  const top   = (H - span) / 2;
+  const scale = 0.52;  // profile units → fraction of cx
+  return { cx, span, top, scale };
+}
+
 // ── BUILD CANVAS POINTS ────────────────────────────────────
 function buildPoints(cx, top, h, scale) {
   const sym = state.symmetry / 100;
@@ -362,10 +373,7 @@ function draw() {
   ctx.clearRect(0, 0, W, H);
   if (!baseProfile) generateProfiles();
 
-  const cx    = W / 2;
-  const span  = Math.min(H * 0.72, W * 0.52);
-  const top   = (H - span) / 2;
-  const scale = 0.52;  // profile units → fraction of cx
+  const { cx, span, top, scale } = geom();
   const verd  = getVerd();
 
   const { left, right } = buildPoints(cx, top, span, scale);
@@ -515,6 +523,73 @@ tgAxis.addEventListener('click', () => {
   tgAxis.classList.toggle('on', state.showAxis);
   draw();
 });
+
+// ── SCULPT THE LEFT CONTOUR (direct manipulation) ──────────
+// Grab near the left contour and drag vertically to bulge (up) or pinch (down)
+// it locally. The RIGHT side is not edited — it follows only through the existing
+// symmetry blend, so at sym=100 it mirrors instantly and at low sym it barely
+// reacts. That contrast is the whole point: symmetry is felt as coupling.
+const DRAG_HIT   = 40;      // px — how close to the contour counts as a grab
+const DRAG_SIGMA = 10;      // gaussian half-window, in profile samples
+const DRAG_GAIN  = 0.0022;  // profile units per px dragged
+let sculpt = null;          // { idx, y0, snapshot }
+
+function profileIndexAt(py) {
+  const { span, top } = geom();
+  if (py < top - 8 || py > top + span + 8) return -1;
+  const i = Math.round(((py - top) / span) * (PROFILE_N - 1));
+  return (i < 0 || i >= PROFILE_N) ? -1 : i;
+}
+// Returns the profile index if (px,py) is within DRAG_HIT of the left contour.
+function hitLeftContour(px, py) {
+  if (!baseProfile) return -1;
+  const i = profileIndexAt(py);
+  if (i < 0) return -1;
+  const { cx, scale } = geom();
+  const lx = cx - baseProfile[i] * scale * cx;
+  return Math.abs(px - lx) <= DRAG_HIT ? i : -1;
+}
+function canvasPos(e) {
+  const r = cv.getBoundingClientRect();
+  return [e.clientX - r.left, e.clientY - r.top];
+}
+
+cv.addEventListener('pointerdown', e => {
+  const [px, py] = canvasPos(e);
+  const idx = hitLeftContour(px, py);
+  if (idx < 0) return;
+  sculpt = { idx, y0: e.clientY, snapshot: Float32Array.from(baseProfile) };
+  cv.setPointerCapture(e.pointerId);
+  cv.style.cursor = 'ns-resize';
+});
+
+cv.addEventListener('pointermove', e => {
+  const [px, py] = canvasPos(e);
+  if (!sculpt) {
+    // hover affordance
+    cv.style.cursor = hitLeftContour(px, py) >= 0 ? 'ns-resize' : 'default';
+    return;
+  }
+  // drag UP (dy<0) → bulge outward ; drag DOWN → pinch inward
+  const amp = -(e.clientY - sculpt.y0) * DRAG_GAIN;
+  const lo = Math.max(0, sculpt.idx - DRAG_SIGMA * 3);
+  const hi = Math.min(PROFILE_N - 1, sculpt.idx + DRAG_SIGMA * 3);
+  for (let j = lo; j <= hi; j++) {
+    const d = j - sculpt.idx;
+    const w = Math.exp(-(d * d) / (2 * DRAG_SIGMA * DRAG_SIGMA));
+    baseProfile[j] = Math.max(0.06, sculpt.snapshot[j] + amp * w);
+  }
+  draw();
+});
+
+function endSculpt(e) {
+  if (!sculpt) return;
+  sculpt = null;
+  cv.style.cursor = 'default';
+  if (e && e.pointerId != null) { try { cv.releasePointerCapture(e.pointerId); } catch {} }
+}
+cv.addEventListener('pointerup', endSculpt);
+cv.addEventListener('pointercancel', endSculpt);
 
 function syncUI() {
   document.getElementById('s-sym').value = state.symmetry;
