@@ -6,6 +6,18 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "8123"],
       "port": 8123
+    },
+    {
+      "name": "static2",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8125"],
+      "port": 8125
+    },
+    {
+      "name": "expression-physics",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8124", "--directory", "C:/Users/so173/Documents/Claude/Projects/EXPRESSION PHYSICS"],
+      "port": 8124
     }
   ]
 }
