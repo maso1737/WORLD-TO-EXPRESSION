@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>EE_01 // BIFURCATION WALK</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,700;0,900;1,900&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@400;600;800&family=Cormorant+Garamond:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════════════════════
+   EMERGENCE ENGINE // EE_01 — BIFURCATION WALK
+   KINETIC STAGE design system + EE overrides (SPEC §2)
+   NOIR base · ice=live particles/data · gold=labels · rouge=here&now
+   ══════════════════════════════════════════════════════════════ */
+:root{
+  --rouge:#FF4FA8; --ice:#5AE9FF; --gold:#FFD27A; --lavender:#B58EFF;
+  --white:#F8EFFF; --noir:#070707;
+  --mono:'IBM Plex Mono',monospace;
+  --disp:'Barlow Condensed',sans-serif;
+  --orn:'Cormorant Garamond',serif;
+  --jp:'Noto Sans JP',sans-serif;
+  --jp-serif:'Noto Serif JP',serif;
+  --mute:rgba(181,142,255,0.62);      /* 二次テキスト下限（既存規約） */
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;background:var(--noir);color:var(--white);
+  font-family:var(--mono);overflow:hidden;-webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;}
+
+#app{display:grid;height:100vh;width:100vw;}
+/* NAKED — canvas only, zero UI */
+body.naked #app{grid-template-rows:1fr;grid-template-columns:1fr;}
+body.naked #topbar,body.naked #side,body.naked #mapwrap,body.naked #bottombar{display:none;}
+body.naked #stage{grid-column:1/-1;grid-row:1/-1;}
+body.naked .stage-deco{opacity:0;}
+/* REVEALED — full HUD + map strip */
+body.revealed #app{grid-template-rows:44px 1fr 180px 44px;grid-template-columns:1fr 300px;}
+body.revealed #topbar{grid-area:1/1/2/-1;}
+body.revealed #stage {grid-area:2/1/3/2;}
+body.revealed #mapwrap{grid-area:3/1/4/2;}
+body.revealed #side  {grid-area:2/4/4/5;}
+body.revealed #bottombar{grid-area:4/1/5/-1;}
+
+/* the world — always present, resized by observer */
+#stage{position:relative;overflow:hidden;background:var(--noir);touch-action:none;cursor:crosshair;}
+#world{display:block;width:100%;height:100%;}
+
+/* reveal-layer decoration (hidden in NAKED) */
+.stage-deco{position:absolute;inset:0;pointer-events:none;transition:opacity .4s ease;z-index:3;}
+.corner{position:absolute;width:14px;height:14px;}
+.corner::before,.corner::after{content:'';position:absolute;background:linear-gradient(90deg,var(--gold),var(--rouge));box-shadow:0 0 6px rgba(255,79,168,.4);}
+.corner::before{width:100%;height:1px;} .corner::after{width:1px;height:100%;}
+.corner.tl{top:10px;left:10px;} .corner.tr{top:10px;right:10px;transform:scaleX(-1);}
+.corner.bl{bottom:10px;left:10px;transform:scaleY(-1);} .corner.br{bottom:10px;right:10px;transform:scale(-1);}
+.po{position:absolute;top:12px;right:16px;text-align:right;}
+.po-num{font-family:var(--orn);font-style:italic;font-weight:700;font-size:clamp(40px,6vw,72px);line-height:1;letter-spacing:-.03em;
+  color:var(--ice);filter:drop-shadow(0 0 16px rgba(90,233,255,.35));}
+.po-en{font-family:var(--orn);font-style:italic;font-weight:700;font-size:clamp(14px,2vw,22px);color:var(--gold);line-height:1;}
+.po-jp{font-family:var(--jp-serif);font-size:11px;color:var(--mute);margin-top:5px;letter-spacing:.22em;}
+.stage-bignum{position:absolute;bottom:-38px;left:-8px;font-family:var(--orn);font-style:italic;font-weight:700;
+  font-size:clamp(160px,26vw,340px);color:transparent;-webkit-text-stroke:1.5px rgba(90,233,255,.10);line-height:1;}
+
+/* transient WALK banner (bottombar text handled in JS) */
+
+/* topbar / bottombar */
+#topbar{border-bottom:1px solid rgba(255,210,122,.12);display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;font-size:10px;color:rgba(248,239,255,.5);letter-spacing:.22em;background:rgba(255,255,255,.012);}
+#topbar .tb-r{color:var(--ice);text-shadow:0 0 6px rgba(90,233,255,.4);}
+#topbar a{border:1px solid rgba(255,210,122,.3);color:var(--gold);text-decoration:none;padding:2px 8px;letter-spacing:.2em;}
+#topbar a:hover{background:rgba(255,210,122,.1);}
+#bottombar{border-top:1px solid rgba(255,210,122,.12);display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;font-size:9px;color:var(--mute);letter-spacing:.18em;}
+#bottombar #walkstat{color:var(--rouge);text-shadow:0 0 6px rgba(255,79,168,.4);}
+.kbd{background:rgba(255,79,168,.08);border:1px solid rgba(255,79,168,.35);color:var(--rouge);
+  font-family:var(--mono);font-size:8px;padding:1px 5px;border-radius:2px;letter-spacing:.1em;}
+#sc-open-btn{cursor:pointer;color:var(--mute);font-size:9px;letter-spacing:.25em;padding:2px 8px;
+  border:1px solid rgba(255,210,122,.25);border-radius:2px;transition:all .15s;}
+#sc-open-btn:hover{color:var(--gold);border-color:var(--gold);background:rgba(255,210,122,.06);}
+
+/* map strip */
+#mapwrap{position:relative;border-top:1px solid rgba(255,210,122,.1);background:var(--noir);overflow:hidden;touch-action:none;cursor:ew-resize;}
+#mapCanvas,#mapOverlay{position:absolute;inset:0;width:100%;height:100%;display:block;}
+#mapOverlay{pointer-events:none;}
+#map-lbl{position:absolute;top:4px;left:8px;font-size:8px;letter-spacing:.32em;color:var(--mute);pointer-events:none;}
+
+/* side panel */
+#side{display:flex;flex-direction:column;overflow-y:auto;background:rgba(255,255,255,.015);border-left:1px solid rgba(255,210,122,.08);}
+#side::-webkit-scrollbar{width:2px;} #side::-webkit-scrollbar-thumb{background:var(--rouge);}
+.sp{border-bottom:1px solid rgba(181,142,255,.08);padding:13px 15px;flex-shrink:0;}
+.spl{font-size:9px;letter-spacing:.4em;color:var(--mute);margin-bottom:10px;}
+.tr{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;font-size:10px;color:rgba(248,239,255,.72);letter-spacing:.05em;gap:8px;}
+.tr:last-child{margin-bottom:0;}
+.sl{font-size:9px;color:var(--mute);letter-spacing:.12em;white-space:nowrap;min-width:52px;text-align:right;}
+input[type=range]{-webkit-appearance:none;flex:1;height:2px;background:rgba(255,255,255,.12);outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),var(--rouge));box-shadow:0 0 8px rgba(255,79,168,.5);cursor:pointer;}
+/* data rows */
+.data-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(181,142,255,.08);font-size:10px;}
+.data-row:last-child{border-bottom:none;}
+.dk{color:var(--mute);letter-spacing:.05em;}
+.dv{color:var(--gold);font-weight:600;font-variant-numeric:tabular-nums;}
+.dv.neon{color:var(--ice);text-shadow:0 0 6px rgba(90,233,255,.45);}
+#badge{font-size:9px;letter-spacing:.2em;padding:2px 8px;border-radius:2px;border:1px solid;}
+#badge.chaos{color:var(--ice);border-color:rgba(90,233,255,.5);box-shadow:0 0 10px rgba(90,233,255,.3);}
+#badge.stable{color:var(--gold);border-color:rgba(255,210,122,.4);}
+#badge.edge{color:var(--rouge);border-color:rgba(255,79,168,.4);}
+/* rule */
+.rule{font-family:var(--orn);font-style:italic;font-size:19px;color:var(--white);letter-spacing:.01em;text-align:center;padding:4px 0;}
+.rule b{color:var(--ice);font-style:normal;font-family:var(--mono);font-size:15px;text-shadow:0 0 8px rgba(90,233,255,.5);}
+.rule small{display:block;font-family:var(--jp);font-style:normal;font-size:9px;color:var(--mute);letter-spacing:.16em;margin-top:6px;}
+/* walk buttons */
+.walkgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.wb{font-size:8.5px;letter-spacing:.12em;padding:7px 4px;border:1px solid rgba(90,233,255,.25);color:var(--ice);
+  background:rgba(90,233,255,.04);cursor:pointer;border-radius:2px;transition:all .15s;text-align:center;}
+.wb:hover{background:rgba(90,233,255,.14);box-shadow:0 0 8px rgba(90,233,255,.25);}
+.wb b{display:block;color:var(--gold);font-weight:600;margin-top:2px;font-size:9px;}
+/* toggles */
+.tg{width:34px;height:17px;background:rgba(255,255,255,.07);border-radius:9px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;}
+.tg.on{background:linear-gradient(90deg,var(--rouge),#B850FF);box-shadow:0 0 10px rgba(255,79,168,.45);}
+.tg::after{content:'';position:absolute;width:13px;height:13px;border-radius:50%;background:#fff;top:2px;left:2px;transition:left .2s;}
+.tg.on::after{left:19px;}
+/* copy/paste */
+.cpg{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.ed-btn{background:rgba(255,79,168,.05);border:1px solid rgba(255,79,168,.3);color:var(--rouge);font-family:var(--mono);
+  font-size:9px;letter-spacing:.15em;padding:8px;cursor:pointer;border-radius:2px;transition:all .15s;text-align:center;}
+.ed-btn:hover{background:rgba(255,79,168,.14);box-shadow:0 0 8px rgba(255,79,168,.25);}
+.ed-btn.ok{background:rgba(90,233,255,.18);border-color:var(--ice);color:var(--ice);}
+.ed-btn.err{background:rgba(255,79,168,.22);border-color:var(--rouge);color:#fff;}
+
+/* NAKED hint */
+#naked-hint{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);font-size:8px;letter-spacing:.5em;
+  color:rgba(90,233,255,.9);opacity:0;transition:opacity 1.2s ease;pointer-events:none;z-index:20;}
+#naked-hint.show{opacity:.25;}
+
+/* shortcut modal */
+#shortcut-modal{display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.85);align-items:center;justify-content:center;}
+#shortcut-modal.open{display:flex;}
+#shortcut-box{background:linear-gradient(180deg,#0d0d0d,#050505);border:1px solid rgba(255,210,122,.4);border-radius:6px;
+  width:min(520px,92vw);max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.7),0 0 60px rgba(90,233,255,.1);}
+.sc-header{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid rgba(255,210,122,.18);
+  font-size:10px;letter-spacing:.4em;color:var(--gold);}
+.sc-header span{cursor:pointer;color:var(--mute);} .sc-header span:hover{color:var(--rouge);}
+.sc-body{padding:14px 18px;}
+.sc-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(181,142,255,.06);font-size:10px;}
+.sc-row:last-child{border-bottom:none;}
+.sc-key{background:#141414;border:1px solid rgba(181,142,255,.3);color:var(--white);font-family:var(--mono);font-size:9px;
+  padding:2px 8px;min-width:30px;text-align:center;border-radius:3px;letter-spacing:.05em;}
+.sc-desc{color:rgba(248,239,255,.7);letter-spacing:.04em;}
+.sc-desc .jp{display:block;font-family:var(--jp);font-size:9px;color:var(--mute);margin-top:1px;letter-spacing:.1em;}
+
+@media(max-width:720px){
+  body.revealed #app{grid-template-columns:1fr;grid-template-rows:44px 1fr 150px 44px;}
+  body.revealed #side{position:fixed;right:0;top:44px;bottom:44px;width:min(300px,84vw);z-index:40;
+    box-shadow:-10px 0 40px rgba(0,0,0,.6);}
+  body.revealed #stage{grid-area:2/1/3/-1;} body.revealed #mapwrap{grid-area:3/1/4/-1;}
+}
+</style>
+</head>
+<body class="naked">
+<div id="app">
+
+  <div id="topbar">
+    <span>EMERGENCE_ENGINE // EE_01</span>
+    <a href="#" id="esc-link">[ESC] INDEX</a>
+  </div>
+
+  <div id="stage">
+    <canvas id="world"></canvas>
+    <div class="stage-deco">
+      <span class="corner tl"></span><span class="corner tr"></span>
+      <span class="corner bl"></span><span class="corner br"></span>
+      <div class="stage-bignum">01</div>
+      <div class="po">
+        <div class="po-num">01</div>
+        <div class="po-en">Bifurcation Walk</div>
+        <div class="po-jp">分岐図を歩く</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="mapwrap">
+    <canvas id="mapCanvas"></canvas>
+    <canvas id="mapOverlay"></canvas>
+    <div id="map-lbl">BIFURCATION MAP — DRAG SCRUB · WHEEL ZOOM · DBLCLICK RESET</div>
+  </div>
+
+  <div id="side">
+    <div class="sp">
+      <div class="spl">READOUT</div>
+      <div class="data-row"><span class="dk">r (RULE PARAM)</span><span class="dv neon" id="ro-r">2.900000</span></div>
+      <div class="data-row"><span class="dk">ORBIT</span><span id="badge" class="stable">PERIOD 01</span></div>
+      <div class="data-row"><span class="dk">λ  LYAPUNOV</span><span class="dv" id="ro-l">−0.00</span></div>
+    </div>
+    <div class="sp">
+      <div class="spl">RULE — THE PROTAGONIST</div>
+      <div class="rule">x<sub>n+1</sub> = <b id="rule-r">2.900</b>·x<sub>n</sub>(1−x<sub>n</sub>)
+        <small>主人公は「r」という1つの数。世界はこの式だけで育つ。</small></div>
+    </div>
+    <div class="sp">
+      <div class="spl">WALK — 歩いて移動（テレポート禁止）</div>
+      <div class="walkgrid" id="walkgrid">
+        <div class="wb" data-r="2.90">CALM<b>2.90</b></div>
+        <div class="wb" data-r="3.20">PULSE·2<b>3.20</b></div>
+        <div class="wb" data-r="3.50">PULSE·4<b>3.50</b></div>
+        <div class="wb" data-r="3.5699">EDGE<b>3.5699</b></div>
+        <div class="wb" data-r="3.90">MIST<b>3.90</b></div>
+        <div class="wb" data-r="3.8284">CRYSTAL·3<b>3.8284</b></div>
+      </div>
+    </div>
+    <div class="sp">
+      <div class="spl">CONTROLS</div>
+      <div class="tr"><span>r</span><input type="range" id="c-r" min="2.5" max="4.0" step="0.0001" value="2.9"><span class="sl" id="v-r">2.9000</span></div>
+      <div class="tr"><span>SPEED</span><input type="range" id="c-speed" min="1" max="60" step="1" value="8"><span class="sl" id="v-speed">8 g/s</span></div>
+      <div class="tr"><span>PARTICLES</span><input type="range" id="c-n" min="200" max="4000" step="100" value="1200"><span class="sl" id="v-n">1200</span></div>
+      <div class="tr"><span>TRAIL</span><input type="range" id="c-trail" min="0.05" max="0.5" step="0.01" value="0.18"><span class="sl" id="v-trail">0.18</span></div>
+    </div>
+    <div class="sp">
+      <div class="spl">PROOF</div>
+      <div class="tr"><span>FEIGENBAUM δ<span style="color:var(--mute)"> — 分岐点と収束比</span></span><div class="tg" id="tg-feig"></div></div>
+      <div class="tr"><span>WINDOW·3<span style="color:var(--mute)"> — 周期3の窓</span></span><div class="tg" id="tg-win3"></div></div>
+    </div>
+    <div class="sp">
+      <div class="spl">PARAMS</div>
+      <div class="cpg">
+        <div class="ed-btn" id="btn-copy">⧉ COPY</div>
+        <div class="ed-btn" id="btn-paste">▣ PASTE</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="bottombar">
+    <span id="walkstat">EE_01 // LOGISTIC MAP</span>
+    <span><span id="sc-open-btn">⌨ SHORTCUTS</span> <span class="kbd">?</span></span>
+  </div>
+</div>
+
+<div id="naked-hint">TAB — REVEAL</div>
+
+<div id="shortcut-modal">
+  <div id="shortcut-box">
+    <div class="sc-header">⌨ KEYBOARD SHORTCUTS <span id="sc-close">✕</span></div>
+    <div class="sc-body">
+      <div class="sc-row"><span class="sc-key">DRAG</span><span class="sc-desc">Walk r — ステージ横ドラッグで歩く<span class="jp">地図をズームするほど歩幅が細かくなる</span></span></div>
+      <div class="sc-row"><span class="sc-key">CLICK</span><span class="sc-desc">Disturb — 粒子を擾乱<span class="jp">周期領域では秩序が回復、カオスでは霧に飲まれる</span></span></div>
+      <div class="sc-row"><span class="sc-key">← →</span><span class="sc-desc">r ±0.0005（Shiftで ±0.01）</span></div>
+      <div class="sc-row"><span class="sc-key">Space</span><span class="sc-desc">Pause / Resume — 時間停止<span class="jp">止めても絵になる</span></span></div>
+      <div class="sc-row"><span class="sc-key">Tab</span><span class="sc-desc">Reveal — HUDと地図の表示切替</span></div>
+      <div class="sc-row"><span class="sc-key">R</span><span class="sc-desc">Reseed — 全粒子を再シード</span></div>
+      <div class="sc-row"><span class="sc-key">?</span><span class="sc-desc">This panel</span></div>
+      <div class="sc-row"><span class="sc-key">Esc</span><span class="sc-desc">Modal → NAKED → Index</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ══════════════════════════════════════════════════════════════
+   STATE
+   ══════════════════════════════════════════════════════════════ */
+const reduceMotion = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+const state = {
+  r: 2.9,
+  genPerSec: 8,
+  N: 1200,
+  trail: 0.18,
+  mapWindow: [2.8, 4.0],
+  revealed: false,
+  feigenbaum: false,
+  window3: false,
+  paused: false,
+  idle: true,             // attract-drift until first user input
+};
+const R_MIN = 2.5, R_MAX = 4.0;
+const flashAmp = reduceMotion ? 0.5 : 1.0;
+if (reduceMotion && state.genPerSec > 12) state.genPerSec = 12;
+
+/* ══════════════════════════════════════════════════════════════
+   CANVAS SETUP
+   ══════════════════════════════════════════════════════════════ */
+const stage = document.getElementById('stage');
+const world = document.getElementById('world');
+const wctx = world.getContext('2d');
+let W = 0, H = 0, DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+function resizeWorld(){
+  const r = stage.getBoundingClientRect();
+  W = Math.max(1, Math.floor(r.width));
+  H = Math.max(1, Math.floor(r.height));
+  world.width = W * DPR; world.height = H * DPR;
+  wctx.setTransform(DPR,0,0,DPR,0,0);
+  // clear so trail buffer restarts on new geometry
+  wctx.fillStyle = '#070707'; wctx.fillRect(0,0,W,H);
+}
+const ro = new ResizeObserver(resizeWorld);
+ro.observe(stage);
+window.addEventListener('resize', ()=>{ resizeWorld(); if(state.revealed) resizeMap(); });
+resizeWorld();   // explicit initial size (don't rely on RO first-fire timing)
+
+/* ══════════════════════════════════════════════════════════════
+   PARTICLES — each runs the SAME map independently (SPEC §4-1)
+   縦位置 = x_i  → ライブ粒子雲 = 分岐図の垂直スライス
+   ══════════════════════════════════════════════════════════════ */
+let P = [];              // {x, px(0..1), dy(css px), flash}
+function gauss(){ let s=0; for(let i=0;i<3;i++) s+=Math.random(); return s/3 - 0.5; } // ~N, [-.5,.5]
+function seedParticle(){
+  return {
+    x: 0.001 + Math.random()*0.998,
+    px: Math.min(0.96, Math.max(0.04, 0.5 + gauss()*0.85)) + (Math.random()-0.5)*0.01,
+    dy: -1,             // <0 => snap on first frame
+    flash: 0,
+    tw: Math.random()*6.2832,        // twinkle phase — 静止中も生きて見える
+    tws: 0.4 + Math.random()*0.9     // twinkle speed
+  };
+}
+function buildParticles(){
+  P = new Array(state.N);
+  for (let i=0;i<state.N;i++) P[i] = seedParticle();
+}
+function reseed(){ for (const p of P){ p.x = 0.001 + Math.random()*0.998; } }
+buildParticles();
+
+/* hero (index 0) history for period / lyapunov readouts (SPEC §4-2) */
+let hist = [];          // recent x values
+let lyapBuf = [];       // recent ln|r(1-2x)| terms
+let period = 1, lambda = 0;
+
+function detectPeriod(){
+  const n = hist.length;
+  for (let p=1; p<=32; p++){
+    if (n < 3*p+1) break;
+    let ok = true;
+    for (let k=1; k<=3*p; k++){
+      if (Math.abs(hist[n-k] - hist[n-k-p]) > 1e-4){ ok=false; break; }
+    }
+    if (ok) return p;
+  }
+  return 0; // none => chaos/edge, decided by lambda
+}
+
+/* one generation tick — advance every particle once */
+function tick(){
+  const r = state.r;
+  for (const p of P){
+    p.x = r * p.x * (1 - p.x);
+    p.flash = flashAmp;                 // pulse
+  }
+  const h = P[0].x;
+  hist.push(h); if (hist.length > 220) hist.shift();
+  const term = Math.log(Math.abs(r*(1-2*h)) + 1e-12);
+  lyapBuf.push(term); if (lyapBuf.length > 500) lyapBuf.shift();
+  lambda = lyapBuf.reduce((a,b)=>a+b,0) / lyapBuf.length;
+  period = detectPeriod();
+  // footprint (visited r) for map
+  pushFootprint(r);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RENDER LOOP
+   ══════════════════════════════════════════════════════════════ */
+let last = performance.now(), genAcc = 0;
+const MARGIN = 0.12;
+
+function frame(now){
+  const dt = Math.min(0.05, (now - last)/1000); last = now;
+  const tsec = now*0.001;
+  stepIdle(dt);
+  stepWalk(dt);
+
+  if (!state.paused){
+    genAcc += dt;
+    const interval = 1 / state.genPerSec;
+    let guard = 0;
+    while (genAcc >= interval && guard < 8){ tick(); genAcc -= interval; guard++; }
+  }
+
+  // afterimage
+  wctx.globalCompositeOperation = 'source-over';
+  wctx.fillStyle = `rgba(7,7,7,${state.trail})`;
+  wctx.fillRect(0,0,W,H);
+
+  // particles (additive glow)
+  wctx.globalCompositeOperation = 'lighter';
+  const yTop = H*MARGIN, yBot = H*(1-MARGIN);
+  for (const p of P){
+    const ty = yBot + (yTop - yBot)*p.x;      // high x => high up
+    if (p.dy < 0) p.dy = ty; else p.dy += (ty - p.dy)*0.15;
+    const f = p.flash;
+    const tw = 0.76 + 0.24*Math.sin(tsec*p.tws + p.tw);   // idle twinkle — breathe while still
+    const rad = 1.4 + 1.7*f;                              // stronger pulse
+    // ice -> white with flash
+    const g = Math.round(233 + (255-233)*f*0.9);
+    const b = 255;
+    const rr = Math.round(90 + (248-90)*f*0.85);
+    const a = (0.40 + 0.5*f) * tw;
+    const wob = Math.sin(tsec*0.8 + p.tw) * 0.6;          // subtle horizontal shimmer
+    wctx.fillStyle = `rgba(${rr},${g},${b},${a})`;
+    wctx.beginPath();
+    wctx.arc(p.px*W + wob, p.dy, rad, 0, 6.2832);
+    wctx.fill();
+    if (!state.paused) p.flash *= 0.9;
+  }
+
+  // disturbance ripples (rouge — here&now only)
+  for (let i=ripples.length-1;i>=0;i--){
+    const rp = ripples[i]; rp.t += dt;
+    const k = rp.t/0.4;
+    if (k >= 1){ ripples.splice(i,1); continue; }
+    wctx.globalCompositeOperation = 'lighter';
+    wctx.strokeStyle = `rgba(255,79,168,${(1-k)*0.8})`;
+    wctx.lineWidth = 1.5;
+    wctx.beginPath();
+    wctx.arc(rp.x, rp.y, 20 + k*120, 0, 6.2832);
+    wctx.stroke();
+  }
+  wctx.globalCompositeOperation = 'source-over';
+
+  if (state.revealed){ renderMapChunk(); drawOverlay(); updateReadout(); }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* ══════════════════════════════════════════════════════════════
+   INTERACTION — WALK (drag) + DISTURB (click) on stage
+   ══════════════════════════════════════════════════════════════ */
+const ripples = [];
+let dragging=false, moved=false, startX=0, lastX=0, downXY=null;
+
+stage.addEventListener('pointerdown', e=>{
+  stopIdle(); cancelWalk();
+  dragging=true; moved=false; startX=lastX=e.clientX;
+  const r = stage.getBoundingClientRect();
+  downXY = {x:e.clientX-r.left, y:e.clientY-r.top};
+  stage.setPointerCapture(e.pointerId);
+});
+stage.addEventListener('pointermove', e=>{
+  if (!dragging) return;
+  const dx = e.clientX - lastX; lastX = e.clientX;
+  if (Math.abs(e.clientX - startX) > 4) moved=true;
+  const winW = state.mapWindow[1]-state.mapWindow[0];
+  setR(state.r + (dx / Math.max(1,W)) * winW * 0.3);
+});
+stage.addEventListener('pointerup', e=>{
+  dragging=false;
+  if (!moved && downXY){ disturb(downXY.x, downXY.y); }
+});
+stage.addEventListener('pointercancel', ()=>{ dragging=false; });
+
+function disturb(cx, cy){
+  const yTop=H*MARGIN, yBot=H*(1-MARGIN);
+  for (const p of P){
+    const dx = p.px*W - cx, dy = p.dy - cy;
+    if (dx*dx+dy*dy < 120*120){
+      p.x = Math.min(0.999, Math.max(0.001, p.x + (Math.random()-0.5)*0.3));
+    }
+  }
+  ripples.push({x:cx, y:cy, t:0});
+}
+
+/* ══════════════════════════════════════════════════════════════
+   r CONTROL
+   ══════════════════════════════════════════════════════════════ */
+function setR(v){
+  state.r = Math.min(R_MAX, Math.max(R_MIN, v));
+  syncRUI();
+}
+function syncRUI(){
+  document.getElementById('c-r').value = state.r;
+  document.getElementById('v-r').textContent = state.r.toFixed(4);
+  document.getElementById('rule-r').textContent = state.r.toFixed(3);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   READOUT
+   ══════════════════════════════════════════════════════════════ */
+function updateReadout(){
+  document.getElementById('ro-r').textContent = state.r.toFixed(6);
+  const badge = document.getElementById('badge');
+  if (period > 0){
+    badge.textContent = 'PERIOD ' + String(period).padStart(2,'0');
+    badge.className = period<=8 ? 'stable' : 'edge';
+  } else if (lambda > 0.01){ badge.textContent='CHAOS'; badge.className='chaos'; }
+  else if (lambda < -0.01){ badge.textContent='STABLE'; badge.className='stable'; }
+  else { badge.textContent='EDGE'; badge.className='edge'; }
+  const sign = lambda>=0?'+':'−';
+  document.getElementById('ro-l').textContent = sign + Math.abs(lambda).toFixed(2);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   BIFURCATION MAP (SPEC §6) — progressive develop, ice fog
+   ══════════════════════════════════════════════════════════════ */
+const mapC = document.getElementById('mapCanvas'), mctx = mapC.getContext('2d');
+const mapO = document.getElementById('mapOverlay'), octx = mapO.getContext('2d');
+let MW=0, MH=0, mapCol=0, colImg=null;
+
+function resizeMap(){
+  const r = document.getElementById('mapwrap').getBoundingClientRect();
+  MW = Math.max(1, Math.floor(r.width)); MH = Math.max(1, Math.floor(r.height));
+  mapC.width=MW; mapC.height=MH; mapO.width=MW; mapO.height=MH;
+  colImg = mctx.createImageData(1, MH);
+  resetMap();
+}
+function resetMap(){
+  mapCol = 0;
+  mctx.clearRect(0,0,MW,MH);
+  mctx.fillStyle = '#070707'; mctx.fillRect(0,0,MW,MH);
+}
+function renderMapChunk(){
+  if (mapCol >= MW) return;
+  const [w0,w1] = state.mapWindow, span=w1-w0;
+  const cols = Math.min(40, MW - mapCol);
+  const data = colImg.data;
+  for (let c=0;c<cols;c++){
+    const col = mapCol + c;
+    const r = w0 + (col/MW)*span;
+    const counts = new Uint16Array(MH);
+    let x = 0.31;
+    for (let i=0;i<300;i++) x = r*x*(1-x);          // warm-up
+    let maxc = 1;
+    for (let i=0;i<200;i++){
+      x = r*x*(1-x);
+      let yi = ((1-x)*MH)|0; if (yi<0)yi=0; else if(yi>=MH)yi=MH-1;
+      counts[yi]++; if (counts[yi]>maxc) maxc=counts[yi];
+    }
+    for (let y=0;y<MH;y++){
+      const cval = counts[y];
+      const a = cval? Math.min(1, Math.pow(cval/6, 0.6)) : 0;
+      const o = y*4;
+      data[o]=90; data[o+1]=233; data[o+2]=255; data[o+3]=Math.round(a*255);
+    }
+    mctx.putImageData(colImg, col, 0);
+  }
+  mapCol += cols;
+}
+
+/* current-position cursor + footprints + range labels + proof lines */
+const footprints = [];
+function pushFootprint(r){
+  const n = footprints.length;
+  if (n===0 || Math.abs(footprints[n-1]-r) > 0.0008){ footprints.push(r); if (footprints.length>4000) footprints.shift(); }
+}
+const FEIG = [
+  {r:3.0,     l:'r₁'}, {r:3.44949, l:'r₂'}, {r:3.54409, l:'r₃'},
+  {r:3.56441, l:'r₄'}, {r:3.569946,l:'r∞'}
+];
+function rToX(r){ const [w0,w1]=state.mapWindow; return (r-w0)/(w1-w0)*MW; }
+function drawOverlay(){
+  octx.clearRect(0,0,MW,MH);
+  const [w0,w1]=state.mapWindow;
+  // footprints (gold accumulation, top 3px)
+  octx.fillStyle='rgba(255,210,122,0.08)';
+  for (const fr of footprints){ if(fr<w0||fr>w1)continue; octx.fillRect(rToX(fr),0,1,3); }
+  // feigenbaum
+  if (state.feigenbaum){
+    octx.font='9px IBM Plex Mono'; octx.textBaseline='top';
+    octx.setLineDash([3,3]); octx.lineWidth=1;
+    let prev=null, prevX=null;
+    for (const f of FEIG){
+      const x=rToX(f.r); if (f.r>=w0&&f.r<=w1){
+        octx.strokeStyle='rgba(255,210,122,0.55)'; octx.beginPath();
+        octx.moveTo(x,10); octx.lineTo(x,MH); octx.stroke();
+        octx.fillStyle='rgba(255,210,122,0.85)'; octx.fillText(f.l, x+3, 12);
+      }
+      prev=f.r; prevX=x;
+    }
+    octx.setLineDash([]);
+    octx.fillStyle='rgba(255,210,122,0.9)'; octx.textAlign='right';
+    octx.fillText('δ → 4.6692…', MW-8, MH-14); octx.textAlign='left';
+  }
+  // window-3
+  if (state.window3){
+    const x=rToX(3.8284);
+    if (3.8284>=w0&&3.8284<=w1){
+      octx.strokeStyle='rgba(255,210,122,0.7)'; octx.lineWidth=1.5;
+      octx.strokeRect(x-6,4,12,MH-8);
+      octx.fillStyle='rgba(255,210,122,0.9)'; octx.font='8px IBM Plex Mono';
+      octx.fillText('WIN·3', x+9, 6);
+    }
+  }
+  // current cursor (rouge) — the "here & now"
+  const cx=rToX(state.r);
+  octx.strokeStyle='rgba(255,79,168,0.95)'; octx.lineWidth=1;
+  octx.beginPath(); octx.moveTo(cx,0); octx.lineTo(cx,MH); octx.stroke();
+  octx.fillStyle='rgba(255,79,168,0.95)';
+  octx.beginPath(); octx.moveTo(cx-4,0); octx.lineTo(cx+4,0); octx.lineTo(cx,6); octx.closePath(); octx.fill();
+  // range labels
+  octx.fillStyle='rgba(255,210,122,0.55)'; octx.font='9px IBM Plex Mono';
+  octx.textBaseline='bottom';
+  octx.fillText(w0.toFixed(3), 6, MH-3);
+  octx.textAlign='right'; octx.fillText(w1.toFixed(3), MW-6, MH-3); octx.textAlign='left';
+  octx.textBaseline='top';
+}
+
+/* map interactions — scrub / zoom / reset */
+const mapwrap = document.getElementById('mapwrap');
+let mapDrag=false;
+function mapScrub(clientX){
+  const r = mapwrap.getBoundingClientRect();
+  const x = clientX - r.left;
+  const [w0,w1]=state.mapWindow;
+  setR(w0 + (x/MW)*(w1-w0));
+}
+mapwrap.addEventListener('pointerdown', e=>{ stopIdle(); cancelWalk(); mapDrag=true; mapScrub(e.clientX); mapwrap.setPointerCapture(e.pointerId); });
+mapwrap.addEventListener('pointermove', e=>{ if(mapDrag) mapScrub(e.clientX); });
+mapwrap.addEventListener('pointerup', ()=>{ mapDrag=false; });
+mapwrap.addEventListener('dblclick', ()=>{ state.mapWindow=[2.8,4.0]; resetMap(); syncSliderRange(); });
+mapwrap.addEventListener('wheel', e=>{
+  e.preventDefault();
+  const r = mapwrap.getBoundingClientRect();
+  const [w0,w1]=state.mapWindow, span=w1-w0;
+  const focus = w0 + ((e.clientX-r.left)/MW)*span;
+  const factor = e.deltaY>0 ? 1.15 : 1/1.15;
+  let ns = Math.min(1.2, Math.max(0.002, span*factor));
+  let n0 = focus - (focus-w0)*(ns/span);
+  let n1 = n0 + ns;
+  n0=Math.max(0, n0); n1=Math.min(4.0, n1);
+  state.mapWindow=[n0,n1]; resetMap(); syncSliderRange();
+}, {passive:false});
+function syncSliderRange(){
+  const c=document.getElementById('c-r');
+  c.min=state.mapWindow[0]; c.max=state.mapWindow[1];
+}
+
+/* ══════════════════════════════════════════════════════════════
+   IDLE ATTRACT DRIFT — the world lives on its own until first touch
+   起動直後から静かな海→分裂→霧が勝手に立ち上がる。最初の操作で停止。
+   ══════════════════════════════════════════════════════════════ */
+let idleDir = 1;
+const IDLE_SPEED = 0.055;                 // r/s — 瞑想的にゆっくり
+function stopIdle(){ state.idle = false; }
+function stepIdle(dt){
+  if (!state.idle || walkTarget!==null || dragging || mapDrag) return;
+  let nr = state.r + idleDir*IDLE_SPEED*dt;
+  if (nr > 3.95){ nr = 3.95; idleDir = -1; }
+  else if (nr < 2.78){ nr = 2.78; idleDir = 1; }
+  setR(nr);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   WALK — auto-travel to landmark at 0.15 r/s (SPEC §7)
+   ══════════════════════════════════════════════════════════════ */
+let walkTarget=null;
+function startWalk(target){
+  walkTarget = Math.min(R_MAX,Math.max(R_MIN,target));
+}
+function cancelWalk(){
+  if (walkTarget!==null){ walkTarget=null; document.getElementById('walkstat').textContent = state.revealed?'EE_01 // LOGISTIC MAP':''; }
+}
+function stepWalk(dt){
+  if (walkTarget===null) return;
+  const dir = Math.sign(walkTarget - state.r);
+  const step = 0.15*dt;
+  if (Math.abs(walkTarget - state.r) <= step){ setR(walkTarget); cancelWalk(); return; }
+  setR(state.r + dir*step);
+  document.getElementById('walkstat').textContent = 'WALKING → ' + walkTarget.toFixed(4);
+}
+document.getElementById('walkgrid').addEventListener('click', e=>{
+  const b = e.target.closest('.wb'); if(!b) return;
+  stopIdle(); startWalk(parseFloat(b.dataset.r));
+});
+
+/* ══════════════════════════════════════════════════════════════
+   REVEAL
+   ══════════════════════════════════════════════════════════════ */
+let everRevealed=false;
+function setReveal(on){
+  state.revealed = on;
+  document.body.classList.toggle('revealed', on);
+  document.body.classList.toggle('naked', !on);
+  if (on){
+    everRevealed=true;
+    hideHint();
+    // wait a frame for grid to lay out, then size map + world
+    requestAnimationFrame(()=>{ resizeMap(); resizeWorld(); });
+    document.getElementById('walkstat').textContent='EE_01 // LOGISTIC MAP';
+  } else {
+    requestAnimationFrame(resizeWorld);
+  }
+}
+
+/* NAKED hint after 45s */
+const hintEl=document.getElementById('naked-hint');
+let hintTimer=setTimeout(()=>{ if(!everRevealed) hintEl.classList.add('show'); }, 45000);
+function hideHint(){ hintEl.classList.remove('show'); clearTimeout(hintTimer); }
+
+/* ══════════════════════════════════════════════════════════════
+   SIDE CONTROLS
+   ══════════════════════════════════════════════════════════════ */
+const bind=(id,fn)=>document.getElementById(id).addEventListener('input',e=>fn(e.target.value));
+bind('c-r', v=>{ stopIdle(); setR(parseFloat(v)); });
+bind('c-speed', v=>{ state.genPerSec=+v; document.getElementById('v-speed').textContent=v+' g/s'; });
+bind('c-n', v=>{ state.N=+v; document.getElementById('v-n').textContent=v; buildParticles(); });
+bind('c-trail', v=>{ state.trail=+v; document.getElementById('v-trail').textContent=(+v).toFixed(2); });
+document.getElementById('tg-feig').addEventListener('click',e=>{ state.feigenbaum=!state.feigenbaum; e.currentTarget.classList.toggle('on',state.feigenbaum); });
+document.getElementById('tg-win3').addEventListener('click',e=>{ state.window3=!state.window3; e.currentTarget.classList.toggle('on',state.window3); });
+
+/* ══════════════════════════════════════════════════════════════
+   COPY / PASTE PARAMS  (unknown keys ignored)
+   ══════════════════════════════════════════════════════════════ */
+function flash(btn,cls,txt){ const t=btn.textContent; btn.textContent=txt; btn.classList.add(cls);
+  setTimeout(()=>{ btn.textContent=t; btn.classList.remove(cls); },1200); }
+document.getElementById('btn-copy').addEventListener('click', async e=>{
+  const payload={ r:+state.r.toFixed(6), genPerSec:state.genPerSec, particles:state.N, trail:state.trail,
+    mapWindow:state.mapWindow.map(v=>+v.toFixed(4)), revealed:state.revealed,
+    feigenbaum:state.feigenbaum, window3:state.window3, paused:state.paused };
+  try{ await navigator.clipboard.writeText(JSON.stringify(payload,null,2)); flash(e.currentTarget,'ok','✓ COPIED'); }
+  catch{ flash(e.currentTarget,'err','✗'); }
+});
+document.getElementById('btn-paste').addEventListener('click', async e=>{
+  try{
+    const j=JSON.parse(await navigator.clipboard.readText());
+    if(typeof j.r==='number') setR(j.r);
+    if(typeof j.genPerSec==='number'){ state.genPerSec=j.genPerSec; document.getElementById('c-speed').value=j.genPerSec; document.getElementById('v-speed').textContent=j.genPerSec+' g/s'; }
+    if(typeof j.particles==='number'){ state.N=j.particles; document.getElementById('c-n').value=j.particles; document.getElementById('v-n').textContent=j.particles; buildParticles(); }
+    if(typeof j.trail==='number'){ state.trail=j.trail; document.getElementById('c-trail').value=j.trail; document.getElementById('v-trail').textContent=j.trail.toFixed(2); }
+    if(Array.isArray(j.mapWindow)&&j.mapWindow.length===2){ state.mapWindow=[+j.mapWindow[0],+j.mapWindow[1]]; syncSliderRange(); if(state.revealed) resetMap(); }
+    if(typeof j.feigenbaum==='boolean'){ state.feigenbaum=j.feigenbaum; document.getElementById('tg-feig').classList.toggle('on',j.feigenbaum); }
+    if(typeof j.window3==='boolean'){ state.window3=j.window3; document.getElementById('tg-win3').classList.toggle('on',j.window3); }
+    if(typeof j.paused==='boolean'){ state.paused=j.paused; }
+    if(typeof j.revealed==='boolean'&&j.revealed!==state.revealed) setReveal(j.revealed);
+    flash(e.currentTarget,'ok','✓ APPLIED');
+  }catch{ flash(e.currentTarget,'err','✗'); }
+});
+
+/* ══════════════════════════════════════════════════════════════
+   SHORTCUT MODAL
+   ══════════════════════════════════════════════════════════════ */
+const modal=document.getElementById('shortcut-modal');
+function openSC(){ if(!state.revealed) setReveal(true); modal.classList.add('open'); }
+function closeSC(){ modal.classList.remove('open'); }
+document.getElementById('sc-open-btn').addEventListener('click',openSC);
+document.getElementById('sc-close').addEventListener('click',closeSC);
+modal.addEventListener('click',e=>{ if(e.target===modal) closeSC(); });
+
+/* ══════════════════════════════════════════════════════════════
+   KEYBOARD  (focus guard → cascade)
+   ══════════════════════════════════════════════════════════════ */
+window.addEventListener('keydown', e=>{
+  const tag=document.activeElement?.tagName;
+  if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA') return;
+
+  if(e.key==='Escape'){
+    if(modal.classList.contains('open')){ closeSC(); return; }
+    if(state.revealed){ setReveal(false); return; }
+    // final step — EE index not built yet:
+    // window.location.href='index.html';
+    return;
+  }
+  if(e.key==='Tab'){ e.preventDefault(); setReveal(!state.revealed); return; }
+  if(e.key==='?'){ e.preventDefault(); modal.classList.contains('open')?closeSC():openSC(); return; }
+  if(e.code==='Space'){ e.preventDefault(); state.paused=!state.paused; return; }
+  if(e.key==='r'||e.key==='R'){ reseed(); return; }
+  if(e.key==='ArrowLeft'){ stopIdle(); cancelWalk(); setR(state.r - (e.shiftKey?0.01:0.0005)); return; }
+  if(e.key==='ArrowRight'){ stopIdle(); cancelWalk(); setR(state.r + (e.shiftKey?0.01:0.0005)); return; }
+});
+
+/* ESC link in topbar mirrors cascade */
+document.getElementById('esc-link').addEventListener('click',e=>{
+  e.preventDefault();
+  if(modal.classList.contains('open')) closeSC();
+  else if(state.revealed) setReveal(false);
+  // else window.location.href='index.html';
+});
+
+syncRUI();
+</script>
+</body>
+</html>
