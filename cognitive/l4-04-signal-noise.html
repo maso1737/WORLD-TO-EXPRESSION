@@ -123,6 +123,10 @@ input[type=range]:hover::-moz-range-thumb{background:var(--acc)}
 .gauge-fill.lime{background:var(--acc)}
 .gauge-fill.red{background:var(--ng)}
 
+/* find-test readout */
+.find-out{margin-top:10px;font-family:var(--disp);font-size:17px;letter-spacing:0.06em;color:var(--ink);border:1px solid var(--mute-2);padding:7px 9px;text-align:center;font-feature-settings:"tnum"}
+.find-out.lime{background:var(--acc);border-color:var(--ink)}
+
 /* read block */
 .db{border-left:2px solid var(--ink);padding:1px 0 1px 13px;position:relative}
 .db::before{content:"✦";position:absolute;left:-8px;top:-1px;color:var(--ink);font-size:10px;background:#fff;line-height:1}
@@ -248,6 +252,12 @@ input[type=range]:hover::-moz-range-thumb{background:var(--acc)}
         <div class="tr-lbl">Show Signal<span>信号要素を強調表示する</span></div>
         <div class="tg on" id="tg-signal"></div>
       </div>
+      <div class="tr" style="margin-top:14px">
+        <div class="tr-lbl">Find Test<span>手がかりを消して探索時間を計測</span></div>
+        <button class="ed-btn" id="btn-find" style="flex:none;width:98px">◎ FIND</button>
+      </div>
+      <div class="find-out" id="find-out">48 ELEM → —</div>
+      <div class="ed-hint">FIND を押すと信号の手がかりが消え、配置がシャッフルされる。ノイズの中には<b>紛らわしいニセの十字</b>（傾いている／腕の太さが違う）も混ざる——本物は常に垂直水平。要素数を変えて再挑戦すると、TUNED が最速・FLOODED で激増するのが分かる。</div>
     </section>
 
     <section class="sp">
@@ -259,8 +269,8 @@ input[type=range]:hover::-moz-range-thumb{background:var(--acc)}
       <div class="dnote">これは L1〜3 全部の<b>統合</b>である。群化・焦点・解釈どの層においても、要素の過密と過疎は共通して失敗する。L4 EDIT キャップストーン——<b>S/N の最適点を編集者が決める</b>ことが、設計の根幹にある。</div>
       <div class="xrefs">
         <a class="xref" href="01-proximity.html"><span>↑</span>L1 <b>GROUP</b>／群化・近接・連続（S/N の地）<span class="ar">→</span></a>
-        <a class="xref" href="l2-01-focal.html"><span>↑</span>L2 <b>FOCUS</b>／視覚重力・焦点（S/N の主役）<span class="ar">→</span></a>
-        <a class="xref" href="l3-01-muller.html"><span>↑</span>L3 <b>INTERPRET</b>／錯視・解釈（S/N の誤読）<span class="ar">→</span></a>
+        <a class="xref" href="l2-01-size-weight.html"><span>↑</span>L2 <b>FOCUS</b>／視覚重力・焦点（S/N の主役）<span class="ar">→</span></a>
+        <a class="xref" href="l3-01-muller-lyer.html"><span>↑</span>L3 <b>INTERPRET</b>／錯視・解釈（S/N の誤読）<span class="ar">→</span></a>
       </div>
     </section>
 
@@ -290,6 +300,8 @@ input[type=range]:hover::-moz-range-thumb{background:var(--acc)}
     <div class="sc-list">
       <div class="sc-row"><div class="sc-desc">Count −/+<span>要素数（粗調整）</span></div><div class="sc-key">↑ ↓</div></div>
       <div class="sc-row"><div class="sc-desc">Fine adjust<span>微調整</span></div><div class="sc-key">← →</div></div>
+      <div class="sc-row"><div class="sc-desc">Find test<span>探索ゲーム開始（配置シャッフル）</span></div><div class="sc-key">F</div></div>
+      <div class="sc-row"><div class="sc-desc">Pick the signal<span>FIND 中にクロスをクリック</span></div><div class="sc-key">CLICK</div></div>
       <div class="sc-row"><div class="sc-desc">Show signal<span>信号の強調表示</span></div><div class="sc-key">P</div></div>
       <div class="sc-row"><div class="sc-desc">Reset<span>初期化</span></div><div class="sc-key">R</div></div>
       <div class="sc-row"><div class="sc-desc">This panel<span>この一覧</span></div><div class="sc-key">?</div></div>
@@ -300,7 +312,7 @@ input[type=range]:hover::-moz-range-thumb{background:var(--acc)}
 
 <script>
 // ── STATE ──────────────────────────────────────────────────
-const DEFAULTS = { elementCount: 48, showSignal: true };
+const DEFAULTS = { elementCount: 48, showSignal: true, lastFindMs: null };
 const state = { ...DEFAULTS };
 
 // ── MODEL ──────────────────────────────────────────────────
@@ -319,22 +331,40 @@ const SIG_SIZE = 0.072;                // signal half-size as fraction of span
 
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};}
 
-// Pre-generate noise element attributes (positions + shape type fixed; size/opacity driven by count)
-const NOISE_POOL = (() => {
-  const rng = mulberry32(20260604), out = [];
+// Noise element attributes (positions + shape type fixed; size/opacity driven by count).
+// Rebuilt with a fresh seed each time FIND starts, so the layout can't be memorised.
+// ~1 in 8 noise elements is a DECOY CROSS — same silhouette family as the real signal
+// but off-ratio (thinner/thicker arms) and rotated, so FIND can't be won by scanning
+// for "a plus-shaped blob": the eye has to actually compare proportions.
+function buildNoisePool(seed){
+  const rng = mulberry32(seed), out = [];
   for (let i = 0; i < MAX_NOISE; i++){
     const ang = rng() * Math.PI * 2;
     const rad = 0.18 + rng() * 0.76;
+    const isDecoy = rng() < 0.125;
     out.push({
       x: Math.cos(ang) * rad,
       y: Math.sin(ang) * rad,
       r: 0.6 + rng() * 0.9,
-      shape: rng() < 0.6 ? 'dot' : 'sq',
+      shape: isDecoy ? 'cross' : (rng() < 0.6 ? 'dot' : 'sq'),
       layer: rng(),   // stacking order jitter
+      // decoy rotation: 15°–75° off either axis, so it never coincides with the
+      // always axis-aligned real signal (that alignment is the one true tell)
+      rot: ((15 + rng() * 60) + (rng() < 0.5 ? 90 : 0)) * Math.PI / 180,
+      thickRatio: 0.16 + rng() * 0.46,                    // decoy arm-thickness ratio (true signal = 0.36)
     });
   }
   return out;
-})();
+}
+let NOISE_POOL = buildNoisePool(20260604);
+
+// Current signal position (normalised offset from centre). Reshuffled by FIND.
+let sigPos = { x: SIG.x, y: SIG.y };
+
+// ── FIND MODE (search-time measurement) ────────────────────
+let finding = false;      // true while the user is hunting for the cross
+let findStart = 0;        // performance.now() when the hunt began
+let findMsg = null;       // { type:'found', ms } | { type:'miss' }
 
 const cv  = document.getElementById('stage-canvas');
 const ctx = cv.getContext('2d');
@@ -362,6 +392,13 @@ function detectability(c){
   return Math.max(0, 1 - (c - HI) / (100 - HI));
 }
 
+// Stage geometry + signal placement, shared by draw() and the FIND hit-test.
+function signalScreen(){
+  const cx = W / 2, cy = H / 2;
+  const span = Math.min(W * 0.36, H * 0.40);
+  return { cx, cy, span, sx: cx + sigPos.x * span, sy: cy + sigPos.y * span, ss: span * SIG_SIZE };
+}
+
 // ── RESIZE ─────────────────────────────────────────────────
 function resize(){
   const r = document.getElementById('main').getBoundingClientRect();
@@ -377,16 +414,13 @@ function resize(){
 function draw(){
   ctx.clearRect(0, 0, W, H);
   const c = state.elementCount, zone = zoneOf(c), eff = sweetZone(c, LO, HI, SOFT);
-  const cx = W / 2, cy = H / 2;
-  const span = Math.min(W * 0.36, H * 0.40);
+  const { cx, cy, span, sx, sy, ss } = signalScreen();
   const nCount = noiseCount(c);
   const detect = detectability(c);
   const tuned = zone === 'tuned';
   const baseDot = span * 0.022;
-
-  // signal position
-  const sx = cx + SIG.x * span, sy = cy + SIG.y * span;
-  const ss = span * SIG_SIZE;
+  // While hunting, every hint about where the signal is must be suppressed.
+  const revealSignal = state.showSignal && !finding;
 
   // failure frame
   if (!tuned){
@@ -411,6 +445,14 @@ function draw(){
     const nr = baseDot * n.r;
     if (n.shape === 'dot'){
       ctx.beginPath(); ctx.arc(nx, ny, nr, 0, Math.PI * 2); ctx.fill();
+    } else if (n.shape === 'cross'){
+      // decoy cross: rotated + off-ratio, so shape alone can't out it as the signal
+      const dArm = nr * 2.6, dThick = dArm * n.thickRatio;
+      ctx.save();
+      ctx.translate(nx, ny); ctx.rotate(n.rot);
+      ctx.fillRect(-dArm, -dThick, dArm * 2, dThick * 2);
+      ctx.fillRect(-dThick, -dArm, dThick * 2, dArm * 2);
+      ctx.restore();
     } else {
       ctx.fillRect(nx - nr * 0.8, ny - nr * 0.8, nr * 1.6, nr * 1.6);
     }
@@ -418,7 +460,7 @@ function draw(){
   ctx.globalAlpha = 1;
 
   // signal element — ink cross (always drawn, above noise)
-  if (state.showSignal && tuned){
+  if (revealSignal && tuned){
     // lime halo
     ctx.save();
     ctx.strokeStyle = ACC; ctx.lineWidth = 2;
@@ -434,7 +476,7 @@ function draw(){
   ctx.restore();
 
   // STARVED label: signal alone, no ground
-  if (zone === 'starved' && c < LO / 2){
+  if (!finding && zone === 'starved' && c < LO / 2){
     ctx.save();
     ctx.font = '600 9px "JetBrains Mono",monospace';
     ctx.textAlign = 'center'; ctx.textBaseline = 'top';
@@ -444,7 +486,7 @@ function draw(){
   }
 
   // proof: signal detection ring (lime when tuned, dashed red when lost)
-  if (state.showSignal){
+  if (revealSignal){
     ctx.save();
     ctx.strokeStyle = tuned ? ACC : NG;
     ctx.lineWidth = tuned ? 2.5 : 1.5;
@@ -457,6 +499,20 @@ function draw(){
     ctx.fillStyle = tuned ? '#0a0a0a' : NG;
     const labelX = sx + ss * 2.1, labelY = sy;
     ctx.fillText('SIG', labelX, labelY);
+    ctx.restore();
+  }
+
+  // FIND mode banner — no positional hint, just the task
+  if (finding){
+    ctx.save();
+    ctx.setLineDash([3, 4]);
+    ctx.strokeStyle = 'rgba(10,10,10,0.45)'; ctx.lineWidth = 1;
+    const pad = 24; ctx.strokeRect(pad, pad, W - pad * 2, H - pad * 2);
+    ctx.setLineDash([]);
+    ctx.font = '600 10px "JetBrains Mono",monospace';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillStyle = INK;
+    ctx.fillText('◎ FIND — CLICK THE CROSS', pad + 6, pad + 8);
     ctx.restore();
   }
 
@@ -512,6 +568,30 @@ function updateReadouts(c, zone, eff, detect){
   vm.textContent = main; vs.textContent = sub; bz.textContent = bzv;
   if (tuned){ V.classList.add('tuned'); bz.classList.add('lime'); bz.classList.remove('red'); }
   else      { V.classList.add('fail');  bz.classList.remove('lime'); bz.classList.add('red'); }
+
+  // FIND mode takes over the verdict line.
+  // A miss keeps the hunt running, so it must win over the FIND banner.
+  if (findMsg && findMsg.type === 'found'){
+    V.classList.remove('fail'); V.classList.add('tuned');
+    vm.textContent = `FOUND · ${(findMsg.ms / 1000).toFixed(1)}s`;
+    vs.textContent = `${c} 要素での探索時間 — 要素数を変えて再挑戦`;
+  } else if (findMsg && findMsg.type === 'miss'){
+    V.classList.remove('tuned'); V.classList.add('fail');
+    vm.textContent = 'MISS';
+    vs.textContent = 'そこではない — 探索続行';
+  } else if (finding){
+    V.classList.remove('tuned', 'fail');
+    vm.textContent = 'FIND';
+    vs.textContent = 'クロスを探してクリック — 時間を計測中';
+  }
+
+  // Measure readout: elementCount ↔ latest search time
+  const fo = document.getElementById('find-out');
+  if (fo){
+    const t = state.lastFindMs == null ? '—' : (state.lastFindMs / 1000).toFixed(1) + 's';
+    fo.textContent = `${c} ELEM → ${t}`;
+    fo.classList.toggle('lime', state.lastFindMs != null && !finding);
+  }
 }
 
 // ── CONTROLS ───────────────────────────────────────────────
@@ -520,12 +600,48 @@ sCount.addEventListener('input', e => { state.elementCount = +e.target.value; dr
 const tgSignal = document.getElementById('tg-signal');
 tgSignal.addEventListener('click', () => { state.showSignal = !state.showSignal; tgSignal.classList.toggle('on', state.showSignal); draw(); });
 
+// ── FIND MODE ──────────────────────────────────────────────
+// Hides the signal cues, reshuffles both the noise field and the signal
+// position, then times how long the user takes to click the cross.
+function startFind(){
+  NOISE_POOL = buildNoisePool((Math.random() * 2147483647) | 0);
+  const a = Math.random() * Math.PI * 2;
+  const r = 0.28 + Math.random() * 0.58;     // keep it off-centre but inside the field
+  sigPos = { x: Math.cos(a) * r, y: Math.sin(a) * r };
+  finding = true; findStart = performance.now(); findMsg = null;
+  cv.style.cursor = 'crosshair';
+  draw();
+}
+cv.addEventListener('click', e => {
+  if (!finding) return;
+  const r = cv.getBoundingClientRect();
+  const px = e.clientX - r.left, py = e.clientY - r.top;
+  const { sx, sy, ss } = signalScreen();
+  if (Math.hypot(px - sx, py - sy) <= ss * 2.2){
+    state.lastFindMs = Math.round(performance.now() - findStart);
+    finding = false;
+    cv.style.cursor = 'default';
+    findMsg = { type: 'found', ms: state.lastFindMs };
+  } else {
+    findMsg = { type: 'miss' };
+  }
+  draw();
+});
+document.getElementById('btn-find').addEventListener('click', startFind);
+
 function syncUI(){
   sCount.value = state.elementCount;
   tgSignal.classList.toggle('on', state.showSignal);
   draw();
 }
-function reset(){ Object.assign(state, DEFAULTS); syncUI(); }
+function reset(){
+  Object.assign(state, DEFAULTS);
+  finding = false; findMsg = null;
+  sigPos = { x: SIG.x, y: SIG.y };
+  NOISE_POOL = buildNoisePool(20260604);
+  cv.style.cursor = 'default';
+  syncUI();
+}
 
 // ── COPY / PASTE ───────────────────────────────────────────
 function flash(btn, label, cls){
@@ -534,7 +650,7 @@ function flash(btn, label, cls){
   setTimeout(() => { btn.textContent = orig; btn.className = oc; }, 1200);
 }
 document.getElementById('btn-copy').addEventListener('click', async e => {
-  const payload = { app:'edit-04-signal-noise', elementCount:state.elementCount, showSignal:state.showSignal };
+  const payload = { app:'edit-04-signal-noise', elementCount:state.elementCount, showSignal:state.showSignal, lastFindMs:state.lastFindMs };
   try { await navigator.clipboard.writeText(JSON.stringify(payload, null, 2)); flash(e.currentTarget,'✓ COPIED','ok'); }
   catch { flash(e.currentTarget,'✗','ng'); }
 });
@@ -543,6 +659,7 @@ document.getElementById('btn-paste').addEventListener('click', async e => {
     const o = JSON.parse(await navigator.clipboard.readText());
     if (typeof o.elementCount === 'number') state.elementCount = Math.max(0, Math.min(100, o.elementCount | 0));
     if (typeof o.showSignal === 'boolean') state.showSignal = o.showSignal;
+    if (typeof o.lastFindMs === 'number' || o.lastFindMs === null) state.lastFindMs = o.lastFindMs;
     syncUI(); flash(e.currentTarget,'✓ APPLIED','ok');
   } catch { flash(e.currentTarget,'✗','ng'); }
 });
@@ -564,6 +681,7 @@ window.addEventListener('keydown', e => {
   else if(e.key==='ArrowDown')  { e.preventDefault(); state.elementCount=Math.max(0,state.elementCount-5); syncUI(); }
   else if(e.key==='ArrowRight') { e.preventDefault(); state.elementCount=Math.min(100,state.elementCount+1); syncUI(); }
   else if(e.key==='ArrowLeft')  { e.preventDefault(); state.elementCount=Math.max(0,state.elementCount-1); syncUI(); }
+  else if(e.key==='f'||e.key==='F'){ startFind(); }
   else if(e.key==='p'||e.key==='P'){ state.showSignal=!state.showSignal; tgSignal.classList.toggle('on',state.showSignal); draw(); }
   else if(e.key==='r'||e.key==='R'){ reset(); }
 });
