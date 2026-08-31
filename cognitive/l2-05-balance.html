@@ -95,14 +95,8 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;backg
 .ratiobar i.lime{background:var(--acc);box-shadow:0 0 0 1px var(--ink)}
 .ratiobar i.muted{background:var(--mute)}
 .rb-ends{display:flex;justify-content:space-between;margin-top:6px;font-family:var(--jp);font-size:9px;letter-spacing:0.04em;color:var(--mute)}
-/* balance scale (天秤) widget */
-.scale{margin-top:2px;height:54px;position:relative}
-.scale-beam{position:absolute;left:50%;top:14px;width:80%;height:3px;background:var(--ink);transform-origin:center;transform:translateX(-50%) rotate(0deg);transition:transform .18s var(--ez)}
-.scale-pivot{position:absolute;left:50%;top:14px;width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:18px solid var(--ink);transform:translateX(-50%)}
-.scale-base{position:absolute;left:50%;top:32px;width:48px;height:2px;background:var(--ink);transform:translateX(-50%)}
-.scale-pan{position:absolute;width:14px;height:14px;border:1.5px solid var(--ink);background:#fff;transition:all .18s var(--ez)}
-.scale-pan.heavy{background:var(--acc)}
-.scale-lbl{display:flex;justify-content:space-between;margin-top:30px;font-family:var(--mono);font-size:9px;letter-spacing:0.06em;color:var(--mute);text-transform:uppercase}
+/* mass readout — the scale itself now lives on the stage (SPEC §3-9) */
+.scale-lbl{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;letter-spacing:0.06em;color:var(--mute);text-transform:uppercase}
 .scale-lbl b{font-family:var(--disp);color:var(--ink);font-size:13px}
 /* gauge */
 .gauge{margin-top:4px}
@@ -204,15 +198,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;backg
     </section>
 
     <section class="sp">
-      <div class="spl">Scale <em>天秤</em></div>
-      <div class="scale">
-        <div class="scale-beam" id="beam">
-          <div class="scale-pan" id="pan-l" style="left:-2px"></div>
-          <div class="scale-pan" id="pan-r" style="right:-2px"></div>
-        </div>
-        <div class="scale-pivot"></div>
-        <div class="scale-base"></div>
-      </div>
+      <div class="spl">Mass <em>質量</em></div>
       <div class="scale-lbl"><span>L MASS <b id="m-l">50</b></span><span><b id="m-r">50</b> R MASS</span></div>
     </section>
 
@@ -234,9 +220,14 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;backg
         <div class="tg on" id="tg-cent"></div>
       </div>
       <div class="tr">
-        <div class="tr-lbl">Balance Scale<span>釣り合いを天秤で可視化</span></div>
+        <div class="tr-lbl">Balance Scale<span>ステージの天秤に載せる</span></div>
         <div class="tg on" id="tg-scale"></div>
       </div>
+      <div class="tr">
+        <div class="tr-lbl">Gaze Particle<span>視線の粒子が重心へ引かれる</span></div>
+        <div class="tg on" id="tg-gaze"></div>
+      </div>
+      <div class="ed-hint">粒子は<b>重み付き重心</b>にばねで引かれる。値を変えると目標が移り、粒子が新しい重心へ<b>スッと落ちていく</b>——「視線が引っ張られる」の直訳。均一状態では中央に静止する。</div>
     </section>
 
     <section class="sp">
@@ -275,6 +266,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;backg
       <div class="sc-row"><div class="sc-desc">Balance −/+<span>釣り合い</span></div><div class="sc-key">↑ ↓</div></div>
       <div class="sc-row"><div class="sc-desc">Toggle scale<span>天秤表示</span></div><div class="sc-key">S</div></div>
       <div class="sc-row"><div class="sc-desc">Toggle centroid proof<span>重心表示</span></div><div class="sc-key">C</div></div>
+      <div class="sc-row"><div class="sc-desc">Toggle gaze particle<span>視線粒子の表示</span></div><div class="sc-key">E</div></div>
       <div class="sc-row"><div class="sc-desc">Reset<span>初期化</span></div><div class="sc-key">R</div></div>
       <div class="sc-row"><div class="sc-desc">This panel<span>この一覧</span></div><div class="sc-key">?</div></div>
       <div class="sc-row"><div class="sc-desc">Index<span>戻る</span></div><div class="sc-key">ESC</div></div>
@@ -284,13 +276,14 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;backg
 
 <script>
 // ── STATE ──────────────────────────────────────────────────
-const DEFAULTS = { balance: 50, showCentroid: true, showScale: true };
+const DEFAULTS = { balance: 50, showCentroid: true, showScale: true, showGaze: true };
 const state = { ...DEFAULTS };
 
 const cv  = document.getElementById('stage-canvas');
 const ctx = cv.getContext('2d');
 let W = 0, H = 0, DPR = 1;
 
+const ACC = '#c8ff1a';         // the L3 pages declare this; L2 did not until the scale needed it
 const LX = -0.52, RX = 0.52;   // group anchor x (normalised)
 
 // masses sum to 1; balance 100 → 0.5/0.5, balance 0 → 0.92/0.08
@@ -300,14 +293,137 @@ function masses() {
   return { mL: heavy, mR: 1 - heavy };             // left grows heavy as balance drops
 }
 
+// ── BALANCE SCALE (SPEC §3-9 — the stage's主役) ─────────────
+// Eased so the beam swings into place instead of snapping. Driven by pageStep(),
+// which rides the shared frame loop.
+const TILT_MAX = 18 * Math.PI / 180;   // beam angle at full imbalance
+const SC = { tilt: 0, mix: 1, flash: 0 };   // mix: 0 = masses on the axis, 1 = on the pans
+let scaleWasLevel = true;
+
+function radii(span) {
+  const { mL, mR } = masses();
+  const baseR = span * (0.62 + (0.34 - 0.62) * SC.mix);
+  return { rL: baseR * Math.sqrt(mL), rR: baseR * Math.sqrt(mR) };
+}
+
+function scaleTargets() {
+  const { mL, mR } = masses();
+  return { tilt: (mL - mR) * TILT_MAX, mix: state.showScale ? 1 : 0 };
+}
+
+// The hardware, in canvas coords.
+function scaleGeo(cx, cy, span) {
+  return {
+    pivotX: cx,
+    pivotY: cy + span * 0.10,
+    armLen: span * 0.52,               // keeps the pans near the masses' old x
+    hanger: span * 0.07,               // short: the trays ride just under the beam, so a big disc hides little of it
+    triHalf: span * 0.13,
+    triH:    span * 0.40,
+  };
+}
+
+// Where each mass actually sits. side: -1 = left, +1 = right.
+// At mix 0 this returns the original on-axis layout, so the toggle is a real
+// A/B of "with the scale" and "without".
+function massPos(cx, cy, span, side, r) {
+  const g = scaleGeo(cx, cy, span);
+  const axisX = cx + (side < 0 ? LX : RX) * span;
+  const endX = g.pivotX + side * g.armLen * Math.cos(SC.tilt);
+  const endY = g.pivotY - side * g.armLen * Math.sin(SC.tilt);
+  const plateY = endY + g.hanger;
+  return {
+    x: axisX + (endX - axisX) * SC.mix,
+    y: cy + (plateY - r - cy) * SC.mix,   // resting ON the plate
+    endX, endY, plateY,
+  };
+}
+
 // ── CENTROIDS (common proof) ───────────────────────────────
 function computeCentroids(cx, cy, span) {
   const { mL, mR } = masses();
-  const wx = cx + (LX * mL + RX * mR) * span;      // mass-weighted x
-  const wy = cy;
-  const gx = cx, gy = cy;                           // central axis
+  const { rL, rR } = radii(span);
+  const pL = massPos(cx, cy, span, -1, rL);
+  const pR = massPos(cx, cy, span, +1, rR);
+  // Mass-weighted centre of the two discs. Once they ride the pans this picks up
+  // the vertical dip too, which is the whole point of putting them on a beam.
+  const wx = pL.x * mL + pR.x * mR;
+  const wy = pL.y * mL + pR.y * mR;
+  // Geometric reference = the unweighted mean of the two discs, as on the other L2
+  // pages. Pinning it to cy would leave PULL at 7% even with the beam dead level,
+  // because the discs now ride pans that hang below the centre line.
+  const gx = (pL.x + pR.x) / 2, gy = (pL.y + pR.y) / 2;
   const pull = Math.hypot(wx - gx, wy - gy) / span;
   return { gx, gy, wx, wy, pull };
+}
+
+// ── PAGE ANIMATION (picked up by the shared frame loop) ────
+function pageStep(dt) {
+  const t = scaleTargets();
+  if (GAZE_REDUCED) { SC.tilt = t.tilt; SC.mix = t.mix; SC.flash = 0; return; }
+  const k = 1 - Math.exp(-dt / 0.10);   // ~0.18s transition feel
+  SC.tilt += (t.tilt - SC.tilt) * k;
+  SC.mix  += (t.mix  - SC.mix)  * k;
+  if (SC.flash > 0) SC.flash = Math.max(0, SC.flash - dt);
+  // Reward the moment it comes to rest level (SPEC §3-9 完成条件).
+  const level = Math.abs(SC.tilt) < 0.004 && Math.abs(t.tilt) < 0.004;
+  if (level && !scaleWasLevel) SC.flash = 0.45;
+  scaleWasLevel = level;
+}
+function pageSettled() {
+  const t = scaleTargets();
+  return Math.abs(t.tilt - SC.tilt) < 0.0005 &&
+         Math.abs(t.mix - SC.mix) < 0.002 && SC.flash <= 0;
+}
+
+// Fulcrum, beam, hangers and pans.
+function drawScale(ctx, cx, cy, span) {
+  if (SC.mix < 0.01) return;
+  const g = scaleGeo(cx, cy, span);
+  const baseY = g.pivotY + g.triH;
+  const hot = SC.flash > 0;
+  const ink = 'rgba(10,10,10,' + (0.20 + SC.mix * 0.80).toFixed(2) + ')';
+  ctx.save();
+  ctx.globalAlpha = SC.mix;
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+
+  // ground + fulcrum
+  ctx.strokeStyle = ink; ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx - span * 0.42, baseY); ctx.lineTo(cx + span * 0.42, baseY);
+  ctx.stroke();
+  ctx.fillStyle = ink;
+  ctx.beginPath();
+  ctx.moveTo(g.pivotX, g.pivotY);
+  ctx.lineTo(g.pivotX - g.triHalf, baseY);
+  ctx.lineTo(g.pivotX + g.triHalf, baseY);
+  ctx.closePath(); ctx.fill();
+
+  // beam
+  const eL = { x: g.pivotX - g.armLen * Math.cos(SC.tilt), y: g.pivotY + g.armLen * Math.sin(SC.tilt) };
+  const eR = { x: g.pivotX + g.armLen * Math.cos(SC.tilt), y: g.pivotY - g.armLen * Math.sin(SC.tilt) };
+  ctx.strokeStyle = hot ? ACC : ink;
+  ctx.lineWidth = hot ? 5 : 3.5;
+  ctx.beginPath(); ctx.moveTo(eL.x, eL.y); ctx.lineTo(eR.x, eR.y); ctx.stroke();
+
+  // pivot cap
+  ctx.fillStyle = hot ? ACC : ink;
+  ctx.beginPath(); ctx.arc(g.pivotX, g.pivotY, 4, 0, Math.PI * 2); ctx.fill();
+
+  // hangers + pans. Pans hang level whatever the beam does, and each is sized to
+  // its own load so a heavy disc can never sit on an invisible pan.
+  const { rL, rR } = radii(span);
+  for (const [e, r] of [[eL, rL], [eR, rR]]) {
+    const half = Math.max(span * 0.12, r + span * 0.05);
+    ctx.strokeStyle = ink; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(e.x, e.y); ctx.lineTo(e.x, e.y + g.hanger); ctx.stroke();
+    ctx.strokeStyle = hot ? ACC : ink; ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(e.x - half, e.y + g.hanger);
+    ctx.lineTo(e.x + half, e.y + g.hanger);
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
 // ── VERDICT ────────────────────────────────────────────────
@@ -331,6 +447,105 @@ function resize() {
   draw();
 }
 
+// ── GAZE PARTICLE (L2 common part) ─────────────────────────
+// One dot, spring-pulled toward the weighted centroid. Change a parameter and
+// the target moves, so the dot visibly *falls* toward it — the pull made physical.
+// These pages are otherwise draw-on-demand, so the rAF loop runs only while the
+// dot still has somewhere to go, and shuts itself off once it has settled.
+const GAZE_REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+// acc = (target - pos) * K - vel * D. SPEC §3-8 gives 4.0 / 3.0 "as the baseline
+// ratio, fine-tune the time constant" — that pair takes ~3.3s to settle, which is
+// not the "スッと滑る" the completion condition asks for. Doubling the natural
+// frequency while holding the damping ratio (zeta = D / 2*sqrt(K) = 0.75) keeps the
+// exact same character — a glide with a ~1px overshoot — but lands it in ~1.6s.
+const GAZE_K = 16.0, GAZE_D = 6.0;
+const GAZE_TRAIL = 20;
+const GAZE = { x: null, y: null, vx: 0, vy: 0, trail: [] };
+let lastC = null;                      // latest centroids, filled by draw()
+let gazeRAF = 0, gazeLast = 0;
+
+// Net force on the dot: spring toward the target, damping, plus any field.
+// Shared by the integrator and the settle test so they can never disagree.
+function gazeAccel(tx, ty) {
+  let ax = (tx - GAZE.x) * GAZE_K - GAZE.vx * GAZE_D;
+  let ay = (ty - GAZE.y) * GAZE_K - GAZE.vy * GAZE_D;
+  if (typeof gazeField === 'function') {
+    const f = gazeField(GAZE.x, GAZE.y);
+    if (f) { ax += f[0]; ay += f[1]; }
+  }
+  return [ax, ay];
+}
+// Settled = nothing left to do. Distance to the target is the wrong test: a page
+// with a field (l2-04) parks the dot slightly off-target forever, and that is a
+// rest state, not motion.
+function gazeSettled(tx, ty) {
+  const [ax, ay] = gazeAccel(tx, ty);
+  return Math.hypot(ax, ay) < 2 && Math.hypot(GAZE.vx, GAZE.vy) < 0.5;
+}
+
+// One integration step. Split out from the loop so it can be driven by hand
+// (the Browser pane freezes rAF, so this is also how the motion gets verified).
+function stepGaze(dt, tx, ty) {
+  if (GAZE.x == null) { GAZE.x = tx; GAZE.y = ty; GAZE.vx = GAZE.vy = 0; }
+  if (GAZE_REDUCED) {                  // no travel, no trail — just mark the spot
+    GAZE.x = tx; GAZE.y = ty; GAZE.vx = GAZE.vy = 0; GAZE.trail.length = 0;
+    return;
+  }
+  dt = Math.min(dt, 0.05);             // a stalled tab must not explode the spring
+  const [ax, ay] = gazeAccel(tx, ty);
+  GAZE.vx += ax * dt;
+  GAZE.vy += ay * dt;
+  GAZE.x  += GAZE.vx * dt;
+  GAZE.y  += GAZE.vy * dt;
+  // The tail follows actual displacement, not distance-to-target — otherwise a dot
+  // parked off-target by a field would stack 20 points on one spot forever.
+  const tip = GAZE.trail[GAZE.trail.length - 1];
+  if (!tip || Math.hypot(GAZE.x - tip[0], GAZE.y - tip[1]) > 0.4) {
+    GAZE.trail.push([GAZE.x, GAZE.y]);
+    if (GAZE.trail.length > GAZE_TRAIL) GAZE.trail.shift();
+  } else if (GAZE.trail.length) {
+    GAZE.trail.shift();                // standing still: the tail drains instead of freezing
+  }
+}
+
+function drawGaze(ctx) {
+  if (!state.showGaze || GAZE.x == null) return;
+  ctx.save();
+  const n = GAZE.trail.length;
+  for (let i = 0; i < n; i++) {        // index 0 = oldest = faintest
+    ctx.fillStyle = 'rgba(200,255,26,' + ((i + 1) / n * 0.30).toFixed(3) + ')';
+    ctx.beginPath(); ctx.arc(GAZE.trail[i][0], GAZE.trail[i][1], 2.2, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.fillStyle = '#c8ff1a';
+  ctx.strokeStyle = '#0a0a0a';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(GAZE.x, GAZE.y, 6, 0, Math.PI * 2);
+  ctx.fill(); ctx.stroke();
+  ctx.restore();
+}
+
+// The page's single animation frame: the dot, plus any page-local easing.
+function gazeFrame(ts) {
+  gazeRAF = 0;
+  const dt = gazeLast ? (ts - gazeLast) / 1000 : 1 / 60;
+  gazeLast = ts;
+  if (state.showGaze && lastC) stepGaze(dt, lastC.wx, lastC.wy);
+  // Pages with their own eased hardware (l2-05's beam) define pageStep/pageSettled
+  // and ride this loop — a second rAF would draw the frame twice.
+  if (typeof pageStep === 'function') pageStep(Math.min(dt, 0.05));
+  draw();                              // re-arms through armGaze()
+}
+
+// Called at the end of every draw(), so any control path keeps the dot alive
+// without each handler having to know about it.
+function armGaze() {
+  const gazeLive = state.showGaze && !GAZE_REDUCED && lastC &&
+                   (!gazeSettled(lastC.wx, lastC.wy) || GAZE.trail.length > 0);
+  const pageLive = typeof pageSettled === 'function' && !pageSettled();
+  if (gazeLive || pageLive) { if (!gazeRAF) gazeRAF = requestAnimationFrame(gazeFrame); }
+  else                      { gazeLast = 0; }
+}
+
 // ── DRAW ───────────────────────────────────────────────────
 function draw() {
   ctx.clearRect(0, 0, W, H);
@@ -339,6 +554,7 @@ function draw() {
   const verd = getVerd();
   const { mL, mR } = masses();
   const C = computeCentroids(cx, cy, span);
+  lastC = C;
 
   // off-state border (extreme imbalance)
   if (state.balance === 0) {
@@ -357,12 +573,15 @@ function draw() {
   ctx.beginPath(); ctx.moveTo(cx, cy - span * 1.05); ctx.lineTo(cx, cy + span * 1.05); ctx.stroke();
   ctx.restore();
 
+  // the scale itself — drawn first so the masses sit on top of the pans
+  drawScale(ctx, cx, cy, span);
+
   // left & right masses (radius ∝ sqrt(mass) so area ∝ mass)
-  const baseR = span * 0.62;
-  const rL = baseR * Math.sqrt(mL), rR = baseR * Math.sqrt(mR);
+  const { rL, rR } = radii(span);
+  const pL = massPos(cx, cy, span, -1, rL), pR = massPos(cx, cy, span, +1, rR);
   ctx.fillStyle = '#0a0a0a';
-  ctx.beginPath(); ctx.arc(cx + LX * span, cy, rL, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(cx + RX * span, cy, rR, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(pL.x, pL.y, rL, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(pR.x, pR.y, rR, 0, Math.PI * 2); ctx.fill();
 
   // proof: centroid overlay
   if (state.showCentroid) {
@@ -390,7 +609,10 @@ function draw() {
     ctx.restore();
   }
 
+  drawGaze(ctx);
+
   updateReadouts(verd, C.pull, mL, mR);
+  armGaze();
 }
 
 // ── READOUTS ───────────────────────────────────────────────
@@ -415,18 +637,6 @@ function updateReadouts(verd, pull, mL, mR) {
   const tense = verd === 'tension';
   fill.classList.toggle('lime', tense);
   document.getElementById('g-pull').classList.toggle('lime', tense);
-
-  // balance scale (天秤): beam tilts toward heavy side
-  const beam = document.getElementById('beam');
-  const tilt = (mL - mR) * 26;          // degrees, left heavy → tilt left (positive lowers left)
-  beam.style.transform = 'translateX(-50%) rotate(' + (-tilt) + 'deg)';
-  beam.style.opacity = state.showScale ? '1' : '0.15';
-  const panL = document.getElementById('pan-l'), panR = document.getElementById('pan-r');
-  panL.classList.toggle('heavy', mL > mR + 0.02);
-  panR.classList.toggle('heavy', mR > mL + 0.02);
-  const sL = 0.7 + mL, sR = 0.7 + mR;
-  panL.style.transform = 'scale(' + sL.toFixed(2) + ')';
-  panR.style.transform = 'scale(' + sR.toFixed(2) + ')';
 
   const mark = document.getElementById('bal-mark');
   mark.style.left = b + '%';
@@ -457,24 +667,41 @@ function updateReadouts(verd, pull, mL, mR) {
 document.getElementById('s-bal').addEventListener('input', e => {
   state.balance = +e.target.value; draw();
 });
+const tgGaze = document.getElementById('tg-gaze');
+function setGaze(on) {
+  state.showGaze = on;
+  tgGaze.classList.toggle('on', on);
+  gazeLast = 0;                        // restart the clock, never a jumbo first dt
+  draw();
+}
+tgGaze.addEventListener('click', () => setGaze(!state.showGaze));
 const tgCent = document.getElementById('tg-cent');
 tgCent.addEventListener('click', () => {
   state.showCentroid = !state.showCentroid;
   tgCent.classList.toggle('on', state.showCentroid); draw();
 });
 const tgScale = document.getElementById('tg-scale');
-tgScale.addEventListener('click', () => {
-  state.showScale = !state.showScale;
-  tgScale.classList.toggle('on', state.showScale); draw();
-});
+tgScale.addEventListener('click', () => setScale(!state.showScale));
+function setScale(on) {
+  state.showScale = on;
+  tgScale.classList.toggle('on', on);
+  gazeLast = 0;
+  draw();                              // draw() re-arms the loop, so mix eases
+}
 
 function syncUI() {
   document.getElementById('s-bal').value = state.balance;
+  tgGaze.classList.toggle('on', state.showGaze);
   tgCent.classList.toggle('on', state.showCentroid);
   tgScale.classList.toggle('on', state.showScale);
   draw();
 }
-function reset() { Object.assign(state, DEFAULTS); syncUI(); }
+function reset() {
+  Object.assign(state, DEFAULTS);
+  const t = scaleTargets();
+  SC.tilt = t.tilt; SC.mix = t.mix; SC.flash = 0; scaleWasLevel = Math.abs(t.tilt) < 0.004;
+  syncUI();
+}
 
 // ── COPY / PASTE ───────────────────────────────────────────
 function flash(btn, label, cls) {
@@ -482,19 +709,25 @@ function flash(btn, label, cls) {
   btn.textContent = label; btn.className = 'ed-btn ' + cls;
   setTimeout(() => { btn.textContent = orig; btn.className = oc; }, 1200);
 }
+// NOTE: hold the button in a local — e.currentTarget is null once the handler
+// resumes after an await, which used to make every flash() throw.
 document.getElementById('btn-copy').addEventListener('click', async e => {
-  const p = { app:'focus-05-balance', balance:state.balance, showCentroid:state.showCentroid, showScale:state.showScale };
-  try { await navigator.clipboard.writeText(JSON.stringify(p, null, 2)); flash(e.currentTarget,'✓ COPIED','ok'); }
-  catch { flash(e.currentTarget,'✗','ng'); }
+  const btn = e.currentTarget;
+  const p = { app:'focus-05-balance', balance:state.balance, showCentroid:state.showCentroid, showScale:state.showScale,
+              showGaze:state.showGaze };
+  try { await navigator.clipboard.writeText(JSON.stringify(p, null, 2)); flash(btn,'✓ COPIED','ok'); }
+  catch { flash(btn,'✗','ng'); }
 });
 document.getElementById('btn-paste').addEventListener('click', async e => {
+  const btn = e.currentTarget;
   try {
     const o = JSON.parse(await navigator.clipboard.readText());
     if (typeof o.balance === 'number') state.balance = Math.max(0,Math.min(100,o.balance|0));
     if (typeof o.showCentroid === 'boolean') state.showCentroid = o.showCentroid;
+    if (typeof o.showGaze === 'boolean') state.showGaze = o.showGaze;
     if (typeof o.showScale === 'boolean') state.showScale = o.showScale;
-    syncUI(); flash(e.currentTarget,'✓ APPLIED','ok');
-  } catch { flash(e.currentTarget,'✗','ng'); }
+    syncUI(); flash(btn,'✓ APPLIED','ok');
+  } catch { flash(btn,'✗','ng'); }
 });
 
 // ── SHORTCUT MODAL ─────────────────────────────────────────
@@ -512,12 +745,15 @@ window.addEventListener('keydown', e => {
   if (e.target && (e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')) return;
   if (e.key==='ArrowUp')   { e.preventDefault(); state.balance=Math.min(100,state.balance+5); syncUI(); }
   else if(e.key==='ArrowDown'){ e.preventDefault(); state.balance=Math.max(0,state.balance-5); syncUI(); }
-  else if(e.key==='s'||e.key==='S'){ state.showScale=!state.showScale; tgScale.classList.toggle('on',state.showScale); draw(); }
+  else if(e.key==='s'||e.key==='S'){ setScale(!state.showScale); }
   else if(e.key==='c'||e.key==='C'){ state.showCentroid=!state.showCentroid; tgCent.classList.toggle('on',state.showCentroid); draw(); }
+  else if(e.key==='e'||e.key==='E'){ setGaze(!state.showGaze); }
   else if(e.key==='r'||e.key==='R'){ reset(); }
 });
 
 // ── INIT ───────────────────────────────────────────────────
+(() => { const t = scaleTargets(); SC.tilt = t.tilt; SC.mix = t.mix;
+         scaleWasLevel = Math.abs(t.tilt) < 0.004; })();
 window.addEventListener('resize', resize);
 resize();
 </script>

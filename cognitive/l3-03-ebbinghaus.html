@@ -116,6 +116,11 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;backg
 .ed-btn.ok{background:var(--acc);border-color:var(--ink);color:var(--ink)}
 .ed-btn.ng{background:var(--ng);border-color:var(--ng);color:#fff}
 .ed-hint{font-family:var(--jp);font-size:9px;color:var(--mute);letter-spacing:0.04em;margin-top:9px;line-height:1.6}
+.ed-btn:disabled{opacity:0.32;cursor:default}
+.ed-btn:disabled:hover{background:var(--bg);color:var(--ink)}
+.tg.dis{opacity:0.32;pointer-events:none}
+.match-out{margin-top:10px;font-family:var(--disp);font-size:16px;letter-spacing:0.05em;color:var(--ink);border:1px solid var(--mute-2);padding:7px 9px;text-align:center;font-feature-settings:"tnum"}
+.match-out.lime{background:var(--acc);border-color:var(--ink)}
 
 /* BOTTOMBAR */
 #bottombar{grid-column:1/3;display:grid;grid-template-columns:auto auto auto 1fr auto;align-items:stretch;border-top:1px solid var(--line);background:var(--bg);z-index:10}
@@ -207,9 +212,23 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;backg
     <section class="sp">
       <div class="spl">Proof <em>検証</em></div>
       <div class="tr">
-        <div class="tr-lbl">Concentric Ring<span>同心円を2つの中心円に重ねる</span></div>
+        <div class="tr-lbl">Concentric Ring<span>同心円を2つの中心円に重ねる（MATCH 判定前は無効）</span></div>
         <div class="tg" id="tg-ruler"></div>
       </div>
+    </section>
+
+    <section class="sp">
+      <div class="spl">Measure <em>計測</em></div>
+      <div class="tr">
+        <div class="tr-lbl">Match Mode<span>右の中心円を調整して同じ大きさに</span></div>
+        <div class="tg" id="tg-match"></div>
+      </div>
+      <div class="tr">
+        <div class="tr-lbl">Judge<span>同じに見えたら判定する</span></div>
+        <button class="ed-btn" id="btn-judge" style="flex:none;width:98px" disabled>⌖ JUDGE</button>
+      </div>
+      <div class="match-out" id="match-out">LAST — · BEST —</div>
+      <div class="ed-hint">MATCH 中は右の中心円を <b>⟷ ドラッグ</b>（円のフチをつまんで半径を変える）／<b>←→</b> で拡縮できる。左の中心円と<b>同じ大きさに見えた</b>ところで JUDGE。ズレた分が<b>あなたの脳の錯視量</b>。開始径は毎回ランダム、同心円は判定まで無効。BEST は最大の錯視量。</div>
     </section>
 
     <section class="sp">
@@ -247,6 +266,10 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;backg
     <div class="sc-list">
       <div class="sc-row"><div class="sc-desc">Surround size −/+<span>周囲円のサイズ</span></div><div class="sc-key">↑ ↓</div></div>
       <div class="sc-row"><div class="sc-desc">Toggle concentric proof<span>同心円の表示</span></div><div class="sc-key">P</div></div>
+      <div class="sc-row"><div class="sc-desc">Match mode<span>錯視量の計測モード</span></div><div class="sc-key">M</div></div>
+      <div class="sc-row"><div class="sc-desc">Resize right disc<span>MATCH 中に右の中心円を拡縮</span></div><div class="sc-key">← →</div></div>
+      <div class="sc-row"><div class="sc-desc">Judge / retry<span>判定する／もう一度</span></div><div class="sc-key">ENTER</div></div>
+      <div class="sc-row"><div class="sc-desc">Drag the disc edge<span>MATCH 中に円のフチをドラッグ</span></div><div class="sc-key">DRAG</div></div>
       <div class="sc-row"><div class="sc-desc">Reset<span>初期化</span></div><div class="sc-key">R</div></div>
       <div class="sc-row"><div class="sc-desc">This panel<span>この一覧</span></div><div class="sc-key">?</div></div>
       <div class="sc-row"><div class="sc-desc">Index<span>戻る</span></div><div class="sc-key">ESC</div></div>
@@ -256,8 +279,25 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;backg
 
 <script>
 // ── STATE ──────────────────────────────────────────────────
-const DEFAULTS = { surroundScale: 85, showCircle: false };
+const DEFAULTS = { surroundScale: 85, showCircle: false, lastIllusionPct: null };
 const state = { ...DEFAULTS };
+
+// ── MATCH & MEASURE (method of adjustment) ─────────────────
+// The right central disc (ringed by big surrounds — the one that looks smaller)
+// becomes adjustable. The user nulls it against the fixed left disc; whatever
+// physical difference is left over is their illusion magnitude.
+// ILL_SIGN: the adjustable disc is the one that looks SMALLER, so the expected
+// illusion is a stretch (l3-01 shrinks instead and uses -1).
+const ILL_SIGN = +1;
+let matchOn    = false;
+let matchScale = 1;        // right disc radius / true radius. Never displayed before JUDGE.
+let judged     = false;
+let judgeMsg   = null;     // { pct } shown for 3s after a judgement
+let judgeTimer = null;
+let flashOn    = false;    // 300ms lime frame on judgement
+let bestPct = null, bestSurr = null;
+const MATCH_MIN = 0.80, MATCH_MAX = 1.20;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 const cv  = document.getElementById('stage-canvas');
 const ctx = cv.getContext('2d');
@@ -288,25 +328,39 @@ function resize() {
   draw();
 }
 
+// ── GEOMETRY (shared by draw and the match drag) ───────────
+function geo() {
+  const cx = W / 2, cy = H / 2;
+  const span = Math.min(W * 0.30, H * 0.38);
+  const gap  = span * 0.78;             // half-distance between the two clusters
+  return {
+    cx, cy, span, gap,
+    centerR: span * 0.20,               // true radius of both central discs
+    lx: cx - gap, rx: cx + gap,         // cluster centers
+    t: Math.abs(state.surroundScale - 50) / 50,   // 0 = off, 1 = max contrast
+  };
+}
+// Right disc radius: only MATCH mode makes it differ from the true one.
+function rightR(g) { return g.centerR * (matchOn ? matchScale : 1); }
+
 // ── DRAW ───────────────────────────────────────────────────
 function draw() {
   ctx.clearRect(0, 0, W, H);
-  const cx = W / 2, cy = H / 2;
-  const span = Math.min(W * 0.30, H * 0.38);
+  const g = geo();
+  const { cx, cy, span, centerR, lx, rx, t } = g;
+  const rR = rightR(g);                 // drawn radius of the adjustable disc
+  const adjusting = matchOn && !judged;
 
-  const centerR = span * 0.20;          // both central discs — IDENTICAL radius
-  const gap     = span * 0.78;          // half-distance between the two clusters
-  const lx = cx - gap, rx = cx + gap;   // cluster centers
-
-  const t = Math.abs(state.surroundScale - 50) / 50;   // 0 = off, 1 = max contrast
   const verd = getVerd();
 
   // surround radii: left small (disc looks big), right large (disc looks small)
+  // NOTE: driven by the TRUE centerR, so the context never moves while matching.
   const surrL = centerR * (1.0 - 0.62 * t);
   const surrR = centerR * (1.0 + 1.7  * t);
 
   // off-state border
-  if (verd === 'equal') {
+  // suppressed while matching — the lime frame is the judge flash there
+  if (verd === 'equal' && !matchOn) {
     ctx.save();
     ctx.setLineDash([8, 6]);
     ctx.strokeStyle = 'rgba(200,255,26,0.5)';
@@ -317,7 +371,7 @@ function draw() {
   }
 
   // ── one Ebbinghaus cluster ──
-  function cluster(ox, surrR, count) {
+  function cluster(ox, surrR, count, subjR) {
     // surround discs
     const ring = centerR + surrR + Math.max(10, surrR * 0.35);
     ctx.save();
@@ -335,30 +389,69 @@ function draw() {
     // central disc (subject)
     ctx.save();
     ctx.fillStyle = '#0a0a0a';
-    ctx.beginPath(); ctx.arc(ox, cy, centerR, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(ox, cy, subjR, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   }
 
-  cluster(lx, surrL, 8);   // small surrounds → center looks BIGGER
-  cluster(rx, surrR, 6);   // big surrounds   → center looks SMALLER
+  cluster(lx, surrL, 8, centerR);   // small surrounds → center looks BIGGER
+  cluster(rx, surrR, 6, rR);        // big surrounds   → center looks SMALLER
 
-  // captions
-  if (t > 0.001) {
+  // grab affordance on the adjustable disc — its edge is what you pull
+  if (adjusting) {
+    ctx.save();
+    ctx.strokeStyle = ACC; ctx.lineWidth = 2;
+    ctx.setLineDash([5, 4]);
+    ctx.beginPath(); ctx.arc(rx, cy, rR, 0, Math.PI * 2); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.lineWidth = 3;
+    for (let i = 0; i < 4; i++) {                    // N/E/S/W pull ticks
+      const a = i * Math.PI / 2;
+      ctx.beginPath();
+      ctx.moveTo(rx + Math.cos(a) * (rR - 4), cy + Math.sin(a) * (rR - 4));
+      ctx.lineTo(rx + Math.cos(a) * (rR + 7), cy + Math.sin(a) * (rR + 7));
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // captions — the match labels also stand in at surround 50 (the illusion-off self-check)
+  if (t > 0.001 || adjusting) {
     ctx.save();
     ctx.font = '600 10px "JetBrains Mono", monospace';
     ctx.fillStyle = 'rgba(10,10,10,0.42)';
     ctx.textAlign = 'center';
     const capY = cy + span * 1.02;
-    ctx.fillText('囲み小 — 大きく見える', lx, capY);
-    ctx.fillText('囲み大 — 小さく見える', rx, capY);
+    // While nulling, the normal labels would give the answer away — the task is the label.
+    ctx.fillText(adjusting ? 'REFERENCE — 基準（固定）' : '囲み小 — 大きく見える', lx, capY);
+    ctx.fillText(adjusting ? '⟷ ADJUST — 同じ大きさに' : '囲み大 — 小さく見える', rx, capY);
     ctx.restore();
   }
 
-  // ── proof: concentric ring overlay (equal diameter) ──
-  if (state.showCircle) {
+  // ── proof: concentric ring overlay (true, equal diameter) ──
+  // Locked out mid-trial: seeing the true sizes would answer the question for you.
+  if (state.showCircle && !adjusting) {
     drawConcentric(ctx, lx, cy, centerR);
-    drawConcentric(ctx, rx, cy, centerR);
-    // connecting equal tick
+    drawConcentric(ctx, rx, cy, centerR);   // the TRUE size — your disc is measured against it
+
+    // the leftover gap: how far your match missed physical equality
+    const gap = (matchScale - 1) * 100;
+    if (matchOn && Math.abs(gap) > 0.05) {
+      const r1 = Math.min(centerR, rR), r2 = Math.max(centerR, rR);
+      ctx.save();
+      ctx.lineCap = 'butt';
+      ctx.strokeStyle = ACC; ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(rx + r1, cy); ctx.lineTo(rx + r2, cy);   // radial gap, pointing right
+      ctx.moveTo(rx - r1, cy); ctx.lineTo(rx - r2, cy);
+      ctx.stroke();
+      ctx.strokeStyle = '#0a0a0a'; ctx.lineWidth = 1;     // caps make it read as a measured gap
+      ctx.beginPath();
+      for (const gx of [rx + r1, rx + r2, rx - r1, rx - r2]) { ctx.moveTo(gx, cy - 6); ctx.lineTo(gx, cy + 6); }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // connecting tick
     ctx.save();
     ctx.strokeStyle = 'rgba(200,255,26,0.55)';
     ctx.lineWidth = 1;
@@ -367,14 +460,26 @@ function draw() {
     ctx.moveTo(lx, cy - centerR - 16); ctx.lineTo(rx, cy - centerR - 16);
     ctx.stroke();
     ctx.restore();
-    // equal tag
+
+    // tag
     ctx.save();
     ctx.font = '600 10px "JetBrains Mono", monospace';
     ctx.textAlign = 'center';
+    const label = (matchOn && Math.abs((matchScale - 1) * 100) > 0.05)
+      ? 'Δ ' + fmtPct((matchScale - 1) * 100) : '= EQUAL';
+    const tagw  = Math.max(64, ctx.measureText(label).width + 16);
     ctx.fillStyle = ACC;
-    ctx.fillRect(cx - 32, cy - centerR - 26, 64, 18);
+    ctx.fillRect(cx - tagw / 2, cy - centerR - 26, tagw, 18);
     ctx.fillStyle = '#0a0a0a';
-    ctx.fillText('= EQUAL', cx, cy - centerR - 13);
+    ctx.fillText(label, cx, cy - centerR - 13);
+    ctx.restore();
+  }
+
+  // judge flash
+  if (flashOn) {
+    ctx.save();
+    ctx.strokeStyle = ACC; ctx.lineWidth = 4;
+    ctx.strokeRect(10, 10, W - 20, H - 20);
     ctx.restore();
   }
 
@@ -392,6 +497,8 @@ function drawConcentric(ctx, cx, cy, r, color = ACC, lw = 1.5) {
 }
 
 // ── READOUTS ───────────────────────────────────────────────
+const fmtPct = v => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(1) + '%';
+
 function updateReadouts(verd, appPct) {
   const c = state.surroundScale;
   document.getElementById('v-surr').textContent  = c;
@@ -413,8 +520,15 @@ function updateReadouts(verd, appPct) {
 
   document.getElementById('v-surr').classList.toggle('lime', verd === 'threshold');
 
+  const adjusting = matchOn && !judged;
+  const gap = (matchScale - 1) * 100;
+
+  // TRUE cell: the physical relation. Withheld mid-trial — it *is* the answer.
   const bbTrue = document.getElementById('bb-true');
-  bbTrue.classList.toggle('lime', state.showCircle);
+  bbTrue.textContent = adjusting ? 'HIDDEN'
+                     : (matchOn && Math.abs(gap) > 0.05) ? 'Δ ' + fmtPct(gap)
+                     : 'EQUAL';
+  bbTrue.classList.toggle('lime', state.showCircle && !adjusting);
 
   const V  = document.getElementById('verdict');
   const vm = V.querySelector('.v-main');
@@ -433,11 +547,41 @@ function updateReadouts(verd, appPct) {
   vs.textContent = sub;
   bb.textContent = bbVal;
   if (verd === 'threshold') V.classList.add('edge');
+
+  // ── MATCH mode takes over the verdict line ──
+  if (judgeMsg) {
+    const pct = judgeMsg.pct;
+    V.classList.add('edge');
+    vm.textContent = 'YOUR ILLUSION ' + fmtPct(pct);
+    vs.textContent = Math.abs(pct) < 2
+      ? 'ほぼゼロ — この条件では錯視はほとんど働いていない'
+      : pct > 0
+        ? `あなたは右の円を ${Math.abs(pct).toFixed(1)}% 大きくして「等しい」と判断した = 錯視量`
+        : `逆方向 — 右の円を ${Math.abs(pct).toFixed(1)}% 小さくして一致した`;
+    bb.textContent = 'JUDGED';
+  } else if (judged) {
+    V.classList.add('edge');
+    vm.textContent = 'MATCHED';
+    vs.textContent = `LAST ${fmtPct(state.lastIllusionPct ?? 0)} — ENTER でもう一度`;
+    bb.textContent = 'JUDGED';
+  } else if (matchOn) {
+    V.classList.remove('edge');
+    vm.textContent = 'MATCH';
+    vs.textContent = '右の円を左と同じ大きさに — フチを ⟷ ドラッグ / ←→ · ENTER で判定';
+    bb.textContent = 'MATCH';
+  }
+
+  // Measure readout: LAST / BEST
+  const mo = document.getElementById('match-out');
+  const last = state.lastIllusionPct == null ? '—' : fmtPct(state.lastIllusionPct);
+  const best = bestPct == null ? '—' : `${fmtPct(bestPct)} @surr ${bestSurr}`;
+  mo.textContent = `LAST ${last} · BEST ${best}`;
+  mo.classList.toggle('lime', judged);
 }
 
 // ── CONTROLS ───────────────────────────────────────────────
 document.getElementById('s-surr').addEventListener('input', e => {
-  state.surroundScale = +e.target.value; draw();
+  setSurr(+e.target.value);
 });
 const tgRuler = document.getElementById('tg-ruler');
 tgRuler.addEventListener('click', () => {
@@ -446,12 +590,95 @@ tgRuler.addEventListener('click', () => {
   draw();
 });
 
+// Changing the illusion invalidates a finished trial → start a fresh one.
+function setSurr(v) {
+  state.surroundScale = clamp(v | 0, 0, 100);
+  if (judged) newTrial();
+  syncUI();
+}
+
+// ── MATCH & MEASURE ────────────────────────────────────────
+// Fresh random start radius so the answer can't be anchored on "untouched = equal".
+function newTrial() {
+  matchScale = 1 + (Math.random() * 0.24 - 0.12);
+  judged = false;
+  judgeMsg = null;
+  if (judgeTimer) { clearTimeout(judgeTimer); judgeTimer = null; }
+  state.showCircle = false;
+}
+function setMatch(on) {
+  matchOn = on;
+  if (on) newTrial();
+  else { matchScale = 1; judged = false; judgeMsg = null;
+         if (judgeTimer) { clearTimeout(judgeTimer); judgeTimer = null; } }
+  syncUI();
+}
+function judge() {
+  if (!matchOn) return;
+  if (judged) { newTrial(); syncUI(); return; }   // second press = retry
+  const pct = ILL_SIGN * (matchScale - 1) * 100;  // enlarged the right disc → positive illusion
+  state.lastIllusionPct = Math.round(pct * 10) / 10;
+  if (bestPct == null || Math.abs(state.lastIllusionPct) > Math.abs(bestPct)) {
+    bestPct = state.lastIllusionPct; bestSurr = state.surroundScale;
+  }
+  judged = true;
+  state.showCircle = true;                        // reveal the proof
+  judgeMsg = { pct: state.lastIllusionPct };
+  flashOn = true;
+  setTimeout(() => { flashOn = false; draw(); }, 300);
+  if (judgeTimer) clearTimeout(judgeTimer);
+  judgeTimer = setTimeout(() => { judgeMsg = null; judgeTimer = null; draw(); }, 3000);
+  syncUI();
+}
+const tgMatch = document.getElementById('tg-match');
+tgMatch.addEventListener('click', () => setMatch(!matchOn));
+document.getElementById('btn-judge').addEventListener('click', judge);
+
+// stage drag: pull the right disc's edge outward/inward, from any direction.
+// DRAG_GAIN: the disc radius is only ~1/4 of the bar half-length on l3-01/02, so a
+// literal 1:1 radial drag would squeeze the whole +-20% range into 7px of travel.
+// A quarter gain puts the full range at ~+-29px — the same hand feel as the other two.
+const DRAG_GAIN = 0.25;
+let dragging = false, dragR0 = 0, dragScale0 = 1;
+const distToRight = (px, py) => { const g = geo(); return Math.hypot(px - g.rx, py - g.cy); };
+cv.addEventListener('pointerdown', e => {
+  if (!matchOn || judged) return;
+  const r = cv.getBoundingClientRect();
+  dragging = true;
+  dragR0 = distToRight(e.clientX - r.left, e.clientY - r.top);
+  dragScale0 = matchScale;
+  cv.setPointerCapture(e.pointerId);
+});
+cv.addEventListener('pointermove', e => {
+  if (!dragging) return;
+  const r = cv.getBoundingClientRect();
+  const dR = distToRight(e.clientX - r.left, e.clientY - r.top) - dragR0;
+  matchScale = clamp(dragScale0 + dR * DRAG_GAIN / geo().centerR, MATCH_MIN, MATCH_MAX);
+  draw();
+});
+const endDrag = () => { dragging = false; };
+cv.addEventListener('pointerup', endDrag);
+cv.addEventListener('pointercancel', endDrag);
+
 function syncUI() {
+  const adjusting = matchOn && !judged;
   document.getElementById('s-surr').value = state.surroundScale;
   tgRuler.classList.toggle('on', state.showCircle);
+  tgRuler.classList.toggle('dis', adjusting);   // locked out mid-trial
+  tgMatch.classList.toggle('on', matchOn);
+  const bj = document.getElementById('btn-judge');
+  bj.disabled = !matchOn;
+  bj.textContent = judged ? '⟲ RETRY' : '⌖ JUDGE';
+  cv.style.cursor = adjusting ? 'ew-resize' : 'default';
   draw();
 }
-function reset() { Object.assign(state, DEFAULTS); syncUI(); }
+function reset() {
+  Object.assign(state, DEFAULTS);
+  matchOn = false; matchScale = 1; judged = false; judgeMsg = null;
+  if (judgeTimer) { clearTimeout(judgeTimer); judgeTimer = null; }
+  bestPct = null; bestSurr = null;
+  syncUI();
+}
 
 // ── COPY / PASTE ───────────────────────────────────────────
 function flash(btn, label, cls) {
@@ -459,18 +686,24 @@ function flash(btn, label, cls) {
   btn.textContent = label; btn.className = 'ed-btn ' + cls;
   setTimeout(() => { btn.textContent = orig; btn.className = oc; }, 1200);
 }
+// NOTE: hold the button in a local — e.currentTarget is null once the handler
+// resumes after an await, which used to make every flash() throw.
 document.getElementById('btn-copy').addEventListener('click', async e => {
-  const p = { app:'interpret-03-ebbinghaus', surroundScale:state.surroundScale, showCircle:state.showCircle };
-  try { await navigator.clipboard.writeText(JSON.stringify(p, null, 2)); flash(e.currentTarget,'✓ COPIED','ok'); }
-  catch { flash(e.currentTarget,'✗','ng'); }
+  const btn = e.currentTarget;
+  const p = { app:'interpret-03-ebbinghaus', surroundScale:state.surroundScale, showCircle:state.showCircle,
+              lastIllusionPct:state.lastIllusionPct };
+  try { await navigator.clipboard.writeText(JSON.stringify(p, null, 2)); flash(btn,'✓ COPIED','ok'); }
+  catch { flash(btn,'✗','ng'); }
 });
 document.getElementById('btn-paste').addEventListener('click', async e => {
+  const btn = e.currentTarget;
   try {
     const o = JSON.parse(await navigator.clipboard.readText());
     if (typeof o.surroundScale === 'number') state.surroundScale = Math.max(0, Math.min(100, o.surroundScale | 0));
     if (typeof o.showCircle === 'boolean') state.showCircle = o.showCircle;
-    syncUI(); flash(e.currentTarget,'✓ APPLIED','ok');
-  } catch { flash(e.currentTarget,'✗','ng'); }
+    if (typeof o.lastIllusionPct === 'number' || o.lastIllusionPct === null) state.lastIllusionPct = o.lastIllusionPct;
+    syncUI(); flash(btn,'✓ APPLIED','ok');
+  } catch { flash(btn,'✗','ng'); }
 });
 
 // ── SHORTCUT MODAL ─────────────────────────────────────────
@@ -486,9 +719,20 @@ window.addEventListener('keydown', e => {
   if (e.key === 'Escape') { if (modal.classList.contains('open')) { closeSc(); return; } window.location.href='index.html'; return; }
   if (e.key === '?') { modal.classList.contains('open') ? closeSc() : openSc(); return; }
   if (e.target && (e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')) return;
-  if (e.key==='ArrowUp')        { e.preventDefault(); state.surroundScale=Math.min(100,state.surroundScale+5); syncUI(); }
-  else if(e.key==='ArrowDown')  { e.preventDefault(); state.surroundScale=Math.max(0,state.surroundScale-5); syncUI(); }
-  else if(e.key==='p'||e.key==='P'){ state.showCircle=!state.showCircle; tgRuler.classList.toggle('on',state.showCircle); draw(); }
+  if (e.key==='ArrowUp')        { e.preventDefault(); setSurr(state.surroundScale+5); }
+  else if(e.key==='ArrowDown')  { e.preventDefault(); setSurr(state.surroundScale-5); }
+  else if(e.key==='ArrowRight'||e.key==='ArrowLeft'){
+    if (!matchOn || judged) return;
+    e.preventDefault();
+    matchScale = clamp(matchScale + (e.key==='ArrowRight' ? 0.005 : -0.005), MATCH_MIN, MATCH_MAX);
+    draw();
+  }
+  else if(e.key==='Enter')      { e.preventDefault(); judge(); }
+  else if(e.key==='m'||e.key==='M'){ setMatch(!matchOn); }
+  else if(e.key==='p'||e.key==='P'){
+    if (matchOn && !judged) return;             // proof is locked mid-trial
+    state.showCircle=!state.showCircle; tgRuler.classList.toggle('on',state.showCircle); draw();
+  }
   else if(e.key==='r'||e.key==='R'){ reset(); }
 });
 

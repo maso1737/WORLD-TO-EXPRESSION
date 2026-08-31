@@ -222,6 +222,16 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;backg
         <div class="tr-lbl">Color Hint<span>知覚されるはずの色を補助表示</span></div>
         <div class="tg" id="tg-hint"></div>
       </div>
+      <div class="tr" style="margin-top:16px">
+        <div class="tr-lbl">Strobe<span>連続回転をやめ離散ステップで点滅させる</span></div>
+        <div class="tg" id="tg-strobe"></div>
+      </div>
+      <div class="tr" id="row-strobe">
+        <div class="tr-lbl">Step Rate<span>STROBE 時のみ有効</span></div>
+        <input type="range" id="s-shz" min="6" max="18" value="12">
+        <div class="tr-val" id="v-shz">12</div>
+      </div>
+      <div class="ed-hint" id="strobe-note">STROBE は円盤を <b>45°ずつ跳ばして</b>描く。画面のリフレッシュレートに<b>整数分周で吸着</b>するので、実際の点滅数は下部バーの <b>SPIN</b> に出る。連続回転で色が出ない環境向けの代替。</div>
     </section>
 
     <section class="sp">
@@ -256,6 +266,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;backg
         <div class="de">Black &amp; white only. Spin it, and colour appears.</div>
         <div class="dj">円盤は<b>白黒のインクだけ</b>。半分は黒、もう半分に半径ごとにずらした黒い弧。回すと、各半径の点が<b>黒→弧→白</b>を別々のリズムで点滅し、網膜の赤・青チャンネルの<b>応答速度の差</b>が露出する。脳はその時間差を<b>淡い色（フェヒナー色）</b>として解釈する。停止＝点滅消失＝色なし（off）。</div>
       </div>
+      <div class="dnote"><b>画面のリフレッシュレートによっては見えにくい。</b>60Hz の液晶では最高速（300rpm）でも1フレームあたり30°跳ぶため、色の元になる細かい明暗リズムが十分にサンプリングされない。見えないときは <b>STROBE</b>（離散点滅）を試し、それでも出なければ <b>Color Hint</b> で理論値を確認すること。</div>
       <div class="dnote">同じ円盤でも<b>人により見える色は違う</b>—だから赤寄り／青寄りを記録する。<b>回転方向を反転</b>すると外周と内周の色が入れ替わる。インクに無い色を脳が作る＝解釈そのもの。</div>
     </section>
 
@@ -270,7 +281,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;backg
   </aside>
 
   <footer id="bottombar">
-    <div class="bb-cell">SPIN <b id="bb-rpm">160</b></div>
+    <div class="bb-cell">SPIN <b id="bb-rpm">160</b><b id="bb-shz"></b></div>
     <div class="bb-cell">DIR <b id="bb-dir">CW</b></div>
     <div class="bb-cell">CHROMA <b id="bb-chroma">0%</b></div>
     <div class="bb-cell" style="flex:1">STATE <b class="lime" id="bb-state">—</b></div>
@@ -286,6 +297,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;backg
       <div class="sc-row"><div class="sc-desc">Spin rate −/+<span>回転速度</span></div><div class="sc-key">↑ ↓</div></div>
       <div class="sc-row"><div class="sc-desc">Direction CCW / CW<span>回転方向</span></div><div class="sc-key">← →</div></div>
       <div class="sc-row"><div class="sc-desc">Toggle arc structure<span>弧の構造表示</span></div><div class="sc-key">P</div></div>
+      <div class="sc-row"><div class="sc-desc">Toggle strobe<span>離散ステップ点滅</span></div><div class="sc-key">T</div></div>
       <div class="sc-row"><div class="sc-desc">Reset<span>初期化</span></div><div class="sc-key">R</div></div>
       <div class="sc-row"><div class="sc-desc">This panel<span>この一覧</span></div><div class="sc-key">?</div></div>
       <div class="sc-row"><div class="sc-desc">Index<span>戻る</span></div><div class="sc-key">ESC</div></div>
@@ -295,7 +307,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;backg
 
 <script>
 // ── STATE ──────────────────────────────────────────────────
-const DEFAULTS = { rpm: 160, direction: 1, showStruct: false, colorHint: false };
+const DEFAULTS = { rpm: 160, direction: 1, showStruct: false, colorHint: false, strobe: false, strobeHz: 12 };
 const state = { ...DEFAULTS, recRed: 0, recBlue: 0 };
 
 const cv  = document.getElementById('stage-canvas');
@@ -307,12 +319,43 @@ const ACC = '#c8ff1a';
 // rAF spin state
 let angle = 0, raf = null, lastT = 0;
 
+// ── STROBE (SPEC §3-10) ────────────────────────────────────
+// Instead of spinning smoothly, jump the disc 45° at a fixed rate so the retina
+// gets a hard light/dark rhythm. Measured here: this panel runs 59.9Hz with no
+// dropped frames, so at the 300rpm maximum the smooth disc still advances 30°
+// per frame — the fine temporal structure the effect needs is barely sampled.
+// The step is locked to whole frames (a 12Hz request on a 60Hz panel becomes
+// "every 5th frame"): free-running timing would jitter frame to frame and smear
+// the very rhythm this mode exists to produce. ACTUAL reports what you really get.
+const STROBE_STEP = Math.PI / 4;       // 45° per step — one eighth of a turn
+let refreshHz = 60, strobeFrames = 0;
+(function measureRefresh() {           // one short sample at startup
+  const t = [];
+  const tick = ts => {
+    t.push(ts);
+    if (t.length < 24) return requestAnimationFrame(tick);
+    const d = [];
+    for (let i = 1; i < t.length; i++) d.push(t[i] - t[i-1]);
+    d.sort((a, b) => a - b);
+    const med = d[Math.floor(d.length / 2)];
+    if (med > 4 && med < 40) refreshHz = 1000 / med;
+    syncUI();
+  };
+  requestAnimationFrame(tick);
+})();
+// Frames per step, and the flicker rate that actually results.
+function strobeDiv()    { return Math.max(1, Math.round(refreshHz / state.strobeHz)); }
+function strobeActual() { return refreshHz / strobeDiv(); }
+// Equivalent spin so the existing chroma/verdict bands keep meaning something:
+// 45° per step = one eighth of a revolution.
+function effRpm() { return state.strobe ? strobeActual() * 7.5 : state.rpm; }
+
 // ── HELPERS ────────────────────────────────────────────────
 function smooth(a, b, x) { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); }
 
 // subjective colour strength from rpm only (stable, angle-independent)
 function colorStrength() {
-  const r = state.rpm;
+  const r = effRpm();
   if (r <= 0) return 0;
   let s = smooth(35, 130, r);
   if (r > 250) s *= 1 - (r - 250) / 250 * 0.45;   // mild high-speed wash-out
@@ -321,7 +364,7 @@ function colorStrength() {
 
 // ── VERDICT ────────────────────────────────────────────────
 function getVerd() {
-  const r = state.rpm;
+  const r = effRpm();
   if (r === 0)  return 'static';
   if (r <= 40)  return 'slow';
   if (r <= 90)  return 'threshold';
@@ -453,7 +496,18 @@ function draw() {
 function updateReadouts(verd, cs) {
   const dirTxt = state.direction > 0 ? 'CW' : 'CCW';
   document.getElementById('v-rpm').textContent  = state.rpm;
-  document.getElementById('bb-rpm').textContent = state.rpm;
+  document.getElementById('bb-rpm').textContent = state.strobe ? 'STROBE' : state.rpm;
+  // The rpm slider does nothing while strobing — grey it out rather than leave
+  // the user wondering whether it is broken.
+  const sRpm = document.getElementById('s-rpm');
+  sRpm.disabled = state.strobe;
+  sRpm.style.opacity = state.strobe ? '0.32' : '';
+  document.getElementById('v-rpm').style.opacity = state.strobe ? '0.32' : '';
+  document.getElementById('s-shz').disabled = !state.strobe;
+  document.getElementById('row-strobe').style.opacity = state.strobe ? '' : '0.42';
+  document.getElementById('v-shz').textContent = state.strobeHz;
+  document.getElementById('bb-shz').textContent = state.strobe
+    ? strobeActual().toFixed(1) + 'Hz · 1/' + strobeDiv() + 'f' : '';
   document.getElementById('bb-dir').textContent = dirTxt;
 
   const chromaPct = Math.round(cs * 100);
@@ -505,15 +559,20 @@ function loop(t) {
   if (!lastT) lastT = t;
   const dt = Math.min(0.05, (t - lastT) / 1000);
   lastT = t;
-  angle += (state.rpm / 60) * Math.PI * 2 * state.direction * dt;
+  if (state.strobe) {
+    if (++strobeFrames >= strobeDiv()) { strobeFrames = 0; angle += STROBE_STEP * state.direction; }
+  } else {
+    angle += (state.rpm / 60) * Math.PI * 2 * state.direction * dt;
+  }
   if (angle > Math.PI * 2) angle -= Math.PI * 2;
   if (angle < 0) angle += Math.PI * 2;
   draw();
-  if (state.rpm > 0 && !document.hidden) { raf = requestAnimationFrame(loop); }
+  if (spinning() && !document.hidden) { raf = requestAnimationFrame(loop); }
   else { raf = null; lastT = 0; }
 }
+function spinning() { return state.strobe || state.rpm > 0; }
 function syncLoop() {
-  if (state.rpm > 0 && !document.hidden) {
+  if (spinning() && !document.hidden) {
     if (raf === null) { lastT = 0; raf = requestAnimationFrame(loop); }
   } else {
     if (raf !== null) { cancelAnimationFrame(raf); raf = null; lastT = 0; }
@@ -524,6 +583,22 @@ function syncLoop() {
 // ── CONTROLS ───────────────────────────────────────────────
 document.getElementById('s-rpm').addEventListener('input', e => {
   state.rpm = +e.target.value; syncLoop();
+});
+const tgStrobe = document.getElementById('tg-strobe');
+function setStrobe(on) {
+  state.strobe = on;
+  tgStrobe.classList.toggle('on', on);
+  strobeFrames = 0;
+  // Snap onto the 45° grid. Each arc band occupies exactly one 45° sector, so
+  // stepping on from an arbitrary carried-over angle would straddle two bands on
+  // every flash and smear the light/dark rhythm this mode exists to produce.
+  if (on) angle = Math.round(angle / STROBE_STEP) * STROBE_STEP;
+  syncUI();
+  syncLoop();
+}
+tgStrobe.addEventListener('click', () => setStrobe(!state.strobe));
+document.getElementById('s-shz').addEventListener('input', e => {
+  state.strobeHz = +e.target.value; strobeFrames = 0; syncUI();
 });
 const segDir = document.getElementById('seg-dir');
 segDir.addEventListener('click', e => {
@@ -549,6 +624,8 @@ document.getElementById('rec-blue').addEventListener('click', () => { state.recB
 
 function syncUI() {
   document.getElementById('s-rpm').value = state.rpm;
+  document.getElementById('s-shz').value = state.strobeHz;
+  tgStrobe.classList.toggle('on', state.strobe);
   [...segDir.children].forEach(b => b.classList.toggle('on', +b.dataset.dir === state.direction));
   tgStruct.classList.toggle('on', state.showStruct);
   tgHint.classList.toggle('on', state.colorHint);
@@ -556,6 +633,7 @@ function syncUI() {
 }
 function reset() {
   Object.assign(state, DEFAULTS);
+  strobeFrames = 0;
   state.recRed = 0; state.recBlue = 0;
   syncUI();
 }
@@ -567,7 +645,8 @@ function flash(btn, label, cls) {
   setTimeout(() => { btn.textContent = orig; btn.className = oc; }, 1200);
 }
 document.getElementById('btn-copy').addEventListener('click', async e => {
-  const p = { app:'interpret-05-benhams-top', rpm:state.rpm, direction:state.direction };
+  const p = { app:'interpret-05-benhams-top', rpm:state.rpm, direction:state.direction,
+              strobe:state.strobe, strobeHz:state.strobeHz };
   try { await navigator.clipboard.writeText(JSON.stringify(p, null, 2)); flash(e.currentTarget,'✓ COPIED','ok'); }
   catch { flash(e.currentTarget,'✗','ng'); }
 });
@@ -575,6 +654,8 @@ document.getElementById('btn-paste').addEventListener('click', async e => {
   try {
     const o = JSON.parse(await navigator.clipboard.readText());
     if (typeof o.rpm === 'number') state.rpm = Math.max(0, Math.min(300, o.rpm | 0));
+    if (typeof o.strobe === 'boolean') state.strobe = o.strobe;
+    if (typeof o.strobeHz === 'number') state.strobeHz = Math.max(6, Math.min(18, o.strobeHz | 0));
     if (o.direction === 1 || o.direction === -1) state.direction = o.direction;
     syncUI(); flash(e.currentTarget,'✓ APPLIED','ok');
   } catch { flash(e.currentTarget,'✗','ng'); }
@@ -598,6 +679,7 @@ window.addEventListener('keydown', e => {
   else if(e.key==='ArrowRight') { e.preventDefault(); state.direction=1;  syncUI(); }
   else if(e.key==='ArrowLeft')  { e.preventDefault(); state.direction=-1; syncUI(); }
   else if(e.key==='p'||e.key==='P'){ state.showStruct=!state.showStruct; tgStruct.classList.toggle('on',state.showStruct); if (raf === null) draw(); }
+  else if(e.key==='t'||e.key==='T'){ setStrobe(!state.strobe); }
   else if(e.key==='r'||e.key==='R'){ reset(); }
 });
 

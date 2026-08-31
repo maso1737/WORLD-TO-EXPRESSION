@@ -116,6 +116,11 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;backg
 .ed-btn.ok{background:var(--acc);border-color:var(--ink);color:var(--ink)}
 .ed-btn.ng{background:var(--ng);border-color:var(--ng);color:#fff}
 .ed-hint{font-family:var(--jp);font-size:9px;color:var(--mute);letter-spacing:0.04em;margin-top:9px;line-height:1.6}
+.ed-btn:disabled{opacity:0.32;cursor:default}
+.ed-btn:disabled:hover{background:var(--bg);color:var(--ink)}
+.tg.dis{opacity:0.32;pointer-events:none}
+.match-out{margin-top:10px;font-family:var(--disp);font-size:16px;letter-spacing:0.05em;color:var(--ink);border:1px solid var(--mute-2);padding:7px 9px;text-align:center;font-feature-settings:"tnum"}
+.match-out.lime{background:var(--acc);border-color:var(--ink)}
 
 /* BOTTOMBAR */
 #bottombar{grid-column:1/3;display:grid;grid-template-columns:auto auto auto 1fr auto;align-items:stretch;border-top:1px solid var(--line);background:var(--bg);z-index:10}
@@ -207,9 +212,23 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;backg
     <section class="sp">
       <div class="spl">Proof <em>検証</em></div>
       <div class="tr">
-        <div class="tr-lbl">Ruler Overlay<span>定規を2本のバーに重ねる</span></div>
+        <div class="tr-lbl">Ruler Overlay<span>定規を2本のバーに重ねる（MATCH 判定前は無効）</span></div>
         <div class="tg" id="tg-ruler"></div>
       </div>
+    </section>
+
+    <section class="sp">
+      <div class="spl">Measure <em>計測</em></div>
+      <div class="tr">
+        <div class="tr-lbl">Match Mode<span>下のバーを調整して同じ長さに</span></div>
+        <div class="tg" id="tg-match"></div>
+      </div>
+      <div class="tr">
+        <div class="tr-lbl">Judge<span>同じに見えたら判定する</span></div>
+        <button class="ed-btn" id="btn-judge" style="flex:none;width:98px" disabled>⌖ JUDGE</button>
+      </div>
+      <div class="match-out" id="match-out">LAST — · BEST —</div>
+      <div class="ed-hint">MATCH 中は下（NEAR）のバーを <b>⟷ ドラッグ</b>／<b>←→</b> で伸縮できる。上（FAR）のバーと<b>同じ長さに見えた</b>ところで JUDGE。ズレた分が<b>あなたの脳の錯視量</b>。開始長は毎回ランダム、定規は判定まで無効。BEST は最大の錯視量。</div>
     </section>
 
     <section class="sp">
@@ -247,6 +266,10 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;backg
     <div class="sc-list">
       <div class="sc-row"><div class="sc-desc">Convergence −/+<span>収束線の角度</span></div><div class="sc-key">↑ ↓</div></div>
       <div class="sc-row"><div class="sc-desc">Toggle ruler proof<span>定規の表示</span></div><div class="sc-key">P</div></div>
+      <div class="sc-row"><div class="sc-desc">Match mode<span>錯視量の計測モード</span></div><div class="sc-key">M</div></div>
+      <div class="sc-row"><div class="sc-desc">Adjust lower bar<span>MATCH 中に下のバーを伸縮</span></div><div class="sc-key">← →</div></div>
+      <div class="sc-row"><div class="sc-desc">Judge / retry<span>判定する／もう一度</span></div><div class="sc-key">ENTER</div></div>
+      <div class="sc-row"><div class="sc-desc">Drag the lower bar<span>MATCH 中にステージを左右ドラッグ</span></div><div class="sc-key">DRAG</div></div>
       <div class="sc-row"><div class="sc-desc">Reset<span>初期化</span></div><div class="sc-key">R</div></div>
       <div class="sc-row"><div class="sc-desc">This panel<span>この一覧</span></div><div class="sc-key">?</div></div>
       <div class="sc-row"><div class="sc-desc">Index<span>戻る</span></div><div class="sc-key">ESC</div></div>
@@ -256,8 +279,25 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;backg
 
 <script>
 // ── STATE ──────────────────────────────────────────────────
-const DEFAULTS = { convergence: 60, showRuler: false };
+const DEFAULTS = { convergence: 60, showRuler: false, lastIllusionPct: null };
 const state = { ...DEFAULTS };
+
+// ── MATCH & MEASURE (method of adjustment) ─────────────────
+// The lower bar (NEAR — the one that looks shorter) becomes adjustable.
+// The user nulls it against the fixed upper bar; whatever physical
+// difference is left over is their illusion magnitude.
+// ILL_SIGN: here the adjustable bar is the one that looks SMALLER, so the
+// expected illusion is a stretch. l3-01 shrinks instead and uses -1.
+const ILL_SIGN = +1;
+let matchOn    = false;
+let matchScale = 1;        // lower bar length / true length. Never displayed before JUDGE.
+let judged     = false;
+let judgeMsg   = null;     // { pct } shown for 3s after a judgement
+let judgeTimer = null;
+let flashOn    = false;    // 300ms lime frame on judgement
+let bestPct = null, bestConv = null;
+const MATCH_MIN = 0.80, MATCH_MAX = 1.20;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 const cv  = document.getElementById('stage-canvas');
 const ctx = cv.getContext('2d');
@@ -301,29 +341,40 @@ function resize() {
   draw();
 }
 
+// ── GEOMETRY (shared by draw and the match drag) ───────────
+function geo() {
+  const cx = W / 2, cy = H / 2;
+  const span = Math.min(W * 0.30, H * 0.38);
+  return {
+    cx, cy, span,
+    halfBase: span * 0.92,                       // rail half-width at the bottom (near viewer)
+    c: state.convergence / 100,                  // 0 = parallel, 1 = strong convergence
+    yBottom:  cy + span * 0.96,
+    yTopRail: cy - span * 0.96,
+    barLen: span * 0.92,                         // true bar length (identical for both)
+    barTop: cy - span * 0.50,                    // higher up → reads as "far" → looks longer
+    barBot: cy + span * 0.50,                    // lower down → reads as "near" → looks shorter
+  };
+}
+// Lower bar half-length: only MATCH mode makes it differ from the true one.
+function lowerHalf(g) { return g.barLen / 2 * (matchOn ? matchScale : 1); }
+
 // ── DRAW ───────────────────────────────────────────────────
 function draw() {
   ctx.clearRect(0, 0, W, H);
-  const cx = W / 2, cy = H / 2;
-  const span = Math.min(W * 0.30, H * 0.38);
-
-  // rail geometry — a trapezoid converging toward the top
-  const halfBase = span * 0.92;                 // half-width at the bottom (near viewer)
-  const c        = state.convergence / 100;     // 0 = parallel, 1 = strong convergence
-  const halfTop  = halfBase * (1 - 0.86 * c);   // half-width at the top (far away)
-  const yBottom  = cy + span * 0.96;
-  const yTopRail = cy - span * 0.96;
-
-  // two EQUAL horizontal test bars
-  const barLen = span * 0.92;
-  const barTop = cy - span * 0.50;   // higher up → reads as "far" → looks longer
-  const barBot = cy + span * 0.50;   // lower down → reads as "near" → looks shorter
-  const bxL = cx - barLen / 2, bxR = cx + barLen / 2;
+  const g = geo();
+  const { cx, cy, span, halfBase, c, yBottom, yTopRail, barLen, barTop, barBot } = g;
+  const halfTop = halfBase * (1 - 0.86 * c);            // half-width at the top (far away)
+  const bxL = cx - barLen / 2, bxR = cx + barLen / 2;   // upper (reference) bar
+  const hB = lowerHalf(g);
+  const bxLb = cx - hB, bxRb = cx + hB;                 // lower (adjustable) bar
+  const adjusting = matchOn && !judged;
 
   const verd = getVerd();
 
   // off-state border (parallel = no perspective)
-  if (verd === 'parallel') {
+  // suppressed while matching — the lime frame is the judge flash there
+  if (verd === 'parallel' && !matchOn) {
     ctx.save();
     ctx.setLineDash([8, 6]);
     ctx.strokeStyle = 'rgba(200,255,26,0.5)';
@@ -358,34 +409,48 @@ function draw() {
   }
   ctx.restore();
 
-  // ── two equal test bars ──
-  function bar(y) {
+  // ── two test bars (equal unless the lower one is being matched) ──
+  function bar(y, x1, x2) {
     ctx.save();
     ctx.strokeStyle = '#0a0a0a';
     ctx.lineWidth = 4;
     ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(bxL, y); ctx.lineTo(bxR, y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y); ctx.stroke();
     ctx.fillStyle = '#0a0a0a';
-    ctx.beginPath(); ctx.arc(bxL, y, 2.6, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(bxR, y, 2.6, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x1, y, 2.6, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x2, y, 2.6, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   }
-  bar(barTop);
-  bar(barBot);
+  bar(barTop, bxL,  bxR);
+  bar(barBot, bxLb, bxRb);
 
-  // captions
-  if (c > 0.001) {
+  // grab handles on the adjustable bar
+  if (adjusting) {
+    ctx.save();
+    ctx.strokeStyle = '#0a0a0a'; ctx.lineWidth = 1;
+    for (const hx of [bxLb, bxRb]) {
+      ctx.fillStyle = ACC;
+      ctx.fillRect(hx - 3, barBot - 9, 6, 18);
+      ctx.strokeRect(hx - 3, barBot - 9, 6, 18);
+    }
+    ctx.restore();
+  }
+
+  // captions — the match labels also stand in at convergence 0 (the illusion-off self-check)
+  if (c > 0.001 || adjusting) {
     ctx.save();
     ctx.font = '600 10px "JetBrains Mono", monospace';
     ctx.fillStyle = 'rgba(10,10,10,0.42)';
     ctx.textAlign = 'center';
-    ctx.fillText('FAR  —  長く見える', cx, barTop - 14);
-    ctx.fillText('NEAR  —  短く見える', cx, barBot + 22);
+    // While nulling, the normal labels would give the answer away — the task is the label.
+    ctx.fillText(adjusting ? 'REFERENCE  —  基準（固定）' : 'FAR  —  長く見える', cx, barTop - 14);
+    ctx.fillText(adjusting ? '⟷  ADJUST  —  同じ長さに合わせる' : 'NEAR  —  短く見える', cx, barBot + 22);
     ctx.restore();
   }
 
-  // ── proof: ruler overlay (equal length) ──
-  if (state.showRuler) {
+  // ── proof: ruler overlay ──
+  // Locked out mid-trial: seeing the true lengths would answer the question for you.
+  if (state.showRuler && !adjusting) {
     ctx.save();
     ctx.strokeStyle = 'rgba(200,255,26,0.40)';
     ctx.lineWidth = 1;
@@ -395,18 +460,47 @@ function draw() {
     ctx.moveTo(bxR, barTop - 14); ctx.lineTo(bxR, barBot + 14);
     ctx.stroke();
     ctx.restore();
-    drawRuler(ctx, bxL, barTop, bxR, barTop);
-    drawRuler(ctx, bxL, barBot, bxR, barBot);
-    // equal tag
+    drawRuler(ctx, bxL,  barTop, bxR,  barTop);
+    drawRuler(ctx, bxLb, barBot, bxRb, barBot);
+
+    // the leftover gap: how far your match missed physical equality
+    const gap = (matchScale - 1) * 100;
+    if (matchOn && Math.abs(gap) > 0.05) {
+      const gy = barBot + 15;
+      ctx.save();
+      ctx.lineCap = 'butt';
+      ctx.strokeStyle = ACC; ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(bxLb, gy); ctx.lineTo(bxL, gy);
+      ctx.moveTo(bxRb, gy); ctx.lineTo(bxR, gy);
+      ctx.stroke();
+      ctx.strokeStyle = '#0a0a0a'; ctx.lineWidth = 1;   // caps make it read as a measured gap
+      ctx.beginPath();
+      for (const gx of [bxLb, bxL, bxRb, bxR]) { ctx.moveTo(gx, gy - 6); ctx.lineTo(gx, gy + 6); }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // tag
     ctx.save();
     ctx.font = '600 10px "JetBrains Mono", monospace';
-    ctx.fillStyle = '#0a0a0a';
     ctx.textAlign = 'left';
-    const tagx = bxR + 12;
+    const label = (matchOn && Math.abs((matchScale - 1) * 100) > 0.05)
+      ? 'Δ ' + fmtPct((matchScale - 1) * 100) : '= EQUAL';
+    const tagw  = Math.max(64, ctx.measureText(label).width + 16);
+    const tagx  = Math.max(bxR, bxRb) + 12;
     ctx.fillStyle = ACC;
-    ctx.fillRect(tagx, cy - 9, 64, 18);
+    ctx.fillRect(tagx, cy - 9, tagw, 18);
     ctx.fillStyle = '#0a0a0a';
-    ctx.fillText('= EQUAL', tagx + 8, cy + 4);
+    ctx.fillText(label, tagx + 8, cy + 4);
+    ctx.restore();
+  }
+
+  // judge flash
+  if (flashOn) {
+    ctx.save();
+    ctx.strokeStyle = ACC; ctx.lineWidth = 4;
+    ctx.strokeRect(10, 10, W - 20, H - 20);
     ctx.restore();
   }
 
@@ -416,6 +510,8 @@ function draw() {
 }
 
 // ── READOUTS ───────────────────────────────────────────────
+const fmtPct = v => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(1) + '%';
+
 function updateReadouts(verd, appPct) {
   const c = state.convergence;
   document.getElementById('v-conv').textContent  = c;
@@ -437,8 +533,15 @@ function updateReadouts(verd, appPct) {
 
   document.getElementById('v-conv').classList.toggle('lime', verd === 'threshold');
 
+  const adjusting = matchOn && !judged;
+  const gap = (matchScale - 1) * 100;
+
+  // TRUE cell: the physical relation. Withheld mid-trial — it *is* the answer.
   const bbTrue = document.getElementById('bb-true');
-  bbTrue.classList.toggle('lime', state.showRuler);
+  bbTrue.textContent = adjusting ? 'HIDDEN'
+                     : (matchOn && Math.abs(gap) > 0.05) ? 'Δ ' + fmtPct(gap)
+                     : 'EQUAL';
+  bbTrue.classList.toggle('lime', state.showRuler && !adjusting);
 
   const V  = document.getElementById('verdict');
   const vm = V.querySelector('.v-main');
@@ -457,11 +560,41 @@ function updateReadouts(verd, appPct) {
   vs.textContent = sub;
   bb.textContent = bbVal;
   if (verd === 'threshold') V.classList.add('edge');
+
+  // ── MATCH mode takes over the verdict line ──
+  if (judgeMsg) {
+    const pct = judgeMsg.pct;
+    V.classList.add('edge');
+    vm.textContent = 'YOUR ILLUSION ' + fmtPct(pct);
+    vs.textContent = Math.abs(pct) < 2
+      ? 'ほぼゼロ — この条件では錯視はほとんど働いていない'
+      : pct > 0
+        ? `あなたは下のバーを ${Math.abs(pct).toFixed(1)}% 伸ばして「等しい」と判断した = 錯視量`
+        : `逆方向 — 下のバーを ${Math.abs(pct).toFixed(1)}% 縮めて一致した`;
+    bb.textContent = 'JUDGED';
+  } else if (judged) {
+    V.classList.add('edge');
+    vm.textContent = 'MATCHED';
+    vs.textContent = `LAST ${fmtPct(state.lastIllusionPct ?? 0)} — ENTER でもう一度`;
+    bb.textContent = 'JUDGED';
+  } else if (matchOn) {
+    V.classList.remove('edge');
+    vm.textContent = 'MATCH';
+    vs.textContent = '下のバーを上と同じ長さに — ⟷ ドラッグ / ←→ · ENTER で判定';
+    bb.textContent = 'MATCH';
+  }
+
+  // Measure readout: LAST / BEST
+  const mo = document.getElementById('match-out');
+  const last = state.lastIllusionPct == null ? '—' : fmtPct(state.lastIllusionPct);
+  const best = bestPct == null ? '—' : `${fmtPct(bestPct)} @conv ${bestConv}`;
+  mo.textContent = `LAST ${last} · BEST ${best}`;
+  mo.classList.toggle('lime', judged);
 }
 
 // ── CONTROLS ───────────────────────────────────────────────
 document.getElementById('s-conv').addEventListener('input', e => {
-  state.convergence = +e.target.value; draw();
+  setConv(+e.target.value);
 });
 const tgRuler = document.getElementById('tg-ruler');
 tgRuler.addEventListener('click', () => {
@@ -470,12 +603,91 @@ tgRuler.addEventListener('click', () => {
   draw();
 });
 
+// Changing the illusion invalidates a finished trial → start a fresh one.
+function setConv(c) {
+  state.convergence = clamp(c | 0, 0, 100);
+  if (judged) newTrial();
+  syncUI();
+}
+
+// ── MATCH & MEASURE ────────────────────────────────────────
+// Fresh random start length so the answer can't be anchored on "untouched = equal".
+function newTrial() {
+  matchScale = 1 + (Math.random() * 0.24 - 0.12);
+  judged = false;
+  judgeMsg = null;
+  if (judgeTimer) { clearTimeout(judgeTimer); judgeTimer = null; }
+  state.showRuler = false;
+}
+function setMatch(on) {
+  matchOn = on;
+  if (on) newTrial();
+  else { matchScale = 1; judged = false; judgeMsg = null;
+         if (judgeTimer) { clearTimeout(judgeTimer); judgeTimer = null; } }
+  syncUI();
+}
+function judge() {
+  if (!matchOn) return;
+  if (judged) { newTrial(); syncUI(); return; }   // second press = retry
+  const pct = ILL_SIGN * (matchScale - 1) * 100;  // stretched the near bar → positive illusion
+  state.lastIllusionPct = Math.round(pct * 10) / 10;
+  if (bestPct == null || Math.abs(state.lastIllusionPct) > Math.abs(bestPct)) {
+    bestPct = state.lastIllusionPct; bestConv = state.convergence;
+  }
+  judged = true;
+  state.showRuler = true;                         // reveal the proof
+  judgeMsg = { pct: state.lastIllusionPct };
+  flashOn = true;
+  setTimeout(() => { flashOn = false; draw(); }, 300);
+  if (judgeTimer) clearTimeout(judgeTimer);
+  judgeTimer = setTimeout(() => { judgeMsg = null; judgeTimer = null; draw(); }, 3000);
+  syncUI();
+}
+const tgMatch = document.getElementById('tg-match');
+tgMatch.addEventListener('click', () => setMatch(!matchOn));
+document.getElementById('btn-judge').addEventListener('click', judge);
+
+// stage drag: grab either end of the lower bar and scale it about the centre
+let dragging = false, dragX0 = 0, dragScale0 = 1, dragSign = 1;
+cv.addEventListener('pointerdown', e => {
+  if (!matchOn || judged) return;
+  const r = cv.getBoundingClientRect();
+  const px = e.clientX - r.left;
+  dragging = true; dragX0 = px; dragScale0 = matchScale;
+  dragSign = px >= W / 2 ? 1 : -1;              // right half pulls right, left half pulls left
+  cv.setPointerCapture(e.pointerId);
+});
+cv.addEventListener('pointermove', e => {
+  if (!dragging) return;
+  const r = cv.getBoundingClientRect();
+  const px = e.clientX - r.left;
+  const dHalf = (px - dragX0) * dragSign;       // px change of the half-length
+  matchScale = clamp(dragScale0 + dHalf * 2 / geo().barLen, MATCH_MIN, MATCH_MAX);
+  draw();
+});
+const endDrag = () => { dragging = false; };
+cv.addEventListener('pointerup', endDrag);
+cv.addEventListener('pointercancel', endDrag);
+
 function syncUI() {
+  const adjusting = matchOn && !judged;
   document.getElementById('s-conv').value = state.convergence;
   tgRuler.classList.toggle('on', state.showRuler);
+  tgRuler.classList.toggle('dis', adjusting);   // locked out mid-trial
+  tgMatch.classList.toggle('on', matchOn);
+  const bj = document.getElementById('btn-judge');
+  bj.disabled = !matchOn;
+  bj.textContent = judged ? '⟲ RETRY' : '⌖ JUDGE';
+  cv.style.cursor = adjusting ? 'ew-resize' : 'default';
   draw();
 }
-function reset() { Object.assign(state, DEFAULTS); syncUI(); }
+function reset() {
+  Object.assign(state, DEFAULTS);
+  matchOn = false; matchScale = 1; judged = false; judgeMsg = null;
+  if (judgeTimer) { clearTimeout(judgeTimer); judgeTimer = null; }
+  bestPct = null; bestConv = null;
+  syncUI();
+}
 
 // ── COPY / PASTE ───────────────────────────────────────────
 function flash(btn, label, cls) {
@@ -483,18 +695,24 @@ function flash(btn, label, cls) {
   btn.textContent = label; btn.className = 'ed-btn ' + cls;
   setTimeout(() => { btn.textContent = orig; btn.className = oc; }, 1200);
 }
+// NOTE: hold the button in a local — e.currentTarget is null once the handler
+// resumes after an await, which used to make every flash() throw.
 document.getElementById('btn-copy').addEventListener('click', async e => {
-  const p = { app:'interpret-02-ponzo', convergence:state.convergence, showRuler:state.showRuler };
-  try { await navigator.clipboard.writeText(JSON.stringify(p, null, 2)); flash(e.currentTarget,'✓ COPIED','ok'); }
-  catch { flash(e.currentTarget,'✗','ng'); }
+  const btn = e.currentTarget;
+  const p = { app:'interpret-02-ponzo', convergence:state.convergence, showRuler:state.showRuler,
+              lastIllusionPct:state.lastIllusionPct };
+  try { await navigator.clipboard.writeText(JSON.stringify(p, null, 2)); flash(btn,'✓ COPIED','ok'); }
+  catch { flash(btn,'✗','ng'); }
 });
 document.getElementById('btn-paste').addEventListener('click', async e => {
+  const btn = e.currentTarget;
   try {
     const o = JSON.parse(await navigator.clipboard.readText());
     if (typeof o.convergence === 'number') state.convergence = Math.max(0, Math.min(100, o.convergence | 0));
     if (typeof o.showRuler === 'boolean') state.showRuler = o.showRuler;
-    syncUI(); flash(e.currentTarget,'✓ APPLIED','ok');
-  } catch { flash(e.currentTarget,'✗','ng'); }
+    if (typeof o.lastIllusionPct === 'number' || o.lastIllusionPct === null) state.lastIllusionPct = o.lastIllusionPct;
+    syncUI(); flash(btn,'✓ APPLIED','ok');
+  } catch { flash(btn,'✗','ng'); }
 });
 
 // ── SHORTCUT MODAL ─────────────────────────────────────────
@@ -510,9 +728,20 @@ window.addEventListener('keydown', e => {
   if (e.key === 'Escape') { if (modal.classList.contains('open')) { closeSc(); return; } window.location.href='index.html'; return; }
   if (e.key === '?') { modal.classList.contains('open') ? closeSc() : openSc(); return; }
   if (e.target && (e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')) return;
-  if (e.key==='ArrowUp')        { e.preventDefault(); state.convergence=Math.min(100,state.convergence+5); syncUI(); }
-  else if(e.key==='ArrowDown')  { e.preventDefault(); state.convergence=Math.max(0,state.convergence-5); syncUI(); }
-  else if(e.key==='p'||e.key==='P'){ state.showRuler=!state.showRuler; tgRuler.classList.toggle('on',state.showRuler); draw(); }
+  if (e.key==='ArrowUp')        { e.preventDefault(); setConv(state.convergence+5); }
+  else if(e.key==='ArrowDown')  { e.preventDefault(); setConv(state.convergence-5); }
+  else if(e.key==='ArrowRight'||e.key==='ArrowLeft'){
+    if (!matchOn || judged) return;
+    e.preventDefault();
+    matchScale = clamp(matchScale + (e.key==='ArrowRight' ? 0.005 : -0.005), MATCH_MIN, MATCH_MAX);
+    draw();
+  }
+  else if(e.key==='Enter')      { e.preventDefault(); judge(); }
+  else if(e.key==='m'||e.key==='M'){ setMatch(!matchOn); }
+  else if(e.key==='p'||e.key==='P'){
+    if (matchOn && !judged) return;             // ruler is locked mid-trial
+    state.showRuler=!state.showRuler; tgRuler.classList.toggle('on',state.showRuler); draw();
+  }
   else if(e.key==='r'||e.key==='R'){ reset(); }
 });
 

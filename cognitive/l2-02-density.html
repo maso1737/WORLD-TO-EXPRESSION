@@ -220,6 +220,11 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;backg
         <div class="tr-lbl">Cluster Bound<span>クラスター境界をライム円で表示</span></div>
         <div class="tg on" id="tg-clus"></div>
       </div>
+      <div class="tr">
+        <div class="tr-lbl">Gaze Particle<span>視線の粒子が重心へ引かれる</span></div>
+        <div class="tg on" id="tg-gaze"></div>
+      </div>
+      <div class="ed-hint">粒子は<b>重み付き重心</b>にばねで引かれる。値を変えると目標が移り、粒子が新しい重心へ<b>スッと落ちていく</b>——「視線が引っ張られる」の直訳。均一状態では中央に静止する。</div>
     </section>
 
     <section class="sp">
@@ -258,6 +263,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;backg
       <div class="sc-row"><div class="sc-desc">Density Bias −/+<span>密度差</span></div><div class="sc-key">↑ ↓</div></div>
       <div class="sc-row"><div class="sc-desc">Toggle cluster bound<span>境界表示</span></div><div class="sc-key">B</div></div>
       <div class="sc-row"><div class="sc-desc">Toggle centroid proof<span>重心表示</span></div><div class="sc-key">C</div></div>
+      <div class="sc-row"><div class="sc-desc">Toggle gaze particle<span>視線粒子の表示</span></div><div class="sc-key">E</div></div>
       <div class="sc-row"><div class="sc-desc">Reset<span>初期化</span></div><div class="sc-key">R</div></div>
       <div class="sc-row"><div class="sc-desc">This panel<span>この一覧</span></div><div class="sc-key">?</div></div>
       <div class="sc-row"><div class="sc-desc">Index<span>戻る</span></div><div class="sc-key">ESC</div></div>
@@ -267,7 +273,7 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:0;backg
 
 <script>
 // ── STATE ──────────────────────────────────────────────────
-const DEFAULTS = { densityBias: 60, showCentroid: true, showCluster: true };
+const DEFAULTS = { densityBias: 60, showCentroid: true, showCluster: true, showGaze: true };
 const state = { ...DEFAULTS };
 
 const cv  = document.getElementById('stage-canvas');
@@ -328,6 +334,105 @@ function resize() {
   draw();
 }
 
+// ── GAZE PARTICLE (L2 common part) ─────────────────────────
+// One dot, spring-pulled toward the weighted centroid. Change a parameter and
+// the target moves, so the dot visibly *falls* toward it — the pull made physical.
+// These pages are otherwise draw-on-demand, so the rAF loop runs only while the
+// dot still has somewhere to go, and shuts itself off once it has settled.
+const GAZE_REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+// acc = (target - pos) * K - vel * D. SPEC §3-8 gives 4.0 / 3.0 "as the baseline
+// ratio, fine-tune the time constant" — that pair takes ~3.3s to settle, which is
+// not the "スッと滑る" the completion condition asks for. Doubling the natural
+// frequency while holding the damping ratio (zeta = D / 2*sqrt(K) = 0.75) keeps the
+// exact same character — a glide with a ~1px overshoot — but lands it in ~1.6s.
+const GAZE_K = 16.0, GAZE_D = 6.0;
+const GAZE_TRAIL = 20;
+const GAZE = { x: null, y: null, vx: 0, vy: 0, trail: [] };
+let lastC = null;                      // latest centroids, filled by draw()
+let gazeRAF = 0, gazeLast = 0;
+
+// Net force on the dot: spring toward the target, damping, plus any field.
+// Shared by the integrator and the settle test so they can never disagree.
+function gazeAccel(tx, ty) {
+  let ax = (tx - GAZE.x) * GAZE_K - GAZE.vx * GAZE_D;
+  let ay = (ty - GAZE.y) * GAZE_K - GAZE.vy * GAZE_D;
+  if (typeof gazeField === 'function') {
+    const f = gazeField(GAZE.x, GAZE.y);
+    if (f) { ax += f[0]; ay += f[1]; }
+  }
+  return [ax, ay];
+}
+// Settled = nothing left to do. Distance to the target is the wrong test: a page
+// with a field (l2-04) parks the dot slightly off-target forever, and that is a
+// rest state, not motion.
+function gazeSettled(tx, ty) {
+  const [ax, ay] = gazeAccel(tx, ty);
+  return Math.hypot(ax, ay) < 2 && Math.hypot(GAZE.vx, GAZE.vy) < 0.5;
+}
+
+// One integration step. Split out from the loop so it can be driven by hand
+// (the Browser pane freezes rAF, so this is also how the motion gets verified).
+function stepGaze(dt, tx, ty) {
+  if (GAZE.x == null) { GAZE.x = tx; GAZE.y = ty; GAZE.vx = GAZE.vy = 0; }
+  if (GAZE_REDUCED) {                  // no travel, no trail — just mark the spot
+    GAZE.x = tx; GAZE.y = ty; GAZE.vx = GAZE.vy = 0; GAZE.trail.length = 0;
+    return;
+  }
+  dt = Math.min(dt, 0.05);             // a stalled tab must not explode the spring
+  const [ax, ay] = gazeAccel(tx, ty);
+  GAZE.vx += ax * dt;
+  GAZE.vy += ay * dt;
+  GAZE.x  += GAZE.vx * dt;
+  GAZE.y  += GAZE.vy * dt;
+  // The tail follows actual displacement, not distance-to-target — otherwise a dot
+  // parked off-target by a field would stack 20 points on one spot forever.
+  const tip = GAZE.trail[GAZE.trail.length - 1];
+  if (!tip || Math.hypot(GAZE.x - tip[0], GAZE.y - tip[1]) > 0.4) {
+    GAZE.trail.push([GAZE.x, GAZE.y]);
+    if (GAZE.trail.length > GAZE_TRAIL) GAZE.trail.shift();
+  } else if (GAZE.trail.length) {
+    GAZE.trail.shift();                // standing still: the tail drains instead of freezing
+  }
+}
+
+function drawGaze(ctx) {
+  if (!state.showGaze || GAZE.x == null) return;
+  ctx.save();
+  const n = GAZE.trail.length;
+  for (let i = 0; i < n; i++) {        // index 0 = oldest = faintest
+    ctx.fillStyle = 'rgba(200,255,26,' + ((i + 1) / n * 0.30).toFixed(3) + ')';
+    ctx.beginPath(); ctx.arc(GAZE.trail[i][0], GAZE.trail[i][1], 2.2, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.fillStyle = '#c8ff1a';
+  ctx.strokeStyle = '#0a0a0a';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(GAZE.x, GAZE.y, 6, 0, Math.PI * 2);
+  ctx.fill(); ctx.stroke();
+  ctx.restore();
+}
+
+// The page's single animation frame: the dot, plus any page-local easing.
+function gazeFrame(ts) {
+  gazeRAF = 0;
+  const dt = gazeLast ? (ts - gazeLast) / 1000 : 1 / 60;
+  gazeLast = ts;
+  if (state.showGaze && lastC) stepGaze(dt, lastC.wx, lastC.wy);
+  // Pages with their own eased hardware (l2-05's beam) define pageStep/pageSettled
+  // and ride this loop — a second rAF would draw the frame twice.
+  if (typeof pageStep === 'function') pageStep(Math.min(dt, 0.05));
+  draw();                              // re-arms through armGaze()
+}
+
+// Called at the end of every draw(), so any control path keeps the dot alive
+// without each handler having to know about it.
+function armGaze() {
+  const gazeLive = state.showGaze && !GAZE_REDUCED && lastC &&
+                   (!gazeSettled(lastC.wx, lastC.wy) || GAZE.trail.length > 0);
+  const pageLive = typeof pageSettled === 'function' && !pageSettled();
+  if (gazeLive || pageLive) { if (!gazeRAF) gazeRAF = requestAnimationFrame(gazeFrame); }
+  else                      { gazeLast = 0; }
+}
+
 // ── DRAW ───────────────────────────────────────────────────
 function draw() {
   ctx.clearRect(0, 0, W, H);
@@ -335,6 +440,7 @@ function draw() {
   const span = Math.min(W * 0.30, H * 0.34);
   const verd = getVerd();
   const C    = computeCentroids(cx, cy, span);
+  lastC = C;
   const baseDot = span * 0.018;
 
   // off-state border
@@ -395,7 +501,10 @@ function draw() {
     ctx.restore();
   }
 
+  drawGaze(ctx);
+
   updateReadouts(verd, C.pull);
+  armGaze();
 }
 
 // ── READOUTS ───────────────────────────────────────────────
@@ -442,6 +551,14 @@ function updateReadouts(verd, pull) {
 document.getElementById('s-bias').addEventListener('input', e => {
   state.densityBias = +e.target.value; draw();
 });
+const tgGaze = document.getElementById('tg-gaze');
+function setGaze(on) {
+  state.showGaze = on;
+  tgGaze.classList.toggle('on', on);
+  gazeLast = 0;                        // restart the clock, never a jumbo first dt
+  draw();
+}
+tgGaze.addEventListener('click', () => setGaze(!state.showGaze));
 const tgCent = document.getElementById('tg-cent');
 tgCent.addEventListener('click', () => {
   state.showCentroid = !state.showCentroid;
@@ -455,6 +572,7 @@ tgClus.addEventListener('click', () => {
 
 function syncUI() {
   document.getElementById('s-bias').value = state.densityBias;
+  tgGaze.classList.toggle('on', state.showGaze);
   tgCent.classList.toggle('on', state.showCentroid);
   tgClus.classList.toggle('on', state.showCluster);
   draw();
@@ -467,19 +585,25 @@ function flash(btn, label, cls) {
   btn.textContent = label; btn.className = 'ed-btn ' + cls;
   setTimeout(() => { btn.textContent = orig; btn.className = oc; }, 1200);
 }
+// NOTE: hold the button in a local — e.currentTarget is null once the handler
+// resumes after an await, which used to make every flash() throw.
 document.getElementById('btn-copy').addEventListener('click', async e => {
-  const p = { app:'focus-02-density', densityBias:state.densityBias, showCentroid:state.showCentroid, showCluster:state.showCluster };
-  try { await navigator.clipboard.writeText(JSON.stringify(p, null, 2)); flash(e.currentTarget,'✓ COPIED','ok'); }
-  catch { flash(e.currentTarget,'✗','ng'); }
+  const btn = e.currentTarget;
+  const p = { app:'focus-02-density', densityBias:state.densityBias, showCentroid:state.showCentroid, showCluster:state.showCluster,
+              showGaze:state.showGaze };
+  try { await navigator.clipboard.writeText(JSON.stringify(p, null, 2)); flash(btn,'✓ COPIED','ok'); }
+  catch { flash(btn,'✗','ng'); }
 });
 document.getElementById('btn-paste').addEventListener('click', async e => {
+  const btn = e.currentTarget;
   try {
     const o = JSON.parse(await navigator.clipboard.readText());
     if (typeof o.densityBias === 'number') state.densityBias = Math.max(0,Math.min(100,o.densityBias|0));
     if (typeof o.showCentroid === 'boolean') state.showCentroid = o.showCentroid;
+    if (typeof o.showGaze === 'boolean') state.showGaze = o.showGaze;
     if (typeof o.showCluster === 'boolean') state.showCluster = o.showCluster;
-    syncUI(); flash(e.currentTarget,'✓ APPLIED','ok');
-  } catch { flash(e.currentTarget,'✗','ng'); }
+    syncUI(); flash(btn,'✓ APPLIED','ok');
+  } catch { flash(btn,'✗','ng'); }
 });
 
 // ── SHORTCUT MODAL ─────────────────────────────────────────
@@ -499,6 +623,7 @@ window.addEventListener('keydown', e => {
   else if(e.key==='ArrowDown'){ e.preventDefault(); state.densityBias=Math.max(0,state.densityBias-5); syncUI(); }
   else if(e.key==='b'||e.key==='B'){ state.showCluster=!state.showCluster; tgClus.classList.toggle('on',state.showCluster); draw(); }
   else if(e.key==='c'||e.key==='C'){ state.showCentroid=!state.showCentroid; tgCent.classList.toggle('on',state.showCentroid); draw(); }
+  else if(e.key==='e'||e.key==='E'){ setGaze(!state.showGaze); }
   else if(e.key==='r'||e.key==='R'){ reset(); }
 });
 
