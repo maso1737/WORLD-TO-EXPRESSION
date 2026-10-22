@@ -1,6 +1,6 @@
 # HANDOFF — 次セッションへの申し送り
 
-最終更新: 2026-08-13 ／ 直近セッション: COGNITIVE ブラッシュアップ **完走**（NULL & MEASURE 3p ＋ GAZE PARTICLE 6p ＋ l2-05 天秤 ＋ l3-05 STROBE）
+最終更新: 2026-10-22（Emergence Engine 02/03 追加・下の「別件」）／ 2026-08-13 ／ 直近セッション: COGNITIVE ブラッシュアップ **完走**（NULL & MEASURE 3p ＋ GAZE PARTICLE 6p ＋ l2-05 天秤 ＋ l3-05 STROBE）
 
 ---
 
@@ -114,8 +114,8 @@ cognitive/svg/PROFILE_face-vase.js    ← 顔⇔壺の共有輪郭アセット�
 
 ## 別件（並行中の別プロジェクト）
 
-**Emergence Engine**（`Emergence Engine/01_bifurcation_walk.html`）
-- 仕様書 `20_Design/SPEC_EE-01_bifurcation-walk.md`、コンセプト `Emergence Engine/PROJECT_CONCEPT.md`
-- P1〜P3 のうち実装済み＋気持ちよさ調整済み（IDLE ATTRACT DRIFT / トゥインクル / 脈拍）
-- 次の分岐: ①EE-01b 3D版（Three.js）②次作 Langton's Ant の仕様書 ③さらに EE-01 詰め — **ユーザー選択待ち**
-- EE の `index.html` は未作成（ESCカスケード最終段はコメントアウトで準備済み）
+**Emergence Engine**（`Emergence Engine/index.html` が入口）— 🆕 2026-10-22 に前進
+- 01 Bifurcation Walk ／ **02 Highway（ラングトンのアリ）** ／ **03 Slime Network（粘菌）** ／ 入口 `index.html`
+- 詳細とチェック結果 → [[2026-10-22]]（`90_Log/2026-10-22.md`）。仕様書は 01 のみ（`20_Design/SPEC_EE-01_bifurcation-walk.md`）、02/03 はラボ先行
+- 各作品の中身（SIM）は `/*SIM-BEGIN … SIM-END*/` で囲ってあり、Node で切り出して絵を書き出せる（検証手順はログ参照）
+- 次の分岐: ① EE-04 Boids ② EE-01b 3D 版 ③ 02/03 に音連動を足して VJ 素材化 — **ユーザー選択待ち**

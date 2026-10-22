@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>EE_02 // HIGHWAY</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,700;0,900;1,900&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@400;600;800&family=Cormorant+Garamond:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════════════════════
+   EMERGENCE ENGINE // EE_02 — HIGHWAY (Langton's ant / turmites)
+   KINETIC STAGE design system + EE overrides (SPEC EE-01 §2)
+   NOIR base · ice=live cells/data · gold=labels · rouge=here&now (the ant)
+   ══════════════════════════════════════════════════════════════ */
+:root{
+  --rouge:#FF4FA8; --ice:#5AE9FF; --gold:#FFD27A; --lavender:#B58EFF;
+  --white:#F8EFFF; --noir:#070707;
+  --mono:'IBM Plex Mono',monospace;
+  --disp:'Barlow Condensed',sans-serif;
+  --orn:'Cormorant Garamond',serif;
+  --jp:'Noto Sans JP',sans-serif;
+  --jp-serif:'Noto Serif JP',serif;
+  --mute:rgba(181,142,255,0.62);      /* 二次テキスト下限（既存規約） */
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;background:var(--noir);color:var(--white);
+  font-family:var(--mono);overflow:hidden;-webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;}
+
+#app{display:grid;height:100vh;width:100vw;}
+/* NAKED — canvas only, zero UI */
+body.naked #app{grid-template-rows:1fr;grid-template-columns:1fr;}
+body.naked #topbar,body.naked #side,body.naked #graphwrap,body.naked #bottombar{display:none;}
+body.naked #stage{grid-column:1/-1;grid-row:1/-1;}
+body.naked .stage-deco{opacity:0;}
+/* REVEALED — full HUD + proof strip */
+body.revealed #app{grid-template-rows:44px 1fr 150px 44px;grid-template-columns:1fr 300px;}
+body.revealed #topbar{grid-area:1/1/2/-1;}
+body.revealed #stage {grid-area:2/1/3/2;}
+body.revealed #graphwrap{grid-area:3/1/4/2;}
+body.revealed #side  {grid-area:2/2/4/3;}
+body.revealed #bottombar{grid-area:4/1/5/-1;}
+
+#stage{position:relative;overflow:hidden;background:var(--noir);touch-action:none;cursor:crosshair;}
+#world{display:block;width:100%;height:100%;}
+
+.stage-deco{position:absolute;inset:0;pointer-events:none;transition:opacity .4s ease;z-index:3;}
+.corner{position:absolute;width:14px;height:14px;}
+.corner::before,.corner::after{content:'';position:absolute;background:linear-gradient(90deg,var(--gold),var(--rouge));box-shadow:0 0 6px rgba(255,79,168,.4);}
+.corner::before{width:100%;height:1px;} .corner::after{width:1px;height:100%;}
+.corner.tl{top:10px;left:10px;} .corner.tr{top:10px;right:10px;transform:scaleX(-1);}
+.corner.bl{bottom:10px;left:10px;transform:scaleY(-1);} .corner.br{bottom:10px;right:10px;transform:scale(-1);}
+.po{position:absolute;top:12px;right:16px;text-align:right;}
+.po-num{font-family:var(--orn);font-style:italic;font-weight:700;font-size:clamp(40px,6vw,72px);line-height:1;letter-spacing:-.03em;
+  color:var(--ice);filter:drop-shadow(0 0 16px rgba(90,233,255,.35));}
+.po-en{font-family:var(--orn);font-style:italic;font-weight:700;font-size:clamp(14px,2vw,22px);color:var(--gold);line-height:1;}
+.po-jp{font-family:var(--jp-serif);font-size:11px;color:var(--mute);margin-top:5px;letter-spacing:.22em;}
+.stage-bignum{position:absolute;bottom:-38px;left:-8px;font-family:var(--orn);font-style:italic;font-weight:700;
+  font-size:clamp(160px,26vw,340px);color:transparent;-webkit-text-stroke:1.5px rgba(90,233,255,.10);line-height:1;}
+
+#topbar{border-bottom:1px solid rgba(255,210,122,.12);display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;font-size:10px;color:rgba(248,239,255,.5);letter-spacing:.22em;background:rgba(255,255,255,.012);}
+#topbar a{border:1px solid rgba(255,210,122,.3);color:var(--gold);text-decoration:none;padding:2px 8px;letter-spacing:.2em;}
+#topbar a:hover{background:rgba(255,210,122,.1);}
+#bottombar{border-top:1px solid rgba(255,210,122,.12);display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;font-size:9px;color:var(--mute);letter-spacing:.18em;}
+#bottombar #status{color:var(--mute);}
+#bottombar #status.hot{color:var(--rouge);text-shadow:0 0 6px rgba(255,79,168,.4);}
+.kbd{background:rgba(255,79,168,.08);border:1px solid rgba(255,79,168,.35);color:var(--rouge);
+  font-family:var(--mono);font-size:8px;padding:1px 5px;border-radius:2px;letter-spacing:.1em;}
+#sc-open-btn{cursor:pointer;color:var(--mute);font-size:9px;letter-spacing:.25em;padding:2px 8px;
+  border:1px solid rgba(255,210,122,.25);border-radius:2px;transition:all .15s;}
+#sc-open-btn:hover{color:var(--gold);border-color:var(--gold);background:rgba(255,210,122,.06);}
+
+/* proof strip — distance from origin */
+#graphwrap{position:relative;border-top:1px solid rgba(255,210,122,.1);background:var(--noir);overflow:hidden;}
+#graph{position:absolute;inset:0;width:100%;height:100%;display:block;}
+#graph-lbl{position:absolute;top:4px;left:8px;font-size:8px;letter-spacing:.32em;color:var(--mute);pointer-events:none;}
+
+/* side panel */
+#side{display:flex;flex-direction:column;overflow-y:auto;background:rgba(255,255,255,.015);border-left:1px solid rgba(255,210,122,.08);}
+#side::-webkit-scrollbar{width:2px;} #side::-webkit-scrollbar-thumb{background:var(--rouge);}
+.sp{border-bottom:1px solid rgba(181,142,255,.08);padding:13px 15px;flex-shrink:0;}
+.spl{font-size:9px;letter-spacing:.4em;color:var(--mute);margin-bottom:10px;}
+.tr{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;font-size:10px;color:rgba(248,239,255,.72);letter-spacing:.05em;gap:8px;}
+.tr:last-child{margin-bottom:0;}
+.sl{font-size:9px;color:var(--mute);letter-spacing:.12em;white-space:nowrap;min-width:58px;text-align:right;}
+input[type=range]{-webkit-appearance:none;flex:1;height:2px;background:rgba(255,255,255,.12);outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),var(--rouge));box-shadow:0 0 8px rgba(255,79,168,.5);cursor:pointer;}
+.data-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(181,142,255,.08);font-size:10px;}
+.data-row:last-child{border-bottom:none;}
+.dk{color:var(--mute);letter-spacing:.05em;}
+.dv{color:var(--gold);font-weight:600;font-variant-numeric:tabular-nums;}
+.dv.neon{color:var(--ice);text-shadow:0 0 6px rgba(90,233,255,.45);}
+#badge{font-size:9px;letter-spacing:.2em;padding:2px 8px;border-radius:2px;border:1px solid;}
+#badge.seed{color:var(--gold);border-color:rgba(255,210,122,.4);}
+#badge.chaos{color:var(--ice);border-color:rgba(90,233,255,.5);box-shadow:0 0 10px rgba(90,233,255,.3);}
+#badge.highway{color:var(--rouge);border-color:rgba(255,79,168,.5);box-shadow:0 0 10px rgba(255,79,168,.3);}
+/* rule chips — the protagonist, editable live */
+.rule-cap{font-family:var(--jp);font-size:9px;color:var(--mute);letter-spacing:.12em;line-height:1.7;margin-top:8px;}
+.chips{display:flex;flex-wrap:wrap;gap:4px;align-items:center;}
+.chip{width:30px;height:38px;border:1px solid rgba(90,233,255,.25);border-radius:2px;cursor:pointer;display:flex;flex-direction:column;
+  align-items:center;justify-content:space-between;padding:3px 0 2px;transition:border-color .15s, box-shadow .15s;user-select:none;}
+.chip:hover{border-color:var(--ice);box-shadow:0 0 8px rgba(90,233,255,.25);}
+.chip .sw{width:18px;height:14px;border:1px solid rgba(255,255,255,.18);}
+.chip .lt{font-family:var(--disp);font-weight:900;font-size:16px;line-height:1;color:var(--white);}
+.chip.here{border-color:var(--rouge);box-shadow:0 0 10px rgba(255,79,168,.45);}
+.chip-btn{width:22px;height:38px;border:1px dashed rgba(255,210,122,.3);color:var(--gold);font-size:13px;display:flex;align-items:center;
+  justify-content:center;cursor:pointer;border-radius:2px;user-select:none;}
+.chip-btn:hover{background:rgba(255,210,122,.08);}
+/* presets */
+.walkgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.wb{font-size:8.5px;letter-spacing:.12em;padding:7px 4px;border:1px solid rgba(90,233,255,.25);color:var(--ice);
+  background:rgba(90,233,255,.04);cursor:pointer;border-radius:2px;transition:all .15s;text-align:center;}
+.wb:hover{background:rgba(90,233,255,.14);box-shadow:0 0 8px rgba(90,233,255,.25);}
+.wb b{display:block;color:var(--gold);font-weight:600;margin-top:2px;font-size:9px;letter-spacing:.06em;}
+.wb i{display:block;font-style:normal;font-family:var(--jp);color:var(--mute);font-size:8px;margin-top:2px;letter-spacing:.04em;}
+.wb.on{border-color:var(--rouge);box-shadow:0 0 8px rgba(255,79,168,.3);}
+/* toggles */
+.tg{width:34px;height:17px;background:rgba(255,255,255,.07);border-radius:9px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;}
+.tg.on{background:linear-gradient(90deg,var(--rouge),#B850FF);box-shadow:0 0 10px rgba(255,79,168,.45);}
+.tg::after{content:'';position:absolute;width:13px;height:13px;border-radius:50%;background:#fff;top:2px;left:2px;transition:left .2s;}
+.tg.on::after{left:19px;}
+/* events */
+#events{font-size:9px;line-height:1.9;letter-spacing:.06em;color:rgba(248,239,255,.7);font-variant-numeric:tabular-nums;}
+#events .ev-h{color:var(--rouge);} #events .ev-c{color:var(--ice);} #events .ev-s{color:var(--gold);}
+#events .ev-n{color:var(--mute);margin-right:8px;}
+/* copy/paste */
+.cpg{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.ed-btn{background:rgba(255,79,168,.05);border:1px solid rgba(255,79,168,.3);color:var(--rouge);font-family:var(--mono);
+  font-size:9px;letter-spacing:.15em;padding:8px;cursor:pointer;border-radius:2px;transition:all .15s;text-align:center;}
+.ed-btn:hover{background:rgba(255,79,168,.14);box-shadow:0 0 8px rgba(255,79,168,.25);}
+.ed-btn.ok{background:rgba(90,233,255,.18);border-color:var(--ice);color:var(--ice);}
+.ed-btn.err{background:rgba(255,79,168,.22);border-color:var(--rouge);color:#fff;}
+
+#naked-hint{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);font-size:8px;letter-spacing:.5em;
+  color:rgba(90,233,255,.9);opacity:0;transition:opacity 1.2s ease;pointer-events:none;z-index:20;}
+#naked-hint.show{opacity:.25;}
+
+#shortcut-modal{display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.85);align-items:center;justify-content:center;}
+#shortcut-modal.open{display:flex;}
+#shortcut-box{background:linear-gradient(180deg,#0d0d0d,#050505);border:1px solid rgba(255,210,122,.4);border-radius:6px;
+  width:min(520px,92vw);max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.7),0 0 60px rgba(90,233,255,.1);}
+.sc-header{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid rgba(255,210,122,.18);
+  font-size:10px;letter-spacing:.4em;color:var(--gold);}
+.sc-header span{cursor:pointer;color:var(--mute);} .sc-header span:hover{color:var(--rouge);}
+.sc-body{padding:14px 18px;}
+.sc-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(181,142,255,.06);font-size:10px;}
+.sc-row:last-child{border-bottom:none;}
+.sc-key{background:#141414;border:1px solid rgba(181,142,255,.3);color:var(--white);font-family:var(--mono);font-size:9px;
+  padding:2px 8px;min-width:30px;text-align:center;border-radius:3px;letter-spacing:.05em;}
+.sc-desc{color:rgba(248,239,255,.7);letter-spacing:.04em;}
+.sc-desc .jp{display:block;font-family:var(--jp);font-size:9px;color:var(--mute);margin-top:1px;letter-spacing:.1em;}
+
+@media(max-width:720px){
+  body.revealed #app{grid-template-columns:1fr;grid-template-rows:44px 1fr 120px 44px;}
+  body.revealed #side{position:fixed;right:0;top:44px;bottom:44px;width:min(300px,84vw);z-index:40;
+    box-shadow:-10px 0 40px rgba(0,0,0,.6);}
+  body.revealed #stage{grid-area:2/1/3/-1;} body.revealed #graphwrap{grid-area:3/1/4/-1;}
+}
+</style>
+</head>
+<body class="naked">
+<div id="app">
+
+  <div id="topbar">
+    <span>EMERGENCE_ENGINE // EE_02</span>
+    <a href="#" id="esc-link">[ESC] INDEX</a>
+  </div>
+
+  <div id="stage">
+    <canvas id="world"></canvas>
+    <div class="stage-deco">
+      <span class="corner tl"></span><span class="corner tr"></span>
+      <span class="corner bl"></span><span class="corner br"></span>
+      <div class="stage-bignum">02</div>
+      <div class="po">
+        <div class="po-num">02</div>
+        <div class="po-en">Highway</div>
+        <div class="po-jp">一万歩目の秩序</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="graphwrap">
+    <canvas id="graph"></canvas>
+    <div id="graph-lbl">DISTANCE FROM ORIGIN — 原点からの距離 · 線がまっすぐ伸びたら「道」</div>
+  </div>
+
+  <div id="side">
+    <div class="sp">
+      <div class="spl">READOUT</div>
+      <div class="data-row"><span class="dk">STEP</span><span class="dv neon" id="ro-step">0</span></div>
+      <div class="data-row"><span class="dk">PHASE</span><span id="badge" class="seed">SEED</span></div>
+      <div class="data-row"><span class="dk">HIGHWAY</span><span class="dv" id="ro-hw">—</span></div>
+      <div class="data-row"><span class="dk">ANTS</span><span class="dv" id="ro-ants">1</span></div>
+      <div class="data-row"><span class="dk">CELLS COLORED</span><span class="dv" id="ro-fill">0.0%</span></div>
+    </div>
+    <div class="sp">
+      <div class="spl">RULE — THE PROTAGONIST</div>
+      <div class="chips" id="chips"></div>
+      <div class="rule-cap">いま立っているマスの色を読み、その文字の方へ曲がる（L=左 / R=右）。マスの色を次へ進めて1歩。ルールはこれだけ。<br>文字クリック＝L⇔R 反転・＋−＝色を増減（<b style="color:var(--gold)">走ったまま書き換わる</b>）</div>
+    </div>
+    <div class="sp">
+      <div class="spl">SEEDS — 同じアリ、違うルール</div>
+      <div class="walkgrid" id="presets"></div>
+    </div>
+    <div class="sp">
+      <div class="spl">CONTROLS</div>
+      <div class="tr"><span>SPEED</span><input type="range" id="c-speed" min="0" max="100" step="1" value="20"><span class="sl" id="v-speed">—</span></div>
+      <div class="tr"><span>CELL</span><input type="range" id="c-cell" min="2" max="12" step="1" value="4"><span class="sl" id="v-cell">4 px</span></div>
+      <div class="tr"><span>GLOW TAIL</span><input type="range" id="c-decay" min="1" max="40" step="1" value="6"><span class="sl" id="v-decay">6</span></div>
+      <div class="tr"><span>BLOOM<span style="color:var(--mute)"> — 足あとの光</span></span><div class="tg on" id="tg-glow"></div></div>
+    </div>
+    <div class="sp">
+      <div class="spl">EVENTS — 先頭のアリの年表</div>
+      <div id="events"></div>
+    </div>
+    <div class="sp">
+      <div class="spl">PARAMS</div>
+      <div class="cpg">
+        <div class="ed-btn" id="btn-copy">⧉ COPY</div>
+        <div class="ed-btn" id="btn-paste">▣ PASTE</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="bottombar">
+    <span id="status">EE_02 // LANGTON'S ANT</span>
+    <span><span id="sc-open-btn">⌨ SHORTCUTS</span> <span class="kbd">?</span></span>
+  </div>
+</div>
+
+<div id="naked-hint">TAB — REVEAL</div>
+
+<div id="shortcut-modal">
+  <div id="shortcut-box">
+    <div class="sc-header">⌨ KEYBOARD SHORTCUTS <span id="sc-close">✕</span></div>
+    <div class="sc-body">
+      <div class="sc-row"><span class="sc-key">CLICK</span><span class="sc-desc">Drop an ant — アリを置く<span class="jp">アリの上をクリックすると取り除く（最後の1匹は残る）</span></span></div>
+      <div class="sc-row"><span class="sc-key">DRAG</span><span class="sc-desc">Paint walls — 色を塗って道をふさぐ<span class="jp">Shift+ドラッグで消す。道がぶつかると混沌に戻る</span></span></div>
+      <div class="sc-row"><span class="sc-key">↑ ↓</span><span class="sc-desc">Speed — 速度</span></div>
+      <div class="sc-row"><span class="sc-key">Space</span><span class="sc-desc">Pause / Resume — 時間停止</span></div>
+      <div class="sc-row"><span class="sc-key">.</span><span class="sc-desc">Step once (paused) — 1歩だけ進める<span class="jp">アリがルールを読む瞬間をコマ送りで見る</span></span></div>
+      <div class="sc-row"><span class="sc-key">1–6</span><span class="sc-desc">Seed rule — プリセットのルールで最初から</span></div>
+      <div class="sc-row"><span class="sc-key">Tab</span><span class="sc-desc">Reveal — HUD と証明ストリップの表示切替</span></div>
+      <div class="sc-row"><span class="sc-key">R</span><span class="sc-desc">Reset — 白紙に1匹から</span></div>
+      <div class="sc-row"><span class="sc-key">?</span><span class="sc-desc">This panel</span></div>
+      <div class="sc-row"><span class="sc-key">Esc</span><span class="sc-desc">Modal → NAKED → Index</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/*SIM-BEGIN — pure simulation core (no DOM). Node-verifiable: extract between the markers. */
+const DX=[0,1,0,-1], DY=[-1,0,1,0];      // 0=up 1=right 2=down 3=left
+const HBUF=8192;                          // per-ant position history (ring)
+function parseRule(rule){ return Int8Array.from(rule, c=> c==='R'?1:-1); }
+function makeWorld(gw, gh, rule){
+  return { gw, gh, grid:new Uint8Array(gw*gh), heat:new Uint8Array(gw*gh),
+           rule, turns:parseRule(rule), k:rule.length, ants:[], steps:0, heatVal:255 };
+}
+function makeAnt(x, y, dir){
+  return { x, y, dir, ux:0, uy:0, n:0, buf:new Int32Array(HBUF*2), hw:null };
+}
+/* the whole rule: read the colour, turn, advance the colour, step forward (torus) */
+function stepAnt(w, a){
+  const i = a.y*w.gw + a.x, s = w.grid[i];
+  a.dir = (a.dir + w.turns[s] + 4) & 3;
+  w.grid[i] = (s+1 === w.k) ? 0 : s+1;
+  w.heat[i] = w.heatVal;
+  const dx = DX[a.dir], dy = DY[a.dir];
+  a.x += dx; a.y += dy; a.ux += dx; a.uy += dy;
+  if (a.x < 0) a.x = w.gw-1; else if (a.x >= w.gw) a.x = 0;
+  if (a.y < 0) a.y = w.gh-1; else if (a.y >= w.gh) a.y = 0;
+  const j = (a.n % HBUF)*2; a.buf[j] = a.ux; a.buf[j+1] = a.uy; a.n++;
+}
+/* highway = the ant's displacement over p steps is the same nonzero vector,
+   repeated for the last max(3p, 600) steps. The 600-step floor stops short zigzags
+   in the chaos from passing as roads. Unwrapped coords, so the torus doesn't fool it. */
+const HW_MIN = 600;
+function detectHighway(a){
+  const n = a.n, last = n-1, have = Math.min(n, HBUF);
+  const b = a.buf, at = t => (t % HBUF)*2;
+  for (let p=1; p<=2000; p++){
+    const span = Math.max(3*p, HW_MIN);
+    if (span + p >= have) break;
+    const i0 = at(last), i1 = at(last-p);
+    const dx = b[i0]-b[i1], dy = b[i0+1]-b[i1+1];
+    if (dx===0 && dy===0) continue;
+    let ok = true;
+    for (let j=1; j<span; j++){
+      const k0 = at(last-j), k1 = at(last-j-p);
+      if (b[k0]-b[k1] !== dx || b[k0+1]-b[k1+1] !== dy){ ok=false; break; }
+    }
+    if (ok) return { p, dx, dy };
+  }
+  return null;
+}
+function lerp(a,b,t){ return a+(b-a)*t; }
+/* state 0 = noir, then dim ice → bright ice. 95% of the screen stays black & ice. */
+function buildPalette(k){
+  const pal = new Uint8Array(k*3);
+  pal[0]=7; pal[1]=7; pal[2]=7;
+  for (let s=1; s<k; s++){
+    const t = k===2 ? 0.42 : (s-1)/(k-2);
+    pal[s*3]  = Math.round(lerp(12, 130, t));
+    pal[s*3+1]= Math.round(lerp(52, 232, t));
+    pal[s*3+2]= Math.round(lerp(78, 255, t));
+  }
+  return pal;
+}
+/* base image (state colours, heat lifts toward white) + heat-only image for the bloom */
+function paint(w, data, hdata, pal, decay){
+  const g = w.grid, h = w.heat, n = g.length;
+  for (let i=0, o=0; i<n; i++, o+=4){
+    const s = g[i]*3;
+    let r = pal[s], gg = pal[s+1], bb = pal[s+2];
+    const hv = h[i];
+    if (hv){
+      const t = hv/255*0.6;
+      r += (248-r)*t; gg += (252-gg)*t; bb += (255-bb)*t;
+      h[i] = hv > decay ? hv-decay : 0;
+      hdata[o]=150; hdata[o+1]=240; hdata[o+2]=255; hdata[o+3]=hv;
+    } else hdata[o+3]=0;
+    data[o]=r; data[o+1]=gg; data[o+2]=bb; data[o+3]=255;
+  }
+}
+/*SIM-END*/
+
+/* ══════════════════════════════════════════════════════════════
+   STATE
+   ══════════════════════════════════════════════════════════════ */
+const reduceMotion = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+const PRESETS = [
+  { name:'LANGTON',    rule:'RL',           jp:'一万歩目に道が出る' },
+  { name:'SYMMETRY',   rule:'LLRR',         jp:'左右対称に育つ' },
+  { name:'CHAOS',      rule:'RLR',          jp:'秩序が来ない' },
+  { name:'SQUARE',     rule:'LRRRRRLLR',    jp:'四角を塗り広げる' },
+  { name:'TRIANGLE',   rule:'RRLLLRLLLRRR', jp:'三角に育つ' },
+  { name:'SPIRAL HWY', rule:'LLRRRLRLRLLR', jp:'渦の奥から道' },
+];
+// self-performing gallery while untouched: preset, speed cap (steps/frame), steps before the next seed
+const IDLE_ORDER = [ {i:0, cap:60, cycle:200000}, {i:1, cap:120, cycle:200000}, {i:4, cap:120, cycle:200000},
+                     {i:3, cap:120, cycle:200000}, {i:5, cap:200, cycle:200000} ];
+const state = {
+  rule: 'RL',
+  speed: 20,           // slider 0..100 → steps/frame (log)
+  cell: 4,
+  decay: 6,
+  glow: true,
+  revealed: false,
+  paused: false,
+  idle: true,          // attract mode until first input
+};
+const MAX_ANTS = 64, STEP_BUDGET = 400000;
+function spfFromSlider(s){ return Math.pow(10, -1 + s/100*5.3); }        // 0.1 .. 20000 steps/frame
+function sliderFromSpf(v){ return Math.max(0, Math.min(100, (Math.log10(v)+1)/5.3*100)); }
+
+/* ══════════════════════════════════════════════════════════════
+   CANVAS
+   ══════════════════════════════════════════════════════════════ */
+const stage = document.getElementById('stage');
+const worldC = document.getElementById('world');
+const wctx = worldC.getContext('2d');
+const off = document.createElement('canvas'), offCtx = off.getContext('2d');
+const offH = document.createElement('canvas'), offHCtx = offH.getContext('2d');
+let W=0, H=0, DPR=Math.min(window.devicePixelRatio||1, 2);
+let img=null, himg=null;
+
+function resizeWorld(){
+  const r = stage.getBoundingClientRect();
+  W = Math.max(1, Math.floor(r.width)); H = Math.max(1, Math.floor(r.height));
+  worldC.width = W*DPR; worldC.height = H*DPR;
+  wctx.setTransform(DPR,0,0,DPR,0,0);
+}
+new ResizeObserver(resizeWorld).observe(stage);
+window.addEventListener('resize', ()=>{ resizeWorld(); if (state.revealed) resizeGraph(); });
+resizeWorld();
+
+/* grid size is fixed from the window at reset — revealing the HUD only refits it, never resets */
+let world, pal, GW=0, GH=0;
+function fit(){
+  const sc = Math.min(W/GW, H/GH);
+  return { sc, ox:(W-GW*sc)/2, oy:(H-GH*sc)/2 };
+}
+
+/* ══════════════════════════════════════════════════════════════
+   WORLD LIFECYCLE
+   ══════════════════════════════════════════════════════════════ */
+let events = [], samples = [], sampleEvery = 16, hwSpans = [];
+function resetWorld(){
+  GW = Math.max(40, Math.floor(window.innerWidth / state.cell));
+  GH = Math.max(30, Math.floor(window.innerHeight / state.cell));
+  world = makeWorld(GW, GH, state.rule);
+  world.ants.push(makeAnt(GW>>1, GH>>1, 0));
+  pal = buildPalette(world.k);
+  off.width = offH.width = GW; off.height = offH.height = GH;
+  img = offCtx.createImageData(GW, GH); himg = offHCtx.createImageData(GW, GH);
+  events = []; samples = [0]; sampleEvery = 16; hwSpans = []; rings.length = 0;
+  pushEvent(0, 'SEED', 'ev-s', state.rule);
+  stepAcc = 0;
+  renderChips(); markPreset();
+}
+function setRuleLive(rule){
+  // rule surgery — the world keeps running; colours beyond the new count fold back
+  const oldK = world.k;
+  state.rule = rule;
+  world.rule = rule; world.turns = parseRule(rule); world.k = rule.length;
+  if (world.k < oldK){ const g = world.grid; for (let i=0;i<g.length;i++) if (g[i] >= world.k) g[i] %= world.k; }
+  pal = buildPalette(world.k);
+  pushEvent(world.steps, 'RULE', 'ev-s', rule);
+  renderChips(); markPreset();
+}
+function loadPreset(i){
+  const p = PRESETS[i]; if (!p) return;
+  state.rule = p.rule; resetWorld();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   STEPPING
+   ══════════════════════════════════════════════════════════════ */
+let stepAcc = 0;
+function runSteps(n){
+  const w = world, ants = w.ants;
+  for (let s=0; s<n; s++){
+    for (let k=0; k<ants.length; k++){
+      const a = ants[k];
+      stepAnt(w, a);
+      if ((a.n & 1023) === 0) checkAnt(a, k===0);
+    }
+    w.steps++;
+    if (w.steps % sampleEvery === 0) sampleGraph();
+  }
+}
+function checkAnt(a, hero){
+  const hw = detectHighway(a);
+  if (hw && !a.hw){
+    rings.push({ gx:a.x, gy:a.y, t:0, big:hero });
+    if (hero){
+      pushEvent(world.steps, 'HIGHWAY', 'ev-h', `p${hw.p} (${sgn(hw.dx)},${sgn(hw.dy)})`);
+      hwSpans.push([world.steps, null]);
+      flashStatus(`HIGHWAY EMERGED AT STEP ${fmt(world.steps)} — ルールは何も変わっていない`);
+    }
+  } else if (!hw && a.hw && hero){
+    pushEvent(world.steps, 'CRASH', 'ev-c', 'back to chaos');
+    const sp = hwSpans[hwSpans.length-1]; if (sp && sp[1]===null) sp[1] = world.steps;
+  }
+  a.hw = hw;
+}
+function sgn(v){ return (v>0?'+':v<0?'−':'') + Math.abs(v); }
+function fmt(n){ return n.toLocaleString('en-US'); }
+function sampleGraph(){
+  const a = world.ants[0];
+  samples.push(Math.hypot(a.ux, a.uy));
+  if (samples.length > 2048){
+    const s2 = []; for (let i=0;i<samples.length;i+=2) s2.push(samples[i]);
+    samples = s2; sampleEvery *= 2;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   IDLE ATTRACT — slow birth → acceleration → the highway → next seed
+   最初の操作で止まり、以後は SPEED の値がそのまま残る。
+   ══════════════════════════════════════════════════════════════ */
+let idleT = 0, idleIdx = 0, fade = 0;
+const IDLE_SLOW = 3.5;
+function stopIdle(){
+  if (!state.idle) return;
+  state.idle = false; fade = 0;
+  setSpeedSlider(state.speed);
+}
+function stepIdle(dt){
+  if (!state.idle) return;
+  if (fade > 0){
+    fade -= dt;
+    if (fade <= 0){ idleIdx = (idleIdx+1) % IDLE_ORDER.length; loadPreset(IDLE_ORDER[idleIdx].i); idleT = 0; }
+    return;
+  }
+  idleT += dt;
+  const cur = IDLE_ORDER[idleIdx];
+  const spf = idleT < IDLE_SLOW ? 0.35 : Math.min(cur.cap, 0.35*Math.exp((idleT-IDLE_SLOW)*0.75));
+  state.speed = sliderFromSpf(spf);
+  if (world.steps > cur.cycle) fade = 1.4;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RENDER LOOP
+   ══════════════════════════════════════════════════════════════ */
+const rings = [];
+let last = performance.now(), roAcc = 0;
+function frame(now){
+  const dt = Math.min(0.05, (now-last)/1000); last = now;
+  stepIdle(dt);
+  if (!state.paused && !(state.idle && fade > 0)){
+    const spf = spfFromSlider(state.speed);
+    // slow = a bright comet; fast = dimmer footprints so the colour structure shows through
+    world.heatVal = spf <= 2 ? 255 : Math.max(90, Math.round(255 - 55*Math.log10(spf)));
+    stepAcc += spf;
+    let n = Math.floor(stepAcc); stepAcc -= n;
+    n = Math.min(n, Math.floor(STEP_BUDGET / world.ants.length));
+    if (n > 0) runSteps(n);
+  }
+  draw(dt);
+  if (state.revealed){
+    drawGraph();
+    roAcc += dt; if (roAcc > 0.1){ roAcc = 0; updateReadout(); }
+  }
+  requestAnimationFrame(frame);
+}
+
+function draw(dt){
+  paint(world, img.data, himg.data, pal, state.decay);
+  offCtx.putImageData(img, 0, 0);
+  const { sc, ox, oy } = fit();
+  wctx.globalCompositeOperation = 'source-over';
+  wctx.globalAlpha = 1; wctx.filter = 'none';
+  wctx.fillStyle = '#070707'; wctx.fillRect(0,0,W,H);
+  wctx.imageSmoothingEnabled = false;
+  wctx.drawImage(off, ox, oy, GW*sc, GH*sc);
+  if (state.glow){
+    offHCtx.putImageData(himg, 0, 0);
+    wctx.save();
+    wctx.globalCompositeOperation = 'lighter';
+    wctx.imageSmoothingEnabled = true;
+    wctx.globalAlpha = reduceMotion ? 0.35 : 0.7;
+    wctx.filter = `blur(${Math.max(3, sc*2.2)}px)`;
+    wctx.drawImage(offH, ox, oy, GW*sc, GH*sc);
+    wctx.filter = 'none';
+    wctx.restore();
+  }
+  // the ants — rouge is "here & now"
+  const as = Math.max(2, sc);
+  wctx.globalCompositeOperation = 'lighter';
+  world.ants.forEach((a, k)=>{
+    const x = ox + (a.x+0.5)*sc, y = oy + (a.y+0.5)*sc;
+    const g = wctx.createRadialGradient(x, y, 0, x, y, k===0 ? 14 : 9);
+    g.addColorStop(0, 'rgba(255,79,168,0.55)'); g.addColorStop(1, 'rgba(255,79,168,0)');
+    wctx.fillStyle = g; wctx.fillRect(x-14, y-14, 28, 28);
+    wctx.fillStyle = '#FF4FA8'; wctx.fillRect(x-as/2, y-as/2, as, as);
+  });
+  // emergence rings
+  for (let i=rings.length-1; i>=0; i--){
+    const rg = rings[i]; rg.t += dt;
+    const dur = rg.big ? 1.6 : 0.9, k = rg.t/dur;
+    if (k >= 1){ rings.splice(i,1); continue; }
+    const x = ox + (rg.gx+0.5)*sc, y = oy + (rg.gy+0.5)*sc;
+    wctx.strokeStyle = `rgba(255,79,168,${(1-k)*0.85})`; wctx.lineWidth = rg.big ? 2 : 1.2;
+    wctx.beginPath(); wctx.arc(x, y, 10 + k*(rg.big ? 220 : 90), 0, 6.2832); wctx.stroke();
+  }
+  wctx.globalCompositeOperation = 'source-over';
+  // paint-stroke preview / idle cross-fade
+  if (state.idle && fade > 0){
+    wctx.fillStyle = `rgba(7,7,7,${1 - Math.max(0, fade)/1.4})`; wctx.fillRect(0,0,W,H);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PROOF STRIP — distance from origin vs step
+   chaos = a ragged line that barely climbs; highway = a straight ramp
+   ══════════════════════════════════════════════════════════════ */
+const graphC = document.getElementById('graph'), gctx = graphC.getContext('2d');
+let GWp=0, GHp=0;
+function resizeGraph(){
+  const r = document.getElementById('graphwrap').getBoundingClientRect();
+  GWp = Math.max(1, Math.floor(r.width)); GHp = Math.max(1, Math.floor(r.height));
+  graphC.width = GWp*DPR; graphC.height = GHp*DPR; gctx.setTransform(DPR,0,0,DPR,0,0);
+}
+function drawGraph(){
+  if (!GWp) return;
+  const g = gctx, L = 10, R = GWp-12, T = 20, B = GHp-16;
+  g.clearRect(0,0,GWp,GHp);
+  const total = Math.max(1, world.steps);
+  let maxD = 10; for (const v of samples) if (v > maxD) maxD = v;
+  const sx = s => L + (s/total)*(R-L), sy = d => B - (d/maxD)*(B-T);
+  // highway spans (gold wash) + onset line (rouge)
+  for (const [a,b] of hwSpans){
+    const x0 = sx(a), x1 = sx(b===null ? total : b);
+    g.fillStyle = 'rgba(255,210,122,0.07)'; g.fillRect(x0, T, Math.max(1,x1-x0), B-T);
+    g.strokeStyle = 'rgba(255,79,168,0.9)'; g.lineWidth = 1;
+    g.beginPath(); g.moveTo(x0, T-6); g.lineTo(x0, B); g.stroke();
+    g.fillStyle = 'rgba(255,79,168,0.9)'; g.font = '8px IBM Plex Mono'; g.textBaseline = 'top';
+    g.fillText('HIGHWAY ' + fmt(a), x0+4, T-6);
+  }
+  // baseline
+  g.strokeStyle = 'rgba(255,210,122,0.18)'; g.beginPath(); g.moveTo(L,B+0.5); g.lineTo(R,B+0.5); g.stroke();
+  // the line
+  g.strokeStyle = 'rgba(90,233,255,0.95)'; g.lineWidth = 1.4;
+  g.shadowColor = 'rgba(90,233,255,0.6)'; g.shadowBlur = 6;
+  g.beginPath();
+  for (let i=0; i<samples.length; i++){
+    const x = sx(i*sampleEvery), y = sy(samples[i]);
+    i ? g.lineTo(x,y) : g.moveTo(x,y);
+  }
+  g.stroke(); g.shadowBlur = 0;
+  // labels
+  g.fillStyle = 'rgba(255,210,122,0.6)'; g.font = '9px IBM Plex Mono'; g.textBaseline = 'bottom';
+  g.fillText('0', L, GHp-3);
+  g.textAlign = 'right'; g.fillText('STEP ' + fmt(world.steps), R, GHp-3);
+  g.textBaseline = 'top'; g.fillText(Math.round(maxD) + ' cells', R, 6); g.textAlign = 'left';
+}
+
+/* ══════════════════════════════════════════════════════════════
+   READOUT / EVENTS / CHIPS
+   ══════════════════════════════════════════════════════════════ */
+function phaseOf(a){ return a.hw ? 'highway' : (world.steps < 600 ? 'seed' : 'chaos'); }
+function updateReadout(){
+  const a = world.ants[0];
+  document.getElementById('ro-step').textContent = fmt(world.steps);
+  const ph = phaseOf(a), badge = document.getElementById('badge');
+  badge.className = ph; badge.textContent = ph.toUpperCase();
+  document.getElementById('ro-hw').textContent = a.hw ? `p${a.hw.p} · (${sgn(a.hw.dx)},${sgn(a.hw.dy)})` : '—';
+  const nh = world.ants.filter(x=>x.hw).length;
+  document.getElementById('ro-ants').textContent = world.ants.length + (world.ants.length>1 ? `  (${nh} on highway)` : '');
+  let on = 0; const g = world.grid; for (let i=0;i<g.length;i+=7) if (g[i]) on++;
+  document.getElementById('ro-fill').textContent = (on/(g.length/7)*100).toFixed(1) + '%';
+  document.getElementById('v-speed').textContent = speedLabel();
+  // which letter is the lead ant reading right now
+  const s = world.grid[a.y*world.gw + a.x];
+  document.querySelectorAll('#chips .chip').forEach((c,i)=>c.classList.toggle('here', i===s));
+}
+function speedLabel(){
+  const sps = spfFromSlider(state.speed)*60;
+  return sps >= 1000 ? (sps/1000).toFixed(sps>=10000?0:1)+'k st/s' : Math.round(sps)+' st/s';
+}
+function pushEvent(step, kind, cls, note){
+  events.push({ step, kind, cls, note });
+  if (events.length > 9) events.shift();
+  const el = document.getElementById('events');
+  el.innerHTML = events.slice().reverse().map(e =>
+    `<div><span class="ev-n">${String(e.step).padStart(7,'0')}</span><span class="${e.cls}">${e.kind}</span> <span style="color:var(--mute)">${e.note||''}</span></div>`).join('');
+}
+let statusTimer = null;
+function flashStatus(txt){
+  const el = document.getElementById('status');
+  el.textContent = txt; el.classList.add('hot');
+  clearTimeout(statusTimer);
+  statusTimer = setTimeout(()=>{ el.textContent = "EE_02 // LANGTON'S ANT"; el.classList.remove('hot'); }, 6000);
+}
+function renderChips(){
+  const el = document.getElementById('chips');
+  const rule = state.rule;
+  let h = '';
+  for (let i=0;i<rule.length;i++){
+    const c = `rgb(${pal[i*3]},${pal[i*3+1]},${pal[i*3+2]})`;
+    h += `<div class="chip" data-i="${i}" title="色${i} → ${rule[i]==='R'?'右':'左'}"><span class="sw" style="background:${c}"></span><span class="lt">${rule[i]}</span></div>`;
+  }
+  h += `<div class="chip-btn" id="chip-minus" title="色を減らす">−</div><div class="chip-btn" id="chip-plus" title="色を増やす">＋</div>`;
+  el.innerHTML = h;
+}
+document.getElementById('chips').addEventListener('click', e=>{
+  stopIdle();
+  const c = e.target.closest('.chip');
+  if (c){
+    const i = +c.dataset.i, r = state.rule;
+    setRuleLive(r.slice(0,i) + (r[i]==='R'?'L':'R') + r.slice(i+1)); return;
+  }
+  if (e.target.id==='chip-plus' && state.rule.length < 16) setRuleLive(state.rule + 'L');
+  if (e.target.id==='chip-minus' && state.rule.length > 2) setRuleLive(state.rule.slice(0,-1));
+});
+function renderPresets(){
+  document.getElementById('presets').innerHTML = PRESETS.map((p,i)=>
+    `<div class="wb" data-i="${i}">${String(i+1).padStart(2,'0')} ${p.name}<b>${p.rule}</b><i>${p.jp}</i></div>`).join('');
+}
+function markPreset(){
+  document.querySelectorAll('#presets .wb').forEach(b=>b.classList.toggle('on', PRESETS[+b.dataset.i].rule === state.rule));
+}
+document.getElementById('presets').addEventListener('click', e=>{
+  const b = e.target.closest('.wb'); if (!b) return;
+  stopIdle(); loadPreset(+b.dataset.i);
+});
+
+/* ══════════════════════════════════════════════════════════════
+   INTERACTION — click = drop/remove ant · drag = paint walls
+   ══════════════════════════════════════════════════════════════ */
+let down=null, painting=false, lastCell=null;
+function toCell(clientX, clientY){
+  const r = stage.getBoundingClientRect(), { sc, ox, oy } = fit();
+  return { gx: Math.floor((clientX-r.left-ox)/sc), gy: Math.floor((clientY-r.top-oy)/sc) };
+}
+function inGrid(c){ return c.gx>=0 && c.gy>=0 && c.gx<GW && c.gy<GH; }
+function paintCell(gx, gy, erase){
+  const rad = state.cell <= 3 ? 1 : 0;      // fine grids get a slightly thicker brush
+  for (let y=gy-rad; y<=gy+rad; y++) for (let x=gx-rad; x<=gx+rad; x++){
+    if (x<0||y<0||x>=GW||y>=GH) continue;
+    const i = y*GW+x;
+    world.grid[i] = erase ? 0 : (world.k > 2 ? world.k-1 : 1);
+    world.heat[i] = 140;
+  }
+}
+function paintLine(a, b, erase){
+  const n = Math.max(Math.abs(b.gx-a.gx), Math.abs(b.gy-a.gy), 1);
+  for (let t=0; t<=n; t++) paintCell(Math.round(a.gx+(b.gx-a.gx)*t/n), Math.round(a.gy+(b.gy-a.gy)*t/n), erase);
+}
+stage.addEventListener('pointerdown', e=>{
+  stopIdle();
+  down = { x:e.clientX, y:e.clientY, shift:e.shiftKey }; painting = false;
+  lastCell = toCell(e.clientX, e.clientY);
+  stage.setPointerCapture(e.pointerId);
+});
+stage.addEventListener('pointermove', e=>{
+  if (!down) return;
+  if (!painting && Math.hypot(e.clientX-down.x, e.clientY-down.y) > 4){ painting = true; }
+  if (painting){
+    const c = toCell(e.clientX, e.clientY);
+    paintLine(lastCell, c, down.shift || e.shiftKey); lastCell = c;
+  }
+});
+stage.addEventListener('pointerup', e=>{
+  if (down && !painting){
+    const c = toCell(e.clientX, e.clientY);
+    if (inGrid(c)) clickCell(c);
+  }
+  down = null; painting = false;
+});
+stage.addEventListener('pointercancel', ()=>{ down=null; painting=false; });
+function clickCell(c){
+  const ants = world.ants;
+  const hit = ants.findIndex(a => Math.abs(a.x-c.gx)<=2 && Math.abs(a.y-c.gy)<=2);
+  if (hit >= 0 && ants.length > 1){ ants.splice(hit,1); return; }
+  if (hit >= 0 || ants.length >= MAX_ANTS) return;
+  const a = makeAnt(c.gx, c.gy, 0);
+  ants.push(a);
+  rings.push({ gx:c.gx, gy:c.gy, t:0.5, big:false });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   REVEAL
+   ══════════════════════════════════════════════════════════════ */
+let everRevealed = false;
+function setReveal(on){
+  state.revealed = on;
+  document.body.classList.toggle('revealed', on);
+  document.body.classList.toggle('naked', !on);
+  if (on){
+    everRevealed = true; hideHint();
+    requestAnimationFrame(()=>{ resizeGraph(); resizeWorld(); updateReadout(); });
+  } else requestAnimationFrame(resizeWorld);
+}
+const hintEl = document.getElementById('naked-hint');
+let hintTimer = setTimeout(()=>{ if (!everRevealed) hintEl.classList.add('show'); }, 45000);
+function hideHint(){ hintEl.classList.remove('show'); clearTimeout(hintTimer); }
+
+/* ══════════════════════════════════════════════════════════════
+   SIDE CONTROLS
+   ══════════════════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+function setSpeedSlider(v){ state.speed = +v; $('c-speed').value = v; $('v-speed').textContent = speedLabel(); }
+$('c-speed').addEventListener('input', e=>{ const v = e.target.value; stopIdle(); setSpeedSlider(v); });   // read first: stopIdle rewrites the slider
+$('c-cell').addEventListener('input', e=>{ stopIdle(); state.cell = +e.target.value; $('v-cell').textContent = state.cell+' px'; resetWorld(); });
+$('c-decay').addEventListener('input', e=>{ state.decay = +e.target.value; $('v-decay').textContent = e.target.value; });
+$('tg-glow').addEventListener('click', e=>{ state.glow = !state.glow; e.currentTarget.classList.toggle('on', state.glow); });
+
+/* COPY / PASTE (unknown keys ignored) */
+function flash(btn,cls,txt){ const t=btn.textContent; btn.textContent=txt; btn.classList.add(cls);
+  setTimeout(()=>{ btn.textContent=t; btn.classList.remove(cls); },1200); }
+$('btn-copy').addEventListener('click', async e=>{
+  const payload = { rule:state.rule, speed:+state.speed.toFixed(1), cell:state.cell, decay:state.decay,
+    glow:state.glow, revealed:state.revealed, paused:state.paused };
+  try{ await navigator.clipboard.writeText(JSON.stringify(payload,null,2)); flash(e.currentTarget,'ok','✓ COPIED'); }
+  catch{ flash(e.currentTarget,'err','✗'); }
+});
+$('btn-paste').addEventListener('click', async e=>{
+  try{
+    const j = JSON.parse(await navigator.clipboard.readText());
+    stopIdle();
+    if (typeof j.speed==='number') setSpeedSlider(Math.max(0,Math.min(100,j.speed)));
+    if (typeof j.decay==='number'){ state.decay=j.decay; $('c-decay').value=j.decay; $('v-decay').textContent=j.decay; }
+    if (typeof j.glow==='boolean'){ state.glow=j.glow; $('tg-glow').classList.toggle('on', j.glow); }
+    let reset = false;
+    if (typeof j.cell==='number' && j.cell!==state.cell){ state.cell=Math.max(2,Math.min(12,j.cell)); $('c-cell').value=state.cell; $('v-cell').textContent=state.cell+' px'; reset=true; }
+    if (typeof j.rule==='string' && /^[LR]{2,16}$/.test(j.rule) && j.rule!==state.rule){ state.rule=j.rule; reset=true; }
+    if (reset) resetWorld();
+    if (typeof j.paused==='boolean') state.paused=j.paused;
+    if (typeof j.revealed==='boolean' && j.revealed!==state.revealed) setReveal(j.revealed);
+    flash(e.currentTarget,'ok','✓ APPLIED');
+  }catch{ flash(e.currentTarget,'err','✗'); }
+});
+
+/* SHORTCUT MODAL */
+const modal = $('shortcut-modal');
+function openSC(){ if (!state.revealed) setReveal(true); modal.classList.add('open'); }
+function closeSC(){ modal.classList.remove('open'); }
+$('sc-open-btn').addEventListener('click', openSC);
+$('sc-close').addEventListener('click', closeSC);
+modal.addEventListener('click', e=>{ if (e.target===modal) closeSC(); });
+
+/* KEYBOARD (focus guard → cascade) */
+window.addEventListener('keydown', e=>{
+  const tag = document.activeElement?.tagName;
+  if (tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA') return;
+  if (e.key==='Escape'){
+    if (modal.classList.contains('open')){ closeSC(); return; }
+    if (state.revealed){ setReveal(false); return; }
+    window.location.href = 'index.html';
+    return;
+  }
+  if (e.key==='Tab'){ e.preventDefault(); setReveal(!state.revealed); return; }
+  if (e.key==='?'){ e.preventDefault(); modal.classList.contains('open') ? closeSC() : openSC(); return; }
+  if (e.code==='Space'){ e.preventDefault(); stopIdle(); state.paused = !state.paused; return; }
+  if (e.key==='.'){ stopIdle(); state.paused = true; runSteps(1); if (state.revealed) updateReadout(); return; }
+  if (e.key==='r'||e.key==='R'){ stopIdle(); resetWorld(); return; }
+  if (e.key==='ArrowUp'){ e.preventDefault(); stopIdle(); setSpeedSlider(Math.min(100, state.speed+5)); return; }
+  if (e.key==='ArrowDown'){ e.preventDefault(); stopIdle(); setSpeedSlider(Math.max(0, state.speed-5)); return; }
+  if (/^[1-6]$/.test(e.key)){ stopIdle(); loadPreset(+e.key-1); return; }
+});
+$('esc-link').addEventListener('click', e=>{
+  e.preventDefault();
+  if (modal.classList.contains('open')) closeSC();
+  else if (state.revealed) setReveal(false);
+  else window.location.href = 'index.html';
+});
+
+renderPresets();
+resetWorld();
+setSpeedSlider(state.speed);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

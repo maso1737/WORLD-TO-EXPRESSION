@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EMERGENCE ENGINE</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,700;0,900;1,900&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@400;600;800&family=Cormorant+Garamond:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+<style>
+/* EMERGENCE ENGINE — series index. NOIR · ice=live · gold=labels · rouge=here&now */
+:root{
+  --rouge:#FF4FA8; --ice:#5AE9FF; --gold:#FFD27A; --white:#F8EFFF; --noir:#070707;
+  --mono:'IBM Plex Mono',monospace; --orn:'Cormorant Garamond',serif;
+  --jp:'Noto Sans JP',sans-serif; --jp-serif:'Noto Serif JP',serif;
+  --mute:rgba(181,142,255,0.62);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{background:var(--noir);color:var(--white);font-family:var(--mono);-webkit-font-smoothing:antialiased;}
+body{min-height:100vh;}
+#topbar{height:44px;border-bottom:1px solid rgba(255,210,122,.12);display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;font-size:10px;color:rgba(248,239,255,.5);letter-spacing:.22em;position:sticky;top:0;background:rgba(7,7,7,.92);z-index:5;}
+#topbar a{border:1px solid rgba(255,210,122,.3);color:var(--gold);text-decoration:none;padding:2px 8px;letter-spacing:.2em;}
+#topbar a:hover{background:rgba(255,210,122,.1);}
+
+header{padding:clamp(40px,8vw,96px) clamp(16px,6vw,72px) 40px;max-width:1280px;margin:0 auto;}
+.kicker{font-size:9px;letter-spacing:.5em;color:var(--mute);}
+h1{font-family:var(--orn);font-style:italic;font-weight:700;font-size:clamp(48px,9vw,120px);line-height:.95;letter-spacing:-.02em;
+  color:var(--ice);filter:drop-shadow(0 0 22px rgba(90,233,255,.25));margin-top:14px;}
+.lede{font-family:var(--jp-serif);font-size:clamp(13px,1.6vw,16px);color:rgba(248,239,255,.82);letter-spacing:.14em;line-height:2;margin-top:22px;max-width:640px;}
+.lede b{color:var(--gold);font-weight:600;}
+
+main{max-width:1280px;margin:0 auto;padding:0 clamp(16px,6vw,72px) 80px;display:grid;gap:18px;}
+.work{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:0;border:1px solid rgba(255,210,122,.14);
+  text-decoration:none;color:inherit;position:relative;min-height:280px;transition:border-color .2s, box-shadow .2s;}
+.work:hover,.work:focus-visible{border-color:rgba(255,79,168,.55);box-shadow:0 0 30px rgba(255,79,168,.12);outline:none;}
+.meta{padding:24px 26px;display:flex;flex-direction:column;gap:10px;border-right:1px solid rgba(255,210,122,.1);}
+.num{font-family:var(--orn);font-style:italic;font-weight:700;font-size:64px;line-height:.9;color:var(--ice);filter:drop-shadow(0 0 14px rgba(90,233,255,.3));}
+.en{font-family:var(--orn);font-style:italic;font-weight:700;font-size:26px;color:var(--gold);line-height:1;}
+.jp{font-family:var(--jp-serif);font-size:12px;color:var(--mute);letter-spacing:.24em;}
+.rule{margin-top:auto;font-size:9px;letter-spacing:.3em;color:var(--mute);}
+.rule p{font-family:var(--jp);font-size:12px;letter-spacing:.08em;color:rgba(248,239,255,.86);margin-top:6px;line-height:1.7;}
+.truth{font-size:9px;letter-spacing:.16em;color:var(--mute);transition:color .3s;}
+.truth span{color:transparent;text-shadow:0 0 7px rgba(181,142,255,.55);transition:all .35s;}
+.work:hover .truth span,.work:focus-visible .truth span{color:var(--rouge);text-shadow:none;}
+.view{position:relative;overflow:hidden;background:#050505;}
+.view canvas,.view iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;}
+.view iframe{pointer-events:none;opacity:0;transition:opacity .5s ease;}
+.view iframe.on{opacity:1;}
+.view .live{position:absolute;left:10px;bottom:8px;font-size:8px;letter-spacing:.4em;color:var(--mute);z-index:2;}
+.work:hover .live{color:var(--rouge);}
+.new{position:absolute;top:10px;right:12px;font-size:8px;letter-spacing:.3em;color:var(--rouge);border:1px solid rgba(255,79,168,.45);padding:2px 7px;z-index:2;}
+
+footer{max-width:1280px;margin:0 auto;padding:0 clamp(16px,6vw,72px) 48px;font-size:9px;letter-spacing:.2em;color:var(--mute);line-height:2;}
+@media(max-width:760px){
+  .work{grid-template-columns:1fr;}
+  .meta{border-right:0;border-bottom:1px solid rgba(255,210,122,.1);}
+  .view{min-height:220px;}
+}
+</style>
+</head>
+<body>
+<div id="topbar"><span>EMERGENCE_ENGINE // INDEX</span><a href="../index.html" id="esc-link">[ESC] WORLD TO EXPRESSION</a></div>
+
+<header>
+  <div class="kicker">EMERGENCE ENGINE — SERIES</div>
+  <h1>Emergence<br>Engine</h1>
+  <p class="lede">形は作らない。<b>ルールだけ</b>を置く。<br>世界はそこから勝手に育ち、壊れ、また秩序を見つける。<br>まず「生きてる」と感じてから、正体を知ってほしい。</p>
+</header>
+
+<main id="works"></main>
+
+<footer>
+  各作品は起動直後 UI ゼロで勝手に動き出す（触った瞬間あなたのものになる）。<br>
+  TAB で HUD と種明かし ／ ? でショートカット ／ ESC でここへ戻る。<br>
+  ホバーで実物がプレビュー再生されます（ローカルサーバ経由で開いたときのみ）。
+</footer>
+
+<script>
+"use strict";
+/* WORKS — 1 block = 1 piece. The rule is shown; its identity is blurred until hover. */
+const WORKS = [
+  { n:'01', en:'Bifurcation Walk', jp:'分岐図を歩く', url:'01_bifurcation_walk.html',
+    rule:'いまの値 x に r を掛け、さらに (1−x) を掛ける。それを繰り返すだけ。',
+    truth:'ロジスティック写像 xₙ₊₁ = r·xₙ(1−xₙ)', draw:'bif' },
+  { n:'02', en:'Highway', jp:'一万歩目の秩序', url:'02_highway.html', isNew:true,
+    rule:'足もとの色を読み、決まった方へ曲がり、色を塗り替えて1歩。',
+    truth:"ラングトンのアリ（と、その親戚のターミット）", draw:'ant' },
+  { n:'03', en:'Slime Network', jp:'脳のない設計者', url:'03_slime_network.html', isNew:true,
+    rule:'前・左・右の3点を嗅ぎ、濃い方へ曲がり、1滴落とす。何万匹で。',
+    truth:'粘菌の輸送ネットワークモデル（Jones 2010）', draw:'slime' },
+];
+
+const host = document.getElementById('works');
+host.innerHTML = WORKS.map((w,i)=>`
+  <a class="work" href="${encodeURI(w.url)}" data-i="${i}">
+    <div class="meta">
+      <div class="num">${w.n}</div>
+      <div class="en">${w.en}</div>
+      <div class="jp">${w.jp}</div>
+      <div class="rule">THE RULE<p>${w.rule}</p></div>
+      <div class="truth">WAS ACTUALLY → <span>${w.truth}</span></div>
+    </div>
+    <div class="view"><canvas></canvas><span class="live">● HOVER — LIVE</span>${w.isNew?'<span class="new">NEW</span>':''}</div>
+  </a>`).join('');
+
+/* static posters — tiny procedural stand-ins until the real piece loads on hover */
+function poster(cv, kind){
+  const r = cv.getBoundingClientRect(), d = Math.min(devicePixelRatio||1, 2);
+  const W = Math.max(1, r.width|0), H = Math.max(1, r.height|0);
+  cv.width = W*d; cv.height = H*d; const g = cv.getContext('2d'); g.scale(d,d);
+  g.fillStyle = '#050505'; g.fillRect(0,0,W,H);
+  if (kind === 'bif'){
+    g.fillStyle = 'rgba(90,233,255,0.5)';
+    for (let c=0; c<W; c++){
+      const rr = 2.8 + 1.2*c/W; let x = 0.31;
+      for (let i=0;i<200;i++) x = rr*x*(1-x);
+      for (let i=0;i<60;i++){ x = rr*x*(1-x); g.fillRect(c, H*0.1 + (1-x)*H*0.8, 1, 1); }
+    }
+  } else if (kind === 'ant'){
+    const cs = 3, gw = Math.ceil(W/cs), gh = Math.ceil(H/cs), grid = new Uint8Array(gw*gh);
+    let x = gw>>1, y = gh>>1, dir = 0; const DX=[0,1,0,-1], DY=[-1,0,1,0];
+    for (let s=0; s<12500; s++){
+      const i = y*gw+x; dir = (dir + (grid[i] ? 3 : 1)) & 3; grid[i] ^= 1;
+      x = (x+DX[dir]+gw)%gw; y = (y+DY[dir]+gh)%gh;
+    }
+    g.fillStyle = 'rgba(62,128,152,1)';
+    for (let j=0;j<gh;j++) for (let i=0;i<gw;i++) if (grid[j*gw+i]) g.fillRect(i*cs, j*cs, cs, cs);
+    g.fillStyle = '#FF4FA8'; g.fillRect(x*cs-1, y*cs-1, cs+2, cs+2);
+  } else {
+    // the real rule, tiny: a few thousand agents on a ½-res grid for 220 steps (~100 ms)
+    let s = 9; const rnd = ()=>{ s = (s*16807)%2147483647; return s/2147483647; };
+    const gw = Math.ceil(W/2), gh = Math.ceil(H/2), n = Math.round(gw*gh*0.15);
+    let tr = new Float32Array(gw*gh), tmp = new Float32Array(gw*gh);
+    const ax = new Float32Array(n), ay = new Float32Array(n), aa = new Float32Array(n);
+    for (let i=0;i<n;i++){ ax[i]=rnd()*gw; ay[i]=rnd()*gh; aa[i]=rnd()*6.2832; }
+    const sa = 45*Math.PI/180, ra = 45*Math.PI/180, so = 9;
+    const at = (x,y)=>tr[(((y|0)%gh+gh)%gh)*gw + (((x|0)%gw+gw)%gw)];
+    for (let st=0; st<220; st++){
+      for (let i=0;i<n;i++){
+        let a = aa[i]; const x = ax[i], y = ay[i];
+        const f = at(x+Math.cos(a)*so, y+Math.sin(a)*so), l = at(x+Math.cos(a-sa)*so, y+Math.sin(a-sa)*so), r = at(x+Math.cos(a+sa)*so, y+Math.sin(a+sa)*so);
+        if (!(f>l && f>r)){ if (f<l && f<r) a += rnd()<.5 ? -ra : ra; else if (l<r) a += ra; else if (r<l) a -= ra; }
+        ax[i] = (x+Math.cos(a)+gw)%gw; ay[i] = (y+Math.sin(a)+gh)%gh; aa[i] = a;
+        tr[(ay[i]|0)*gw + (ax[i]|0)] += 5;
+      }
+      for (let y=0;y<gh;y++) for (let x=0;x<gw;x++){
+        let v = 0; for (let dy=-1;dy<=1;dy++) for (let dx=-1;dx<=1;dx++) v += tr[((y+dy+gh)%gh)*gw + (x+dx+gw)%gw];
+        tmp[y*gw+x] = v/9*0.9;
+      }
+      [tr, tmp] = [tmp, tr];
+    }
+    const img = new ImageData(gw, gh);
+    for (let i=0;i<gw*gh;i++){
+      const t = 1 - Math.exp(-tr[i]/45);
+      img.data[i*4] = 7 + 200*t*t; img.data[i*4+1] = 7 + 240*t; img.data[i*4+2] = 7 + 248*Math.sqrt(t); img.data[i*4+3] = 255;
+    }
+    const oc = document.createElement('canvas'); oc.width = gw; oc.height = gh; oc.getContext('2d').putImageData(img, 0, 0);
+    g.imageSmoothingEnabled = true; g.drawImage(oc, 0, 0, W, H);
+  }
+}
+function drawPosters(){ document.querySelectorAll('.work').forEach(a=>poster(a.querySelector('canvas'), WORKS[+a.dataset.i].draw)); }
+drawPosters(); addEventListener('resize', drawPosters);
+
+/* live preview — 240 ms hover delay, at most 2 alive, destroyed on leave (STAGE LINK rule) */
+const live = new Map(), served = location.protocol.startsWith('http');
+document.querySelectorAll('.work').forEach(a=>{
+  let timer = null;
+  const view = a.querySelector('.view');
+  a.addEventListener('mouseenter', ()=>{
+    if (!served) return;
+    timer = setTimeout(()=>{
+      if (live.has(a)) return;
+      if (live.size >= 2){ const [k,f] = live.entries().next().value; f.remove(); live.delete(k); }
+      const f = document.createElement('iframe');
+      f.src = a.getAttribute('href'); f.tabIndex = -1; f.setAttribute('aria-hidden','true');
+      f.onload = ()=>f.classList.add('on');
+      view.appendChild(f); live.set(a, f);
+    }, 240);
+  });
+  a.addEventListener('mouseleave', ()=>{
+    clearTimeout(timer);
+    const f = live.get(a); if (f){ f.remove(); live.delete(a); }
+  });
+});
+
+addEventListener('keydown', e=>{ if (e.key==='Escape') location.href = '../index.html'; });
+</script>
+</body>
+</html>

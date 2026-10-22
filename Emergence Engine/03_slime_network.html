@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>EE_03 // SLIME NETWORK</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,700;0,900;1,900&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@400;600;800&family=Cormorant+Garamond:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════════════════════
+   EMERGENCE ENGINE // EE_03 — SLIME NETWORK (Physarum transport network)
+   KINETIC STAGE design system + EE overrides (SPEC EE-01 §2)
+   NOIR base · ice=live trail · gold=food & labels · rouge=here&now (cursor, sniffer)
+   ══════════════════════════════════════════════════════════════ */
+:root{
+  --rouge:#FF4FA8; --ice:#5AE9FF; --gold:#FFD27A; --lavender:#B58EFF;
+  --white:#F8EFFF; --noir:#070707;
+  --mono:'IBM Plex Mono',monospace;
+  --disp:'Barlow Condensed',sans-serif;
+  --orn:'Cormorant Garamond',serif;
+  --jp:'Noto Sans JP',sans-serif;
+  --jp-serif:'Noto Serif JP',serif;
+  --mute:rgba(181,142,255,0.62);      /* 二次テキスト下限（既存規約） */
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;background:var(--noir);color:var(--white);
+  font-family:var(--mono);overflow:hidden;-webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;}
+
+#app{display:grid;height:100vh;width:100vw;}
+body.naked #app{grid-template-rows:1fr;grid-template-columns:1fr;}
+body.naked #topbar,body.naked #side,body.naked #bottombar{display:none;}
+body.naked #stage{grid-column:1/-1;grid-row:1/-1;}
+body.naked .stage-deco{opacity:0;}
+body.revealed #app{grid-template-rows:44px 1fr 44px;grid-template-columns:1fr 300px;}
+body.revealed #topbar{grid-area:1/1/2/-1;}
+body.revealed #stage {grid-area:2/1/3/2;}
+body.revealed #side  {grid-area:2/2/3/3;}
+body.revealed #bottombar{grid-area:3/1/4/-1;}
+
+#stage{position:relative;overflow:hidden;background:var(--noir);touch-action:none;cursor:crosshair;}
+#world{display:block;width:100%;height:100%;}
+
+.stage-deco{position:absolute;inset:0;pointer-events:none;transition:opacity .4s ease;z-index:3;}
+.corner{position:absolute;width:14px;height:14px;}
+.corner::before,.corner::after{content:'';position:absolute;background:linear-gradient(90deg,var(--gold),var(--rouge));box-shadow:0 0 6px rgba(255,79,168,.4);}
+.corner::before{width:100%;height:1px;} .corner::after{width:1px;height:100%;}
+.corner.tl{top:10px;left:10px;} .corner.tr{top:10px;right:10px;transform:scaleX(-1);}
+.corner.bl{bottom:10px;left:10px;transform:scaleY(-1);} .corner.br{bottom:10px;right:10px;transform:scale(-1);}
+.po{position:absolute;top:12px;right:16px;text-align:right;}
+.po-num{font-family:var(--orn);font-style:italic;font-weight:700;font-size:clamp(40px,6vw,72px);line-height:1;letter-spacing:-.03em;
+  color:var(--ice);filter:drop-shadow(0 0 16px rgba(90,233,255,.35));}
+.po-en{font-family:var(--orn);font-style:italic;font-weight:700;font-size:clamp(14px,2vw,22px);color:var(--gold);line-height:1;}
+.po-jp{font-family:var(--jp-serif);font-size:11px;color:var(--mute);margin-top:5px;letter-spacing:.22em;}
+.stage-bignum{position:absolute;bottom:-38px;left:-8px;font-family:var(--orn);font-style:italic;font-weight:700;
+  font-size:clamp(160px,26vw,340px);color:transparent;-webkit-text-stroke:1.5px rgba(90,233,255,.10);line-height:1;}
+
+#topbar{border-bottom:1px solid rgba(255,210,122,.12);display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;font-size:10px;color:rgba(248,239,255,.5);letter-spacing:.22em;background:rgba(255,255,255,.012);}
+#topbar a{border:1px solid rgba(255,210,122,.3);color:var(--gold);text-decoration:none;padding:2px 8px;letter-spacing:.2em;}
+#topbar a:hover{background:rgba(255,210,122,.1);}
+#bottombar{border-top:1px solid rgba(255,210,122,.12);display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;font-size:9px;color:var(--mute);letter-spacing:.18em;}
+#bottombar #status.hot{color:var(--rouge);text-shadow:0 0 6px rgba(255,79,168,.4);}
+.kbd{background:rgba(255,79,168,.08);border:1px solid rgba(255,79,168,.35);color:var(--rouge);
+  font-family:var(--mono);font-size:8px;padding:1px 5px;border-radius:2px;letter-spacing:.1em;}
+#sc-open-btn{cursor:pointer;color:var(--mute);font-size:9px;letter-spacing:.25em;padding:2px 8px;
+  border:1px solid rgba(255,210,122,.25);border-radius:2px;transition:all .15s;}
+#sc-open-btn:hover{color:var(--gold);border-color:var(--gold);background:rgba(255,210,122,.06);}
+
+#side{display:flex;flex-direction:column;overflow-y:auto;background:rgba(255,255,255,.015);border-left:1px solid rgba(255,210,122,.08);}
+#side::-webkit-scrollbar{width:2px;} #side::-webkit-scrollbar-thumb{background:var(--rouge);}
+.sp{border-bottom:1px solid rgba(181,142,255,.08);padding:13px 15px;flex-shrink:0;}
+.spl{font-size:9px;letter-spacing:.4em;color:var(--mute);margin-bottom:10px;}
+.tr{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;font-size:10px;color:rgba(248,239,255,.72);letter-spacing:.05em;gap:8px;}
+.tr:last-child{margin-bottom:0;}
+.tr > span:first-child{min-width:74px;}
+.sl{font-size:9px;color:var(--mute);letter-spacing:.12em;white-space:nowrap;min-width:44px;text-align:right;}
+input[type=range]{-webkit-appearance:none;flex:1;height:2px;background:rgba(255,255,255,.12);outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),var(--rouge));box-shadow:0 0 8px rgba(255,79,168,.5);cursor:pointer;}
+.data-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(181,142,255,.08);font-size:10px;}
+.data-row:last-child{border-bottom:none;}
+.dk{color:var(--mute);letter-spacing:.05em;}
+.dv{color:var(--gold);font-weight:600;font-variant-numeric:tabular-nums;}
+.dv.neon{color:var(--ice);text-shadow:0 0 6px rgba(90,233,255,.45);}
+/* rule */
+.rule-ln{display:flex;gap:10px;align-items:baseline;padding:3px 0;}
+.rule-ln .n{font-family:var(--orn);font-style:italic;font-weight:700;font-size:18px;color:var(--ice);width:16px;}
+.rule-ln .t{font-family:var(--jp);font-size:10px;color:rgba(248,239,255,.8);letter-spacing:.06em;line-height:1.5;}
+.rule-ln .t b{font-family:var(--mono);color:var(--gold);font-weight:600;}
+/* one agent's view */
+#agentview{display:block;width:100%;height:96px;margin-top:8px;border:1px solid rgba(181,142,255,.12);}
+/* presets */
+.walkgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.wb{font-size:8.5px;letter-spacing:.12em;padding:7px 4px;border:1px solid rgba(90,233,255,.25);color:var(--ice);
+  background:rgba(90,233,255,.04);cursor:pointer;border-radius:2px;transition:all .15s;text-align:center;}
+.wb:hover{background:rgba(90,233,255,.14);box-shadow:0 0 8px rgba(90,233,255,.25);}
+.wb i{display:block;font-style:normal;font-family:var(--jp);color:var(--mute);font-size:8px;margin-top:3px;letter-spacing:.04em;}
+.wb.on{border-color:var(--rouge);box-shadow:0 0 8px rgba(255,79,168,.3);}
+/* tool switch */
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.seg div{font-size:9px;letter-spacing:.18em;padding:7px 4px;text-align:center;cursor:pointer;border-radius:2px;
+  border:1px solid rgba(255,210,122,.25);color:var(--gold);}
+.seg div.on{background:rgba(255,79,168,.14);border-color:var(--rouge);color:var(--white);box-shadow:0 0 8px rgba(255,79,168,.3);}
+.seg-cap{font-family:var(--jp);font-size:9px;color:var(--mute);letter-spacing:.08em;margin-top:7px;line-height:1.6;}
+.tg{width:34px;height:17px;background:rgba(255,255,255,.07);border-radius:9px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;}
+.tg.on{background:linear-gradient(90deg,var(--rouge),#B850FF);box-shadow:0 0 10px rgba(255,79,168,.45);}
+.tg::after{content:'';position:absolute;width:13px;height:13px;border-radius:50%;background:#fff;top:2px;left:2px;transition:left .2s;}
+.tg.on::after{left:19px;}
+.cpg{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.ed-btn{background:rgba(255,79,168,.05);border:1px solid rgba(255,79,168,.3);color:var(--rouge);font-family:var(--mono);
+  font-size:9px;letter-spacing:.15em;padding:8px;cursor:pointer;border-radius:2px;transition:all .15s;text-align:center;}
+.ed-btn:hover{background:rgba(255,79,168,.14);box-shadow:0 0 8px rgba(255,79,168,.25);}
+.ed-btn.ok{background:rgba(90,233,255,.18);border-color:var(--ice);color:var(--ice);}
+.ed-btn.err{background:rgba(255,79,168,.22);border-color:var(--rouge);color:#fff;}
+
+#naked-hint{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);font-size:8px;letter-spacing:.5em;
+  color:rgba(90,233,255,.9);opacity:0;transition:opacity 1.2s ease;pointer-events:none;z-index:20;}
+#naked-hint.show{opacity:.25;}
+
+#shortcut-modal{display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.85);align-items:center;justify-content:center;}
+#shortcut-modal.open{display:flex;}
+#shortcut-box{background:linear-gradient(180deg,#0d0d0d,#050505);border:1px solid rgba(255,210,122,.4);border-radius:6px;
+  width:min(520px,92vw);max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.7),0 0 60px rgba(90,233,255,.1);}
+.sc-header{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid rgba(255,210,122,.18);
+  font-size:10px;letter-spacing:.4em;color:var(--gold);}
+.sc-header span{cursor:pointer;color:var(--mute);} .sc-header span:hover{color:var(--rouge);}
+.sc-body{padding:14px 18px;}
+.sc-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(181,142,255,.06);font-size:10px;}
+.sc-row:last-child{border-bottom:none;}
+.sc-key{background:#141414;border:1px solid rgba(181,142,255,.3);color:var(--white);font-family:var(--mono);font-size:9px;
+  padding:2px 8px;min-width:30px;text-align:center;border-radius:3px;letter-spacing:.05em;}
+.sc-desc{color:rgba(248,239,255,.7);letter-spacing:.04em;}
+.sc-desc .jp{display:block;font-family:var(--jp);font-size:9px;color:var(--mute);margin-top:1px;letter-spacing:.1em;}
+
+@media(max-width:720px){
+  body.revealed #app{grid-template-columns:1fr;}
+  body.revealed #side{position:fixed;right:0;top:44px;bottom:44px;width:min(300px,84vw);z-index:40;
+    box-shadow:-10px 0 40px rgba(0,0,0,.6);}
+  body.revealed #stage{grid-area:2/1/3/-1;}
+}
+</style>
+</head>
+<body class="naked">
+<div id="app">
+
+  <div id="topbar">
+    <span>EMERGENCE_ENGINE // EE_03</span>
+    <a href="#" id="esc-link">[ESC] INDEX</a>
+  </div>
+
+  <div id="stage">
+    <canvas id="world"></canvas>
+    <div class="stage-deco">
+      <span class="corner tl"></span><span class="corner tr"></span>
+      <span class="corner bl"></span><span class="corner br"></span>
+      <div class="stage-bignum">03</div>
+      <div class="po">
+        <div class="po-num">03</div>
+        <div class="po-en">Slime Network</div>
+        <div class="po-jp">脳のない設計者</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="side">
+    <div class="sp">
+      <div class="spl">READOUT</div>
+      <div class="data-row"><span class="dk">AGENTS</span><span class="dv neon" id="ro-n">0</span></div>
+      <div class="data-row"><span class="dk">FOOD</span><span class="dv" id="ro-food">0</span></div>
+      <div class="data-row"><span class="dk">NETWORK COVER</span><span class="dv" id="ro-cover">0%</span></div>
+      <div class="data-row"><span class="dk">STEP</span><span class="dv" id="ro-step">0</span></div>
+    </div>
+    <div class="sp">
+      <div class="spl">RULE — THE PROTAGONIST</div>
+      <div class="rule-ln"><span class="n">1</span><span class="t">前・左・右の3点を嗅ぐ（左右に <b id="rl-sa">22.5°</b>・<b id="rl-so">9</b> マス先）</span></div>
+      <div class="rule-ln"><span class="n">2</span><span class="t">いちばん濃い方へ <b id="rl-ra">45°</b> 曲がる</span></div>
+      <div class="rule-ln"><span class="n">3</span><span class="t">1歩進んで、匂いを1滴落とす</span></div>
+      <div class="rule-ln"><span class="n">∿</span><span class="t">匂いはにじみ、少しずつ消える</span></div>
+      <canvas id="agentview"></canvas>
+    </div>
+    <div class="sp">
+      <div class="spl">SPECIES — 同じ3行、違う数字</div>
+      <div class="walkgrid" id="presets"></div>
+    </div>
+    <div class="sp">
+      <div class="spl">HAND — 指で何をするか</div>
+      <div class="seg" id="tool"><div data-t="lure" class="on">LURE 誘う</div><div data-t="cut">CUT 切る</div></div>
+      <div class="seg-cap">クリック＝餌を置く／餌をクリック＝取る。ドラッグ＝LURE なら匂いの道を描く、CUT なら網を切る（Shift で反転）。</div>
+    </div>
+    <div class="sp">
+      <div class="spl">CONTROLS</div>
+      <div class="tr"><span>SENSOR ∠</span><input type="range" id="c-sa" min="5" max="90" step="0.5" value="22.5"><span class="sl" id="v-sa">22.5°</span></div>
+      <div class="tr"><span>TURN ∠</span><input type="range" id="c-ra" min="5" max="90" step="0.5" value="45"><span class="sl" id="v-ra">45°</span></div>
+      <div class="tr"><span>SENSOR DIST</span><input type="range" id="c-so" min="2" max="40" step="0.5" value="9"><span class="sl" id="v-so">9</span></div>
+      <div class="tr"><span>STRIDE</span><input type="range" id="c-ss" min="0.3" max="3" step="0.05" value="1"><span class="sl" id="v-ss">1.00</span></div>
+      <div class="tr"><span>DECAY</span><input type="range" id="c-decay" min="0.01" max="0.3" step="0.005" value="0.1"><span class="sl" id="v-decay">0.100</span></div>
+      <div class="tr"><span>WOBBLE</span><input type="range" id="c-jit" min="0" max="0.6" step="0.01" value="0"><span class="sl" id="v-jit">0.00</span></div>
+      <div class="tr"><span>AGENTS</span><input type="range" id="c-dens" min="0.03" max="0.4" step="0.01" value="0.15"><span class="sl" id="v-dens">0.15</span></div>
+      <div class="tr"><span>SPEED</span><input type="range" id="c-sub" min="1" max="4" step="1" value="1"><span class="sl" id="v-sub">×1</span></div>
+    </div>
+    <div class="sp">
+      <div class="spl">PROOF</div>
+      <div class="tr"><span>SNIFFERS<span style="color:var(--mute)"> — 何体かの「鼻」を見せる</span></span><div class="tg" id="tg-sniff"></div></div>
+    </div>
+    <div class="sp">
+      <div class="spl">PARAMS</div>
+      <div class="cpg">
+        <div class="ed-btn" id="btn-copy">⧉ COPY</div>
+        <div class="ed-btn" id="btn-paste">▣ PASTE</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="bottombar">
+    <span id="status">EE_03 // PHYSARUM TRANSPORT NETWORK</span>
+    <span><span id="sc-open-btn">⌨ SHORTCUTS</span> <span class="kbd">?</span></span>
+  </div>
+</div>
+
+<div id="naked-hint">TAB — REVEAL</div>
+
+<div id="shortcut-modal">
+  <div id="shortcut-box">
+    <div class="sc-header">⌨ KEYBOARD SHORTCUTS <span id="sc-close">✕</span></div>
+    <div class="sc-body">
+      <div class="sc-row"><span class="sc-key">CLICK</span><span class="sc-desc">Food — 餌を置く／餌をクリックで取る<span class="jp">餌どうしを最短に近い網でつなぎにいく</span></span></div>
+      <div class="sc-row"><span class="sc-key">DRAG</span><span class="sc-desc">Lure / Cut — 匂いの道を描く／網を切る<span class="jp">Shift+ドラッグで道具を反転。切っても数秒で治る</span></span></div>
+      <div class="sc-row"><span class="sc-key">X</span><span class="sc-desc">Switch tool — LURE ⇔ CUT</span></div>
+      <div class="sc-row"><span class="sc-key">S</span><span class="sc-desc">Sniffers — 何体かのセンサーを見せる</span></div>
+      <div class="sc-row"><span class="sc-key">1–6</span><span class="sc-desc">Species — 数字の組を切り替え（網は残る）</span></div>
+      <div class="sc-row"><span class="sc-key">C</span><span class="sc-desc">Clear food — 餌を全部取る</span></div>
+      <div class="sc-row"><span class="sc-key">Space</span><span class="sc-desc">Pause / Resume — 時間停止</span></div>
+      <div class="sc-row"><span class="sc-key">Tab</span><span class="sc-desc">Reveal — HUD の表示切替</span></div>
+      <div class="sc-row"><span class="sc-key">R</span><span class="sc-desc">Re-dust — ばらばらの粉からやり直す<span class="jp">Shift+R＝中心の胞子1点から（縮んで輪になる）</span></span></div>
+      <div class="sc-row"><span class="sc-key">?</span><span class="sc-desc">This panel</span></div>
+      <div class="sc-row"><span class="sc-key">Esc</span><span class="sc-desc">Modal → NAKED → Index</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/*SIM-BEGIN — pure simulation core (no DOM). Node-verifiable: extract between the markers. */
+const DEG = Math.PI/180, TAU = Math.PI*2;
+/* cos/sin lookup — 8 trig calls per agent per step is the bottleneck otherwise */
+const TRIG_N = 4096, TRIG_K = TRIG_N/TAU, COS = new Float32Array(TRIG_N), SIN = new Float32Array(TRIG_N);
+for (let i=0; i<TRIG_N; i++){ COS[i] = Math.cos(i/TRIG_K); SIN[i] = Math.sin(i/TRIG_K); }
+function makeSim(gw, gh){
+  return { gw, gh, trail:new Float32Array(gw*gh), tmp:new Float32Array(gw*gh), n:0, ax:null, ay:null, aa:null, steps:0 };
+}
+/* dust = scattered everywhere (noise → network in ~2 s, the default birth)
+   spore = a disc at the centre facing outward — it tends to contract into a single ring */
+function seedAgents(sim, n, mode, rnd){
+  sim.n = n; sim.ax = new Float32Array(n); sim.ay = new Float32Array(n); sim.aa = new Float32Array(n);
+  const cx = sim.gw/2, cy = sim.gh/2, R = Math.min(sim.gw, sim.gh)*0.1;
+  for (let i=0; i<n; i++){
+    if (mode === 'spore'){
+      const t = rnd()*2*Math.PI, r = Math.sqrt(rnd())*R;
+      sim.ax[i] = cx + Math.cos(t)*r; sim.ay[i] = cy + Math.sin(t)*r; sim.aa[i] = t;
+    } else {
+      sim.ax[i] = rnd()*sim.gw; sim.ay[i] = rnd()*sim.gh; sim.aa[i] = rnd()*2*Math.PI;
+    }
+  }
+}
+/* the whole rule (Jones 2010): sniff three points, turn toward the strongest, step, deposit */
+function stepAgents(sim, P, rnd){
+  const gw = sim.gw, gh = sim.gh, tr = sim.trail, ax = sim.ax, ay = sim.ay, aa = sim.aa, n = sim.n;
+  const sa = P.sa*DEG, ra = P.ra*DEG, so = P.so, ss = P.ss, dep = P.dep, jit = P.jit;
+  const smp = (px, py) => {
+    let ix = px|0, iy = py|0;
+    if (ix < 0) ix += gw; else if (ix >= gw) ix -= gw;
+    if (iy < 0) iy += gh; else if (iy >= gh) iy -= gh;
+    return tr[iy*gw + ix];
+  };
+  for (let i=0; i<n; i++){
+    const x = ax[i], y = ay[i];
+    let a = aa[i];
+    const ia = (a*TRIG_K)|0, is = (sa*TRIG_K)|0;
+    const f  = smp(x + COS[ia & 4095]*so,      y + SIN[ia & 4095]*so);
+    const fl = smp(x + COS[(ia-is) & 4095]*so, y + SIN[(ia-is) & 4095]*so);
+    const fr = smp(x + COS[(ia+is) & 4095]*so, y + SIN[(ia+is) & 4095]*so);
+    if (f > fl && f > fr){ /* straight on */ }
+    else if (f < fl && f < fr) a += (rnd() < 0.5 ? -ra : ra);
+    else if (fl < fr) a += ra;
+    else if (fr < fl) a -= ra;
+    if (jit) a += (rnd()-0.5)*jit;
+    if (a < 0) a += TAU; else if (a >= TAU) a -= TAU;
+    const ib = ((a*TRIG_K)|0) & 4095;
+    let nx = x + COS[ib]*ss, ny = y + SIN[ib]*ss;
+    if (nx < 0) nx += gw; else if (nx >= gw) nx -= gw;
+    if (ny < 0) ny += gh; else if (ny >= gh) ny -= gh;
+    ax[i] = nx; ay[i] = ny; aa[i] = a;
+    let ix = nx|0, iy = ny|0; if (ix >= gw) ix = gw-1; if (iy >= gh) iy = gh-1;
+    tr[iy*gw + ix] += dep;
+  }
+  sim.steps++;
+}
+/* 3×3 mean (separable, torus) then decay — the scent spreads and fades */
+function diffuse(sim, decay){
+  const gw = sim.gw, gh = sim.gh, tr = sim.trail, tmp = sim.tmp, k = (1-decay)/9;
+  for (let y=0; y<gh; y++){
+    const row = y*gw;
+    tmp[row] = tr[row+gw-1] + tr[row] + tr[row+1];
+    for (let x=1; x<gw-1; x++) tmp[row+x] = tr[row+x-1] + tr[row+x] + tr[row+x+1];
+    tmp[row+gw-1] = tr[row+gw-2] + tr[row+gw-1] + tr[row];
+  }
+  for (let y=0; y<gh; y++){
+    const up = (y ? y-1 : gh-1)*gw, row = y*gw, dn = (y < gh-1 ? y+1 : 0)*gw;
+    for (let x=0; x<gw; x++) tr[row+x] = (tmp[up+x] + tmp[row+x] + tmp[dn+x])*k;
+  }
+}
+function depositDisc(sim, cx, cy, r, amt){
+  const gw = sim.gw, gh = sim.gh, tr = sim.trail, r2 = r*r;
+  for (let dy=-r; dy<=r; dy++) for (let dx=-r; dx<=r; dx++){
+    if (dx*dx+dy*dy > r2) continue;
+    let x = (cx+dx)|0, y = (cy+dy)|0;
+    x = ((x%gw)+gw)%gw; y = ((y%gh)+gh)%gh;
+    tr[y*gw+x] += amt;
+  }
+}
+/* noir → deep blue → ice → white. Tone-mapped (1−e^−v) so dense veins never clip flat */
+function buildLUT(){
+  const stops = [[0,7,7,7],[0.18,6,26,44],[0.45,30,120,160],[0.75,90,233,255],[1,248,250,255]];
+  const lut = new Uint8Array(256*3);
+  for (let i=0; i<256; i++){
+    const t = i/255; let k = 1; while (k < stops.length-1 && stops[k][0] < t) k++;
+    const a = stops[k-1], b = stops[k], u = (t-a[0])/(b[0]-a[0]);
+    for (let c=0; c<3; c++) lut[i*3+c] = Math.round(a[c+1] + (b[c+1]-a[c+1])*u);
+  }
+  return lut;
+}
+const TONE = new Uint8Array(1024);
+for (let i=0; i<1024; i++) TONE[i] = Math.round((1 - Math.exp(-i/256*1.6)) / (1 - Math.exp(-4*1.6)) * 255);
+function paintTrail(sim, data, lut, gain){
+  const tr = sim.trail, n = tr.length, s = 256*gain;
+  for (let i=0, o=0; i<n; i++, o+=4){
+    let q = (tr[i]*s)|0; if (q > 1023) q = 1023;
+    const c = TONE[q]*3;
+    data[o] = lut[c]; data[o+1] = lut[c+1]; data[o+2] = lut[c+2]; data[o+3] = 255;
+  }
+}
+/*SIM-END*/
+
+/* ══════════════════════════════════════════════════════════════
+   STATE
+   ══════════════════════════════════════════════════════════════ */
+const reduceMotion = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+const SPECIES = [
+  { name:'NETWORK',   jp:'餌を最短でつなぐ', p:{ sa:45,   ra:45,   so:15, ss:1,   decay:0.10, jit:0    } },
+  { name:'VEINS',     jp:'太い葉脈',         p:{ sa:45,   ra:22.5, so:20, ss:1.4, decay:0.06, jit:0.05 } },
+  { name:'LABYRINTH', jp:'迷路を編む',       p:{ sa:45,   ra:22.5, so:5,  ss:1,   decay:0.10, jit:0    } },
+  { name:'HONEYCOMB', jp:'蜂の巣の六角',     p:{ sa:70,   ra:22.5, so:15, ss:1,   decay:0.10, jit:0    } },
+  { name:'CELLS',     jp:'泡のような細胞',   p:{ sa:40,   ra:60,   so:26, ss:1.2, decay:0.08, jit:0    } },
+  { name:'BEADS',     jp:'ちぎれて粒になる', p:{ sa:10,   ra:70,   so:5,  ss:1,   decay:0.10, jit:0    } },
+];
+const state = {
+  ...SPECIES[0].p,
+  dep: 5,
+  density: 0.15,
+  sub: 1,
+  tool: 'lure',
+  sniff: false,
+  revealed: false,
+  paused: false,
+  idle: true,
+};
+// css px per sim cell — at least 2, coarser on big screens so the grid stays near 250k cells
+const SCALE = Math.max(2, Math.sqrt(window.innerWidth*window.innerHeight/250000));
+const FOOD_AMT = 60, FOOD_R = 3, MAX_FOOD = 16;
+let rngState = (Math.random()*2**32)>>>0;
+function rnd(){ // mulberry32 — fast, and the same generator Node verification uses
+  rngState |= 0; rngState = rngState + 0x6D2B79F5 | 0;
+  let t = Math.imul(rngState ^ rngState >>> 15, 1 | rngState);
+  t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+  return ((t ^ t >>> 14) >>> 0) / 4294967296;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CANVAS
+   ══════════════════════════════════════════════════════════════ */
+const stage = document.getElementById('stage');
+const worldC = document.getElementById('world');
+const wctx = worldC.getContext('2d');
+const off = document.createElement('canvas'), offCtx = off.getContext('2d');
+const bloom = document.createElement('canvas'), bloomCtx = bloom.getContext('2d');   // ¼-res pre-blurred copy
+let W=0, H=0, DPR=Math.min(window.devicePixelRatio||1, 2), img=null;
+const LUT = buildLUT();
+
+function resizeWorld(){
+  const r = stage.getBoundingClientRect();
+  W = Math.max(1, Math.floor(r.width)); H = Math.max(1, Math.floor(r.height));
+  worldC.width = W*DPR; worldC.height = H*DPR;
+  wctx.setTransform(DPR,0,0,DPR,0,0);
+}
+new ResizeObserver(resizeWorld).observe(stage);
+window.addEventListener('resize', resizeWorld);
+resizeWorld();
+
+let sim, GW=0, GH=0, food=[], lure=[], cuts=[];
+function fit(){ const sc = Math.min(W/GW, H/GH); return { sc, ox:(W-GW*sc)/2, oy:(H-GH*sc)/2 }; }
+
+function respore(mode='dust'){
+  GW = Math.max(80, Math.floor(window.innerWidth / SCALE));
+  GH = Math.max(60, Math.floor(window.innerHeight / SCALE));
+  sim = makeSim(GW, GH);
+  seedAgents(sim, Math.round(GW*GH*state.density), mode, rnd);
+  off.width = GW; off.height = GH; img = offCtx.createImageData(GW, GH);
+  bloom.width = Math.ceil(GW/4); bloom.height = Math.ceil(GH/4);
+  lure = []; cuts = [];
+  pickSniffers();
+}
+function reseedCount(){
+  // change the population without killing the network: keep survivors, add/remove at random places
+  const n = Math.round(GW*GH*state.density), old = sim;
+  const ax = new Float32Array(n), ay = new Float32Array(n), aa = new Float32Array(n);
+  for (let i=0; i<n; i++){
+    if (i < old.n){ ax[i]=old.ax[i]; ay[i]=old.ay[i]; aa[i]=old.aa[i]; }
+    else { ax[i]=rnd()*GW; ay[i]=rnd()*GH; aa[i]=rnd()*6.2832; }
+  }
+  sim.ax = ax; sim.ay = ay; sim.aa = aa; sim.n = n;
+  pickSniffers();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FOOD / LURE / CUT
+   ══════════════════════════════════════════════════════════════ */
+function addFood(gx, gy){ if (food.length < MAX_FOOD) food.push({ x:gx, y:gy, born:0 }); }
+function foodAt(gx, gy, rad){ return food.findIndex(f => { const dx=f.x-gx, dy=f.y-gy; return dx*dx+dy*dy < rad*rad; }); }
+function feed(){
+  for (const f of food) depositDisc(sim, f.x, f.y, FOOD_R, FOOD_AMT);
+  for (let i=lure.length-1; i>=0; i--){
+    const p = lure[i];
+    depositDisc(sim, p.x, p.y, 1, 4*p.life);
+    p.life -= 1/(60*7);                 // a drawn scent lasts ~7 s
+    if (p.life <= 0) lure.splice(i,1);
+  }
+}
+function cutAt(gx, gy){
+  const r = 7, r2 = r*r, tr = sim.trail;
+  for (let dy=-r; dy<=r; dy++) for (let dx=-r; dx<=r; dx++){
+    if (dx*dx+dy*dy > r2) continue;
+    const x = ((gx+dx)%GW+GW)%GW, y = ((gy+dy)%GH+GH)%GH;
+    tr[y*GW+x] = 0;
+  }
+  // agents in the wound lose their bearing
+  for (let i=0; i<sim.n; i++){
+    const dx = sim.ax[i]-gx, dy = sim.ay[i]-gy;
+    if (dx*dx+dy*dy < r2*2.2) sim.aa[i] = rnd()*6.2832;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   IDLE ATTRACT — dust → network → food appears → it rewires → reborn as the next species
+   ══════════════════════════════════════════════════════════════ */
+let idleT = 0, idleIdx = 0, idleFoodN = 0;
+const IDLE_ORDER = [0, 1, 3, 2, 4];
+function stopIdle(){ state.idle = false; }
+function idleFoodSpot(){
+  // keep new food away from the others so the network has to span the stage
+  let best = null, bestD = -1;
+  for (let k=0; k<24; k++){
+    const x = GW*(0.12 + rnd()*0.76), y = GH*(0.14 + rnd()*0.72);
+    let d = 1e9; for (const f of food) d = Math.min(d, Math.hypot(f.x-x, f.y-y));
+    if (!food.length) d = Math.hypot(x-GW/2, y-GH/2);
+    if (d > bestD){ bestD = d; best = { x, y }; }
+  }
+  return best;
+}
+function stepIdle(dt){
+  if (!state.idle) return;
+  idleT += dt;
+  const want = idleT < 6 ? 0 : Math.min(6, 1 + Math.floor((idleT-6)/3.2));
+  while (food.length < want && idleFoodN < 6){ const p = idleFoodSpot(); addFood(p.x|0, p.y|0); idleFoodN++; }
+  if (idleT > 34 && idleT - dt <= 34){ food.splice(0, 2); }                       // two foods vanish → the net lets go
+  if (idleT > 40 && idleT - dt <= 40){ for (let k=0;k<2;k++){ const p = idleFoodSpot(); addFood(p.x|0, p.y|0); } }
+  if (idleT > 58){
+    idleIdx = (idleIdx+1) % IDLE_ORDER.length;
+    applySpecies(IDLE_ORDER[idleIdx]);
+    food = []; idleFoodN = 0; idleT = 0; respore('dust');
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   LOOP
+   ══════════════════════════════════════════════════════════════ */
+let last = performance.now(), roAcc = 0, fpsAcc = 0, fpsN = 0, fps = 60;
+function frame(now){
+  const dt = Math.min(0.05, (now-last)/1000); last = now;
+  fpsAcc += dt; fpsN++; if (fpsAcc > 0.5){ fps = fpsN/fpsAcc; fpsAcc = 0; fpsN = 0; }
+  stepIdle(dt);
+  if (!state.paused){
+    const P = state;
+    for (let s=0; s<state.sub; s++){ feed(); stepAgents(sim, P, rnd); diffuse(sim, state.decay); }
+  }
+  draw(dt);
+  if (state.revealed){ roAcc += dt; if (roAcc > 0.1){ roAcc = 0; updateReadout(); drawAgentView(); } }
+  requestAnimationFrame(frame);
+}
+
+function draw(dt){
+  paintTrail(sim, img.data, LUT, 1/(state.dep*7));
+  offCtx.putImageData(img, 0, 0);
+  const { sc, ox, oy } = fit();
+  wctx.globalCompositeOperation = 'source-over';
+  wctx.fillStyle = '#070707'; wctx.fillRect(0,0,W,H);
+  wctx.imageSmoothingEnabled = true;
+  wctx.drawImage(off, ox, oy, GW*sc, GH*sc);
+  // soft bloom: blur a quarter-size copy, then stretch it back (cheap — the filter runs on 1/16 of the pixels)
+  bloomCtx.filter = 'blur(2px)';
+  bloomCtx.clearRect(0, 0, bloom.width, bloom.height);
+  bloomCtx.drawImage(off, 0, 0, bloom.width, bloom.height);
+  wctx.save();
+  wctx.globalCompositeOperation = 'lighter';
+  wctx.globalAlpha = reduceMotion ? 0.22 : 0.4;
+  wctx.drawImage(bloom, ox, oy, GW*sc, GH*sc);
+  wctx.restore();
+
+  // food — gold seeds that pulse
+  const t = performance.now()*0.001;
+  wctx.globalCompositeOperation = 'lighter';
+  for (const f of food){
+    f.born = Math.min(1, f.born + dt*2);
+    const x = ox + f.x*sc, y = oy + f.y*sc, pr = (5 + Math.sin(t*2.4 + f.x)*1.2)*f.born;
+    const g = wctx.createRadialGradient(x, y, 0, x, y, pr*4);
+    g.addColorStop(0, 'rgba(255,210,122,0.55)'); g.addColorStop(1, 'rgba(255,210,122,0)');
+    wctx.fillStyle = g; wctx.fillRect(x-pr*4, y-pr*4, pr*8, pr*8);
+    wctx.fillStyle = '#FFE6B0';
+    wctx.beginPath(); wctx.moveTo(x, y-pr); wctx.lineTo(x+pr*0.8, y); wctx.lineTo(x, y+pr); wctx.lineTo(x-pr*0.8, y); wctx.closePath(); wctx.fill();
+  }
+  // cut wounds / lure strokes — rouge, here & now
+  for (let i=cuts.length-1; i>=0; i--){
+    const c = cuts[i]; c.t += dt; if (c.t > 0.6){ cuts.splice(i,1); continue; }
+    wctx.strokeStyle = `rgba(255,79,168,${(1-c.t/0.6)*0.7})`; wctx.lineWidth = 1.2;
+    wctx.beginPath(); wctx.arc(ox + c.x*sc, oy + c.y*sc, 7*sc*(0.6 + c.t), 0, 6.2832); wctx.stroke();
+  }
+  if (lure.length){
+    wctx.fillStyle = 'rgba(255,79,168,0.5)';
+    for (let i=0; i<lure.length; i+=2){ const p = lure[i]; wctx.globalAlpha = Math.min(1, p.life*1.4)*0.6; wctx.fillRect(ox + p.x*sc - 0.75, oy + p.y*sc - 0.75, 1.5, 1.5); }
+    wctx.globalAlpha = 1;
+  }
+  wctx.globalCompositeOperation = 'source-over';
+  if (state.sniff) drawSniffers(sc, ox, oy);
+  else if (state.revealed) drawHero(sc, ox, oy);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PROOF — sniffers: each agent is blind; it only ever reads three points
+   ══════════════════════════════════════════════════════════════ */
+let sniffers = [];
+function pickSniffers(){ sniffers = []; for (let k=0; k<36; k++) sniffers.push((rnd()*sim.n)|0); }
+function sense(i){
+  const x = sim.ax[i], y = sim.ay[i], a = sim.aa[i], so = state.so, sa = state.sa*DEG;
+  const read = ang => {
+    const px = x + Math.cos(ang)*so, py = y + Math.sin(ang)*so;
+    let ix = px|0, iy = py|0;
+    if (ix<0) ix+=GW; else if (ix>=GW) ix-=GW; if (iy<0) iy+=GH; else if (iy>=GH) iy-=GH;
+    return { px, py, v: sim.trail[iy*GW+ix] };
+  };
+  return { x, y, a, L:read(a-sa), F:read(a), R:read(a+sa) };
+}
+function drawProbe(i, sc, ox, oy, big){
+  const s = sense(i), m = Math.max(s.L.v, s.F.v, s.R.v, 1e-6);
+  const X = ox + s.x*sc, Y = oy + s.y*sc;
+  for (const k of ['L','F','R']){
+    const p = s[k], px = ox + p.px*sc, py = oy + p.py*sc, on = p.v === m;
+    wctx.strokeStyle = on ? 'rgba(255,79,168,0.9)' : 'rgba(90,233,255,0.45)';
+    wctx.lineWidth = big ? 1.4 : 1;
+    wctx.beginPath(); wctx.moveTo(X, Y); wctx.lineTo(px, py); wctx.stroke();
+    wctx.fillStyle = on ? '#FF4FA8' : `rgba(90,233,255,${0.35 + 0.65*p.v/m})`;
+    wctx.beginPath(); wctx.arc(px, py, big ? 3.5 : 2.2, 0, 6.2832); wctx.fill();
+  }
+  wctx.fillStyle = '#F8EFFF';
+  wctx.beginPath(); wctx.arc(X, Y, big ? 3 : 1.8, 0, 6.2832); wctx.fill();
+  if (big){ wctx.strokeStyle = 'rgba(255,79,168,0.7)'; wctx.beginPath(); wctx.arc(X, Y, 16, 0, 6.2832); wctx.stroke(); }
+}
+function drawSniffers(sc, ox, oy){
+  for (let k=0; k<sniffers.length; k++) if (sniffers[k] < sim.n) drawProbe(sniffers[k], sc, ox, oy, k===0);
+}
+function drawHero(sc, ox, oy){ if (sniffers[0] < sim.n) drawProbe(sniffers[0], sc, ox, oy, true); }
+
+/* one agent's view — three bars and the decision it is about to make */
+const av = document.getElementById('agentview'), avx = av.getContext('2d');
+function drawAgentView(){
+  const r = av.getBoundingClientRect(); if (!r.width) return;
+  const w = Math.floor(r.width), h = Math.floor(r.height);
+  if (av.width !== w*DPR){ av.width = w*DPR; av.height = h*DPR; avx.setTransform(DPR,0,0,DPR,0,0); }
+  avx.clearRect(0,0,w,h);
+  const i = sniffers[0]; if (i >= sim.n) return;
+  const s = sense(i), vals = [s.L.v, s.F.v, s.R.v], m = Math.max(...vals, 1e-6);
+  const labels = ['LEFT', 'FRONT', 'RIGHT'];
+  const bw = (w-40)/3;
+  let decision;
+  if (s.F.v > s.L.v && s.F.v > s.R.v) decision = '▲ STRAIGHT';
+  else if (s.F.v < s.L.v && s.F.v < s.R.v) decision = '? COIN FLIP';
+  else if (s.L.v < s.R.v) decision = '▶ TURN RIGHT';
+  else if (s.R.v < s.L.v) decision = '◀ TURN LEFT';
+  else decision = '▲ STRAIGHT';
+  for (let k=0; k<3; k++){
+    const x = 12 + k*(bw+8), bh = (h-40)*vals[k]/m, on = vals[k] === m;
+    avx.fillStyle = on ? 'rgba(255,79,168,0.85)' : 'rgba(90,233,255,0.55)';
+    avx.fillRect(x, h-22-bh, bw, bh);
+    avx.fillStyle = 'rgba(181,142,255,0.75)'; avx.font = '8px IBM Plex Mono'; avx.textAlign = 'center';
+    avx.fillText(labels[k], x+bw/2, h-10);
+  }
+  avx.textAlign = 'left'; avx.fillStyle = 'rgba(255,210,122,0.9)'; avx.font = '9px IBM Plex Mono';
+  avx.fillText('ONE AGENT → ' + decision, 10, 12);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   READOUT
+   ══════════════════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+function updateReadout(){
+  $('ro-n').textContent = sim.n.toLocaleString('en-US');
+  $('ro-food').textContent = food.length + ' / ' + MAX_FOOD;
+  let on = 0; const tr = sim.trail, th = state.dep*2.2;
+  for (let i=0; i<tr.length; i+=5) if (tr[i] > th) on++;
+  $('ro-cover').textContent = (on/(tr.length/5)*100).toFixed(1) + '%';
+  $('ro-step').textContent = sim.steps.toLocaleString('en-US') + '  · ' + Math.round(fps) + 'fps';
+}
+function syncRule(){
+  $('rl-sa').textContent = (+state.sa).toFixed(state.sa%1 ? 1 : 0) + '°';
+  $('rl-so').textContent = (+state.so).toFixed(state.so%1 ? 1 : 0);
+  $('rl-ra').textContent = (+state.ra).toFixed(state.ra%1 ? 1 : 0) + '°';
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CONTROLS
+   ══════════════════════════════════════════════════════════════ */
+const CTRL = [
+  ['sa',    v=>v+'°',            v=>+v],
+  ['ra',    v=>v+'°',            v=>+v],
+  ['so',    v=>v,                v=>+v],
+  ['ss',    v=>(+v).toFixed(2),  v=>+v],
+  ['decay', v=>(+v).toFixed(3),  v=>+v],
+  ['jit',   v=>(+v).toFixed(2),  v=>+v],
+];
+function syncControls(){
+  for (const [k, lab] of CTRL){ $('c-'+k).value = state[k]; $('v-'+k).textContent = lab(state[k]); }
+  $('c-dens').value = state.density; $('v-dens').textContent = (+state.density).toFixed(2);
+  $('c-sub').value = state.sub; $('v-sub').textContent = '×' + state.sub;
+  syncRule(); markSpecies();
+}
+for (const [k, lab, parse] of CTRL){
+  $('c-'+k).addEventListener('input', e=>{ stopIdle(); state[k] = parse(e.target.value); $('v-'+k).textContent = lab(e.target.value); syncRule(); markSpecies(); });
+}
+$('c-dens').addEventListener('input', e=>{ stopIdle(); state.density = +e.target.value; $('v-dens').textContent = (+e.target.value).toFixed(2); reseedCount(); });
+$('c-sub').addEventListener('input', e=>{ state.sub = +e.target.value; $('v-sub').textContent = '×' + e.target.value; });
+function applySpecies(i){ Object.assign(state, SPECIES[i].p); syncControls(); }
+function markSpecies(){
+  document.querySelectorAll('#presets .wb').forEach(b=>{
+    const p = SPECIES[+b.dataset.i].p;
+    b.classList.toggle('on', Object.keys(p).every(k => Math.abs(p[k]-state[k]) < 1e-6));
+  });
+}
+$('presets').innerHTML = SPECIES.map((s,i)=>`<div class="wb" data-i="${i}">${String(i+1).padStart(2,'0')} ${s.name}<i>${s.jp}</i></div>`).join('');
+$('presets').addEventListener('click', e=>{ const b = e.target.closest('.wb'); if (!b) return; stopIdle(); applySpecies(+b.dataset.i); });
+function setTool(t){ state.tool = t; document.querySelectorAll('#tool div').forEach(d=>d.classList.toggle('on', d.dataset.t===t)); }
+$('tool').addEventListener('click', e=>{ const d = e.target.closest('[data-t]'); if (d) setTool(d.dataset.t); });
+function setSniff(on){ state.sniff = on; $('tg-sniff').classList.toggle('on', on); }
+$('tg-sniff').addEventListener('click', ()=>setSniff(!state.sniff));
+
+/* ══════════════════════════════════════════════════════════════
+   POINTER — click = food · drag = lure / cut
+   ══════════════════════════════════════════════════════════════ */
+let down = null, dragging = false, lastG = null;
+function toSim(cx, cy){ const r = stage.getBoundingClientRect(), { sc, ox, oy } = fit(); return { x:(cx-r.left-ox)/sc, y:(cy-r.top-oy)/sc }; }
+function inSim(p){ return p.x>=0 && p.y>=0 && p.x<GW && p.y<GH; }
+stage.addEventListener('pointerdown', e=>{
+  stopIdle();
+  down = { x:e.clientX, y:e.clientY, shift:e.shiftKey }; dragging = false;
+  lastG = toSim(e.clientX, e.clientY);
+  stage.setPointerCapture(e.pointerId);
+});
+stage.addEventListener('pointermove', e=>{
+  if (!down) return;
+  if (!dragging && Math.hypot(e.clientX-down.x, e.clientY-down.y) > 4) dragging = true;
+  if (!dragging) return;
+  const g = toSim(e.clientX, e.clientY);
+  const tool = (down.shift || e.shiftKey) ? (state.tool==='lure' ? 'cut' : 'lure') : state.tool;
+  const n = Math.max(1, Math.ceil(Math.hypot(g.x-lastG.x, g.y-lastG.y)/1.5));
+  for (let k=1; k<=n; k++){
+    const x = lastG.x + (g.x-lastG.x)*k/n, y = lastG.y + (g.y-lastG.y)*k/n;
+    if (!inSim({x,y})) continue;
+    if (tool === 'lure'){ if (lure.length < 6000) lure.push({ x, y, life:1 }); }
+    else { cutAt(x|0, y|0); if (k===n) cuts.push({ x, y, t:0 }); }
+  }
+  lastG = g;
+});
+stage.addEventListener('pointerup', e=>{
+  if (down && !dragging){
+    const g = toSim(e.clientX, e.clientY);
+    if (inSim(g)){
+      const hit = foodAt(g.x, g.y, 9);
+      if (hit >= 0) food.splice(hit, 1); else addFood(g.x|0, g.y|0);
+    }
+  }
+  down = null; dragging = false;
+});
+stage.addEventListener('pointercancel', ()=>{ down = null; dragging = false; });
+
+/* ══════════════════════════════════════════════════════════════
+   REVEAL / HINT / MODAL / PARAMS / KEYS
+   ══════════════════════════════════════════════════════════════ */
+let everRevealed = false;
+function setReveal(on){
+  state.revealed = on;
+  document.body.classList.toggle('revealed', on);
+  document.body.classList.toggle('naked', !on);
+  if (on){ everRevealed = true; hideHint(); requestAnimationFrame(()=>{ resizeWorld(); updateReadout(); drawAgentView(); }); }
+  else requestAnimationFrame(resizeWorld);
+}
+const hintEl = $('naked-hint');
+let hintTimer = setTimeout(()=>{ if (!everRevealed) hintEl.classList.add('show'); }, 45000);
+function hideHint(){ hintEl.classList.remove('show'); clearTimeout(hintTimer); }
+
+function flash(btn,cls,txt){ const t=btn.textContent; btn.textContent=txt; btn.classList.add(cls);
+  setTimeout(()=>{ btn.textContent=t; btn.classList.remove(cls); },1200); }
+$('btn-copy').addEventListener('click', async e=>{
+  const payload = { sa:state.sa, ra:state.ra, so:state.so, ss:state.ss, decay:state.decay, jit:state.jit,
+    density:state.density, sub:state.sub, tool:state.tool, sniff:state.sniff,
+    food: food.map(f=>[+(f.x/GW).toFixed(4), +(f.y/GH).toFixed(4)]),
+    revealed:state.revealed, paused:state.paused };
+  try{ await navigator.clipboard.writeText(JSON.stringify(payload,null,2)); flash(e.currentTarget,'ok','✓ COPIED'); }
+  catch{ flash(e.currentTarget,'err','✗'); }
+});
+$('btn-paste').addEventListener('click', async e=>{
+  try{
+    const j = JSON.parse(await navigator.clipboard.readText());
+    stopIdle();
+    for (const k of ['sa','ra','so','ss','decay','jit']) if (typeof j[k]==='number') state[k] = j[k];
+    if (typeof j.sub==='number') state.sub = Math.max(1, Math.min(4, j.sub|0));
+    if (typeof j.density==='number' && j.density!==state.density){ state.density = j.density; reseedCount(); }
+    if (j.tool==='lure' || j.tool==='cut') setTool(j.tool);
+    if (typeof j.sniff==='boolean') setSniff(j.sniff);
+    if (Array.isArray(j.food)) food = j.food.filter(p=>Array.isArray(p)&&p.length===2).slice(0,MAX_FOOD).map(p=>({ x:(p[0]*GW)|0, y:(p[1]*GH)|0, born:0 }));
+    if (typeof j.paused==='boolean') state.paused = j.paused;
+    if (typeof j.revealed==='boolean' && j.revealed!==state.revealed) setReveal(j.revealed);
+    syncControls();
+    flash(e.currentTarget,'ok','✓ APPLIED');
+  }catch{ flash(e.currentTarget,'err','✗'); }
+});
+
+const modal = $('shortcut-modal');
+function openSC(){ if (!state.revealed) setReveal(true); modal.classList.add('open'); }
+function closeSC(){ modal.classList.remove('open'); }
+$('sc-open-btn').addEventListener('click', openSC);
+$('sc-close').addEventListener('click', closeSC);
+modal.addEventListener('click', e=>{ if (e.target===modal) closeSC(); });
+
+window.addEventListener('keydown', e=>{
+  const tag = document.activeElement?.tagName;
+  if (tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA') return;
+  if (e.key==='Escape'){
+    if (modal.classList.contains('open')){ closeSC(); return; }
+    if (state.revealed){ setReveal(false); return; }
+    window.location.href = 'index.html';
+    return;
+  }
+  if (e.key==='Tab'){ e.preventDefault(); setReveal(!state.revealed); return; }
+  if (e.key==='?'){ e.preventDefault(); modal.classList.contains('open') ? closeSC() : openSC(); return; }
+  if (e.code==='Space'){ e.preventDefault(); stopIdle(); state.paused = !state.paused; return; }
+  if (e.key==='r'||e.key==='R'){ stopIdle(); food = []; respore(e.shiftKey ? 'spore' : 'dust'); return; }
+  if (e.key==='c'||e.key==='C'){ stopIdle(); food = []; return; }
+  if (e.key==='x'||e.key==='X'){ setTool(state.tool==='lure' ? 'cut' : 'lure'); return; }
+  if (e.key==='s'||e.key==='S'){ setSniff(!state.sniff); return; }
+  if (/^[1-6]$/.test(e.key)){ stopIdle(); applySpecies(+e.key-1); return; }
+});
+$('esc-link').addEventListener('click', e=>{
+  e.preventDefault();
+  if (modal.classList.contains('open')) closeSC();
+  else if (state.revealed) setReveal(false);
+  else window.location.href = 'index.html';
+});
+
+respore('dust');
+syncControls();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
