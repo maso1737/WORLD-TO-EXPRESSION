@@ -118,4 +118,5 @@ cognitive/svg/PROFILE_face-vase.js    ← 顔⇔壺の共有輪郭アセット�
 - 01 Bifurcation Walk ／ **02 Highway（ラングトンのアリ）** ／ **03 Slime Network（粘菌）** ／ **04 Flock（ボイド）** ／ 入口 `index.html`
 - 詳細とチェック結果 → [[2026-10-22]]（`90_Log/2026-10-22.md`）。仕様書は 01 のみ（`20_Design/SPEC_EE-01_bifurcation-walk.md`）、02/03 はラボ先行
 - 各作品の中身（SIM）は `/*SIM-BEGIN … SIM-END*/` で囲ってあり、Node で切り出して絵を書き出せる（検証手順はログ参照）
-- 次の分岐: ① EE-05（候補: ライフゲーム／反応拡散／Lenia）② EE-01b 3D 版 ③ 02〜04 に音連動を足して VJ 素材化 — **ユーザー選択待ち**
+- 🆕 02〜04 に VJ パネル（音連動・BPM/TAP・REC WebM・拍ぴったりの連番PNG）。**実 mp3 での効きと実フォルダ書き出しはユーザー確認待ち**（詳細はログ末尾）
+- 次の分岐: ① EE-05（候補: ライフゲーム／反応拡散／Lenia）② EE-01b 3D 版 ③ EE-01 にも VJ パネル — **ユーザー選択待ち**
