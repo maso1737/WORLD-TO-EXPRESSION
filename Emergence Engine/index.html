@@ -81,12 +81,15 @@ const WORKS = [
   { n:'01', en:'Bifurcation Walk', jp:'分岐図を歩く', url:'01_bifurcation_walk.html',
     rule:'いまの値 x に r を掛け、さらに (1−x) を掛ける。それを繰り返すだけ。',
     truth:'ロジスティック写像 xₙ₊₁ = r·xₙ(1−xₙ)', draw:'bif' },
-  { n:'02', en:'Highway', jp:'一万歩目の秩序', url:'02_highway.html', isNew:true,
+  { n:'02', en:'Highway', jp:'一万歩目の秩序', url:'02_highway.html',
     rule:'足もとの色を読み、決まった方へ曲がり、色を塗り替えて1歩。',
     truth:"ラングトンのアリ（と、その親戚のターミット）", draw:'ant' },
-  { n:'03', en:'Slime Network', jp:'脳のない設計者', url:'03_slime_network.html', isNew:true,
+  { n:'03', en:'Slime Network', jp:'脳のない設計者', url:'03_slime_network.html',
     rule:'前・左・右の3点を嗅ぎ、濃い方へ曲がり、1滴落とす。何万匹で。',
     truth:'粘菌の輸送ネットワークモデル（Jones 2010）', draw:'slime' },
+  { n:'04', en:'Flock', jp:'誰もリーダーじゃない', url:'04_flock.html', isNew:true,
+    rule:'近すぎたら離れ、隣と向きをそろえ、隣たちの真ん中へ寄る。見えるのは隣だけ。',
+    truth:'ボイド（Reynolds 1987）', draw:'flock' },
 ];
 
 const host = document.getElementById('works');
@@ -125,6 +128,20 @@ function poster(cv, kind){
     g.fillStyle = 'rgba(62,128,152,1)';
     for (let j=0;j<gh;j++) for (let i=0;i<gw;i++) if (grid[j*gw+i]) g.fillRect(i*cs, j*cs, cs, cs);
     g.fillStyle = '#FF4FA8'; g.fillRect(x*cs-1, y*cs-1, cs+2, cs+2);
+  } else if (kind === 'flock'){
+    // three tilted ribbons of streaks — a murmuration seen from below
+    let s = 4; const rnd = ()=>{ s = (s*16807)%2147483647; return s/2147483647; };
+    g.lineCap = 'round'; g.lineWidth = 1.2;
+    for (let k=0; k<3; k++){
+      const cx = W*(0.2 + 0.3*k), cy = H*(0.35 + 0.25*Math.sin(k*2.1)), ang = -0.5 + k*0.35;
+      for (let i=0; i<260; i++){
+        const u = (rnd()-0.5)*W*0.5, v = (rnd()+rnd()+rnd()-1.5)*H*0.06*(1 - Math.abs(u)/(W*0.3));
+        const x = cx + u*Math.cos(ang) - v*Math.sin(ang), y = cy + u*Math.sin(ang) + v*Math.cos(ang);
+        const a = ang + (rnd()-0.5)*0.4, dense = Math.abs(u) < W*0.08;
+        g.strokeStyle = dense ? 'rgba(190,246,255,0.85)' : 'rgba(90,233,255,0.7)';
+        g.beginPath(); g.moveTo(x - Math.cos(a)*7, y - Math.sin(a)*7); g.lineTo(x + Math.cos(a)*2, y + Math.sin(a)*2); g.stroke();
+      }
+    }
   } else {
     // the real rule, tiny: a few thousand agents on a ½-res grid for 220 steps (~100 ms)
     let s = 9; const rnd = ()=>{ s = (s*16807)%2147483647; return s/2147483647; };

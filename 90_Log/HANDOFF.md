@@ -115,7 +115,7 @@ cognitive/svg/PROFILE_face-vase.js    ← 顔⇔壺の共有輪郭アセット�
 ## 別件（並行中の別プロジェクト）
 
 **Emergence Engine**（`Emergence Engine/index.html` が入口）— 🆕 2026-10-22 に前進
-- 01 Bifurcation Walk ／ **02 Highway（ラングトンのアリ）** ／ **03 Slime Network（粘菌）** ／ 入口 `index.html`
+- 01 Bifurcation Walk ／ **02 Highway（ラングトンのアリ）** ／ **03 Slime Network（粘菌）** ／ **04 Flock（ボイド）** ／ 入口 `index.html`
 - 詳細とチェック結果 → [[2026-10-22]]（`90_Log/2026-10-22.md`）。仕様書は 01 のみ（`20_Design/SPEC_EE-01_bifurcation-walk.md`）、02/03 はラボ先行
 - 各作品の中身（SIM）は `/*SIM-BEGIN … SIM-END*/` で囲ってあり、Node で切り出して絵を書き出せる（検証手順はログ参照）
-- 次の分岐: ① EE-04 Boids ② EE-01b 3D 版 ③ 02/03 に音連動を足して VJ 素材化 — **ユーザー選択待ち**
+- 次の分岐: ① EE-05（候補: ライフゲーム／反応拡散／Lenia）② EE-01b 3D 版 ③ 02〜04 に音連動を足して VJ 素材化 — **ユーザー選択待ち**

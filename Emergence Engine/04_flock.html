@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>EE_04 // FLOCK</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,700;0,900;1,900&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@400;600;800&family=Cormorant+Garamond:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════════════════════
+   EMERGENCE ENGINE // EE_04 — FLOCK (Reynolds boids, 1987)
+   KINETIC STAGE design system + EE overrides (SPEC EE-01 §2)
+   NOIR base · ice=live boids/data · gold=labels & lure · rouge=here&now (the hawk = your hand)
+   ══════════════════════════════════════════════════════════════ */
+:root{
+  --rouge:#FF4FA8; --ice:#5AE9FF; --gold:#FFD27A; --lavender:#B58EFF;
+  --white:#F8EFFF; --noir:#070707;
+  --mono:'IBM Plex Mono',monospace;
+  --disp:'Barlow Condensed',sans-serif;
+  --orn:'Cormorant Garamond',serif;
+  --jp:'Noto Sans JP',sans-serif;
+  --jp-serif:'Noto Serif JP',serif;
+  --mute:rgba(181,142,255,0.62);      /* 二次テキスト下限（既存規約） */
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;background:var(--noir);color:var(--white);
+  font-family:var(--mono);overflow:hidden;-webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;}
+
+#app{display:grid;height:100vh;width:100vw;}
+body.naked #app{grid-template-rows:1fr;grid-template-columns:1fr;}
+body.naked #topbar,body.naked #side,body.naked #graphwrap,body.naked #bottombar{display:none;}
+body.naked #stage{grid-column:1/-1;grid-row:1/-1;}
+body.naked .stage-deco{opacity:0;}
+body.revealed #app{grid-template-rows:44px 1fr 130px 44px;grid-template-columns:1fr 300px;}
+body.revealed #topbar{grid-area:1/1/2/-1;}
+body.revealed #stage {grid-area:2/1/3/2;}
+body.revealed #graphwrap{grid-area:3/1/4/2;}
+body.revealed #side  {grid-area:2/2/4/3;}
+body.revealed #bottombar{grid-area:4/1/5/-1;}
+
+#stage{position:relative;overflow:hidden;background:var(--noir);touch-action:none;cursor:crosshair;}
+#world{display:block;width:100%;height:100%;}
+#over{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+
+.stage-deco{position:absolute;inset:0;pointer-events:none;transition:opacity .4s ease;z-index:3;}
+.corner{position:absolute;width:14px;height:14px;}
+.corner::before,.corner::after{content:'';position:absolute;background:linear-gradient(90deg,var(--gold),var(--rouge));box-shadow:0 0 6px rgba(255,79,168,.4);}
+.corner::before{width:100%;height:1px;} .corner::after{width:1px;height:100%;}
+.corner.tl{top:10px;left:10px;} .corner.tr{top:10px;right:10px;transform:scaleX(-1);}
+.corner.bl{bottom:10px;left:10px;transform:scaleY(-1);} .corner.br{bottom:10px;right:10px;transform:scale(-1);}
+.po{position:absolute;top:12px;right:16px;text-align:right;}
+.po-num{font-family:var(--orn);font-style:italic;font-weight:700;font-size:clamp(40px,6vw,72px);line-height:1;letter-spacing:-.03em;
+  color:var(--ice);filter:drop-shadow(0 0 16px rgba(90,233,255,.35));}
+.po-en{font-family:var(--orn);font-style:italic;font-weight:700;font-size:clamp(14px,2vw,22px);color:var(--gold);line-height:1;}
+.po-jp{font-family:var(--jp-serif);font-size:11px;color:var(--mute);margin-top:5px;letter-spacing:.22em;}
+.stage-bignum{position:absolute;bottom:-38px;left:-8px;font-family:var(--orn);font-style:italic;font-weight:700;
+  font-size:clamp(160px,26vw,340px);color:transparent;-webkit-text-stroke:1.5px rgba(90,233,255,.10);line-height:1;}
+
+#topbar{border-bottom:1px solid rgba(255,210,122,.12);display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;font-size:10px;color:rgba(248,239,255,.5);letter-spacing:.22em;background:rgba(255,255,255,.012);}
+#topbar a{border:1px solid rgba(255,210,122,.3);color:var(--gold);text-decoration:none;padding:2px 8px;letter-spacing:.2em;}
+#topbar a:hover{background:rgba(255,210,122,.1);}
+#bottombar{border-top:1px solid rgba(255,210,122,.12);display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;font-size:9px;color:var(--mute);letter-spacing:.18em;}
+#bottombar #status.hot{color:var(--rouge);text-shadow:0 0 6px rgba(255,79,168,.4);}
+.kbd{background:rgba(255,79,168,.08);border:1px solid rgba(255,79,168,.35);color:var(--rouge);
+  font-family:var(--mono);font-size:8px;padding:1px 5px;border-radius:2px;letter-spacing:.1em;}
+#sc-open-btn{cursor:pointer;color:var(--mute);font-size:9px;letter-spacing:.25em;padding:2px 8px;
+  border:1px solid rgba(255,210,122,.25);border-radius:2px;transition:all .15s;}
+#sc-open-btn:hover{color:var(--gold);border-color:var(--gold);background:rgba(255,210,122,.06);}
+
+#graphwrap{position:relative;border-top:1px solid rgba(255,210,122,.1);background:var(--noir);overflow:hidden;}
+#graph{position:absolute;inset:0;width:100%;height:100%;display:block;}
+#graph-lbl{position:absolute;top:4px;left:8px;font-size:8px;letter-spacing:.32em;color:var(--mute);pointer-events:none;}
+
+#side{display:flex;flex-direction:column;overflow-y:auto;background:rgba(255,255,255,.015);border-left:1px solid rgba(255,210,122,.08);}
+#side::-webkit-scrollbar{width:2px;} #side::-webkit-scrollbar-thumb{background:var(--rouge);}
+.sp{border-bottom:1px solid rgba(181,142,255,.08);padding:13px 15px;flex-shrink:0;}
+.spl{font-size:9px;letter-spacing:.4em;color:var(--mute);margin-bottom:10px;}
+.tr{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;font-size:10px;color:rgba(248,239,255,.72);letter-spacing:.05em;gap:8px;}
+.tr:last-child{margin-bottom:0;}
+.tr > span:first-child{min-width:62px;}
+.sl{font-size:9px;color:var(--mute);letter-spacing:.12em;white-space:nowrap;min-width:44px;text-align:right;}
+input[type=range]{-webkit-appearance:none;flex:1;height:2px;background:rgba(255,255,255,.12);outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),var(--rouge));box-shadow:0 0 8px rgba(255,79,168,.5);cursor:pointer;}
+input[type=range]:disabled{opacity:.3;}
+.data-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(181,142,255,.08);font-size:10px;}
+.data-row:last-child{border-bottom:none;}
+.dk{color:var(--mute);letter-spacing:.05em;}
+.dv{color:var(--gold);font-weight:600;font-variant-numeric:tabular-nums;}
+.dv.neon{color:var(--ice);text-shadow:0 0 6px rgba(90,233,255,.45);}
+#badge{font-size:9px;letter-spacing:.2em;padding:2px 8px;border-radius:2px;border:1px solid;}
+#badge.gas{color:var(--gold);border-color:rgba(255,210,122,.4);}
+#badge.edge{color:var(--rouge);border-color:rgba(255,79,168,.45);}
+#badge.mill{color:var(--gold);border-color:rgba(255,210,122,.6);box-shadow:0 0 10px rgba(255,210,122,.3);}
+#badge.flock{color:var(--ice);border-color:rgba(90,233,255,.5);box-shadow:0 0 10px rgba(90,233,255,.3);}
+/* the three rules */
+.rule{border:1px solid rgba(181,142,255,.14);border-radius:2px;padding:8px 9px 7px;margin-bottom:7px;}
+.rule:last-of-type{margin-bottom:0;}
+.rule.off{opacity:.45;}
+.rule-h{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.rule-h .n{font-family:var(--orn);font-style:italic;font-weight:700;font-size:18px;line-height:1;width:12px;}
+.rule-h .nm{font-size:10px;letter-spacing:.2em;flex:1;}
+.rule-h .jp{display:block;font-family:var(--jp);font-size:9px;letter-spacing:.06em;color:var(--mute);margin-top:2px;}
+.rule .tr{margin:0;}
+.rule.sep .n,.rule.sep .nm{color:var(--gold);}
+.rule.ali .n,.rule.ali .nm{color:var(--ice);}
+.rule.coh .n,.rule.coh .nm{color:var(--lavender);}
+.rule-cap{font-family:var(--jp);font-size:9px;color:var(--mute);letter-spacing:.08em;line-height:1.7;margin-top:9px;}
+.rule-cap b{color:var(--gold);font-family:var(--mono);font-weight:600;}
+/* presets */
+.walkgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.wb{font-size:8.5px;letter-spacing:.12em;padding:7px 4px;border:1px solid rgba(90,233,255,.25);color:var(--ice);
+  background:rgba(90,233,255,.04);cursor:pointer;border-radius:2px;transition:all .15s;text-align:center;}
+.wb:hover{background:rgba(90,233,255,.14);box-shadow:0 0 8px rgba(90,233,255,.25);}
+.wb i{display:block;font-style:normal;font-family:var(--jp);color:var(--mute);font-size:8px;margin-top:3px;letter-spacing:.04em;}
+.wb.on{border-color:var(--rouge);box-shadow:0 0 8px rgba(255,79,168,.3);}
+.tg{width:34px;height:17px;background:rgba(255,255,255,.07);border-radius:9px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;}
+.tg.on{background:linear-gradient(90deg,var(--rouge),#B850FF);box-shadow:0 0 10px rgba(255,79,168,.45);}
+.tg::after{content:'';position:absolute;width:13px;height:13px;border-radius:50%;background:#fff;top:2px;left:2px;transition:left .2s;}
+.tg.on::after{left:19px;}
+.hand-cap{font-family:var(--jp);font-size:9px;color:var(--mute);letter-spacing:.08em;line-height:1.7;}
+.hand-cap b{color:var(--rouge);font-weight:500;} .hand-cap em{color:var(--gold);font-style:normal;}
+.cpg{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.ed-btn{background:rgba(255,79,168,.05);border:1px solid rgba(255,79,168,.3);color:var(--rouge);font-family:var(--mono);
+  font-size:9px;letter-spacing:.15em;padding:8px;cursor:pointer;border-radius:2px;transition:all .15s;text-align:center;}
+.ed-btn:hover{background:rgba(255,79,168,.14);box-shadow:0 0 8px rgba(255,79,168,.25);}
+.ed-btn.ok{background:rgba(90,233,255,.18);border-color:var(--ice);color:var(--ice);}
+.ed-btn.err{background:rgba(255,79,168,.22);border-color:var(--rouge);color:#fff;}
+
+#naked-hint{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);font-size:8px;letter-spacing:.5em;
+  color:rgba(90,233,255,.9);opacity:0;transition:opacity 1.2s ease;pointer-events:none;z-index:20;}
+#naked-hint.show{opacity:.25;}
+
+#shortcut-modal{display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.85);align-items:center;justify-content:center;}
+#shortcut-modal.open{display:flex;}
+#shortcut-box{background:linear-gradient(180deg,#0d0d0d,#050505);border:1px solid rgba(255,210,122,.4);border-radius:6px;
+  width:min(520px,92vw);max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.7),0 0 60px rgba(90,233,255,.1);}
+.sc-header{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid rgba(255,210,122,.18);
+  font-size:10px;letter-spacing:.4em;color:var(--gold);}
+.sc-header span{cursor:pointer;color:var(--mute);} .sc-header span:hover{color:var(--rouge);}
+.sc-body{padding:14px 18px;}
+.sc-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(181,142,255,.06);font-size:10px;}
+.sc-row:last-child{border-bottom:none;}
+.sc-key{background:#141414;border:1px solid rgba(181,142,255,.3);color:var(--white);font-family:var(--mono);font-size:9px;
+  padding:2px 8px;min-width:30px;text-align:center;border-radius:3px;letter-spacing:.05em;}
+.sc-desc{color:rgba(248,239,255,.7);letter-spacing:.04em;}
+.sc-desc .jp{display:block;font-family:var(--jp);font-size:9px;color:var(--mute);margin-top:1px;letter-spacing:.1em;}
+
+@media(max-width:720px){
+  body.revealed #app{grid-template-columns:1fr;grid-template-rows:44px 1fr 110px 44px;}
+  body.revealed #side{position:fixed;right:0;top:44px;bottom:44px;width:min(300px,84vw);z-index:40;
+    box-shadow:-10px 0 40px rgba(0,0,0,.6);}
+  body.revealed #stage{grid-area:2/1/3/-1;} body.revealed #graphwrap{grid-area:3/1/4/-1;}
+}
+</style>
+</head>
+<body class="naked">
+<div id="app">
+
+  <div id="topbar">
+    <span>EMERGENCE_ENGINE // EE_04</span>
+    <a href="#" id="esc-link">[ESC] INDEX</a>
+  </div>
+
+  <div id="stage">
+    <canvas id="world"></canvas>
+    <canvas id="over"></canvas>
+    <div class="stage-deco">
+      <span class="corner tl"></span><span class="corner tr"></span>
+      <span class="corner bl"></span><span class="corner br"></span>
+      <div class="stage-bignum">04</div>
+      <div class="po">
+        <div class="po-num">04</div>
+        <div class="po-en">Flock</div>
+        <div class="po-jp">誰もリーダーじゃない</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="graphwrap">
+    <canvas id="graph"></canvas>
+    <div id="graph-lbl">ORDER Φ — 向きのそろい具合 · 0＝ばらばら（気体） / 1＝全員同じ向き（群れ） · 金の点線＝NOISE</div>
+  </div>
+
+  <div id="side">
+    <div class="sp">
+      <div class="spl">READOUT</div>
+      <div class="data-row"><span class="dk">ORDER Φ</span><span class="dv neon" id="ro-phi">0.00</span></div>
+      <div class="data-row"><span class="dk">PHASE</span><span id="badge" class="gas">GAS</span></div>
+      <div class="data-row"><span class="dk">MILL Ω <span style="opacity:.7">（餌のまわりの回転）</span></span><span class="dv" id="ro-mill">—</span></div>
+      <div class="data-row"><span class="dk">FLOCKS (≥8)</span><span class="dv" id="ro-flocks">0</span></div>
+      <div class="data-row"><span class="dk">BOIDS</span><span class="dv" id="ro-n">0</span></div>
+      <div class="data-row"><span class="dk">NEIGHBORS / BOID</span><span class="dv" id="ro-nb">0</span></div>
+    </div>
+    <div class="sp">
+      <div class="spl">RULE — THE PROTAGONIST</div>
+      <div class="rule sep" id="rule-sep">
+        <div class="rule-h"><span class="n">1</span><span class="nm">SEPARATE<span class="jp">近すぎる隣から離れる</span></span><div class="tg on" data-rule="sep"></div></div>
+        <div class="tr"><input type="range" id="c-wSep" min="0" max="3" step="0.05" value="1.5"><span class="sl" id="v-wSep">1.50</span></div>
+      </div>
+      <div class="rule ali" id="rule-ali">
+        <div class="rule-h"><span class="n">2</span><span class="nm">ALIGN<span class="jp">隣と向きをそろえる</span></span><div class="tg on" data-rule="ali"></div></div>
+        <div class="tr"><input type="range" id="c-wAli" min="0" max="3" step="0.05" value="1"><span class="sl" id="v-wAli">1.00</span></div>
+      </div>
+      <div class="rule coh" id="rule-coh">
+        <div class="rule-h"><span class="n">3</span><span class="nm">COHERE<span class="jp">隣たちの真ん中へ寄る</span></span><div class="tg on" data-rule="coh"></div></div>
+        <div class="tr"><input type="range" id="c-wCoh" min="0" max="3" step="0.05" value="0.8"><span class="sl" id="v-wCoh">0.80</span></div>
+      </div>
+      <div class="rule-cap">誰も全体を見ていない。1羽に見えるのは半径 <b id="rl-view">42</b>px・視野 <b id="rl-fov">270</b>° の隣だけ。<br>スイッチで1つ消すと、何が壊れるかがわかる。</div>
+    </div>
+    <div class="sp">
+      <div class="spl">BEHAVIORS — 同じ3行、違う重み</div>
+      <div class="walkgrid" id="presets"></div>
+    </div>
+    <div class="sp">
+      <div class="spl">HAND — 指は何になるか</div>
+      <div class="hand-cap">押しているあいだ指が<b>鷹</b>になる（群れが割れて、また戻る）。<br>Shift＋押す＝<em>餌</em>になる（群れが周りを回り出す）。</div>
+    </div>
+    <div class="sp">
+      <div class="spl">CONTROLS</div>
+      <div class="tr"><span>NOISE</span><input type="range" id="c-noise" min="0" max="1" step="0.01" value="0.05"><span class="sl" id="v-noise">0.05</span></div>
+      <div class="tr"><span>VIEW</span><input type="range" id="c-view" min="12" max="120" step="1" value="42"><span class="sl" id="v-view">42 px</span></div>
+      <div class="tr"><span>FOV</span><input type="range" id="c-fov" min="60" max="360" step="5" value="270"><span class="sl" id="v-fov">270°</span></div>
+      <div class="tr"><span>PERSONAL</span><input type="range" id="c-sep" min="4" max="40" step="1" value="16"><span class="sl" id="v-sep">16 px</span></div>
+      <div class="tr"><span>SPEED</span><input type="range" id="c-speed" min="0.8" max="6" step="0.1" value="3"><span class="sl" id="v-speed">3.0</span></div>
+      <div class="tr"><span>BOIDS</span><input type="range" id="c-n" min="100" max="4000" step="50" value="1400"><span class="sl" id="v-n">1400</span></div>
+      <div class="tr"><span>TRAIL</span><input type="range" id="c-trail" min="0.04" max="1" step="0.01" value="0.2"><span class="sl" id="v-trail">0.20</span></div>
+    </div>
+    <div class="sp">
+      <div class="spl">PROOF</div>
+      <div class="tr"><span>SPOTLIGHT<span style="color:var(--mute)"> — 1羽の視界と3つの力</span></span><div class="tg" id="tg-spot"></div></div>
+    </div>
+    <div class="sp">
+      <div class="spl">PARAMS</div>
+      <div class="cpg">
+        <div class="ed-btn" id="btn-copy">⧉ COPY</div>
+        <div class="ed-btn" id="btn-paste">▣ PASTE</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="bottombar">
+    <span id="status">EE_04 // BOIDS</span>
+    <span><span id="sc-open-btn">⌨ SHORTCUTS</span> <span class="kbd">?</span></span>
+  </div>
+</div>
+
+<div id="naked-hint">TAB — REVEAL</div>
+
+<div id="shortcut-modal">
+  <div id="shortcut-box">
+    <div class="sc-header">⌨ KEYBOARD SHORTCUTS <span id="sc-close">✕</span></div>
+    <div class="sc-body">
+      <div class="sc-row"><span class="sc-key">HOLD</span><span class="sc-desc">Hawk — 押しているあいだ指が鷹になる<span class="jp">ドラッグで追いかけられる。群れは割れて、また1つに戻る</span></span></div>
+      <div class="sc-row"><span class="sc-key">⇧ HOLD</span><span class="sc-desc">Lure — 餌になる<span class="jp">群れが周りを回る渦（ミル）になる</span></span></div>
+      <div class="sc-row"><span class="sc-key">← →</span><span class="sc-desc">Noise — 温度を下げる／上げる<span class="jp">上げると群れが溶けて気体に、下げるとまた凍って群れに</span></span></div>
+      <div class="sc-row"><span class="sc-key">1–6</span><span class="sc-desc">Behaviors — 重みの組を切り替え</span></div>
+      <div class="sc-row"><span class="sc-key">S</span><span class="sc-desc">Spotlight — 1羽の視界と3つの力を見せる</span></div>
+      <div class="sc-row"><span class="sc-key">Space</span><span class="sc-desc">Pause / Resume — 時間停止</span></div>
+      <div class="sc-row"><span class="sc-key">Tab</span><span class="sc-desc">Reveal — HUD と証明ストリップの表示切替</span></div>
+      <div class="sc-row"><span class="sc-key">R</span><span class="sc-desc">Scatter — 全員ばらばらの向きからやり直す</span></div>
+      <div class="sc-row"><span class="sc-key">?</span><span class="sc-desc">This panel</span></div>
+      <div class="sc-row"><span class="sc-key">Esc</span><span class="sc-desc">Modal → NAKED → Index</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/*SIM-BEGIN — pure simulation core (no DOM). Node-verifiable: extract between the markers. */
+const DEG = Math.PI/180;
+function makeFlock(w, h){
+  return { w, h, n:0, x:new Float32Array(0), y:new Float32Array(0), vx:new Float32Array(0), vy:new Float32Array(0),
+           nvx:null, nvy:null, nb:null, next:null, head:null, gx:0, gy:0, cw:1, ch:1, steps:0, dbg:null };
+}
+/* resize the population; survivors keep flying, newcomers appear anywhere facing anywhere */
+function setCount(F, n, speed, rnd){
+  const keep = Math.min(n, F.n);
+  const x = new Float32Array(n), y = new Float32Array(n), vx = new Float32Array(n), vy = new Float32Array(n);
+  x.set(F.x.subarray(0, keep)); y.set(F.y.subarray(0, keep)); vx.set(F.vx.subarray(0, keep)); vy.set(F.vy.subarray(0, keep));
+  for (let i=keep; i<n; i++){
+    const a = rnd()*2*Math.PI;
+    x[i] = rnd()*F.w; y[i] = rnd()*F.h; vx[i] = Math.cos(a)*speed; vy[i] = Math.sin(a)*speed;
+  }
+  F.x = x; F.y = y; F.vx = vx; F.vy = vy; F.n = n;
+  F.nvx = new Float32Array(n); F.nvy = new Float32Array(n); F.nb = new Uint8Array(n); F.next = new Int32Array(n);
+}
+function scatter(F, speed, rnd){
+  for (let i=0; i<F.n; i++){
+    const a = rnd()*2*Math.PI;
+    F.x[i] = rnd()*F.w; F.y[i] = rnd()*F.h; F.vx[i] = Math.cos(a)*speed; F.vy[i] = Math.sin(a)*speed;
+  }
+}
+/* bucket grid with cells at least one view-radius wide, so a 3×3 block covers everyone in sight */
+function buildGrid(F, R){
+  const cs = Math.min(Math.max(8, R), F.w/3, F.h/3);
+  const gx = Math.max(3, Math.floor(F.w/cs)), gy = Math.max(3, Math.floor(F.h/cs));
+  if (!F.head || F.head.length !== gx*gy) F.head = new Int32Array(gx*gy);
+  F.gx = gx; F.gy = gy; F.cw = F.w/gx; F.ch = F.h/gy;
+  F.head.fill(-1);
+  for (let i=0; i<F.n; i++){
+    let cx = (F.x[i]/F.cw)|0, cy = (F.y[i]/F.ch)|0;
+    if (cx >= gx) cx = gx-1; if (cy >= gy) cy = gy-1;
+    const c = cy*gx + cx; F.next[i] = F.head[c]; F.head[c] = i;
+  }
+}
+const _st = [0, 0];
+/* Reynolds steering: desired = direction × max speed, steer = desired − velocity, clamped */
+function steer(dx, dy, vx, vy, maxS, maxF){
+  const l = Math.hypot(dx, dy);
+  if (l < 1e-9){ _st[0] = 0; _st[1] = 0; return _st; }
+  let sx = dx/l*maxS - vx, sy = dy/l*maxS - vy;
+  const m = Math.hypot(sx, sy);
+  if (m > maxF){ sx *= maxF/m; sy *= maxF/m; }
+  _st[0] = sx; _st[1] = sy; return _st;
+}
+/* the whole rule, for every boid at once (synchronous update):
+   1 separate from the too-close, 2 align with the visible, 3 move toward their centre */
+function stepFlock(F, P, rnd, ext, wantDbg){
+  buildGrid(F, P.view);
+  const w = F.w, h = F.h, n = F.n, hw = w/2, hh = h/2;
+  const x = F.x, y = F.y, vx = F.vx, vy = F.vy, nvx = F.nvx, nvy = F.nvy, head = F.head, next = F.next, nb = F.nb;
+  const gx = F.gx, gy = F.gy, cw = F.cw, ch = F.ch;
+  const R2 = P.view*P.view, S2 = P.sep*P.sep;
+  const cosF = Math.cos(P.fov*DEG/2), useF = P.fov < 359;
+  const maxS = P.speed, minS = P.speed*0.45, maxF = P.speed*0.06;
+  const wS = P.on.sep ? P.wSep : 0, wA = P.on.ali ? P.wAli : 0, wC = P.on.coh ? P.wCoh : 0;
+  const HAWK_R = 130, HAWK_R2 = HAWK_R*HAWK_R, LURE_R = 90;
+  F.dbg = null;
+  for (let i=0; i<n; i++){
+    const xi = x[i], yi = y[i], vxi = vx[i], vyi = vy[i];
+    const sp = Math.hypot(vxi, vyi) || 1e-6;
+    let sx=0, sy=0, ax=0, ay=0, cx=0, cy=0, cnt=0, scnt=0;
+    const dbgN = (wantDbg && i === 0) ? [] : null;
+    let ci = (xi/cw)|0, cj = (yi/ch)|0; if (ci >= gx) ci = gx-1; if (cj >= gy) cj = gy-1;
+    for (let oy=-1; oy<=1; oy++){
+      let ry = cj+oy; if (ry < 0) ry += gy; else if (ry >= gy) ry -= gy;
+      for (let ox=-1; ox<=1; ox++){
+        let rx = ci+ox; if (rx < 0) rx += gx; else if (rx >= gx) rx -= gx;
+        for (let j = head[ry*gx + rx]; j !== -1; j = next[j]){
+          if (j === i) continue;
+          let dx = x[j]-xi; if (dx > hw) dx -= w; else if (dx < -hw) dx += w;
+          let dy = y[j]-yi; if (dy > hh) dy -= h; else if (dy < -hh) dy += h;
+          const d2 = dx*dx + dy*dy;
+          if (d2 > R2 || d2 === 0) continue;
+          if (useF && (dx*vxi + dy*vyi) < cosF*Math.sqrt(d2)*sp) continue;   // behind me: unseen
+          cnt++; ax += vx[j]; ay += vy[j]; cx += dx; cy += dy;
+          if (d2 < S2){ sx -= dx/d2; sy -= dy/d2; scnt++; }
+          if (dbgN) dbgN.push(j);
+        }
+      }
+    }
+    let fx = 0, fy = 0, s;
+    const dS = [0,0], dA = [0,0], dC = [0,0];
+    if (scnt && wS){ s = steer(sx, sy, vxi, vyi, maxS, maxF); dS[0] = s[0]*wS; dS[1] = s[1]*wS; }
+    if (cnt){
+      if (wA){ s = steer(ax, ay, vxi, vyi, maxS, maxF); dA[0] = s[0]*wA; dA[1] = s[1]*wA; }
+      if (wC){ s = steer(cx, cy, vxi, vyi, maxS, maxF); dC[0] = s[0]*wC; dC[1] = s[1]*wC; }
+    }
+    fx = dS[0] + dA[0] + dC[0]; fy = dS[1] + dA[1] + dC[1];
+    if (ext && ext.hawk){
+      let dx = xi-ext.hx; if (dx > hw) dx -= w; else if (dx < -hw) dx += w;
+      let dy = yi-ext.hy; if (dy > hh) dy -= h; else if (dy < -hh) dy += h;
+      const d2 = dx*dx + dy*dy;
+      if (d2 < HAWK_R2){ s = steer(dx, dy, vxi, vyi, maxS*1.6, maxF*5); const k = 1 - Math.sqrt(d2)/HAWK_R; fx += s[0]*k*1.5; fy += s[1]*k*1.5; }
+    }
+    if (ext && ext.lure){
+      // pulled toward a ring around the lure and nudged along it → the flock turns into a mill
+      let dx = ext.lx-xi; if (dx > hw) dx -= w; else if (dx < -hw) dx += w;
+      let dy = ext.ly-yi; if (dy > hh) dy -= h; else if (dy < -hh) dy += h;
+      const d = Math.hypot(dx, dy) || 1e-6, rx = dx/d, ry = dy/d;
+      const kr = Math.max(-1, Math.min(1, (d - LURE_R)/LURE_R));
+      s = steer(rx*kr*1.4 - ry, ry*kr*1.4 + rx, vxi, vyi, maxS, maxF); fx += s[0]*1.2; fy += s[1]*1.2;
+    }
+    let nx = vxi + fx, ny = vyi + fy;
+    if (P.noise){
+      const a = (rnd()*2-1)*Math.PI*P.noise, c = Math.cos(a), sn = Math.sin(a);
+      const tx = nx*c - ny*sn; ny = nx*sn + ny*c; nx = tx;
+    }
+    const m = Math.hypot(nx, ny) || 1e-6;
+    if (m > maxS){ nx *= maxS/m; ny *= maxS/m; } else if (m < minS){ nx *= minS/m; ny *= minS/m; }
+    nvx[i] = nx; nvy[i] = ny; nb[i] = cnt > 255 ? 255 : cnt;
+    if (dbgN) F.dbg = { nbrs:dbgN, sep:dS, ali:dA, coh:dC };
+  }
+  for (let i=0; i<n; i++){
+    vx[i] = nvx[i]; vy[i] = nvy[i];
+    let px = x[i] + vx[i], py = y[i] + vy[i];
+    if (px < 0) px += w; else if (px >= w) px -= w;
+    if (py < 0) py += h; else if (py >= h) py -= h;
+    x[i] = px; y[i] = py;
+  }
+  F.steps++;
+}
+/* order parameter Φ = |mean heading| — 0 for a gas, 1 when everyone flies the same way */
+function polarization(F){
+  let sx = 0, sy = 0;
+  for (let i=0; i<F.n; i++){ const m = Math.hypot(F.vx[i], F.vy[i]) || 1; sx += F.vx[i]/m; sy += F.vy[i]/m; }
+  return F.n ? Math.hypot(sx, sy)/F.n : 0;
+}
+/* mill Ω = mean signed rotation around a point — ±1 when everyone circles it the same way.
+   A mill has Φ≈0 (headings cancel) yet it is the opposite of a gas. */
+function rotation(F, cx, cy){
+  let s = 0; const w = F.w, h = F.h;
+  for (let i=0; i<F.n; i++){
+    let dx = F.x[i]-cx; if (dx > w/2) dx -= w; else if (dx < -w/2) dx += w;
+    let dy = F.y[i]-cy; if (dy > h/2) dy -= h; else if (dy < -h/2) dy += h;
+    const d = Math.hypot(dx, dy) || 1, v = Math.hypot(F.vx[i], F.vy[i]) || 1;
+    s += (dx*F.vy[i] - dy*F.vx[i])/(d*v);
+  }
+  return F.n ? s/F.n : 0;
+}
+/* flocks = connected groups of boids within view of each other (union-find over the grid) */
+function countFlocks(F, R, minSize){
+  buildGrid(F, R);
+  const n = F.n, par = new Int32Array(n), w = F.w, h = F.h, hw = w/2, hh = h/2, R2 = R*R;
+  for (let i=0; i<n; i++) par[i] = i;
+  const find = a => { while (par[a] !== a){ par[a] = par[par[a]]; a = par[a]; } return a; };
+  for (let i=0; i<n; i++){
+    let ci = (F.x[i]/F.cw)|0, cj = (F.y[i]/F.ch)|0; if (ci >= F.gx) ci = F.gx-1; if (cj >= F.gy) cj = F.gy-1;
+    for (let oy=-1; oy<=1; oy++){
+      const ry = (cj+oy+F.gy) % F.gy;
+      for (let ox=-1; ox<=1; ox++){
+        const rx = (ci+ox+F.gx) % F.gx;
+        for (let j = F.head[ry*F.gx + rx]; j !== -1; j = F.next[j]){
+          if (j <= i) continue;
+          let dx = F.x[j]-F.x[i]; if (dx > hw) dx -= w; else if (dx < -hw) dx += w;
+          let dy = F.y[j]-F.y[i]; if (dy > hh) dy -= h; else if (dy < -hh) dy += h;
+          if (dx*dx + dy*dy <= R2){ const a = find(i), b = find(j); if (a !== b) par[a] = b; }
+        }
+      }
+    }
+  }
+  const size = new Int32Array(n);
+  for (let i=0; i<n; i++) size[find(i)]++;
+  let k = 0; for (let i=0; i<n; i++) if (size[i] >= minSize) k++;
+  return k;
+}
+/*SIM-END*/
+
+/* ══════════════════════════════════════════════════════════════
+   STATE
+   ══════════════════════════════════════════════════════════════ */
+const reduceMotion = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+const BEHAVIORS = [
+  { name:'MURMURATION', jp:'ムクドリの大群',       p:{ wSep:1.5, wAli:1.0, wCoh:0.8, view:42,  fov:270, sep:16, speed:3.0, noise:0.05 } },
+  { name:'SCHOOL',      jp:'イワシの群れ',         p:{ wSep:1.8, wAli:2.2, wCoh:0.6, view:34,  fov:300, sep:11, speed:2.4, noise:0.02 } },
+  { name:'GNATS',       jp:'蚊柱（向きがない）',   p:{ wSep:0.8, wAli:0.0, wCoh:1.6, view:60,  fov:360, sep:8,  speed:2.6, noise:0.35 } },
+  { name:'STREAMS',     jp:'川のような列',         p:{ wSep:1.2, wAli:2.6, wCoh:0.1, view:30,  fov:200, sep:12, speed:3.4, noise:0.03 } },
+  { name:'BAIT BALL',   jp:'固く丸まる',           p:{ wSep:1.6, wAli:0.4, wCoh:1.4, view:90,  fov:360, sep:14, speed:2.2, noise:0.04 } },
+  { name:'GAS',         jp:'ルールなし＝ただの粒', p:{ wSep:0.0, wAli:0.0, wCoh:0.0, view:42,  fov:270, sep:16, speed:3.0, noise:0.15 } },
+];
+const state = {
+  ...BEHAVIORS[0].p,
+  on: { sep:true, ali:true, coh:true },
+  n: 1400,
+  trail: 0.2,
+  spot: false,
+  revealed: false,
+  paused: false,
+  idle: true,
+};
+let rngState = (Math.random()*2**32)>>>0;
+function rnd(){ // mulberry32 — same generator the Node check uses
+  rngState |= 0; rngState = rngState + 0x6D2B79F5 | 0;
+  let t = Math.imul(rngState ^ rngState >>> 15, 1 | rngState);
+  t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+  return ((t ^ t >>> 14) >>> 0) / 4294967296;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CANVAS — the world is fixed to the window at load; the HUD only refits it
+   ══════════════════════════════════════════════════════════════ */
+const stage = document.getElementById('stage');
+const worldC = document.getElementById('world');
+const wctx = worldC.getContext('2d');
+const overC = document.getElementById('over'), octx = overC.getContext('2d');   // no-trail layer: hand + spotlight
+let W=0, H=0, DPR=Math.min(window.devicePixelRatio||1, 2);
+function resizeWorld(){
+  const r = stage.getBoundingClientRect();
+  W = Math.max(1, Math.floor(r.width)); H = Math.max(1, Math.floor(r.height));
+  worldC.width = overC.width = W*DPR; worldC.height = overC.height = H*DPR;
+  wctx.setTransform(DPR,0,0,DPR,0,0); octx.setTransform(DPR,0,0,DPR,0,0);
+  wctx.fillStyle = '#070707'; wctx.fillRect(0,0,W,H);
+}
+new ResizeObserver(resizeWorld).observe(stage);
+window.addEventListener('resize', ()=>{ resizeWorld(); if (state.revealed) resizeGraph(); });
+resizeWorld();
+
+const F = makeFlock(Math.max(320, window.innerWidth), Math.max(240, window.innerHeight));
+state.n = Math.round(Math.min(3000, Math.max(600, F.w*F.h/700)) / 50) * 50;
+setCount(F, state.n, state.speed, rnd);
+function fit(){ const sc = Math.min(W/F.w, H/F.h); return { sc, ox:(W-F.w*sc)/2, oy:(H-F.h*sc)/2 }; }
+
+/* ══════════════════════════════════════════════════════════════
+   HAND — hold = hawk (rouge), shift+hold = lure (gold)
+   ══════════════════════════════════════════════════════════════ */
+const ext = { hawk:false, hx:0, hy:0, lure:false, lx:0, ly:0 };
+let handDown = false;
+function toWorld(cx, cy){ const r = stage.getBoundingClientRect(), { sc, ox, oy } = fit(); return { x:(cx-r.left-ox)/sc, y:(cy-r.top-oy)/sc }; }
+function placeHand(e){
+  const p = toWorld(e.clientX, e.clientY);
+  const px = Math.min(F.w-1, Math.max(0, p.x)), py = Math.min(F.h-1, Math.max(0, p.y));
+  if (e.shiftKey){ ext.lure = true; ext.hawk = false; ext.lx = px; ext.ly = py; }
+  else { ext.hawk = true; ext.lure = false; ext.hx = px; ext.hy = py; }
+}
+stage.addEventListener('pointerdown', e=>{ stopIdle(); handDown = true; placeHand(e); stage.setPointerCapture(e.pointerId); });
+stage.addEventListener('pointermove', e=>{ if (handDown) placeHand(e); });
+function release(){ handDown = false; ext.hawk = false; ext.lure = false; }
+stage.addEventListener('pointerup', release);
+stage.addEventListener('pointercancel', release);
+
+/* ══════════════════════════════════════════════════════════════
+   IDLE ATTRACT — gas → flock → a hawk dives → the flock melts and refreezes → a lure makes a mill
+   最初の操作で止まり、その時点の値がそのまま残る。
+   ══════════════════════════════════════════════════════════════ */
+let idleT = 0, idleLoop = 0;
+const IDLE_LEN = 74;
+function stopIdle(){
+  if (!state.idle) return;
+  state.idle = false; ext.hawk = false; ext.lure = false;
+  syncControls();
+}
+function smooth(t){ t = Math.min(1, Math.max(0, t)); return t*t*(3-2*t); }
+function stepIdle(dt){
+  if (!state.idle) return;
+  idleT += dt;
+  const t = idleT, base = BEHAVIORS[idleLoop % 2 === 0 ? 0 : 1].p.noise;
+  // hawk dive: a straight pass through the middle, 15 → 19 s
+  if (t > 15 && t < 19){
+    const k = (t-15)/4;
+    ext.hawk = true; ext.hx = F.w*(-0.05 + 1.1*k); ext.hy = F.h*(0.62 - 0.25*k);
+  } else ext.hawk = false;
+  // temperature: melt 27 → 37 s, refreeze 39 → 49 s
+  let nz = base;
+  // Φ collapses near noise 0.3 (measured), so 0.55 is a full gas without wasting the ramp
+  if (t > 27 && t <= 39) nz = base + (0.55-base)*smooth((t-27)/10);
+  else if (t > 39 && t <= 49) nz = 0.55 + (base-0.55)*smooth((t-39)/10);
+  state.noise = nz;
+  // lure: a mill around the centre, 53 → 64 s
+  ext.lure = t > 53 && t < 64; ext.lx = F.w/2; ext.ly = F.h/2;
+  if (t > IDLE_LEN){
+    idleT = 0; idleLoop++;
+    Object.assign(state, BEHAVIORS[idleLoop % 2 === 0 ? 0 : 1].p);
+    scatter(F, state.speed, rnd); markBehavior();
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   LOOP
+   ══════════════════════════════════════════════════════════════ */
+let last = performance.now(), roAcc = 0, flockAcc = 0, phi = 0, omega = 0, flocks = 0, meanNb = 0;
+const hist = [];             // {phi, noise} at 10 Hz
+function frame(now){
+  const dt = Math.min(0.05, (now-last)/1000); last = now;
+  stepIdle(dt);
+  if (!state.paused) stepFlock(F, state, rnd, ext, state.spot || state.revealed);
+  draw();
+  roAcc += dt;
+  if (roAcc > 0.1){
+    roAcc = 0;
+    phi = polarization(F);
+    omega = ext.lure ? rotation(F, ext.lx, ext.ly) : 0;
+    hist.push({ phi, noise:state.noise, hawk:ext.hawk, lure:ext.lure }); if (hist.length > 600) hist.shift();
+    if (state.revealed){
+      flockAcc++;
+      if (flockAcc % 5 === 0) flocks = countFlocks(F, Math.max(12, state.view*0.8), 8);
+      let s = 0; for (let i=0;i<F.n;i++) s += F.nb[i]; meanNb = F.n ? s/F.n : 0;
+      updateReadout(); drawGraph();
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+function draw(){
+  const { sc, ox, oy } = fit();
+  wctx.globalCompositeOperation = 'source-over';
+  wctx.fillStyle = `rgba(7,7,7,${state.trail})`; wctx.fillRect(0,0,W,H);
+  // streaks bucketed by how many neighbours each boid sees — lonely = dim, crowded = pale ice
+  const lone = new Path2D(), group = new Path2D(), dense = new Path2D();
+  const L = 2.6*sc;
+  for (let i=0; i<F.n; i++){
+    const x = ox + F.x[i]*sc, y = oy + F.y[i]*sc, vx = F.vx[i], vy = F.vy[i];
+    const p = F.nb[i] < 3 ? lone : F.nb[i] < 20 ? group : dense;
+    p.moveTo(x - vx*L, y - vy*L); p.lineTo(x + vx*0.6*sc, y + vy*0.6*sc);
+  }
+  wctx.globalCompositeOperation = 'lighter';
+  wctx.lineCap = 'round';
+  wctx.lineWidth = Math.max(1, 1.3*sc);
+  wctx.strokeStyle = 'rgba(40,120,160,0.75)'; wctx.stroke(lone);
+  wctx.strokeStyle = 'rgba(90,233,255,0.85)'; wctx.stroke(group);
+  wctx.strokeStyle = 'rgba(190,246,255,0.85)'; wctx.stroke(dense);
+  wctx.globalCompositeOperation = 'source-over';
+  octx.clearRect(0,0,W,H);
+  // the hand
+  const t = performance.now()*0.001;
+  if (ext.hawk){
+    const x = ox + ext.hx*sc, y = oy + ext.hy*sc;
+    octx.strokeStyle = 'rgba(255,79,168,0.75)'; octx.lineWidth = 1.4;
+    octx.beginPath(); octx.arc(x, y, 130*sc*(0.92 + 0.08*Math.sin(t*9)), 0, 6.2832); octx.stroke();
+    octx.fillStyle = '#FF4FA8'; octx.beginPath(); octx.arc(x, y, 4, 0, 6.2832); octx.fill();
+  }
+  if (ext.lure){
+    const x = ox + ext.lx*sc, y = oy + ext.ly*sc, pr = 5 + Math.sin(t*3)*1.2;
+    const g = octx.createRadialGradient(x, y, 0, x, y, pr*5);
+    g.addColorStop(0, 'rgba(255,210,122,0.6)'); g.addColorStop(1, 'rgba(255,210,122,0)');
+    octx.fillStyle = g; octx.fillRect(x-pr*5, y-pr*5, pr*10, pr*10);
+    octx.fillStyle = '#FFE6B0';
+    octx.beginPath(); octx.moveTo(x, y-pr); octx.lineTo(x+pr*0.8, y); octx.lineTo(x, y+pr); octx.lineTo(x-pr*0.8, y); octx.closePath(); octx.fill();
+  }
+  if (state.spot && F.dbg) drawSpotlight(sc, ox, oy);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PROOF — spotlight: one boid, what it can see, and the three pulls on it
+   ══════════════════════════════════════════════════════════════ */
+function drawSpotlight(sc, ox, oy){
+  const d = F.dbg, x = ox + F.x[0]*sc, y = oy + F.y[0]*sc;
+  const hd = Math.atan2(F.vy[0], F.vx[0]), half = state.fov*DEG/2, R = state.view*sc;
+  octx.save();
+  octx.globalCompositeOperation = 'lighter';
+  // field of view
+  octx.fillStyle = 'rgba(248,239,255,0.05)'; octx.strokeStyle = 'rgba(248,239,255,0.35)'; octx.lineWidth = 1;
+  octx.beginPath(); octx.moveTo(x, y); octx.arc(x, y, R, hd-half, hd+half); octx.closePath(); octx.fill(); octx.stroke();
+  octx.setLineDash([2,3]); octx.beginPath(); octx.arc(x, y, state.sep*sc, 0, 6.2832); octx.stroke(); octx.setLineDash([]);
+  // the neighbours it sees
+  octx.strokeStyle = 'rgba(90,233,255,0.35)';
+  octx.beginPath();
+  for (const j of d.nbrs){
+    let dx = F.x[j]-F.x[0]; if (dx > F.w/2) dx -= F.w; else if (dx < -F.w/2) dx += F.w;
+    let dy = F.y[j]-F.y[0]; if (dy > F.h/2) dy -= F.h; else if (dy < -F.h/2) dy += F.h;
+    octx.moveTo(x, y); octx.lineTo(x + dx*sc, y + dy*sc);
+  }
+  octx.stroke();
+  // three pulls (scaled up so a 0.2 px/frame nudge is visible)
+  const arrow = (v, col, lab)=>{
+    // a pull is at most 0.06×speed×weight px/frame — blow it up to ~40 px per unit weight
+    const k = 650*sc/Math.max(0.5, state.speed), ex = x + v[0]*k, ey = y + v[1]*k;
+    if (Math.hypot(ex-x, ey-y) < 4) return;
+    octx.strokeStyle = col; octx.fillStyle = col; octx.lineWidth = 2;
+    octx.beginPath(); octx.moveTo(x, y); octx.lineTo(ex, ey); octx.stroke();
+    const a = Math.atan2(ey-y, ex-x);
+    octx.beginPath(); octx.moveTo(ex, ey); octx.lineTo(ex - 7*Math.cos(a-0.4), ey - 7*Math.sin(a-0.4)); octx.lineTo(ex - 7*Math.cos(a+0.4), ey - 7*Math.sin(a+0.4)); octx.closePath(); octx.fill();
+    let lx = ex + 6*Math.cos(a), ly = ey + 6*Math.sin(a) + 3;
+    while (placed.some(p => Math.abs(p[0]-lx) < 34 && Math.abs(p[1]-ly) < 11)) ly += 11;   // don't stack labels
+    placed.push([lx, ly]);
+    octx.font = '9px IBM Plex Mono'; octx.fillText(lab, lx, ly);
+  };
+  const placed = [];
+  arrow(d.sep, '#FFD27A', '1 SEP');
+  arrow(d.ali, '#5AE9FF', '2 ALI');
+  arrow(d.coh, '#B58EFF', '3 COH');
+  octx.fillStyle = '#F8EFFF'; octx.beginPath(); octx.arc(x, y, 3, 0, 6.2832); octx.fill();
+  octx.font = '9px IBM Plex Mono'; octx.fillStyle = 'rgba(248,239,255,0.8)';
+  octx.fillText(`SEES ${d.nbrs.length}`, x + R*0.72, y + R*0.72 + 12);
+  octx.restore();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PROOF STRIP — Φ over the last minute, noise as a gold dotted line
+   ══════════════════════════════════════════════════════════════ */
+const graphC = document.getElementById('graph'), gctx = graphC.getContext('2d');
+let GWp=0, GHp=0;
+function resizeGraph(){
+  const r = document.getElementById('graphwrap').getBoundingClientRect();
+  GWp = Math.max(1, Math.floor(r.width)); GHp = Math.max(1, Math.floor(r.height));
+  graphC.width = GWp*DPR; graphC.height = GHp*DPR; gctx.setTransform(DPR,0,0,DPR,0,0);
+}
+function drawGraph(){
+  if (!GWp) return;
+  const g = gctx, L = 10, R = GWp-12, T = 20, B = GHp-16;
+  g.clearRect(0,0,GWp,GHp);
+  const sx = i => R - (hist.length-1-i)/599*(R-L), sy = v => B - v*(B-T);
+  // hand events
+  for (let i=0; i<hist.length; i++){
+    if (hist[i].hawk){ g.fillStyle = 'rgba(255,79,168,0.12)'; g.fillRect(sx(i)-1, T, 2, B-T); }
+    if (hist[i].lure){ g.fillStyle = 'rgba(255,210,122,0.08)'; g.fillRect(sx(i)-1, T, 2, B-T); }
+  }
+  g.strokeStyle = 'rgba(255,210,122,0.18)'; g.lineWidth = 1;
+  for (const v of [0, 0.5, 1]){ g.beginPath(); g.moveTo(L, sy(v)+0.5); g.lineTo(R, sy(v)+0.5); g.stroke(); }
+  // noise
+  g.setLineDash([2,3]); g.strokeStyle = 'rgba(255,210,122,0.7)';
+  g.beginPath(); hist.forEach((h,i)=>{ const X = sx(i), Y = sy(h.noise); i ? g.lineTo(X,Y) : g.moveTo(X,Y); }); g.stroke();
+  g.setLineDash([]);
+  // phi
+  g.strokeStyle = 'rgba(90,233,255,0.95)'; g.lineWidth = 1.5; g.shadowColor = 'rgba(90,233,255,0.6)'; g.shadowBlur = 6;
+  g.beginPath(); hist.forEach((h,i)=>{ const X = sx(i), Y = sy(h.phi); i ? g.lineTo(X,Y) : g.moveTo(X,Y); }); g.stroke();
+  g.shadowBlur = 0;
+  g.fillStyle = 'rgba(255,210,122,0.6)'; g.font = '9px IBM Plex Mono'; g.textBaseline = 'bottom';
+  g.fillText('−60 s', L, GHp-3); g.textAlign = 'right'; g.fillText('NOW', R, GHp-3);
+  g.textBaseline = 'top'; g.fillText('Φ 1.0', R, 6); g.textAlign = 'left';
+}
+
+/* ══════════════════════════════════════════════════════════════
+   READOUT / CONTROLS
+   ══════════════════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+function updateReadout(){
+  $('ro-phi').textContent = phi.toFixed(2);
+  const ph = Math.abs(omega) > 0.6 ? 'mill' : phi > 0.7 ? 'flock' : phi > 0.3 ? 'edge' : 'gas';
+  const b = $('badge'); b.className = ph;
+  b.textContent = { mill:'MILL', flock:'FLOCK', edge:'MELTING', gas:'GAS' }[ph];
+  $('ro-mill').textContent = ext.lure ? (omega >= 0 ? '+' : '−') + Math.abs(omega).toFixed(2) : '—';
+  $('ro-flocks').textContent = flocks;
+  $('ro-n').textContent = F.n.toLocaleString('en-US');
+  $('ro-nb').textContent = meanNb.toFixed(1);
+  if (state.idle){ $('c-noise').value = state.noise; $('v-noise').textContent = state.noise.toFixed(2); }
+}
+const CTRL = [
+  ['wSep',  v=>(+v).toFixed(2)],
+  ['wAli',  v=>(+v).toFixed(2)],
+  ['wCoh',  v=>(+v).toFixed(2)],
+  ['noise', v=>(+v).toFixed(2)],
+  ['view',  v=>v+' px'],
+  ['fov',   v=>v+'°'],
+  ['sep',   v=>v+' px'],
+  ['speed', v=>(+v).toFixed(1)],
+  ['trail', v=>(+v).toFixed(2)],
+];
+function syncControls(){
+  for (const [k, lab] of CTRL){ $('c-'+k).value = state[k]; $('v-'+k).textContent = lab(state[k]); }
+  $('c-n').value = F.n; $('v-n').textContent = F.n;
+  for (const r of ['sep','ali','coh']){
+    $('rule-'+r).classList.toggle('off', !state.on[r]);
+    $('rule-'+r).querySelector('.tg').classList.toggle('on', state.on[r]);
+    $('c-w'+r[0].toUpperCase()+r.slice(1)).disabled = !state.on[r];
+  }
+  $('rl-view').textContent = state.view; $('rl-fov').textContent = state.fov;
+  markBehavior();
+}
+for (const [k, lab] of CTRL){
+  $('c-'+k).addEventListener('input', e=>{
+    const v = +e.target.value; stopIdle();
+    state[k] = v; $('v-'+k).textContent = lab(v);
+    $('rl-view').textContent = state.view; $('rl-fov').textContent = state.fov;
+    markBehavior();
+  });
+}
+$('c-n').addEventListener('input', e=>{ const v = +e.target.value; stopIdle(); setCount(F, v, state.speed, rnd); state.n = v; $('v-n').textContent = v; });
+document.querySelectorAll('.rule .tg').forEach(t=>t.addEventListener('click', ()=>{
+  stopIdle(); const r = t.dataset.rule; state.on[r] = !state.on[r]; syncControls();
+}));
+function applyBehavior(i){ Object.assign(state, BEHAVIORS[i].p); state.on = { sep:true, ali:true, coh:true }; syncControls(); }
+function markBehavior(){
+  document.querySelectorAll('#presets .wb').forEach(b=>{
+    const p = BEHAVIORS[+b.dataset.i].p;
+    b.classList.toggle('on', Object.keys(p).every(k => k==='noise' || Math.abs(p[k]-state[k]) < 1e-6));
+  });
+}
+$('presets').innerHTML = BEHAVIORS.map((b,i)=>`<div class="wb" data-i="${i}">${String(i+1).padStart(2,'0')} ${b.name}<i>${b.jp}</i></div>`).join('');
+$('presets').addEventListener('click', e=>{ const b = e.target.closest('.wb'); if (!b) return; stopIdle(); applyBehavior(+b.dataset.i); });
+function setSpot(on){ state.spot = on; $('tg-spot').classList.toggle('on', on); }
+$('tg-spot').addEventListener('click', ()=>setSpot(!state.spot));
+function nudgeNoise(d){ stopIdle(); state.noise = Math.min(1, Math.max(0, +(state.noise + d).toFixed(2))); $('c-noise').value = state.noise; $('v-noise').textContent = state.noise.toFixed(2); }
+
+/* ══════════════════════════════════════════════════════════════
+   REVEAL / HINT / MODAL / PARAMS / KEYS
+   ══════════════════════════════════════════════════════════════ */
+let everRevealed = false;
+function setReveal(on){
+  state.revealed = on;
+  document.body.classList.toggle('revealed', on);
+  document.body.classList.toggle('naked', !on);
+  if (on){ everRevealed = true; hideHint(); requestAnimationFrame(()=>{ resizeGraph(); resizeWorld(); flocks = countFlocks(F, Math.max(12, state.view*0.8), 8); updateReadout(); drawGraph(); }); }
+  else requestAnimationFrame(resizeWorld);
+}
+const hintEl = $('naked-hint');
+let hintTimer = setTimeout(()=>{ if (!everRevealed) hintEl.classList.add('show'); }, 45000);
+function hideHint(){ hintEl.classList.remove('show'); clearTimeout(hintTimer); }
+
+function flash(btn,cls,txt){ const t=btn.textContent; btn.textContent=txt; btn.classList.add(cls);
+  setTimeout(()=>{ btn.textContent=t; btn.classList.remove(cls); },1200); }
+$('btn-copy').addEventListener('click', async e=>{
+  const payload = { wSep:state.wSep, wAli:state.wAli, wCoh:state.wCoh, on:{...state.on}, noise:state.noise, view:state.view,
+    fov:state.fov, sep:state.sep, speed:state.speed, boids:F.n, trail:state.trail, spot:state.spot,
+    revealed:state.revealed, paused:state.paused };
+  try{ await navigator.clipboard.writeText(JSON.stringify(payload,null,2)); flash(e.currentTarget,'ok','✓ COPIED'); }
+  catch{ flash(e.currentTarget,'err','✗'); }
+});
+$('btn-paste').addEventListener('click', async e=>{
+  try{
+    const j = JSON.parse(await navigator.clipboard.readText());
+    stopIdle();
+    for (const [k] of CTRL) if (typeof j[k]==='number') state[k] = j[k];
+    if (j.on && typeof j.on==='object') for (const r of ['sep','ali','coh']) if (typeof j.on[r]==='boolean') state.on[r] = j.on[r];
+    if (typeof j.boids==='number' && j.boids!==F.n){ const v = Math.max(100, Math.min(4000, j.boids|0)); setCount(F, v, state.speed, rnd); state.n = v; }
+    if (typeof j.spot==='boolean') setSpot(j.spot);
+    if (typeof j.paused==='boolean') state.paused = j.paused;
+    if (typeof j.revealed==='boolean' && j.revealed!==state.revealed) setReveal(j.revealed);
+    syncControls();
+    flash(e.currentTarget,'ok','✓ APPLIED');
+  }catch{ flash(e.currentTarget,'err','✗'); }
+});
+
+const modal = $('shortcut-modal');
+function openSC(){ if (!state.revealed) setReveal(true); modal.classList.add('open'); }
+function closeSC(){ modal.classList.remove('open'); }
+$('sc-open-btn').addEventListener('click', openSC);
+$('sc-close').addEventListener('click', closeSC);
+modal.addEventListener('click', e=>{ if (e.target===modal) closeSC(); });
+
+window.addEventListener('keydown', e=>{
+  const tag = document.activeElement?.tagName;
+  if (tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA') return;
+  if (e.key==='Escape'){
+    if (modal.classList.contains('open')){ closeSC(); return; }
+    if (state.revealed){ setReveal(false); return; }
+    window.location.href = 'index.html';
+    return;
+  }
+  if (e.key==='Tab'){ e.preventDefault(); setReveal(!state.revealed); return; }
+  if (e.key==='?'){ e.preventDefault(); modal.classList.contains('open') ? closeSC() : openSC(); return; }
+  if (e.code==='Space'){ e.preventDefault(); stopIdle(); state.paused = !state.paused; return; }
+  if (e.key==='r'||e.key==='R'){ stopIdle(); scatter(F, state.speed, rnd); return; }
+  if (e.key==='s'||e.key==='S'){ setSpot(!state.spot); return; }
+  if (e.key==='ArrowLeft'){ e.preventDefault(); nudgeNoise(e.shiftKey ? -0.1 : -0.02); return; }
+  if (e.key==='ArrowRight'){ e.preventDefault(); nudgeNoise(e.shiftKey ? 0.1 : 0.02); return; }
+  if (/^[1-6]$/.test(e.key)){ stopIdle(); applyBehavior(+e.key-1); return; }
+});
+$('esc-link').addEventListener('click', e=>{
+  e.preventDefault();
+  if (modal.classList.contains('open')) closeSC();
+  else if (state.revealed) setReveal(false);
+  else window.location.href = 'index.html';
+});
+
+syncControls();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
