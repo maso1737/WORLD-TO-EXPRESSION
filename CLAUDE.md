@@ -19,6 +19,7 @@
 30_Levels/      7階層ごとの知識ノート L1〜L7
 40_Primitives/  Perception Primitive P-01〜P-30 の個票（_TEMPLATE.md あり）
 90_Log/         日付ごとの作業ログ／申し送り
+scroll-experience/            特設LP「From rules to worlds.」（2026-10-24 Codex から引継ぎ・申し送り HANDOFF_20261024.md・制作ルール AGENTS.md）
 cognitive/                    完成HTML（Level 4 GESTALT）※git管理なし
 12-Principles-of-Animation/   完成HTML（Level 6）※独自gitリポジトリ
 ```
@@ -28,8 +29,14 @@ cognitive/                    完成HTML（Level 4 GESTALT）※git管理なし
 - 新しい知識・気づきは「散らさない」: 該当する `30_Levels/Lx` か `40_Primitives/Pxx` に追記し、作業の流れは `90_Log/YYYY-MM-DD.md` に書く。
 - ファイル名・日本語・全角①②はそのまま使ってよい（Obsidianは basename で解決する）。
 
+## 特設LP（scroll-experience）
+- `index.html`（バンドル形式の1ファイル。中身は `__bundler/template` の JSON 文字列）の hero 下に **「【特設ページ公開中！】SPECIAL LP」** のリンク帯がある。
+  LP を足すときはその JSON 文字列内の `<!-- ===== SPECIAL LP ===== -->` ブロックに `<a>` を1つ足す（Python で json.loads → 置換 → json.dumps、`</` は `</` に戻す）。
+- 12原則 LP へは GitHub Pages の絶対 URL でリンク（別リポジトリのため）。
+- `scroll-experience/verification/` は検証画像・レビュー zip。**git 管理外**。
+
 ## git について
-- **vault直下は現状 git 未init**（GitHub `maso1737/WORLD-TO-EXPRESSION` とは未連携）。連携するかは未定（[90_Log/2026-06-23.md](90_Log/2026-06-23.md) のTODO参照）。
+- vault直下は git 管理（origin = GitHub `maso1737/WORLD-TO-EXPRESSION`・ブランチ `master`）。
 - `12-Principles-of-Animation/` は**独自リポジトリ**。そのフォルダ内の運用ルールは [12-Principles-of-Animation/CLAUDE.md](12-Principles-of-Animation/CLAUDE.md) を参照（こちらが優先）。
 - もし vault直下を git化する場合、`.obsidian/`（個人設定）をコミットするかは要相談。
 

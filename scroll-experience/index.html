@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#F2F2EF">
+  <meta name="description" content="一つの点から、一つの世界へ。生成・知覚・編集をたどる、スクロールで奏でるグラフィック作品。">
+  <title>WORLD TO EXPRESSION — From rules to worlds.</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23f2f2ef'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%230a0a0a'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles/main.css">
+  <script defer src="js/core.js"></script>
+  <script defer src="js/patterns.js"></script>
+  <script defer src="js/scenes/00-opening.js"></script>
+  <script defer src="js/scenes/01-emergence.js"></script>
+  <script defer src="js/scenes/02-threshold.js"></script>
+  <script defer src="js/scenes/03-group.js"></script>
+  <script defer src="js/scenes/04-focus.js"></script>
+  <script defer src="js/scenes/05-interpret.js"></script>
+  <script defer src="js/scenes/06-edit.js"></script>
+  <script defer src="js/scroll-engine.js"></script>
+  <script defer src="js/main.js"></script>
+</head>
+<body>
+  <a class="skip" href="#controls">操作メニューへ</a>
+  <div class="stage" aria-hidden="true"><canvas id="world"></canvas></div>
+  <header class="masthead">
+    <a class="wordmark" href="#zero" aria-label="WORLD TO EXPRESSION 冒頭へ"><span class="brand">GEN–EX</span><span class="brand-divider">/</span><span>WORLD TO EXPRESSION</span></a>
+    <span class="edition">AN EXPERIMENT IN SEEING <span class="edition-plus">＋</span></span>
+  </header>
+  <aside class="side-note" aria-hidden="true">FROM RULES TO WORLDS.</aside>
+  <main id="score" aria-label="Scroll through the act of creation">
+    <section id="zero" class="scroll-section" aria-label="Opening"><h1 class="sr-only">WORLD TO EXPRESSION — From rules to worlds.</h1><p class="sr-only">スクロールすると一つの点が増殖し、世界の生成、知覚、認識、編集を経てポスターになります。各章へは画面下のナビゲーションでも移動できます。</p></section>
+    <section id="emergence" class="scroll-section" aria-label="Act 01 Emergence"><h2 class="sr-only">01 Emergence — Rules make worlds.</h2><p class="sr-only">黄金角の点群、ボロノイの細胞、反応拡散、ロジスティック写像の分岐。ルールから形が生まれる。</p></section>
+    <section id="threshold" class="scroll-section" aria-label="Act 02 Threshold"><h2 class="sr-only">02 Threshold — When does many begin?</h2><p class="sr-only">少数の即時把握から、量と密度を感じる知覚へ。4と5に絶対的な境界があるわけではありません。</p></section>
+    <section id="group" class="scroll-section" aria-label="Act 03 Group"><h2 class="sr-only">03 Group — Your brain draws the rest.</h2><p class="sr-only">近接、類同、連続、閉合、共通運命、対称によって、脳が自動的にまとまりをつくる。</p></section>
+    <section id="focus" class="scroll-section" aria-label="Act 04 Focus"><h2 class="sr-only">04 Focus — Direct the eye.</h2><p class="sr-only">大きさ、コントラスト、余白と非対称なバランスによって視線が変わる。</p></section>
+    <section id="interpret" class="scroll-section" aria-label="Act 05 Interpret"><h2 class="sr-only">05 Interpret — Seeing is not knowing.</h2><p class="sr-only">同じ長さや同じ大きさでも、文脈によって見え方が変わる。PROOFで等しい寸法や変化した条件を確かめる。</p></section>
+    <section id="edit" class="scroll-section" aria-label="Act 06 Edit and expression"><h2 class="sr-only">06 Edit / Expression — Less is an act of creation.</h2><p class="sr-only">今度はあなたが選び取る。情報を取り去り、余白を経て一枚のポスターへ。The world is what you make of it.</p></section>
+    <div id="end-space" aria-hidden="true"></div>
+  </main>
+  <footer class="console" id="controls">
+    <div class="scene-info"><div><span id="scene-number">00 / 06</span><span id="scene-kicker">THE POINT OF DEPARTURE</span></div><p id="scene-caption">スクロールから、すべてが始まる。</p></div>
+    <div class="transport">
+      <nav class="chapter-nav" aria-label="各ACTへ移動">
+        <a href="#zero" aria-label="00 Opening" aria-current="step"><span>00</span><i></i></a>
+        <a href="#emergence" aria-label="01 Emergence"><span>01</span><i></i></a>
+        <a href="#threshold" aria-label="02 Threshold"><span>02</span><i></i></a>
+        <a href="#group" aria-label="03 Group"><span>03</span><i></i></a>
+        <a href="#focus" aria-label="04 Focus"><span>04</span><i></i></a>
+        <a href="#interpret" aria-label="05 Interpret"><span>05</span><i></i></a>
+        <a href="#edit" aria-label="06 Edit / Expression"><span>06</span><i></i></a>
+      </nav>
+      <div class="actions"><button id="proof" aria-pressed="false" title="原理の証明を表示">PROOF <span>＋</span></button><button id="hold" aria-pressed="false" title="現在の構図を静止">HOLD <span>Ⅱ</span></button><button id="capture" hidden title="完成ポスターをPNG保存">CAPTURE ↓</button><a id="explore" href="../index.html" title="元のインタラクティブ教材へ">EXPLORE <span>↗</span></a></div>
+    </div>
+    <div class="timeline"><span id="timeline-fill"></span></div>
+    <div class="readout" aria-hidden="true"><span id="rhythm">SCROLL TO BEGIN ↓</span><span id="percentage">000.0%</span></div>
+  </footer>
+  <div id="status" class="sr-only" role="status" aria-live="polite"></div>
+  <noscript><div class="no-script">この作品にはJavaScriptが必要です。<a href="../index.html">インタラクティブラボへ →</a></div></noscript>
+</body>
+</html>
