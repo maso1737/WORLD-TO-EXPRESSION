@@ -20,7 +20,7 @@ updated: 2026-06-23
 | 3 | [[L3 PERCEPTION]] | なぜ気づく？ | [few-many](../cognitive/few-many.html) 🚧 |
 | 4 | [[L4 GESTALT]] | なぜまとまって見える？ | [cognitive/](../cognitive/index.html) ✅ |
 | 5 | [[L5 VISUAL LANGUAGE]] | なぜ伝わる？ | — |
-| 6 | [[L6 ANIMATION 12 PRINCIPLES]] | なぜ生きて見える？ | [12原則/](../12-Principles-of-Animation/index.html) ✅ |
+| 6 | [[L6 ANIMATION 12 PRINCIPLES]] | なぜ生きて見える？ | [12原則/](../../12-Principles-of-Animation/index.html) ✅ |
 | 7 | [[L7 EXPRESSION]] | どう表現する？ | — |
 
 **クロスレベル試作**（由来 → [[2026-06-23 NotebookLM ①②差分統合分析]]）:

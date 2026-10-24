@@ -10,10 +10,10 @@ status: 完成HTMLあり（GitHub連携）
 戻る → [[Gen-EX]] ｜ 前 → [[L5 VISUAL LANGUAGE]] ｜ 次 → [[L7 EXPRESSION]]
 
 ## ✅ 完成HTML（GitHub連携済み・独自リポジトリ）
-- ローカル入口 → [12-Principles-of-Animation/index.html](../12-Principles-of-Animation/index.html)
+- ローカル入口 → [12-Principles-of-Animation/index.html](../../12-Principles-of-Animation/index.html)
 - 公開URL → https://maso1737.github.io/12-Principles-of-Animation/
 - GitHub → https://github.com/maso1737/12-Principles-of-Animation
-- このフォルダ専用の運用ルール → [12-Principles-of-Animation/CLAUDE.md](../12-Principles-of-Animation/CLAUDE.md)
+- このフォルダ専用の運用ルール → [12-Principles-of-Animation/CLAUDE.md](../../12-Principles-of-Animation/CLAUDE.md)
 
 ## 核心
 ディズニー12原則 = 数理的には「物理法則の誇張」＋「脳の予測シミュレーションの充足」。
