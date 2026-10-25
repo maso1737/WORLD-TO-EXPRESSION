@@ -1,10 +1,46 @@
 # HANDOFF — 次セッションへの申し送り
 
-最終更新: 2026-10-22（Emergence Engine 02/03 追加・下の「別件」）／ 2026-08-13 ／ 直近セッション: COGNITIVE ブラッシュアップ **完走**（NULL & MEASURE 3p ＋ GAZE PARTICLE 6p ＋ l2-05 天秤 ＋ l3-05 STROBE）
+最終更新: 2026-10-25 ／ 直近セッション: **Emergence Engine を 01〜04 ＋入口まで拡張し、全作品に VJ パネル（音連動・書き出し）**
+（COGNITIVE ブラッシュアップは 2026-08-31 に完走済み → 下の「COGNITIVE（前の仕事）」）
 
 ---
 
-## いま何をやっているか
+## 🆕 いま — Emergence Engine（`Emergence Engine/index.html` が入口）
+
+| ファイル | 中身 | 状態 |
+|---|---|---|
+| `01_bifurcation_walk.html` | ロジスティック写像の分岐図を歩く | VJ パネル追加（2026-10-25） |
+| `02_highway.html` | ラングトンのアリ（1万歩で道・トーラスで衝突→また道） | VJ ／ EVENTS 欄のカタカタ修正 |
+| `03_slime_network.html` | 粘菌（Jones 2010）・6種・餌／LURE／CUT | VJ ／ 下部に「網の量」グラフ帯を追加 |
+| `04_flock.html` | ボイド・鷹／餌の渦・相転移（NOISE≈0.3） | VJ |
+| `index.html` | シリーズ入口（ホバーでライブ再生） | — |
+
+詳細と実測はすべて [[2026-10-22]]（`90_Log/2026-10-22.md`）。末尾に 10-25 分を追記。
+
+### VJ パネル（4作品共通・右パネルの PARAMS の上）
+- ♪ LOAD AUDIO → PLAY ／ 帯域メーター ／ SENS ／ BPM＋TAP（`T`）＋拍 LED ／ BEAT FROM（OFF・MP3 KICK・BPM CLOCK）／ ON BEAT ／ N 拍ごと ／ MID→・HIGH→ ／ REC WebM（音つき）／ 連番PNG（拍ぴったり・1080p/4K）
+- **共通コードの元**は scratchpad の `vj_common.py`（セッションが変わると消える）。**正は各 HTML の中のコピー**。直すときは4ファイルとも同じ箇所を直す（`/* VJ — audio / BPM / export` で grep）。
+- 作品ごとに違うのは最後の `VJ_HOOKS`（拍で起きること）だけ。
+
+### ⚠️ ユーザー確認待ち
+1. **実際の mp3 でのキックの効き**（SENS 既定 55）。多すぎ／少なすぎなら SENS か、`vjAnalyze` の `low - high > 0.06`（ハイハット除け）を調整。
+2. **連番PNG を実フォルダに書けるか**・**REC WebM に音が入るか**（Claude 側は偽フォルダと無音で確認済み）。
+3. 自動上演の一巡の通し視聴（02 約4.5分／03 約5分／04 74秒）。
+
+### 次の候補（ユーザー選択）
+① EE-05（ライフゲーム／反応拡散／Lenia）② EE-01b 3D 版 ③ vj-audio-export-kit スキルに「ハイハットの誤検出」と「シミュレーション作品の連番PNG＝1/60 秒刻みのオフラインレンダ」を追記（スキルの書き換えなのでユーザーの OK が要る）
+
+### 🔧 この系列で効いた検証のやり方
+- Browser ペインは裏に回ると rAF が毎秒1回程度になる → `advance(1/60)` を JS から回して `draw()` → スクショ／画素で確認。
+- 絵の確認は Node：HTML の `/*SIM-BEGIN … SIM-END*/` を切り出して `vm.runInThisContext`（`eval` は15倍遅い）→ RGBA → PIL でコンタクトシート。
+- ブラウザがキャッシュした古い JS を読むことがある → URL に `?v=数字` を付ける。
+- 連番PNG は `window.showDirectoryPicker` を偽物に差し替えて `vjSeq()` を回すと枚数・拍数を検証できる。
+
+---
+
+## COGNITIVE（前の仕事）
+
+### 何をやっていたか
 
 `cognitive/` 全26ページの **インタラクション表現ブラッシュアップ**。
 仕様書 → **[[BRUSHUP-SPEC_cognitive]]**（`20_Design/BRUSHUP-SPEC_cognitive.md`）

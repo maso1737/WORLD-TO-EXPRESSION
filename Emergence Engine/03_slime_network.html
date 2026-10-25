@@ -28,14 +28,18 @@ html,body{width:100%;height:100%;background:var(--noir);color:var(--white);
 
 #app{display:grid;height:100vh;width:100vw;}
 body.naked #app{grid-template-rows:1fr;grid-template-columns:1fr;}
-body.naked #topbar,body.naked #side,body.naked #bottombar{display:none;}
+body.naked #topbar,body.naked #side,body.naked #graphwrap,body.naked #bottombar{display:none;}
 body.naked #stage{grid-column:1/-1;grid-row:1/-1;}
 body.naked .stage-deco{opacity:0;}
-body.revealed #app{grid-template-rows:44px 1fr 44px;grid-template-columns:1fr 300px;}
+body.revealed #app{grid-template-rows:44px 1fr 130px 44px;grid-template-columns:1fr 300px;}
 body.revealed #topbar{grid-area:1/1/2/-1;}
 body.revealed #stage {grid-area:2/1/3/2;}
-body.revealed #side  {grid-area:2/2/3/3;}
-body.revealed #bottombar{grid-area:3/1/4/-1;}
+body.revealed #graphwrap{grid-area:3/1/4/2;}
+body.revealed #side  {grid-area:2/2/4/3;}
+body.revealed #bottombar{grid-area:4/1/5/-1;}
+#graphwrap{position:relative;border-top:1px solid rgba(255,210,122,.1);background:var(--noir);overflow:hidden;}
+#graph{position:absolute;inset:0;width:100%;height:100%;display:block;}
+#graph-lbl{position:absolute;top:4px;left:8px;font-size:8px;letter-spacing:.32em;color:var(--mute);pointer-events:none;}
 
 #stage{position:relative;overflow:hidden;background:var(--noir);touch-action:none;cursor:crosshair;}
 #world{display:block;width:100%;height:100%;}
@@ -160,10 +164,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 .vj-cap b{color:var(--gold);font-weight:500;}
 
 @media(max-width:720px){
-  body.revealed #app{grid-template-columns:1fr;}
+  body.revealed #app{grid-template-columns:1fr;grid-template-rows:44px 1fr 110px 44px;}
   body.revealed #side{position:fixed;right:0;top:44px;bottom:44px;width:min(300px,84vw);z-index:40;
     background:#0b0b0b;box-shadow:-10px 0 40px rgba(0,0,0,.6);}   /* opaque: it sits over the stage here */
-  body.revealed #stage{grid-area:2/1/3/-1;}
+  body.revealed #stage{grid-area:2/1/3/-1;} body.revealed #graphwrap{grid-area:3/1/4/-1;}
 }
 </style>
 </head>
@@ -187,6 +191,11 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
         <div class="po-jp">脳のない設計者</div>
       </div>
     </div>
+  </div>
+
+  <div id="graphwrap">
+    <canvas id="graph"></canvas>
+    <div id="graph-lbl">NETWORK COVER — 網の量（直近60秒） · 金＝餌の数 · rouge＝拍 · 餌が増えると網は伸び、やがて無駄を削って細る</div>
   </div>
 
   <div id="side">
@@ -445,7 +454,7 @@ function resizeWorld(){
   wctx.setTransform(DPR,0,0,DPR,0,0);
 }
 new ResizeObserver(resizeWorld).observe(stage);
-window.addEventListener('resize', resizeWorld);
+window.addEventListener('resize', ()=>{ resizeWorld(); if (state.revealed) resizeGraph(); });
 resizeWorld();
 
 let sim, GW=0, GH=0, food=[], lure=[], cuts=[];
@@ -543,7 +552,9 @@ function frame(now){
   vjTick(now, dt);
   advance(dt);
   draw(dt);
-  if (state.revealed){ roAcc += dt; if (roAcc > 0.1){ roAcc = 0; updateReadout(); drawAgentView(); } }
+  sampAcc += dt;
+  if (sampAcc > 0.1){ sampAcc = 0; sampleHist(); }
+  if (state.revealed){ roAcc += dt; if (roAcc > 0.1){ roAcc = 0; updateReadout(); drawAgentView(); drawGraph(); } }
   queueRaf();
 }
 let vjPulse = 0;
@@ -673,6 +684,47 @@ function drawAgentView(){
    READOUT
    ══════════════════════════════════════════════════════════════ */
 const $ = id => document.getElementById(id);
+/* ══════════════════════════════════════════════════════════════
+   PROOF STRIP — how much network exists, against food and beats
+   ══════════════════════════════════════════════════════════════ */
+const hist = []; let sampAcc = 0, histBeat = 0;
+function coverNow(){
+  let on = 0; const tr = sim.trail, th = state.dep*2.2;
+  for (let i=0; i<tr.length; i+=5) if (tr[i] > th) on++;
+  return on/(tr.length/5);
+}
+function sampleHist(){
+  hist.push({ c:coverNow(), f:food.length, beat:VJ.count !== histBeat });
+  histBeat = VJ.count;
+  if (hist.length > 600) hist.shift();
+}
+const graphC = document.getElementById('graph'), gctx = graphC.getContext('2d');
+let GWp = 0, GHp = 0;
+function resizeGraph(){
+  const r = document.getElementById('graphwrap').getBoundingClientRect();
+  GWp = Math.max(1, Math.floor(r.width)); GHp = Math.max(1, Math.floor(r.height));
+  graphC.width = GWp*DPR; graphC.height = GHp*DPR; gctx.setTransform(DPR,0,0,DPR,0,0);
+}
+function drawGraph(){
+  if (!GWp) return;
+  const g = gctx, L = 10, R = GWp-12, T = 20, B = GHp-16;
+  g.clearRect(0,0,GWp,GHp);
+  let maxC = 0.05; for (const h of hist) if (h.c > maxC) maxC = h.c;
+  const sx = i => R - (hist.length-1-i)/599*(R-L), sy = v => B - v/maxC*(B-T), sf = f => B - f/MAX_FOOD*(B-T);
+  for (let i=0; i<hist.length; i++) if (hist[i].beat){ g.fillStyle = 'rgba(255,79,168,0.35)'; g.fillRect(sx(i), B-6, 1, 6); }
+  g.strokeStyle = 'rgba(255,210,122,0.18)'; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(L, B+0.5); g.lineTo(R, B+0.5); g.stroke();
+  g.strokeStyle = 'rgba(255,210,122,0.75)'; g.beginPath();
+  hist.forEach((h,i)=>{ const X = sx(i), Y = sf(h.f); if (i){ g.lineTo(X, sf(hist[i-1].f)); g.lineTo(X, Y); } else g.moveTo(X, Y); });
+  g.stroke();
+  g.strokeStyle = 'rgba(90,233,255,0.95)'; g.lineWidth = 1.5; g.shadowColor = 'rgba(90,233,255,0.6)'; g.shadowBlur = 6;
+  g.beginPath(); hist.forEach((h,i)=>{ const X = sx(i), Y = sy(h.c); i ? g.lineTo(X,Y) : g.moveTo(X,Y); }); g.stroke();
+  g.shadowBlur = 0;
+  g.fillStyle = 'rgba(255,210,122,0.6)'; g.font = '9px IBM Plex Mono'; g.textBaseline = 'bottom';
+  g.fillText('−60 s', L, GHp-3); g.textAlign = 'right'; g.fillText('NOW', R, GHp-3);
+  g.textBaseline = 'top'; g.fillText((maxC*100).toFixed(0) + '% cover', R, 6); g.textAlign = 'left';
+}
+
 function updateReadout(){
   $('ro-n').textContent = sim.n.toLocaleString('en-US');
   $('ro-food').textContent = food.length + ' / ' + MAX_FOOD;
@@ -770,7 +822,7 @@ function setReveal(on){
   state.revealed = on;
   document.body.classList.toggle('revealed', on);
   document.body.classList.toggle('naked', !on);
-  if (on){ everRevealed = true; hideHint(); requestAnimationFrame(()=>{ resizeWorld(); updateReadout(); drawAgentView(); }); }
+  if (on){ everRevealed = true; hideHint(); requestAnimationFrame(()=>{ resizeWorld(); resizeGraph(); updateReadout(); drawAgentView(); drawGraph(); }); }
   else requestAnimationFrame(resizeWorld);
 }
 const hintEl = $('naked-hint');

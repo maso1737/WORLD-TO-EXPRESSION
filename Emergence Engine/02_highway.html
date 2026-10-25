@@ -122,7 +122,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 .tg::after{content:'';position:absolute;width:13px;height:13px;border-radius:50%;background:#fff;top:2px;left:2px;transition:left .2s;}
 .tg.on::after{left:19px;}
 /* events */
-#events{font-size:9px;line-height:1.9;letter-spacing:.06em;color:rgba(248,239,255,.7);font-variant-numeric:tabular-nums;}
+/* fixed 9-row box, one line per event: a wrapping row or a growing list moved everything below it up and down */
+#events{font-size:9px;line-height:1.9;letter-spacing:.06em;color:rgba(248,239,255,.7);font-variant-numeric:tabular-nums;
+  height:calc(9 * 1.9em);overflow:hidden;}
+#events > div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 #events .ev-h{color:var(--rouge);} #events .ev-c{color:var(--ice);} #events .ev-s{color:var(--gold);}
 #events .ev-n{color:var(--mute);margin-right:8px;}
 /* copy/paste */
