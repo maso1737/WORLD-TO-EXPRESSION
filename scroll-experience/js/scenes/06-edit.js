@@ -51,7 +51,7 @@
   WTE.scenes[6]={poster:WTE.drawPoster,render(c,w,h,p,env){
     const {mobile,m,top,bottom,cx,cy,aw,ah}=box(w,h);bg(c,w,h,C.paper);
     const mark=posterLayout(w,h);
-    let phase='SUBTRACT',caption='ここからは、あなたが決める。残すことも、取り去ることも。';
+    let phase='SUBTRACT',caption='スクロールで取り去る。残る形に、意味が生まれる。';
     if(p<.23){
       WTE.drawInterpretField(c,w,h,1-range(p,0,.22));
       if(p>.06){
@@ -69,7 +69,7 @@
       circle(c,lerp(cx,mark.x,settle),lerp(cy,mark.y,settle),3,C.ink);
     }else if(p<.68){
       // Intentional 1.4-screen rest. Scroll changes almost nothing here.
-      circle(c,mark.x,mark.y,3,C.ink);phase='RELEASE';caption='この余白も、あなたの表現になる。';
+      circle(c,mark.x,mark.y,3,C.ink);phase='RELEASE';caption='何も足さずに、この余白を見る。';
       if(p>.49)label(c,'LESS IS AN ACT OF CREATION.',cx,bottom-22,C.ink,mobile?8:10,'center');
       if(env.proof)label(c,'HOLD THE SPACE / THE MARK DOES NOT MOVE',cx,top+24,C.ink,mobile?7:10,'center');
     }else if(p<.80){
@@ -86,7 +86,7 @@
       // The held point constructs the emblem just ahead of the typography wipe.
       // The completed poster/export uses exactly the original full geometry.
       if(t<1)emblem(c,mark.x,mark.y,mark.r,range(p,.80,.842));
-      phase=t<1?'RECOMPOSE':'EXPRESSION';caption='THE WORLD IS WHAT YOU MAKE OF IT.';
+      phase=t<1?'RECOMPOSE':'EXPRESSION';caption=t<1?'削った先に、次の世界をつくる。':'次は、ラボでルールを変えてみる。';
       if(env.proof){c.fillStyle=C.paper;c.fillRect(m,bottom-5,Math.min(aw,540),22);label(c,'GOLDEN ANGLE + VORONOI + DENSITY → ONE COMPOSITION',m,bottom+8,C.ink,mobile?6.5:9);}
     }
     return {bg:p>=.68&&p<.80?C.yellow:C.paper,ink:C.ink,accent:C.ink,phase,kicker:'06 / EDIT → EXPRESSION',caption,source:p<.8?'../cognitive/l4-03-whitespace.html':'../index.html',sourceLabel:p<.8?'WHITESPACE / ORIGINAL LAB':'EXPLORE THE INTERACTIVE LAB',finale:p>=.85};

@@ -11,7 +11,13 @@ window.WTE = (() => {
   function display(c,text,x,y,size,color=C.ink,opts={}){c.fillStyle=color;c.font=`${opts.weight||900} ${size}px "Arial Black",Arial,sans-serif`;c.textAlign=opts.align||'left';c.textBaseline='alphabetic';if(opts.maxWidth)c.fillText(text,x,y,opts.maxWidth);else c.fillText(text,x,y);}
   function bg(c,w,h,color){c.fillStyle=color;c.fillRect(0,0,w,h);}
   function hash(i){const n=Math.sin(i*127.1+311.7)*43758.5453123;return n-Math.floor(n);}
-  function box(w,h){const mobile=w<600,m=mobile?26:Math.max(55,w*.055),top=mobile?91:119,bottom=mobile?h-198:h-155;return {mobile,m,top,bottom,cx:w/2,cy:(top+bottom)/2,aw:w-2*m,ah:bottom-top};}
+  function box(w,h){
+    const mobile=w<600,m=mobile?26:Math.max(55,w*.055),top=mobile?91:119;
+    // Matches the stacked 44px controls in CSS. A fixed viewport-based reserve
+    // keeps forward/reverse composition independent of the previous caption.
+    const stacked=w<=520||(w<=800&&h>=w),bottom=h-(stacked?210:mobile?198:155);
+    return {mobile,m,top,bottom,cx:w/2,cy:(top+bottom)/2,aw:w-2*m,ah:bottom-top};
+  }
   const scenes=[];
   return {C,clamp,lerp,smooth,range,circle,line,label,display,bg,hash,box,scenes};
 })();

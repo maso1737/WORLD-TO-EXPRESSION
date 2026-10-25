@@ -64,7 +64,8 @@
   WTE.scenes[1] = {
     render(ctx, w, h, p, env) {
       const mobile = w < 600 || w < h * .82, m = mobile ? Math.max(24, w * .055) : 48;
-      const top = mobile ? 98 : 120, bottom = h - (mobile ? 198 : 155);
+      const stackedTablet = w > 520 && w <= 800 && h >= w;
+      const top = mobile ? 98 : 120, bottom = Math.min(h - (mobile ? 198 : 155), stackedTablet && !mobile ? WTE.box(w,h).bottom : h);
       const artH = bottom - top;
       const cx = mobile ? w * .5 : w * .67;
       const cy = mobile ? top + artH * .64 : top + artH * .51;
@@ -177,11 +178,13 @@
         // Keep the full chart, equation, axis and sample count; never crop data.
         const compact = artH < 260;
         const titleTop = compact ? (w <= 520 ? 75 : 90) : top;
-        const sampleY = compact ? bottom + (mobile || w <= 800 ? 0 : 23) : bottom + (mobile ? 43 : 25);
+        // Share the axis-label row on tall screens; the chart stays unchanged
+        // while the enlarged console gets room below the required sample count.
+        const sampleY = compact ? bottom + (mobile || w <= 800 ? 0 : 23) : bottom + (stackedTablet ? 12 : 25);
         const font = Math.min(mobile ? w * .19 : Math.min(w * .151, 182), compact ? (sampleY - titleTop) * .22 : Infinity);
         const plotY = compact ? titleTop + font + 20 : mobile ? top + 105 : top + 108;
         const axisY = compact ? sampleY - 34 : bottom + 5;
-        const tickY = compact ? sampleY - 18 : bottom + 25;
+        const tickY = compact ? sampleY - 18 : sampleY;
         const plotH = Math.max(1, compact ? axisY - plotY - 8 : bottom - plotY - 12);
         const shown = Math.max(1, Math.floor(t * P.bifurcation.length));
         const currentR = P.bifurcation[shown - 1].r;
@@ -209,10 +212,10 @@
           label(ctx, '4.000', plotX + plotW, tickY, C.ice, 9, 'right');
         }
         if (env.proof) {
-          const equationY = compact ? plotY - 9 : mobile ? plotY - 17 : top - 14;
+          const equationY = compact ? plotY - 9 : mobile ? (stackedTablet ? top - 8 : plotY - 17) : top - 14;
           label(ctx, 'x[n+1] = r × x[n] × (1 − x[n])', m, equationY, C.paper, mobile ? 8 : 10);
-          // Desktop proof shares the axis row between its endpoint labels.
-          const sharedRow = !compact && !mobile;
+          // The sample count fits between the endpoint labels in either layout.
+          const sharedRow = !compact;
           label(ctx, '700 TRANSIENTS DISCARDED / 120 SAMPLES PER r', sharedRow ? w / 2 : m, sampleY, C.paper, mobile ? 7 : 9, sharedRow ? 'center' : 'left');
         }
         phase = t < .61 ? 'BUILD' : erase > 0 ? 'HANDOFF' : 'BREAK';

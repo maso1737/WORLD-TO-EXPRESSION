@@ -24,8 +24,8 @@ python -m http.server 4173 --bind 127.0.0.1
 - **ACT NAVIGATION** — 各章へジャンプします。
 - **PROOF** — 等長・等径や、変化しているパラメータの注釈を表示します。
 - **HOLD** — 押した瞬間に見えている構図を固定します。文書のスクロールは維持され、解除すると現在の実位置へ短く追従します。
-- **EXPLORE** — 現在の章に対応する既存のインタラクティブ教材を開きます。
-- **CAPTURE** — 完成ポスターを PNG として保存します。
+- **EXPLORE / OPEN LAB** — 各章では対応する既存教材、完成ポスターではラボのトップを開きます。
+- **CAPTURE** — 完成ポスター（画面UIを含まない1800×2400）のPNGダウンロードを開始します。
 
 OS / ブラウザの「視差効果を減らす」設定では、細かな連続変形を抑え、安定したキーフレームを表示する設計です。
 
@@ -39,11 +39,11 @@ OS / ブラウザの「視差効果を減らす」設定では、細かな連続
 
 原典、各章の構図、遷移、科学的な扱いは [DESIGN_NOTES.md](DESIGN_NOTES.md) を参照してください。
 
-最新の制作・検証記録: [FINISH_NOTES.md](FINISH_NOTES.md)（2026-10-22）。横画面の分岐図・PROOFの配置、GROUPの文字退出、照合資料を仕上げました。
+最新の制作・検証記録: [FINAL_POLISH_NOTES.md](FINAL_POLISH_NOTES.md)（2026-10-25）。終幕コピーとOPEN LAB、操作領域、PNG保存・フォーカスを仕上げました。[変更前後の比較](verification/final-polish-20261025/compare.html) / [今回保存したPNG](verification/final-polish-20261025/after/WORLD-TO-EXPRESSION-poster.png)。前回の仕上げ記録は [FINISH_NOTES.md](FINISH_NOTES.md)（2026-10-22）です。
 
 レビュー用: [10月22日仕上げ版 ZIP](verification/WORLD-TO-EXPRESSION-finish-review-20261022.zip)、[完成ポスター PNG](verification/motion-20261021/WORLD-TO-EXPRESSION-poster.png)。
 
-**最新ZIPのソース照合には [verification/source-sha256.json](verification/source-sha256.json) を使用してください。** キーのパスは `scroll-experience/` 相対です。`verification/motion-20261021/source-sha256.json` は10月21日版の履歴であり、最新ソースの照合用ではありません。
+**10月22日ZIPの照合には [verification/source-sha256.json](verification/source-sha256.json) を使用してください。** キーのパスは `scroll-experience/` 相対です。今回の10月25日ローカル完成版は新しいZIPを作成しておらず、このマニフェストは現行ソース全体の照合用ではありません。`verification/motion-20261021/source-sha256.json` は10月21日版の履歴です。
 
 モーション改善の履歴: [MOTION_NOTES.md](MOTION_NOTES.md)、[10月21日ZIP](verification/WORLD-TO-EXPRESSION-motion-review-20261021.zip)。過去のZIPはローカルに保持し、新しいZIPには重複して内包しません。
 
