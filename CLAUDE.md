@@ -44,7 +44,7 @@ cognitive/                    完成HTML（Level 4 GESTALT）※git管理なし
 - 実行ファイル: `notebooklm-py-main\.venv\Scripts\notebooklm.exe`（venvはBlender Python 3.11製）。ログイン済み。
 - 日本語を扱うときは `$env:PYTHONUTF8=1` を先に設定。
 - **基本ループ**: `create "名前" --json` → `source add "<file>" -n <id> --type file --mime-type text/plain` → `source wait <source_id> -n <id>` → `summary -n <id> --topics` / `ask "質問" -n <id>` → 出力を `10_Research/` にmdノート化。
-- ⚠️ **`.md`直アップは `error` になる**。`.txt`化して `--mime-type text/plain` で渡すと `ready`（`_済/`を変換置き場に使う）。
+- ⚠️ **`.md`直アップは `error` になる**。`.txt`化して `--mime-type text/plain` で渡すと `ready`（`_Archive/`を変換置き場に使う・旧 `_済/`）。
 - ⚠️ グローバルオプション（`--quiet` `-v` 等）は `notebooklm <opt> <command>` の順（サブコマンド後ろはNG）。
 - 既存ノートブック: `Gen-EX Research` = `fedb41c0-c666-464a-be7e-79013df56af8`。
 - 成果物への昇華は `ask --save-as-note` でNotebookLM側にも残せる。Obsidian側は人手/Claudeでmd化。
