@@ -839,13 +839,15 @@ function hideHint(){ hintEl.classList.remove('show'); clearTimeout(hintTimer); }
 function flash(btn,cls,txt){ const t=btn.textContent; btn.textContent=txt; btn.classList.add(cls);
   setTimeout(()=>{ btn.textContent=t; btn.classList.remove(cls); },1200); }
 $('btn-copy').addEventListener('click', async e=>{
+  const btn = e.currentTarget;   // read it before any await — it is null once the handler yields
   const payload = { wSep:state.wSep, wAli:state.wAli, wCoh:state.wCoh, on:{...state.on}, noise:state.noise, view:state.view,
     fov:state.fov, sep:state.sep, speed:state.speed, boids:F.n, trail:state.trail, spot:state.spot,
     revealed:state.revealed, paused:state.paused };
-  try{ await navigator.clipboard.writeText(JSON.stringify(payload,null,2)); flash(e.currentTarget,'ok','✓ COPIED'); }
-  catch{ flash(e.currentTarget,'err','✗'); }
+  try{ await navigator.clipboard.writeText(JSON.stringify(payload,null,2)); flash(btn,'ok','✓ COPIED'); }
+  catch{ flash(btn,'err','✗'); }
 });
 $('btn-paste').addEventListener('click', async e=>{
+  const btn = e.currentTarget;   // read it before any await — it is null once the handler yields
   try{
     const j = JSON.parse(await navigator.clipboard.readText());
     stopIdle();
@@ -856,8 +858,8 @@ $('btn-paste').addEventListener('click', async e=>{
     if (typeof j.paused==='boolean') state.paused = j.paused;
     if (typeof j.revealed==='boolean' && j.revealed!==state.revealed) setReveal(j.revealed);
     syncControls();
-    flash(e.currentTarget,'ok','✓ APPLIED');
-  }catch{ flash(e.currentTarget,'err','✗'); }
+    flash(btn,'ok','✓ APPLIED');
+  }catch{ flash(btn,'err','✗'); }
 });
 
 const modal = $('shortcut-modal');

@@ -758,13 +758,15 @@ document.getElementById('tg-win3').addEventListener('click',e=>{ state.window3=!
 function flash(btn,cls,txt){ const t=btn.textContent; btn.textContent=txt; btn.classList.add(cls);
   setTimeout(()=>{ btn.textContent=t; btn.classList.remove(cls); },1200); }
 document.getElementById('btn-copy').addEventListener('click', async e=>{
+  const btn = e.currentTarget;   // read it before any await — it is null once the handler yields
   const payload={ r:+state.r.toFixed(6), genPerSec:state.genPerSec, particles:state.N, trail:state.trail,
     mapWindow:state.mapWindow.map(v=>+v.toFixed(4)), revealed:state.revealed,
     feigenbaum:state.feigenbaum, window3:state.window3, paused:state.paused };
-  try{ await navigator.clipboard.writeText(JSON.stringify(payload,null,2)); flash(e.currentTarget,'ok','✓ COPIED'); }
-  catch{ flash(e.currentTarget,'err','✗'); }
+  try{ await navigator.clipboard.writeText(JSON.stringify(payload,null,2)); flash(btn,'ok','✓ COPIED'); }
+  catch{ flash(btn,'err','✗'); }
 });
 document.getElementById('btn-paste').addEventListener('click', async e=>{
+  const btn = e.currentTarget;   // read it before any await — it is null once the handler yields
   try{
     const j=JSON.parse(await navigator.clipboard.readText());
     if(typeof j.r==='number') setR(j.r);
@@ -776,8 +778,8 @@ document.getElementById('btn-paste').addEventListener('click', async e=>{
     if(typeof j.window3==='boolean'){ state.window3=j.window3; document.getElementById('tg-win3').classList.toggle('on',j.window3); }
     if(typeof j.paused==='boolean'){ state.paused=j.paused; }
     if(typeof j.revealed==='boolean'&&j.revealed!==state.revealed) setReveal(j.revealed);
-    flash(e.currentTarget,'ok','✓ APPLIED');
-  }catch{ flash(e.currentTarget,'err','✗'); }
+    flash(btn,'ok','✓ APPLIED');
+  }catch{ flash(btn,'err','✗'); }
 });
 
 /* ══════════════════════════════════════════════════════════════

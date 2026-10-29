@@ -819,12 +819,14 @@ $('tg-glow').addEventListener('click', e=>{ state.glow = !state.glow; e.currentT
 function flash(btn,cls,txt){ const t=btn.textContent; btn.textContent=txt; btn.classList.add(cls);
   setTimeout(()=>{ btn.textContent=t; btn.classList.remove(cls); },1200); }
 $('btn-copy').addEventListener('click', async e=>{
+  const btn = e.currentTarget;   // read it before any await — it is null once the handler yields
   const payload = { rule:state.rule, speed:+state.speed.toFixed(1), cell:state.cell, decay:state.decay,
     glow:state.glow, revealed:state.revealed, paused:state.paused };
-  try{ await navigator.clipboard.writeText(JSON.stringify(payload,null,2)); flash(e.currentTarget,'ok','✓ COPIED'); }
-  catch{ flash(e.currentTarget,'err','✗'); }
+  try{ await navigator.clipboard.writeText(JSON.stringify(payload,null,2)); flash(btn,'ok','✓ COPIED'); }
+  catch{ flash(btn,'err','✗'); }
 });
 $('btn-paste').addEventListener('click', async e=>{
+  const btn = e.currentTarget;   // read it before any await — it is null once the handler yields
   try{
     const j = JSON.parse(await navigator.clipboard.readText());
     stopIdle();
@@ -837,8 +839,8 @@ $('btn-paste').addEventListener('click', async e=>{
     if (reset) resetWorld();
     if (typeof j.paused==='boolean') state.paused=j.paused;
     if (typeof j.revealed==='boolean' && j.revealed!==state.revealed) setReveal(j.revealed);
-    flash(e.currentTarget,'ok','✓ APPLIED');
-  }catch{ flash(e.currentTarget,'err','✗'); }
+    flash(btn,'ok','✓ APPLIED');
+  }catch{ flash(btn,'err','✗'); }
 });
 
 /* SHORTCUT MODAL */
