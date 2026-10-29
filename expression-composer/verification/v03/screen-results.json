@@ -1,0 +1,2605 @@
+{
+  "browser": "155.0.8059.79",
+  "checks": [
+    {
+      "name": "1440 RULE stage / fonts / overflow",
+      "pass": true
+    },
+    {
+      "name": "1440 RULE initial CTA",
+      "pass": true,
+      "evidence": [
+        {
+          "id": "compare",
+          "x": 177.015625,
+          "y": 211,
+          "width": 186.4375,
+          "height": 40,
+          "bottom": 251,
+          "right": 363.453125,
+          "visible": true
+        },
+        {
+          "id": "take-main",
+          "x": 902.90625,
+          "y": 211,
+          "width": 183.09375,
+          "height": 40,
+          "bottom": 251,
+          "right": 1086,
+          "visible": true
+        }
+      ]
+    },
+    {
+      "name": "1440 COMPARE stage / fonts / overflow",
+      "pass": true
+    },
+    {
+      "name": "1440 COMPARE initial CTA",
+      "pass": true,
+      "evidence": [
+        {
+          "id": "take-a",
+          "x": 808.40625,
+          "y": 211,
+          "width": 131.828125,
+          "height": 40,
+          "bottom": 251,
+          "right": 940.234375,
+          "visible": true
+        },
+        {
+          "id": "take-b",
+          "x": 948.234375,
+          "y": 211,
+          "width": 137.765625,
+          "height": 40,
+          "bottom": 251,
+          "right": 1086,
+          "visible": true
+        }
+      ]
+    },
+    {
+      "name": "1440 FREEZE stage / fonts / overflow",
+      "pass": true
+    },
+    {
+      "name": "1440 FREEZE initial CTA",
+      "pass": true,
+      "evidence": []
+    },
+    {
+      "name": "1440 EDIT stage / fonts / overflow",
+      "pass": true
+    },
+    {
+      "name": "1440 EDIT initial CTA",
+      "pass": true,
+      "evidence": [
+        {
+          "id": "to-output",
+          "x": 938.125,
+          "y": 211,
+          "width": 147.875,
+          "height": 40,
+          "bottom": 251,
+          "right": 1086,
+          "visible": true
+        }
+      ]
+    },
+    {
+      "name": "1440 OUTPUT stage / fonts / overflow",
+      "pass": true
+    },
+    {
+      "name": "1440 OUTPUT initial CTA",
+      "pass": true,
+      "evidence": [
+        {
+          "id": "export-png",
+          "x": 1129,
+          "y": 459.96875,
+          "width": 262,
+          "height": 40,
+          "bottom": 499.96875,
+          "right": 1391,
+          "visible": true
+        }
+      ]
+    },
+    {
+      "name": "1280 RULE stage / fonts / overflow",
+      "pass": true
+    },
+    {
+      "name": "1280 COMPARE stage / fonts / overflow",
+      "pass": true
+    },
+    {
+      "name": "1280 FREEZE stage / fonts / overflow",
+      "pass": true
+    },
+    {
+      "name": "1280 EDIT stage / fonts / overflow",
+      "pass": true
+    },
+    {
+      "name": "1280 OUTPUT stage / fonts / overflow",
+      "pass": true
+    },
+    {
+      "name": "390 RULE stage / fonts / overflow",
+      "pass": true
+    },
+    {
+      "name": "390 COMPARE stage / fonts / overflow",
+      "pass": true
+    },
+    {
+      "name": "390 FREEZE stage / fonts / overflow",
+      "pass": true
+    },
+    {
+      "name": "390 EDIT stage / fonts / overflow",
+      "pass": true
+    },
+    {
+      "name": "390 OUTPUT stage / fonts / overflow",
+      "pass": true
+    },
+    {
+      "name": "844 RULE stage / fonts / overflow",
+      "pass": true
+    },
+    {
+      "name": "844 COMPARE stage / fonts / overflow",
+      "pass": true
+    },
+    {
+      "name": "844 FREEZE stage / fonts / overflow",
+      "pass": true
+    },
+    {
+      "name": "844 EDIT stage / fonts / overflow",
+      "pass": true
+    },
+    {
+      "name": "844 OUTPUT stage / fonts / overflow",
+      "pass": true
+    },
+    {
+      "name": "file begin / LOCK / B / 3 presets / PNG / JSON / load pixel identical",
+      "pass": true,
+      "evidence": {
+        "hash": "08fe006a",
+        "side": "B",
+        "documentEqual": true,
+        "pngEqual": true
+      }
+    },
+    {
+      "name": "file console errors zero",
+      "pass": true,
+      "evidence": []
+    }
+  ],
+  "metrics": [
+    {
+      "width": 1440,
+      "height": 900,
+      "phase": "RULE",
+      "scrollY": 0,
+      "stage": {
+        "x": 30,
+        "y": 263,
+        "width": 1056,
+        "height": 720,
+        "bottom": 983,
+        "right": 1086
+      },
+      "overflow": false,
+      "ctas": [
+        {
+          "id": "compare",
+          "x": 177.015625,
+          "y": 211,
+          "width": 186.4375,
+          "height": 40,
+          "bottom": 251,
+          "right": 363.453125,
+          "visible": true
+        },
+        {
+          "id": "take-main",
+          "x": 902.90625,
+          "y": 211,
+          "width": 183.09375,
+          "height": 40,
+          "bottom": 251,
+          "right": 1086,
+          "visible": true
+        }
+      ],
+      "minFont": 11,
+      "fonts": [
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".seed-row",
+          "size": 11
+        },
+        {
+          "selector": ".metric-note",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".transport button span",
+          "size": 11
+        },
+        {
+          "selector": ".view-controls",
+          "size": 11
+        }
+      ]
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "phase": "COMPARE",
+      "scrollY": 0,
+      "stage": {
+        "x": 30,
+        "y": 263,
+        "width": 1056,
+        "height": 720,
+        "bottom": 983,
+        "right": 1086
+      },
+      "overflow": false,
+      "ctas": [
+        {
+          "id": "take-a",
+          "x": 808.40625,
+          "y": 211,
+          "width": 131.828125,
+          "height": 40,
+          "bottom": 251,
+          "right": 940.234375,
+          "visible": true
+        },
+        {
+          "id": "take-b",
+          "x": 948.234375,
+          "y": 211,
+          "width": 137.765625,
+          "height": 40,
+          "bottom": 251,
+          "right": 1086,
+          "visible": true
+        }
+      ],
+      "minFont": 11,
+      "fonts": [
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".seed-row",
+          "size": 11
+        },
+        {
+          "selector": ".metric-note",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".transport button span",
+          "size": 11
+        },
+        {
+          "selector": ".transport button span",
+          "size": 11
+        },
+        {
+          "selector": ".compare-labels",
+          "size": 11
+        },
+        {
+          "selector": ".view-controls",
+          "size": 11
+        }
+      ]
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "phase": "FREEZE",
+      "scrollY": 0,
+      "stage": {
+        "x": 30,
+        "y": 211,
+        "width": 1056,
+        "height": 720,
+        "bottom": 931,
+        "right": 1086
+      },
+      "overflow": false,
+      "ctas": [],
+      "minFont": 11,
+      "fonts": [
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        }
+      ]
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "phase": "EDIT",
+      "scrollY": 0,
+      "stage": {
+        "x": 30,
+        "y": 263,
+        "width": 1056,
+        "height": 720,
+        "bottom": 983,
+        "right": 1086
+      },
+      "overflow": false,
+      "ctas": [
+        {
+          "id": "to-output",
+          "x": 938.125,
+          "y": 211,
+          "width": 147.875,
+          "height": 40,
+          "bottom": 251,
+          "right": 1086,
+          "visible": true
+        }
+      ],
+      "minFont": 11,
+      "fonts": [
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".text-label",
+          "size": 11
+        },
+        {
+          "selector": ".text-label",
+          "size": 11
+        },
+        {
+          "selector": ".check span",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        }
+      ]
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "phase": "OUTPUT",
+      "scrollY": 0,
+      "stage": {
+        "x": 30,
+        "y": 263,
+        "width": 1056,
+        "height": 720,
+        "bottom": 983,
+        "right": 1086
+      },
+      "overflow": false,
+      "ctas": [
+        {
+          "id": "export-png",
+          "x": 1129,
+          "y": 459.96875,
+          "width": 262,
+          "height": 40,
+          "bottom": 499.96875,
+          "right": 1391,
+          "visible": true
+        }
+      ],
+      "minFont": 11,
+      "fonts": [
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        }
+      ]
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "phase": "RULE",
+      "scrollY": 0,
+      "stage": {
+        "x": 30,
+        "y": 261,
+        "width": 922,
+        "height": 640,
+        "bottom": 901,
+        "right": 952
+      },
+      "overflow": false,
+      "ctas": [
+        {
+          "id": "compare",
+          "x": 177.015625,
+          "y": 209,
+          "width": 186.4375,
+          "height": 40,
+          "bottom": 249,
+          "right": 363.453125,
+          "visible": true
+        },
+        {
+          "id": "take-main",
+          "x": 768.90625,
+          "y": 209,
+          "width": 183.09375,
+          "height": 40,
+          "bottom": 249,
+          "right": 952,
+          "visible": true
+        }
+      ],
+      "minFont": 11,
+      "fonts": [
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".seed-row",
+          "size": 11
+        },
+        {
+          "selector": ".metric-note",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".transport button span",
+          "size": 11
+        },
+        {
+          "selector": ".view-controls",
+          "size": 11
+        }
+      ]
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "phase": "COMPARE",
+      "scrollY": 0,
+      "stage": {
+        "x": 30,
+        "y": 261,
+        "width": 922,
+        "height": 640,
+        "bottom": 901,
+        "right": 952
+      },
+      "overflow": false,
+      "ctas": [
+        {
+          "id": "take-a",
+          "x": 674.40625,
+          "y": 209,
+          "width": 131.828125,
+          "height": 40,
+          "bottom": 249,
+          "right": 806.234375,
+          "visible": true
+        },
+        {
+          "id": "take-b",
+          "x": 814.234375,
+          "y": 209,
+          "width": 137.765625,
+          "height": 40,
+          "bottom": 249,
+          "right": 952,
+          "visible": true
+        }
+      ],
+      "minFont": 11,
+      "fonts": [
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".seed-row",
+          "size": 11
+        },
+        {
+          "selector": ".metric-note",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".transport button span",
+          "size": 11
+        },
+        {
+          "selector": ".transport button span",
+          "size": 11
+        },
+        {
+          "selector": ".compare-labels",
+          "size": 11
+        },
+        {
+          "selector": ".view-controls",
+          "size": 11
+        }
+      ]
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "phase": "FREEZE",
+      "scrollY": 0,
+      "stage": {
+        "x": 30,
+        "y": 209,
+        "width": 922,
+        "height": 640,
+        "bottom": 849,
+        "right": 952
+      },
+      "overflow": false,
+      "ctas": [],
+      "minFont": 11,
+      "fonts": [
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        }
+      ]
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "phase": "EDIT",
+      "scrollY": 0,
+      "stage": {
+        "x": 30,
+        "y": 261,
+        "width": 922,
+        "height": 640,
+        "bottom": 901,
+        "right": 952
+      },
+      "overflow": false,
+      "ctas": [
+        {
+          "id": "to-output",
+          "x": 804.125,
+          "y": 209,
+          "width": 147.875,
+          "height": 40,
+          "bottom": 249,
+          "right": 952,
+          "visible": true
+        }
+      ],
+      "minFont": 11,
+      "fonts": [
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".text-label",
+          "size": 11
+        },
+        {
+          "selector": ".text-label",
+          "size": 11
+        },
+        {
+          "selector": ".check span",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        }
+      ]
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "phase": "OUTPUT",
+      "scrollY": 0,
+      "stage": {
+        "x": 30,
+        "y": 261,
+        "width": 922,
+        "height": 640,
+        "bottom": 901,
+        "right": 952
+      },
+      "overflow": false,
+      "ctas": [
+        {
+          "id": "export-png",
+          "x": 989,
+          "y": 457.96875,
+          "width": 242,
+          "height": 40,
+          "bottom": 497.96875,
+          "right": 1231,
+          "visible": true
+        }
+      ],
+      "minFont": 11,
+      "fonts": [
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        },
+        {
+          "selector": ".process small",
+          "size": 11
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "phase": "RULE",
+      "scrollY": 0,
+      "stage": {
+        "x": 16,
+        "y": 380,
+        "width": 358,
+        "height": 497.953125,
+        "bottom": 877.953125,
+        "right": 374
+      },
+      "overflow": false,
+      "ctas": [
+        {
+          "id": "compare",
+          "x": 16,
+          "y": 324,
+          "width": 175,
+          "height": 44,
+          "bottom": 368,
+          "right": 191,
+          "visible": true
+        },
+        {
+          "id": "take-main",
+          "x": 199,
+          "y": 324,
+          "width": 175,
+          "height": 44,
+          "bottom": 368,
+          "right": 374,
+          "visible": true
+        }
+      ],
+      "minFont": 10,
+      "fonts": [
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".seed-row",
+          "size": 11
+        },
+        {
+          "selector": ".metric-note",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".transport button span",
+          "size": 10
+        },
+        {
+          "selector": ".view-controls",
+          "size": 11
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "phase": "COMPARE",
+      "scrollY": 0,
+      "stage": {
+        "x": 16,
+        "y": 432,
+        "width": 358,
+        "height": 497.953125,
+        "bottom": 929.953125,
+        "right": 374
+      },
+      "overflow": false,
+      "ctas": [
+        {
+          "id": "take-a",
+          "x": 199,
+          "y": 324,
+          "width": 175,
+          "height": 44,
+          "bottom": 368,
+          "right": 374,
+          "visible": true
+        },
+        {
+          "id": "take-b",
+          "x": 16,
+          "y": 376,
+          "width": 175,
+          "height": 44,
+          "bottom": 420,
+          "right": 191,
+          "visible": true
+        }
+      ],
+      "minFont": 10,
+      "fonts": [
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".seed-row",
+          "size": 11
+        },
+        {
+          "selector": ".metric-note",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".transport button span",
+          "size": 10
+        },
+        {
+          "selector": ".transport button span",
+          "size": 10
+        },
+        {
+          "selector": ".compare-labels",
+          "size": 10
+        },
+        {
+          "selector": ".view-controls",
+          "size": 11
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "phase": "FREEZE",
+      "scrollY": 0,
+      "stage": {
+        "x": 16,
+        "y": 272,
+        "width": 358,
+        "height": 497.953125,
+        "bottom": 769.953125,
+        "right": 374
+      },
+      "overflow": false,
+      "ctas": [],
+      "minFont": 10,
+      "fonts": [
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "phase": "EDIT",
+      "scrollY": 0,
+      "stage": {
+        "x": 16,
+        "y": 328,
+        "width": 358,
+        "height": 497.953125,
+        "bottom": 825.953125,
+        "right": 374
+      },
+      "overflow": false,
+      "ctas": [
+        {
+          "id": "to-output",
+          "x": 199,
+          "y": 272,
+          "width": 175,
+          "height": 44,
+          "bottom": 316,
+          "right": 374,
+          "visible": true
+        }
+      ],
+      "minFont": 10,
+      "fonts": [
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".text-label",
+          "size": 11
+        },
+        {
+          "selector": ".text-label",
+          "size": 11
+        },
+        {
+          "selector": ".check span",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "phase": "OUTPUT",
+      "scrollY": 0,
+      "stage": {
+        "x": 16,
+        "y": 328,
+        "width": 358,
+        "height": 497.953125,
+        "bottom": 825.953125,
+        "right": 374
+      },
+      "overflow": false,
+      "ctas": [
+        {
+          "id": "export-png",
+          "x": 37,
+          "y": 1230.921875,
+          "width": 316,
+          "height": 44,
+          "bottom": 1274.921875,
+          "right": 353,
+          "visible": false
+        }
+      ],
+      "minFont": 10,
+      "fonts": [
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        }
+      ]
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "phase": "RULE",
+      "scrollY": 0,
+      "stage": {
+        "x": 16,
+        "y": 208,
+        "width": 812,
+        "height": 312,
+        "bottom": 520,
+        "right": 828
+      },
+      "overflow": false,
+      "ctas": [
+        {
+          "id": "compare",
+          "x": 426,
+          "y": 152,
+          "width": 197,
+          "height": 44,
+          "bottom": 196,
+          "right": 623,
+          "visible": true
+        },
+        {
+          "id": "take-main",
+          "x": 631,
+          "y": 152,
+          "width": 197,
+          "height": 44,
+          "bottom": 196,
+          "right": 828,
+          "visible": true
+        }
+      ],
+      "minFont": 10,
+      "fonts": [
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".seed-row",
+          "size": 11
+        },
+        {
+          "selector": ".metric-note",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".transport button span",
+          "size": 10
+        },
+        {
+          "selector": ".view-controls",
+          "size": 11
+        }
+      ]
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "phase": "COMPARE",
+      "scrollY": 0,
+      "stage": {
+        "x": 16,
+        "y": 208,
+        "width": 812,
+        "height": 312,
+        "bottom": 520,
+        "right": 828
+      },
+      "overflow": false,
+      "ctas": [
+        {
+          "id": "take-a",
+          "x": 508,
+          "y": 152,
+          "width": 156,
+          "height": 44,
+          "bottom": 196,
+          "right": 664,
+          "visible": true
+        },
+        {
+          "id": "take-b",
+          "x": 672,
+          "y": 152,
+          "width": 156,
+          "height": 44,
+          "bottom": 196,
+          "right": 828,
+          "visible": true
+        }
+      ],
+      "minFont": 10,
+      "fonts": [
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".seed-row",
+          "size": 11
+        },
+        {
+          "selector": ".metric-note",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".transport button span",
+          "size": 10
+        },
+        {
+          "selector": ".transport button span",
+          "size": 10
+        },
+        {
+          "selector": ".compare-labels",
+          "size": 10
+        },
+        {
+          "selector": ".view-controls",
+          "size": 11
+        }
+      ]
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "phase": "FREEZE",
+      "scrollY": 0,
+      "stage": {
+        "x": 16,
+        "y": 152,
+        "width": 812,
+        "height": 312,
+        "bottom": 464,
+        "right": 828
+      },
+      "overflow": false,
+      "ctas": [],
+      "minFont": 10,
+      "fonts": [
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        }
+      ]
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "phase": "EDIT",
+      "scrollY": 0,
+      "stage": {
+        "x": 16,
+        "y": 208,
+        "width": 812,
+        "height": 312,
+        "bottom": 520,
+        "right": 828
+      },
+      "overflow": false,
+      "ctas": [
+        {
+          "id": "to-output",
+          "x": 426,
+          "y": 152,
+          "width": 402,
+          "height": 44,
+          "bottom": 196,
+          "right": 828,
+          "visible": true
+        }
+      ],
+      "minFont": 10,
+      "fonts": [
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider small",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".slider > span",
+          "size": 11
+        },
+        {
+          "selector": ".text-label",
+          "size": 11
+        },
+        {
+          "selector": ".text-label",
+          "size": 11
+        },
+        {
+          "selector": ".check span",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".preset-row button",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        }
+      ]
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "phase": "OUTPUT",
+      "scrollY": 0,
+      "stage": {
+        "x": 16,
+        "y": 208,
+        "width": 812,
+        "height": 312,
+        "bottom": 520,
+        "right": 828
+      },
+      "overflow": false,
+      "ctas": [
+        {
+          "id": "export-png",
+          "x": 37,
+          "y": 924.96875,
+          "width": 770,
+          "height": 44,
+          "bottom": 968.96875,
+          "right": 807,
+          "visible": false
+        }
+      ],
+      "minFont": 10,
+      "fonts": [
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".note",
+          "size": 11
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process button",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        },
+        {
+          "selector": ".process small",
+          "size": 10
+        }
+      ]
+    }
+  ],
+  "pass": 27,
+  "fail": 0
+}

@@ -31,7 +31,7 @@ cognitive/                    完成HTML（Level 4 GESTALT）※git管理なし
 
 ## 特設LP（scroll-experience）
 - `index.html`（バンドル形式の1ファイル。中身は `__bundler/template` の JSON 文字列）の hero 下に **「【特設ページ公開中！】SPECIAL LP」** のリンク帯がある。
-  LP を足すときはその JSON 文字列内の `<!-- ===== SPECIAL LP ===== -->` ブロックに `<a>` を1つ足す（Python で json.loads → 置換 → json.dumps、`</` は `</` に戻す）。
+  LP を足すときはその JSON 文字列内の `<!-- ===== SPECIAL LP ===== -->` ブロックに `<a>` を1つ足す（Python で json.loads → 置換 → json.dumps(..., ensure_ascii=False)、`</` は `<\u002F` に戻す。書き戻す前に「読んで→そのまま書いた文字列」が元と完全一致するか確かめる）。
 - 12原則 LP へは GitHub Pages の絶対 URL でリンク（別リポジトリのため）。
 - `scroll-experience/verification/` は検証画像・レビュー zip。**git 管理外**。
 

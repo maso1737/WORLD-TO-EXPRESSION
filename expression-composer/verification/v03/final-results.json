@@ -1,0 +1,138 @@
+{
+  "date": "2026-10-27T06:21:42.070Z",
+  "runs": [
+    {
+      "command": "node --check js/compare.js",
+      "pass": true,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "node --check js/composition.js",
+      "pass": true,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "node --check js/export.js",
+      "pass": true,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "node --check js/main.js",
+      "pass": true,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "node --check js/render.js",
+      "pass": true,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "node --check js/sim.js",
+      "pass": true,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "node --check js/snapshot.js",
+      "pass": true,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "node verification/verify-model.mjs",
+      "pass": true,
+      "stdout": "{\"node\":\"v24.14.1\",\"date\":\"2026-10-27T06:20:00.145Z\",\"checks\":[{\"name\":\"Same engine fresh simulation equality\",\"pass\":true,\"hashes\":[\"772e5451\",\"772e5451\"]},{\"name\":\"A/B synchronous steps\",\"pass\":true},{\"name\":\"Deep immutable snapshot\",\"pass\":true},{\"name\":\"Validated coordinate roundtrip\",\"pass\":true}],\"comparison\":{\"stepA\":600,\"stepB\":600,\"phiA\":0.996714404917138,\"phiB\":0.09888315739707167},\"summary\":{\"pass\":4,\"fail\":0}}\n",
+      "stderr": ""
+    },
+    {
+      "command": "node verification/verify-browser.cjs",
+      "pass": true,
+      "stdout": "{\"pass\":76,\"fail\":0,\"errors\":0}\n",
+      "stderr": ""
+    },
+    {
+      "command": "node verification/v03/verify-causal.cjs",
+      "pass": true,
+      "stdout": "{\"browser\":\"155.0.8059.79\",\"checks\":[{\"name\":\"1440x900 LOCK step0 identical world / projection / pixels\",\"pass\":true,\"evidence\":{\"diff\":0,\"half\":527,\"view\":{\"mode\":\"LOCK\",\"zoom\":1.8,\"camX\":0.18411381905676416,\"camY\":0.7074728834457662,\"A\":{\"zoom\":1.8,\"camX\":0.18411381905676416,\"camY\":0.707472883445766},\"B\":{\"zoom\":1.8,\"camX\":0.18411381905676416,\"camY\":0.707472883445766}},\"sameWorld\":true,\"sameProjection\":true}},{\"name\":\"1280x800 LOCK step0 identical world / projection / pixels\",\"pass\":true,\"evidence\":{\"diff\":0,\"half\":460,\"view\":{\"mode\":\"LOCK\",\"zoom\":1.8,\"camX\":0.18411381905676416,\"camY\":0.7074728834457662,\"A\":{\"zoom\":1.8,\"camX\":0.18411381905676416,\"camY\":0.707472883445766},\"B\":{\"zoom\":1.8,\"camX\":0.18411381905676416,\"camY\":0.707472883445766}},\"sameWorld\":true,\"sameProjection\":true}},{\"name\":\"390x844 LOCK step0 identical world / projection / pixels\",\"pass\":true,\"evidence\":{\"diff\":0,\"half\":178,\"view\":{\"mode\":\"LOCK\",\"zoom\":1.8,\"camX\":0.18411381905676416,\"camY\":0.7074728834457662,\"A\":{\"zoom\":1.8,\"camX\":0.18411381905676416,\"camY\":0.707472883445766},\"B\":{\"zoom\":1.8,\"camX\":0.18411381905676416,\"camY\":0.707472883445766}},\"sameWorld\":true,\"sameProjection\":true}},{\"name\":\"844x390 LOCK step0 identical world / projection / pixels\",\"pass\":true,\"evidence\":{\"diff\":0,\"half\":405,\"view\":{\"mode\":\"LOCK\",\"zoom\":1.8,\"camX\":0.18411381905676416,\"camY\":0.7074728834457662,\"A\":{\"zoom\":1.8,\"camX\":0.18411381905676416,\"camY\":0.707472883445766},\"B\":{\"zoom\":1.8,\"camX\":0.18411381905676416,\"camY\":0.707472883445766}},\"sameWorld\":true,\"sameProjection\":true}},{\"name\":\"step600 hash and Phi match live v02 baseline\",\"pass\":true,\"evidence\":{\"stepA\":600,\"stepB\":600,\"phiA\":0.9949783491582183,\"phiB\":0.04610160222900489}},{\"name\":\"LOCK FOLLOW ZOOM preserve sim stats and artwork document\",\"pass\":true,\"evidence\":{\"views\":[{\"mode\":\"FOLLOW\",\"zoom\":1,\"camX\":0.18411381905676416,\"camY\":0.7074728834457662,\"A\":{\"zoom\":1,\"camX\":0.08364719897746031,\"camY\":0.2215646402922311},\"B\":{\"zoom\":1,\"camX\":0.9960140168581972,\"camY\":0.6706861981312984}},{\"mode\":\"FOLLOW\",\"zoom\":3,\"camX\":0.18411381905676416,\"camY\":0.7074728834457662,\"A\":{\"zoom\":3,\"camX\":0.08364719897746031,\"camY\":0.2215646402922311},\"B\":{\"zoom\":3,\"camX\":0.9960140168581972,\"camY\":0.6706861981312984}},{\"mode\":\"FOLLOW\",\"zoom\":1.8,\"camX\":0.18411381905676416,\"camY\":0.7074728834457662,\"A\":{\"zoom\":1.8,\"camX\":0.08364719897746031,\"camY\":0.2215646402922311},\"B\":{\"zoom\":1.8,\"camX\":0.9960140168581972,\"camY\":0.6706861981312984}},{\"mode\":\"LOCK\",\"zoom\":1,\"camX\":0.18411381905676416,\"camY\":0.7074728834457662,\"A\":{\"zoom\":1,\"camX\":0.07692774869030838,\"camY\":0.23517237069908403},\"B\":{\"zoom\":1,\"camX\":0.07692774869030838,\"camY\":0.23517237069908403}},{\"mode\":\"LOCK\",\"zoom\":3,\"camX\":0.18411381905676416,\"camY\":0.7074728834457662,\"A\":{\"zoom\":3,\"camX\":0.07692774869030838,\"camY\":0.23517237069908403},\"B\":{\"zoom\":3,\"camX\":0.07692774869030838,\"camY\":0.23517237069908403}},{\"mode\":\"LOCK\",\"zoom\":1.8,\"camX\":0.18411381905676416,\"camY\":0.7074728834457662,\"A\":{\"zoom\":1.8,\"camX\":0.07692774869030838,\"camY\":0.23517237069908403},\"B\":{\"zoom\":1.8,\"camX\":0.07692774869030838,\"camY\":0.23517237069908403}}]}},{\"name\":\"FOLLOW keeps independent tracking\",\"pass\":true}],\"pass\":7,\"fail\":0}\n",
+      "stderr": ""
+    },
+    {
+      "command": "node verification/v03/verify-freeze.cjs",
+      "pass": true,
+      "stdout": "{\"pass\":7,\"fail\":0,\"results\":[{\"name\":\"desktop SILENCE source / hold / endpoint pixels, 600 IDs, mapping, quiet\",\"pass\":true,\"start\":0,\"end\":0},{\"name\":\"desktop CURRENT source / hold / endpoint pixels, 600 IDs, mapping, quiet\",\"pass\":true,\"start\":0,\"end\":0},{\"name\":\"desktop SIGNAL source / hold / endpoint pixels, 600 IDs, mapping, quiet\",\"pass\":true,\"start\":0,\"end\":0},{\"name\":\"mobile SILENCE source / hold / endpoint pixels, 600 IDs, mapping, quiet\",\"pass\":true,\"start\":0,\"end\":0},{\"name\":\"mobile CURRENT source / hold / endpoint pixels, 600 IDs, mapping, quiet\",\"pass\":true,\"start\":0,\"end\":0},{\"name\":\"mobile SIGNAL source / hold / endpoint pixels, 600 IDs, mapping, quiet\",\"pass\":true,\"start\":0,\"end\":0},{\"name\":\"reduced motion 100 ms keeps hash\",\"pass\":true}]}\n",
+      "stderr": ""
+    },
+    {
+      "command": "node verification/v03/verify-posters.cjs",
+      "pass": true,
+      "stdout": "{\"pass\":57,\"fail\":0,\"metrics\":{\"posters\":54,\"pointHits\":0,\"dotHits\":0,\"midpointHits\":0,\"smallestExtent\":0.5506277357580438,\"tightest\":{\"seed\":7,\"side\":\"B\",\"step\":400,\"preset\":\"CURRENT\",\"file\":\"posters_seed7_B_step400.png\",\"minClearance\":0.04022766281678376,\"minTitleClearance\":0.09037330206892508,\"widthRatio\":0.6849561466210086,\"heightRatio\":0.5267391763253877,\"midpointHits\":[]},\"tightestTitle\":{\"seed\":2026,\"side\":\"A\",\"step\":400,\"preset\":\"SIGNAL\",\"file\":\"posters_seed2026_A_step400.png\",\"minClearance\":0.05935426288765658,\"minTitleClearance\":0.05935426288765658,\"widthRatio\":0.5174236370510865,\"heightRatio\":0.5586711694152913,\"midpointHits\":[]},\"worstMidpoint\":{\"seed\":7,\"side\":\"A\",\"step\":400,\"preset\":\"SILENCE\",\"file\":\"posters_seed7_A_step400.png\",\"minClearance\":0.057287207614981336,\"minTitleClearance\":0.3988938729361119,\"widthRatio\":0.13963889472397772,\"heightRatio\":0.22860678797293682,\"midpointHits\":[]}},\"failures\":[],\"variants\":{\"SILENCE\":[\"low-counterweight\",\"opposite-column\",\"quiet-heading\"],\"CURRENT\":[\"upstream\",\"side-channel\"],\"SIGNAL\":[\"beside-signal\",\"below-signal\"]}}\n",
+      "stderr": ""
+    },
+    {
+      "command": "node verification/v03/verify-screens.cjs",
+      "pass": true,
+      "stdout": "{\"pass\":27,\"fail\":0,\"failures\":[]}\n",
+      "stderr": ""
+    },
+    {
+      "command": "node verification/verify-static.cjs",
+      "pass": true,
+      "stdout": "{\"files\":71,\"syntax\":32,\"errors\":0}\n",
+      "stderr": ""
+    }
+  ],
+  "integrity": [
+    {
+      "file": "index.html",
+      "backupMatchesBaseline": true,
+      "appMatchesBaseline": false
+    },
+    {
+      "file": "styles.css",
+      "backupMatchesBaseline": true,
+      "appMatchesBaseline": false
+    },
+    {
+      "file": "js/compare.js",
+      "backupMatchesBaseline": true,
+      "appMatchesBaseline": true
+    },
+    {
+      "file": "js/composition.js",
+      "backupMatchesBaseline": true,
+      "appMatchesBaseline": false
+    },
+    {
+      "file": "js/export.js",
+      "backupMatchesBaseline": true,
+      "appMatchesBaseline": true
+    },
+    {
+      "file": "js/main.js",
+      "backupMatchesBaseline": true,
+      "appMatchesBaseline": false
+    },
+    {
+      "file": "js/render.js",
+      "backupMatchesBaseline": true,
+      "appMatchesBaseline": false
+    },
+    {
+      "file": "js/sim.js",
+      "backupMatchesBaseline": true,
+      "appMatchesBaseline": true
+    },
+    {
+      "file": "js/snapshot.js",
+      "backupMatchesBaseline": true,
+      "appMatchesBaseline": true
+    }
+  ],
+  "pass": true,
+  "temporaryFolders": []
+}

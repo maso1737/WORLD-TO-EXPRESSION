@@ -1,0 +1,500 @@
+{
+ "ruleRanges": [
+  {
+   "id": "rule-separate",
+   "label": "SEPARATE離れる1.40",
+   "min": "0",
+   "max": "3"
+  },
+  {
+   "id": "rule-align",
+   "label": "ALIGN向きを揃える1.50",
+   "min": "0",
+   "max": "3"
+  },
+  {
+   "id": "rule-cohere",
+   "label": "COHERE中心へ寄る0.65",
+   "min": "0",
+   "max": "3"
+  },
+  {
+   "id": "rule-noise",
+   "label": "NOISEゆらぐ0.03",
+   "min": "0",
+   "max": "1"
+  }
+ ],
+ "rule:rule-separate": {
+  "0": {
+   "phi": 0.988,
+   "nn": 7.06,
+   "speed": 3.467,
+   "rules": {
+    "separate": 0,
+    "align": 1.5,
+    "cohere": 0.65,
+    "noise": 0.03,
+    "alignOn": true
+   }
+  },
+  "3": {
+   "phi": 0.942,
+   "nn": 20.22,
+   "speed": 1.99,
+   "rules": {
+    "separate": 3,
+    "align": 1.5,
+    "cohere": 0.65,
+    "noise": 0.03,
+    "alignOn": true
+   }
+  }
+ },
+ "rule:rule-align": {
+  "0": {
+   "phi": 0.073,
+   "nn": 12.74,
+   "speed": 1.612,
+   "rules": {
+    "separate": 1.4,
+    "align": 0,
+    "cohere": 0.65,
+    "noise": 0.03,
+    "alignOn": true
+   }
+  },
+  "3": {
+   "phi": 0.991,
+   "nn": 18.45,
+   "speed": 3.372,
+   "rules": {
+    "separate": 1.4,
+    "align": 3,
+    "cohere": 0.65,
+    "noise": 0.03,
+    "alignOn": true
+   }
+  }
+ },
+ "rule:rule-cohere": {
+  "0": {
+   "phi": 0.998,
+   "nn": 25,
+   "speed": 3.461,
+   "rules": {
+    "separate": 1.4,
+    "align": 1.5,
+    "cohere": 0,
+    "noise": 0.03,
+    "alignOn": true
+   }
+  },
+  "3": {
+   "phi": 0.481,
+   "nn": 0.43,
+   "speed": 2.919,
+   "rules": {
+    "separate": 1.4,
+    "align": 1.5,
+    "cohere": 3,
+    "noise": 0.03,
+    "alignOn": true
+   }
+  }
+ },
+ "rule:rule-noise": {
+  "0": {
+   "phi": 0.996,
+   "nn": 16.02,
+   "speed": 3.326,
+   "rules": {
+    "separate": 1.4,
+    "align": 1.5,
+    "cohere": 0.65,
+    "noise": 0,
+    "alignOn": true
+   }
+  },
+  "1": {
+   "phi": 0.046,
+   "nn": 20.13,
+   "speed": 1.821,
+   "rules": {
+    "separate": 1.4,
+    "align": 1.5,
+    "cohere": 0.65,
+    "noise": 1,
+    "alignOn": true
+   }
+  }
+ },
+ "alignToggle": {
+  "on": {
+   "phi": 0.995,
+   "nn": 13.91,
+   "speed": 3.189,
+   "rules": {
+    "separate": 1.4,
+    "align": 1.5,
+    "cohere": 0.65,
+    "noise": 0.03,
+    "alignOn": true
+   }
+  },
+  "off": {
+   "phi": 0.073,
+   "nn": 12.74,
+   "speed": 1.612,
+   "rules": {
+    "separate": 1.4,
+    "align": 1.5,
+    "cohere": 0.65,
+    "noise": 0.03,
+    "alignOn": false
+   }
+  }
+ },
+ "rulePreset:COHERE": {
+  "phi": 0.995,
+  "nn": 13.91,
+  "speed": 3.189,
+  "rules": {
+   "separate": 1.4,
+   "align": 1.5,
+   "cohere": 0.65,
+   "noise": 0.03,
+   "alignOn": true
+  }
+ },
+ "rulePreset:DRIFT": {
+  "phi": 0.997,
+  "nn": 23.2,
+  "speed": 3.443,
+  "rules": {
+   "separate": 1.2,
+   "align": 2.6,
+   "cohere": 0.12,
+   "noise": 0.02,
+   "alignOn": true
+  }
+ },
+ "rulePreset:FRACTURE": {
+  "phi": 0.082,
+  "nn": 23.38,
+  "speed": 1.746,
+  "rules": {
+   "separate": 2.4,
+   "align": 0.45,
+   "cohere": 0.3,
+   "noise": 0.3,
+   "alignOn": true
+  }
+ },
+ "seed": {
+  "s0": 42,
+  "newSeed": 2735594705,
+  "typed7": 7
+ },
+ "transport": {
+  "stepBefore": 0,
+  "afterStepBtn": 1,
+  "afterPlay600ms": 37,
+  "pausedAfterToggle": true,
+  "playingWasPaused": false,
+  "afterReset": 0
+ },
+ "compare": {
+  "phase": "COMPARE",
+  "stats": {
+   "stepA": 400,
+   "stepB": 400,
+   "phiA": 0.995507786583273,
+   "phiB": 0.015489435970143314
+  },
+  "alignDisabled": true
+ },
+ "takeB": {
+  "seed": 7,
+  "step": 400,
+  "rules": {
+   "separate": 1.4,
+   "align": 1.5,
+   "cohere": 0.65,
+   "noise": 0.03,
+   "alignOn": false
+  },
+  "side": "B",
+  "count": 600,
+  "hash": "ecd77ad0"
+ },
+ "editRanges": [
+  {
+   "id": "edit-keep",
+   "min": "0.05",
+   "max": "1"
+  },
+  {
+   "id": "edit-focusAmt",
+   "min": "0",
+   "max": "1"
+  },
+  {
+   "id": "edit-space",
+   "min": "0",
+   "max": "1"
+  },
+  {
+   "id": "edit-trace",
+   "min": "0",
+   "max": "1"
+  }
+ ],
+ "edit:edit-keep": {
+  "1": {
+   "edit": {
+    "keep": 1,
+    "space": 0.04,
+    "trace": 0.18,
+    "focusAmt": 0.8,
+    "focusX": 0.62,
+    "focusY": 0.52,
+    "typeOn": true,
+    "title": "EMER/GENCE",
+    "sub": "A FLOCK BECOMES A COMPOSITION."
+   },
+   "visible": 600,
+   "enlarged": 600,
+   "scale": 1570.2,
+   "traceLen": 9.52,
+   "focusId": 150,
+   "pngHash": 1296378363,
+   "hash": "ecd77ad0"
+  },
+  "0.05": {
+   "edit": {
+    "keep": 0.05,
+    "space": 0.04,
+    "trace": 0.18,
+    "focusAmt": 0.8,
+    "focusX": 0.62,
+    "focusY": 0.52,
+    "typeOn": true,
+    "title": "EMER/GENCE",
+    "sub": "A FLOCK BECOMES A COMPOSITION."
+   },
+   "visible": 30,
+   "enlarged": 30,
+   "scale": 1570.2,
+   "traceLen": 9.4,
+   "focusId": 5,
+   "pngHash": -1057947696,
+   "hash": "ecd77ad0"
+  }
+ },
+ "edit:edit-focusAmt": {
+  "0": {
+   "edit": {
+    "keep": 1,
+    "space": 0.04,
+    "trace": 0.18,
+    "focusAmt": 0,
+    "focusX": 0.62,
+    "focusY": 0.52,
+    "typeOn": true,
+    "title": "EMER/GENCE",
+    "sub": "A FLOCK BECOMES A COMPOSITION."
+   },
+   "visible": 600,
+   "enlarged": 600,
+   "scale": 1570.2,
+   "traceLen": 9.52,
+   "focusId": 150,
+   "pngHash": -2001951808,
+   "hash": "ecd77ad0"
+  },
+  "1": {
+   "edit": {
+    "keep": 1,
+    "space": 0.04,
+    "trace": 0.18,
+    "focusAmt": 1,
+    "focusX": 0.62,
+    "focusY": 0.52,
+    "typeOn": true,
+    "title": "EMER/GENCE",
+    "sub": "A FLOCK BECOMES A COMPOSITION."
+   },
+   "visible": 600,
+   "enlarged": 600,
+   "scale": 1570.2,
+   "traceLen": 9.52,
+   "focusId": 150,
+   "pngHash": -480461114,
+   "hash": "ecd77ad0"
+  }
+ },
+ "edit:edit-space": {
+  "0": {
+   "edit": {
+    "keep": 1,
+    "space": 0,
+    "trace": 0.18,
+    "focusAmt": 1,
+    "focusX": 0.62,
+    "focusY": 0.52,
+    "typeOn": true,
+    "title": "EMER/GENCE",
+    "sub": "A FLOCK BECOMES A COMPOSITION."
+   },
+   "visible": 600,
+   "enlarged": 600,
+   "scale": 1608.8,
+   "traceLen": 9.76,
+   "focusId": 150,
+   "pngHash": 25149732,
+   "hash": "ecd77ad0"
+  },
+  "1": {
+   "edit": {
+    "keep": 1,
+    "space": 1,
+    "trace": 0.18,
+    "focusAmt": 1,
+    "focusX": 0.62,
+    "focusY": 0.52,
+    "typeOn": true,
+    "title": "EMER/GENCE",
+    "sub": "A FLOCK BECOMES A COMPOSITION."
+   },
+   "visible": 600,
+   "enlarged": 600,
+   "scale": 643.5,
+   "traceLen": 3.9,
+   "focusId": 106,
+   "pngHash": -548738354,
+   "hash": "ecd77ad0"
+  }
+ },
+ "edit:edit-trace": {
+  "0": {
+   "edit": {
+    "keep": 1,
+    "space": 1,
+    "trace": 0,
+    "focusAmt": 1,
+    "focusX": 0.62,
+    "focusY": 0.52,
+    "typeOn": true,
+    "title": "EMER/GENCE",
+    "sub": "A FLOCK BECOMES A COMPOSITION."
+   },
+   "visible": 600,
+   "enlarged": 600,
+   "scale": 643.5,
+   "traceLen": 0,
+   "focusId": 106,
+   "pngHash": 775978444,
+   "hash": "ecd77ad0"
+  },
+  "1": {
+   "edit": {
+    "keep": 1,
+    "space": 1,
+    "trace": 1,
+    "focusAmt": 1,
+    "focusX": 0.62,
+    "focusY": 0.52,
+    "typeOn": true,
+    "title": "EMER/GENCE",
+    "sub": "A FLOCK BECOMES A COMPOSITION."
+   },
+   "visible": 600,
+   "enlarged": 600,
+   "scale": 643.5,
+   "traceLen": 21.68,
+   "focusId": 106,
+   "pngHash": -1254782457,
+   "hash": "ecd77ad0"
+  }
+ },
+ "focusClick": {
+  "before": [
+   0.62,
+   0.52
+  ],
+  "afterClick": [
+   0.3981642276192633,
+   0.7601449275362319
+  ],
+  "afterArrowRight": [
+   0.4081642276192633,
+   0.7601449275362319
+  ]
+ },
+ "type": {
+  "typeOnAfterUncheck": false,
+  "title": "SIGNAL/NOISE<script>",
+  "subLen": 80,
+  "injected": false
+ },
+ "editPreset:SILENCE": {
+  "preset": "SILENCE",
+  "edit": {
+   "keep": 0.3,
+   "space": 0.72,
+   "trace": 0,
+   "focusAmt": 0.15,
+   "focusX": 0.4081642276192633,
+   "focusY": 0.7601449275362319,
+   "typeOn": true,
+   "title": "EMER/GENCE",
+   "sub": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  },
+  "hash": "ecd77ad0"
+ },
+ "editPreset:CURRENT": {
+  "preset": "CURRENT",
+  "edit": {
+   "keep": 1,
+   "space": 0.04,
+   "trace": 0.85,
+   "focusAmt": 0.25,
+   "focusX": 0.4081642276192633,
+   "focusY": 0.7601449275362319,
+   "typeOn": true,
+   "title": "EMER/GENCE",
+   "sub": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  },
+  "hash": "ecd77ad0"
+ },
+ "editPreset:SIGNAL": {
+  "preset": "SIGNAL",
+  "edit": {
+   "keep": 0.85,
+   "space": 0.04,
+   "trace": 0.18,
+   "focusAmt": 0.8,
+   "focusX": 0.4081642276192633,
+   "focusY": 0.7601449275362319,
+   "typeOn": true,
+   "title": "EMER/GENCE",
+   "sub": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  },
+  "hash": "ecd77ad0"
+ },
+ "downloads": {
+  "png": "EC-SIGNAL-ecd77ad0.png",
+  "pngBytes": 347741,
+  "json": "EC-ecd77ad0.json",
+  "jsonBytes": 106417
+ },
+ "loadJSON": {
+  "hashBefore": "ecd77ad0",
+  "hashAfter": "ecd77ad0",
+  "title": "EMER/GENCE",
+  "phase": "EDIT"
+ },
+ "badFileMessage": "JSON の構文が壊れています。",
+ "errors": []
+}

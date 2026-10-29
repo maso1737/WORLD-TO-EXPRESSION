@@ -1,0 +1,4987 @@
+{
+  "date": "2026-10-27T06:18:10.934Z",
+  "backend": "Headless Chrome / --disable-gpu / synthetic input / DPR 1",
+  "checks": [
+    {
+      "name": "simDeterminism(42,600) exact equality",
+      "result": "PASS",
+      "evidence": [
+        "5828ce7f",
+        "5828ce7f"
+      ]
+    },
+    {
+      "name": "RULE keyboard slider updates coefficient",
+      "result": "PASS"
+    },
+    {
+      "name": "Rule changes alter real particle state",
+      "result": "PASS",
+      "evidence": {
+        "a": "8195636b",
+        "b": "3ecffec7"
+      }
+    },
+    {
+      "name": "A/B initial particle state identical",
+      "result": "PASS",
+      "evidence": {
+        "a": "1145e790",
+        "b": "1145e790"
+      }
+    },
+    {
+      "name": "A/B same step",
+      "result": "PASS",
+      "evidence": {
+        "stepA": 600,
+        "stepB": 600,
+        "phiA": 0.9949783491582183,
+        "phiB": 0.04610160222900489
+      }
+    },
+    {
+      "name": "TAKE B records actual side / rules",
+      "result": "PASS",
+      "evidence": {
+        "hash": "08fe006a"
+      }
+    },
+    {
+      "name": "FREEZE retains all 600 source IDs",
+      "result": "PASS",
+      "evidence": {
+        "count": 600,
+        "duration": 1150
+      }
+    },
+    {
+      "name": "Snapshot immutable after rule and simulation changes",
+      "result": "PASS",
+      "evidence": {
+        "before": "5828ce7f",
+        "after": "5828ce7f",
+        "meta": {
+          "seed": 42,
+          "step": 600,
+          "rules": {
+            "separate": 1.4,
+            "align": 1.5,
+            "cohere": 0.65,
+            "noise": 0.03,
+            "alignOn": true
+          },
+          "side": "A",
+          "count": 600,
+          "hash": "5828ce7f"
+        },
+        "afterMeta": {
+          "seed": 42,
+          "step": 600,
+          "rules": {
+            "separate": 1.4,
+            "align": 1.5,
+            "cohere": 0.65,
+            "noise": 0.03,
+            "alignOn": true
+          },
+          "side": "A",
+          "count": 600,
+          "hash": "5828ce7f"
+        },
+        "frozen": true
+      }
+    },
+    {
+      "name": "Three posters: same snapshot, distinct pixels",
+      "result": "PASS",
+      "evidence": {
+        "SILENCE": {
+          "width": 1800,
+          "height": 2400,
+          "hash": "a887db900ebe94369e6f1dacb5381c426992ba8997d6091c3856c5ff51110ec0",
+          "snapshot": "5828ce7f"
+        },
+        "CURRENT": {
+          "width": 1800,
+          "height": 2400,
+          "hash": "34ca767a3470caf9196fcd79055cd72891c39733400de7f1a723fa709148d114",
+          "snapshot": "5828ce7f"
+        },
+        "SIGNAL": {
+          "width": 1800,
+          "height": 2400,
+          "hash": "4c63a6ff213a2edb1f61e8d29ee94de4d85b41be02b632dc5991bcde1e437298",
+          "snapshot": "5828ce7f"
+        }
+      }
+    },
+    {
+      "name": "PNG 1800x2400",
+      "result": "PASS",
+      "evidence": {
+        "SILENCE": {
+          "width": 1800,
+          "height": 2400,
+          "hash": "a887db900ebe94369e6f1dacb5381c426992ba8997d6091c3856c5ff51110ec0",
+          "snapshot": "5828ce7f"
+        },
+        "CURRENT": {
+          "width": 1800,
+          "height": 2400,
+          "hash": "34ca767a3470caf9196fcd79055cd72891c39733400de7f1a723fa709148d114",
+          "snapshot": "5828ce7f"
+        },
+        "SIGNAL": {
+          "width": 1800,
+          "height": 2400,
+          "hash": "4c63a6ff213a2edb1f61e8d29ee94de4d85b41be02b632dc5991bcde1e437298",
+          "snapshot": "5828ce7f"
+        }
+      }
+    },
+    {
+      "name": "JSON round trip exact snapshot / edit / title",
+      "result": "PASS",
+      "evidence": {
+        "before": "5828ce7f",
+        "after": "5828ce7f",
+        "edit": {
+          "keep": 0.63,
+          "space": 0.55,
+          "trace": 0.44,
+          "focusAmt": 0.7,
+          "focusX": 0.42,
+          "focusY": 0.61,
+          "typeOn": true,
+          "title": "同じ/世界",
+          "sub": "SAME PARTICLES. MY DECISIONS."
+        }
+      }
+    },
+    {
+      "name": "Reject broken with UI reason",
+      "result": "PASS",
+      "evidence": {
+        "name": "broken",
+        "ok": false,
+        "error": "JSON の構文が壊れています。",
+        "ui": "JSON の構文が壊れています。",
+        "unchanged": true
+      }
+    },
+    {
+      "name": "Reject oversized with UI reason",
+      "result": "PASS",
+      "evidence": {
+        "name": "oversized",
+        "ok": false,
+        "error": "JSON は 2 MiB 以下にしてください。",
+        "ui": "JSON は 2 MiB 以下にしてください。",
+        "unchanged": true
+      }
+    },
+    {
+      "name": "Reject NaN with UI reason",
+      "result": "PASS",
+      "evidence": {
+        "name": "NaN",
+        "ok": false,
+        "error": "NaN / Infinity は読み込めません。",
+        "ui": "NaN / Infinity は読み込めません。",
+        "unchanged": true
+      }
+    },
+    {
+      "name": "Reject version with UI reason",
+      "result": "PASS",
+      "evidence": {
+        "name": "version",
+        "ok": false,
+        "error": "対応していない schemaVersion です。",
+        "ui": "対応していない schemaVersion です。",
+        "unchanged": true
+      }
+    },
+    {
+      "name": "Reject range with UI reason",
+      "result": "PASS",
+      "evidence": {
+        "name": "range",
+        "ok": false,
+        "error": "focusX: 0〜1 の有限数が必要です。",
+        "ui": "focusX: 0〜1 の有限数が必要です。",
+        "unchanged": true
+      }
+    },
+    {
+      "name": "Reject missing with UI reason",
+      "result": "PASS",
+      "evidence": {
+        "name": "missing",
+        "ok": false,
+        "error": "document: 必須項目がありません。",
+        "ui": "document: 必須項目がありません。",
+        "unchanged": true
+      }
+    },
+    {
+      "name": "Reject hash with UI reason",
+      "result": "PASS",
+      "evidence": {
+        "name": "hash",
+        "ok": false,
+        "error": "snapshot hash が粒子データと一致しません。",
+        "ui": "snapshot hash が粒子データと一致しません。",
+        "unchanged": true
+      }
+    },
+    {
+      "name": "Unknown keys ignored",
+      "result": "PASS",
+      "evidence": {
+        "result": {
+          "ok": true
+        },
+        "ignored": true
+      }
+    },
+    {
+      "name": "Text safety and truncation",
+      "result": "PASS",
+      "evidence": {
+        "title": "<img src=x onerror=alert(1)><img",
+        "subLength": 80,
+        "injected": false
+      }
+    },
+    {
+      "name": "No particle/trace cropping at extreme edit settings",
+      "result": "PASS",
+      "evidence": [
+        {
+          "preset": "SILENCE",
+          "space": 0,
+          "trace": 0,
+          "inside": true
+        },
+        {
+          "preset": "SILENCE",
+          "space": 0,
+          "trace": 1,
+          "inside": true
+        },
+        {
+          "preset": "SILENCE",
+          "space": 1,
+          "trace": 0,
+          "inside": true
+        },
+        {
+          "preset": "SILENCE",
+          "space": 1,
+          "trace": 1,
+          "inside": true
+        },
+        {
+          "preset": "CURRENT",
+          "space": 0,
+          "trace": 0,
+          "inside": true
+        },
+        {
+          "preset": "CURRENT",
+          "space": 0,
+          "trace": 1,
+          "inside": true
+        },
+        {
+          "preset": "CURRENT",
+          "space": 1,
+          "trace": 0,
+          "inside": true
+        },
+        {
+          "preset": "CURRENT",
+          "space": 1,
+          "trace": 1,
+          "inside": true
+        },
+        {
+          "preset": "SIGNAL",
+          "space": 0,
+          "trace": 0,
+          "inside": true
+        },
+        {
+          "preset": "SIGNAL",
+          "space": 0,
+          "trace": 1,
+          "inside": true
+        },
+        {
+          "preset": "SIGNAL",
+          "space": 1,
+          "trace": 0,
+          "inside": true
+        },
+        {
+          "preset": "SIGNAL",
+          "space": 1,
+          "trace": 1,
+          "inside": true
+        }
+      ]
+    },
+    {
+      "name": "KEEP nested IDs, TRACE actual velocities without moving dots, SPACE monotonic",
+      "result": "PASS",
+      "evidence": {
+        "nestedIDs": true,
+        "tracePositions": true,
+        "traceDirections": true,
+        "spaces": [
+          1456.9071243016833,
+          1369.4926968435823,
+          1282.0782693854812,
+          1019.8349870111782,
+          757.5917046368753,
+          582.7628497206733
+        ],
+        "monotonicSpace": true
+      }
+    },
+    {
+      "name": "Poster typography inside paper, no line collisions",
+      "result": "PASS",
+      "evidence": [
+        {
+          "preset": "SILENCE",
+          "title": "EMER/GENCE",
+          "inside": true,
+          "noVerticalCollision": true
+        },
+        {
+          "preset": "SILENCE",
+          "title": "漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢",
+          "inside": true,
+          "noVerticalCollision": true
+        },
+        {
+          "preset": "SILENCE",
+          "title": "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+          "inside": true,
+          "noVerticalCollision": true
+        },
+        {
+          "preset": "CURRENT",
+          "title": "EMER/GENCE",
+          "inside": true,
+          "noVerticalCollision": true
+        },
+        {
+          "preset": "CURRENT",
+          "title": "漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢",
+          "inside": true,
+          "noVerticalCollision": true
+        },
+        {
+          "preset": "CURRENT",
+          "title": "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+          "inside": true,
+          "noVerticalCollision": true
+        },
+        {
+          "preset": "SIGNAL",
+          "title": "EMER/GENCE",
+          "inside": true,
+          "noVerticalCollision": true
+        },
+        {
+          "preset": "SIGNAL",
+          "title": "漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢漢",
+          "inside": true,
+          "noVerticalCollision": true
+        },
+        {
+          "preset": "SIGNAL",
+          "title": "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+          "inside": true,
+          "noVerticalCollision": true
+        }
+      ]
+    },
+    {
+      "name": "PNG exact equality after JSON restore on same browser",
+      "result": "PASS"
+    },
+    {
+      "name": "Pointer FOCUS maps to paper coordinates",
+      "result": "PASS"
+    },
+    {
+      "name": "Keyboard focus control",
+      "result": "PASS"
+    },
+    {
+      "name": "PNG download via UI",
+      "result": "PASS",
+      "evidence": "EC-SIGNAL-5828ce7f.png"
+    },
+    {
+      "name": "JSON download via UI",
+      "result": "PASS",
+      "evidence": "EC-5828ce7f.json"
+    },
+    {
+      "name": "Wrong file extension rejected in UI",
+      "result": "PASS"
+    },
+    {
+      "name": "Oversized file rejected before reading",
+      "result": "PASS"
+    },
+    {
+      "name": "JSON file input restores title",
+      "result": "PASS"
+    },
+    {
+      "name": "1440x900 EDIT horizontal fit / current chip",
+      "result": "PASS",
+      "evidence": {
+        "overflow": false,
+        "controls": [
+          {
+            "id": "1RULE法則",
+            "x": 838.921875,
+            "right": 919.875,
+            "y": 37.5,
+            "bottom": 95.5,
+            "width": 80.953125,
+            "height": 58
+          },
+          {
+            "id": "2EMERGENCE現象",
+            "x": 933.875,
+            "right": 1047.265625,
+            "y": 37.5,
+            "bottom": 95.5,
+            "width": 113.390625,
+            "height": 58
+          },
+          {
+            "id": "3PERCEPTION知覚",
+            "x": 1061.265625,
+            "right": 1181.15625,
+            "y": 37.5,
+            "bottom": 95.5,
+            "width": 119.890625,
+            "height": 58
+          },
+          {
+            "id": "4EDIT編集",
+            "x": 1195.15625,
+            "right": 1276.109375,
+            "y": 37.5,
+            "bottom": 95.5,
+            "width": 80.953125,
+            "height": 58
+          },
+          {
+            "id": "5EXPRESSION表現",
+            "x": 1290.109375,
+            "right": 1410,
+            "y": 37.5,
+            "bottom": 95.5,
+            "width": 119.890625,
+            "height": 58
+          },
+          {
+            "id": "back",
+            "x": 30,
+            "right": 160.28125,
+            "y": 211,
+            "bottom": 251,
+            "width": 130.28125,
+            "height": 40
+          },
+          {
+            "id": "to-output",
+            "x": 938.125,
+            "right": 1086,
+            "y": 211,
+            "bottom": 251,
+            "width": 147.875,
+            "height": 40
+          },
+          {
+            "id": "SILENCE",
+            "x": 1129,
+            "right": 1212.328125,
+            "y": 238,
+            "bottom": 272,
+            "width": 83.328125,
+            "height": 34
+          },
+          {
+            "id": "CURRENT",
+            "x": 1218.328125,
+            "right": 1301.65625,
+            "y": 238,
+            "bottom": 272,
+            "width": 83.328125,
+            "height": 34
+          },
+          {
+            "id": "SIGNAL",
+            "x": 1307.65625,
+            "right": 1391,
+            "y": 238,
+            "bottom": 272,
+            "width": 83.34375,
+            "height": 34
+          },
+          {
+            "id": "edit-keep",
+            "x": 1129,
+            "right": 1391,
+            "y": 347.796875,
+            "bottom": 351.796875,
+            "width": 262,
+            "height": 4
+          },
+          {
+            "id": "edit-focusAmt",
+            "x": 1129,
+            "right": 1391,
+            "y": 404.796875,
+            "bottom": 408.796875,
+            "width": 262,
+            "height": 4
+          },
+          {
+            "id": "edit-space",
+            "x": 1129,
+            "right": 1391,
+            "y": 461.796875,
+            "bottom": 465.796875,
+            "width": 262,
+            "height": 4
+          },
+          {
+            "id": "edit-trace",
+            "x": 1129,
+            "right": 1391,
+            "y": 518.796875,
+            "bottom": 522.796875,
+            "width": 262,
+            "height": 4
+          },
+          {
+            "id": "type-on",
+            "x": 1133,
+            "right": 1146,
+            "y": 656.875,
+            "bottom": 669.875,
+            "width": 13,
+            "height": 13
+          },
+          {
+            "id": "title-input",
+            "x": 1129,
+            "right": 1391,
+            "y": 719.875,
+            "bottom": 754.875,
+            "width": 262,
+            "height": 35
+          },
+          {
+            "id": "sub-input",
+            "x": 1129,
+            "right": 1391,
+            "y": 789.875,
+            "bottom": 824.875,
+            "width": 262,
+            "height": 35
+          },
+          {
+            "id": "load-json",
+            "x": 1129,
+            "right": 1391,
+            "y": 864.875,
+            "bottom": 904.875,
+            "width": 262,
+            "height": 40
+          },
+          {
+            "id": "ASILENCE省略と、余白。01",
+            "x": 30,
+            "right": 368.65625,
+            "y": 1109,
+            "bottom": 1625.875,
+            "width": 338.65625,
+            "height": 516.875
+          },
+          {
+            "id": "BCURRENT速度の痕跡を残す。02",
+            "x": 390.65625,
+            "right": 729.328125,
+            "y": 1109,
+            "bottom": 1625.890625,
+            "width": 338.671875,
+            "height": 516.890625
+          },
+          {
+            "id": "CSIGNAL主役をひとつ、決める。03",
+            "x": 751.328125,
+            "right": 1089.984375,
+            "y": 1109,
+            "bottom": 1625.875,
+            "width": 338.65625,
+            "height": 516.875
+          }
+        ],
+        "chipsFit": true,
+        "chipCount": 1,
+        "stage": {
+          "width": 1056,
+          "height": 720,
+          "areaRatio": 0.5866666666666667
+        }
+      }
+    },
+    {
+      "name": "1440x900 OUTPUT horizontal fit / current chip",
+      "result": "PASS",
+      "evidence": {
+        "overflow": false,
+        "controls": [
+          {
+            "id": "1RULE法則",
+            "x": 838.921875,
+            "right": 919.875,
+            "y": 37.5,
+            "bottom": 95.5,
+            "width": 80.953125,
+            "height": 58
+          },
+          {
+            "id": "2EMERGENCE現象",
+            "x": 933.875,
+            "right": 1047.265625,
+            "y": 37.5,
+            "bottom": 95.5,
+            "width": 113.390625,
+            "height": 58
+          },
+          {
+            "id": "3PERCEPTION知覚",
+            "x": 1061.265625,
+            "right": 1181.15625,
+            "y": 37.5,
+            "bottom": 95.5,
+            "width": 119.890625,
+            "height": 58
+          },
+          {
+            "id": "4EDIT編集",
+            "x": 1195.15625,
+            "right": 1276.109375,
+            "y": 37.5,
+            "bottom": 95.5,
+            "width": 80.953125,
+            "height": 58
+          },
+          {
+            "id": "5EXPRESSION表現",
+            "x": 1290.109375,
+            "right": 1410,
+            "y": 37.5,
+            "bottom": 95.5,
+            "width": 119.890625,
+            "height": 58
+          },
+          {
+            "id": "back",
+            "x": 30,
+            "right": 160.28125,
+            "y": 211,
+            "bottom": 251,
+            "width": 130.28125,
+            "height": 40
+          },
+          {
+            "id": "to-edit",
+            "x": 168.28125,
+            "right": 301.21875,
+            "y": 211,
+            "bottom": 251,
+            "width": 132.9375,
+            "height": 40
+          },
+          {
+            "id": "export-png",
+            "x": 1129,
+            "right": 1391,
+            "y": 459.96875,
+            "bottom": 499.96875,
+            "width": 262,
+            "height": 40
+          },
+          {
+            "id": "save-json",
+            "x": 1129,
+            "right": 1391,
+            "y": 508.96875,
+            "bottom": 548.96875,
+            "width": 262,
+            "height": 40
+          },
+          {
+            "id": "load-json",
+            "x": 1129,
+            "right": 1391,
+            "y": 641.5625,
+            "bottom": 681.5625,
+            "width": 262,
+            "height": 40
+          },
+          {
+            "id": "ASILENCE省略と、余白。01",
+            "x": 30,
+            "right": 368.65625,
+            "y": 1109,
+            "bottom": 1625.875,
+            "width": 338.65625,
+            "height": 516.875
+          },
+          {
+            "id": "BCURRENT速度の痕跡を残す。02",
+            "x": 390.65625,
+            "right": 729.328125,
+            "y": 1109,
+            "bottom": 1625.890625,
+            "width": 338.671875,
+            "height": 516.890625
+          },
+          {
+            "id": "CSIGNAL主役をひとつ、決める。03",
+            "x": 751.328125,
+            "right": 1089.984375,
+            "y": 1109,
+            "bottom": 1625.875,
+            "width": 338.65625,
+            "height": 516.875
+          }
+        ],
+        "chipsFit": true,
+        "chipCount": 1,
+        "stage": {
+          "width": 1056,
+          "height": 720,
+          "areaRatio": 0.5866666666666667
+        }
+      }
+    },
+    {
+      "name": "1440x900 RULE horizontal fit / current chip",
+      "result": "PASS",
+      "evidence": {
+        "overflow": false,
+        "controls": [
+          {
+            "id": "1RULE法則",
+            "x": 838.921875,
+            "right": 919.875,
+            "y": 37.5,
+            "bottom": 95.5,
+            "width": 80.953125,
+            "height": 58
+          },
+          {
+            "id": "2EMERGENCE現象",
+            "x": 933.875,
+            "right": 1047.265625,
+            "y": 37.5,
+            "bottom": 95.5,
+            "width": 113.390625,
+            "height": 58
+          },
+          {
+            "id": "3PERCEPTION知覚",
+            "x": 1061.265625,
+            "right": 1181.15625,
+            "y": 37.5,
+            "bottom": 95.5,
+            "width": 119.890625,
+            "height": 58
+          },
+          {
+            "id": "4EDIT編集",
+            "x": 1195.15625,
+            "right": 1276.109375,
+            "y": 37.5,
+            "bottom": 95.5,
+            "width": 80.953125,
+            "height": 58
+          },
+          {
+            "id": "5EXPRESSION表現",
+            "x": 1290.109375,
+            "right": 1410,
+            "y": 37.5,
+            "bottom": 95.5,
+            "width": 119.890625,
+            "height": 58
+          },
+          {
+            "id": "play",
+            "x": 30,
+            "right": 85.28125,
+            "y": 211,
+            "bottom": 251,
+            "width": 55.28125,
+            "height": 40
+          },
+          {
+            "id": "step",
+            "x": 93.28125,
+            "right": 169.015625,
+            "y": 211,
+            "bottom": 251,
+            "width": 75.734375,
+            "height": 40
+          },
+          {
+            "id": "compare",
+            "x": 177.015625,
+            "right": 363.453125,
+            "y": 211,
+            "bottom": 251,
+            "width": 186.4375,
+            "height": 40
+          },
+          {
+            "id": "take-main",
+            "x": 902.90625,
+            "right": 1086,
+            "y": 211,
+            "bottom": 251,
+            "width": 183.09375,
+            "height": 40
+          },
+          {
+            "id": "resume-snapshot",
+            "x": 30,
+            "right": 167.09375,
+            "y": 263,
+            "bottom": 303,
+            "width": 137.09375,
+            "height": 40
+          },
+          {
+            "id": "view-zoom",
+            "x": 124.25,
+            "right": 344.25,
+            "y": 1055.5,
+            "bottom": 1059.5,
+            "width": 220,
+            "height": 4
+          },
+          {
+            "id": "COHERE",
+            "x": 1129,
+            "right": 1212.328125,
+            "y": 238,
+            "bottom": 272,
+            "width": 83.328125,
+            "height": 34
+          },
+          {
+            "id": "DRIFT",
+            "x": 1218.328125,
+            "right": 1301.65625,
+            "y": 238,
+            "bottom": 272,
+            "width": 83.328125,
+            "height": 34
+          },
+          {
+            "id": "FRACTURE",
+            "x": 1307.65625,
+            "right": 1391,
+            "y": 238,
+            "bottom": 272,
+            "width": 83.34375,
+            "height": 34
+          },
+          {
+            "id": "rule-separate",
+            "x": 1129,
+            "right": 1391,
+            "y": 325,
+            "bottom": 329,
+            "width": 262,
+            "height": 4
+          },
+          {
+            "id": "rule-align",
+            "x": 1129,
+            "right": 1391,
+            "y": 382,
+            "bottom": 386,
+            "width": 262,
+            "height": 4
+          },
+          {
+            "id": "rule-cohere",
+            "x": 1129,
+            "right": 1391,
+            "y": 439,
+            "bottom": 443,
+            "width": 262,
+            "height": 4
+          },
+          {
+            "id": "rule-noise",
+            "x": 1129,
+            "right": 1391,
+            "y": 496,
+            "bottom": 500,
+            "width": 262,
+            "height": 4
+          },
+          {
+            "id": "align-toggle",
+            "x": 1129,
+            "right": 1391,
+            "y": 522,
+            "bottom": 562,
+            "width": 262,
+            "height": 40
+          },
+          {
+            "id": "seed-input",
+            "x": 1161.203125,
+            "right": 1334.53125,
+            "y": 582.5,
+            "bottom": 617.5,
+            "width": 173.328125,
+            "height": 35
+          },
+          {
+            "id": "new-seed",
+            "x": 1342.53125,
+            "right": 1391,
+            "y": 580,
+            "bottom": 620,
+            "width": 48.46875,
+            "height": 40
+          },
+          {
+            "id": "reset",
+            "x": 1129,
+            "right": 1391,
+            "y": 629,
+            "bottom": 669,
+            "width": 262,
+            "height": 40
+          },
+          {
+            "id": "load-json",
+            "x": 1129,
+            "right": 1391,
+            "y": 872.78125,
+            "bottom": 912.78125,
+            "width": 262,
+            "height": 40
+          }
+        ],
+        "chipsFit": true,
+        "chipCount": 1,
+        "stage": {
+          "width": 1056,
+          "height": 720,
+          "areaRatio": 0.5866666666666667
+        }
+      }
+    },
+    {
+      "name": "1440x900 COMPARE horizontal fit / current chip",
+      "result": "PASS",
+      "evidence": {
+        "overflow": false,
+        "controls": [
+          {
+            "id": "1RULE法則",
+            "x": 838.921875,
+            "right": 919.875,
+            "y": 37.5,
+            "bottom": 95.5,
+            "width": 80.953125,
+            "height": 58
+          },
+          {
+            "id": "2EMERGENCE現象",
+            "x": 933.875,
+            "right": 1047.265625,
+            "y": 37.5,
+            "bottom": 95.5,
+            "width": 113.390625,
+            "height": 58
+          },
+          {
+            "id": "3PERCEPTION知覚",
+            "x": 1061.265625,
+            "right": 1181.15625,
+            "y": 37.5,
+            "bottom": 95.5,
+            "width": 119.890625,
+            "height": 58
+          },
+          {
+            "id": "4EDIT編集",
+            "x": 1195.15625,
+            "right": 1276.109375,
+            "y": 37.5,
+            "bottom": 95.5,
+            "width": 80.953125,
+            "height": 58
+          },
+          {
+            "id": "5EXPRESSION表現",
+            "x": 1290.109375,
+            "right": 1410,
+            "y": 37.5,
+            "bottom": 95.5,
+            "width": 119.890625,
+            "height": 58
+          },
+          {
+            "id": "play",
+            "x": 30,
+            "right": 85.28125,
+            "y": 211,
+            "bottom": 251,
+            "width": 55.28125,
+            "height": 40
+          },
+          {
+            "id": "step",
+            "x": 93.28125,
+            "right": 169.015625,
+            "y": 211,
+            "bottom": 251,
+            "width": 75.734375,
+            "height": 40
+          },
+          {
+            "id": "compare",
+            "x": 177.015625,
+            "right": 343,
+            "y": 211,
+            "bottom": 251,
+            "width": 165.984375,
+            "height": 40
+          },
+          {
+            "id": "take-a",
+            "x": 808.40625,
+            "right": 940.234375,
+            "y": 211,
+            "bottom": 251,
+            "width": 131.828125,
+            "height": 40
+          },
+          {
+            "id": "take-b",
+            "x": 948.234375,
+            "right": 1086,
+            "y": 211,
+            "bottom": 251,
+            "width": 137.765625,
+            "height": 40
+          },
+          {
+            "id": "resume-snapshot",
+            "x": 30,
+            "right": 167.09375,
+            "y": 263,
+            "bottom": 303,
+            "width": 137.09375,
+            "height": 40
+          },
+          {
+            "id": "view-zoom",
+            "x": 124.25,
+            "right": 344.25,
+            "y": 1055.5,
+            "bottom": 1059.5,
+            "width": 220,
+            "height": 4
+          },
+          {
+            "id": "view-lock",
+            "x": 62.203125,
+            "right": 158.625,
+            "y": 1076,
+            "bottom": 1115,
+            "width": 96.421875,
+            "height": 39
+          },
+          {
+            "id": "view-follow",
+            "x": 166.625,
+            "right": 288.125,
+            "y": 1076,
+            "bottom": 1115,
+            "width": 121.5,
+            "height": 39
+          },
+          {
+            "id": "replay-compare",
+            "x": 296.125,
+            "right": 460.484375,
+            "y": 1077.5,
+            "bottom": 1113.5,
+            "width": 164.359375,
+            "height": 36
+          },
+          {
+            "id": "COHERE",
+            "x": 1129,
+            "right": 1212.328125,
+            "y": 238,
+            "bottom": 272,
+            "width": 83.328125,
+            "height": 34
+          },
+          {
+            "id": "DRIFT",
+            "x": 1218.328125,
+            "right": 1301.65625,
+            "y": 238,
+            "bottom": 272,
+            "width": 83.328125,
+            "height": 34
+          },
+          {
+            "id": "FRACTURE",
+            "x": 1307.65625,
+            "right": 1391,
+            "y": 238,
+            "bottom": 272,
+            "width": 83.34375,
+            "height": 34
+          },
+          {
+            "id": "rule-separate",
+            "x": 1129,
+            "right": 1391,
+            "y": 325,
+            "bottom": 329,
+            "width": 262,
+            "height": 4
+          },
+          {
+            "id": "rule-align",
+            "x": 1129,
+            "right": 1391,
+            "y": 382,
+            "bottom": 386,
+            "width": 262,
+            "height": 4
+          },
+          {
+            "id": "rule-cohere",
+            "x": 1129,
+            "right": 1391,
+            "y": 439,
+            "bottom": 443,
+            "width": 262,
+            "height": 4
+          },
+          {
+            "id": "rule-noise",
+            "x": 1129,
+            "right": 1391,
+            "y": 496,
+            "bottom": 500,
+            "width": 262,
+            "height": 4
+          },
+          {
+            "id": "align-toggle",
+            "x": 1129,
+            "right": 1391,
+            "y": 522,
+            "bottom": 562,
+            "width": 262,
+            "height": 40
+          },
+          {
+            "id": "seed-input",
+            "x": 1161.203125,
+            "right": 1334.53125,
+            "y": 659.890625,
+            "bottom": 694.890625,
+            "width": 173.328125,
+            "height": 35
+          },
+          {
+            "id": "new-seed",
+            "x": 1342.53125,
+            "right": 1391,
+            "y": 657.390625,
+            "bottom": 697.390625,
+            "width": 48.46875,
+            "height": 40
+          },
+          {
+            "id": "reset",
+            "x": 1129,
+            "right": 1391,
+            "y": 706.390625,
+            "bottom": 746.390625,
+            "width": 262,
+            "height": 40
+          },
+          {
+            "id": "load-json",
+            "x": 1129,
+            "right": 1391,
+            "y": 950.171875,
+            "bottom": 990.171875,
+            "width": 262,
+            "height": 40
+          }
+        ],
+        "chipsFit": true,
+        "chipCount": 1,
+        "stage": {
+          "width": 1056,
+          "height": 720,
+          "areaRatio": 0.5866666666666667
+        }
+      }
+    },
+    {
+      "name": "1280x800 EDIT horizontal fit / current chip",
+      "result": "PASS",
+      "evidence": {
+        "overflow": false,
+        "controls": [
+          {
+            "id": "1RULE法則",
+            "x": 678.921875,
+            "right": 759.875,
+            "y": 27,
+            "bottom": 85,
+            "width": 80.953125,
+            "height": 58
+          },
+          {
+            "id": "2EMERGENCE現象",
+            "x": 773.875,
+            "right": 887.265625,
+            "y": 27,
+            "bottom": 85,
+            "width": 113.390625,
+            "height": 58
+          },
+          {
+            "id": "3PERCEPTION知覚",
+            "x": 901.265625,
+            "right": 1021.15625,
+            "y": 27,
+            "bottom": 85,
+            "width": 119.890625,
+            "height": 58
+          },
+          {
+            "id": "4EDIT編集",
+            "x": 1035.15625,
+            "right": 1116.109375,
+            "y": 27,
+            "bottom": 85,
+            "width": 80.953125,
+            "height": 58
+          },
+          {
+            "id": "5EXPRESSION表現",
+            "x": 1130.109375,
+            "right": 1250,
+            "y": 27,
+            "bottom": 85,
+            "width": 119.890625,
+            "height": 58
+          },
+          {
+            "id": "back",
+            "x": 30,
+            "right": 160.28125,
+            "y": 209,
+            "bottom": 249,
+            "width": 130.28125,
+            "height": 40
+          },
+          {
+            "id": "to-output",
+            "x": 804.125,
+            "right": 952,
+            "y": 209,
+            "bottom": 249,
+            "width": 147.875,
+            "height": 40
+          },
+          {
+            "id": "SILENCE",
+            "x": 989,
+            "right": 1065.65625,
+            "y": 236,
+            "bottom": 270,
+            "width": 76.65625,
+            "height": 34
+          },
+          {
+            "id": "CURRENT",
+            "x": 1071.65625,
+            "right": 1148.328125,
+            "y": 236,
+            "bottom": 270,
+            "width": 76.671875,
+            "height": 34
+          },
+          {
+            "id": "SIGNAL",
+            "x": 1154.328125,
+            "right": 1230.984375,
+            "y": 236,
+            "bottom": 270,
+            "width": 76.65625,
+            "height": 34
+          },
+          {
+            "id": "edit-keep",
+            "x": 989,
+            "right": 1231,
+            "y": 345.796875,
+            "bottom": 349.796875,
+            "width": 242,
+            "height": 4
+          },
+          {
+            "id": "edit-focusAmt",
+            "x": 989,
+            "right": 1231,
+            "y": 402.796875,
+            "bottom": 406.796875,
+            "width": 242,
+            "height": 4
+          },
+          {
+            "id": "edit-space",
+            "x": 989,
+            "right": 1231,
+            "y": 459.796875,
+            "bottom": 463.796875,
+            "width": 242,
+            "height": 4
+          },
+          {
+            "id": "edit-trace",
+            "x": 989,
+            "right": 1231,
+            "y": 516.796875,
+            "bottom": 520.796875,
+            "width": 242,
+            "height": 4
+          },
+          {
+            "id": "type-on",
+            "x": 993,
+            "right": 1006,
+            "y": 654.875,
+            "bottom": 667.875,
+            "width": 13,
+            "height": 13
+          },
+          {
+            "id": "title-input",
+            "x": 989,
+            "right": 1231,
+            "y": 717.875,
+            "bottom": 752.875,
+            "width": 242,
+            "height": 35
+          },
+          {
+            "id": "sub-input",
+            "x": 989,
+            "right": 1231,
+            "y": 787.875,
+            "bottom": 822.875,
+            "width": 242,
+            "height": 35
+          },
+          {
+            "id": "load-json",
+            "x": 989,
+            "right": 1231,
+            "y": 862.875,
+            "bottom": 902.875,
+            "width": 242,
+            "height": 40
+          },
+          {
+            "id": "ASILENCE省略と、余白。01",
+            "x": 30,
+            "right": 368.65625,
+            "y": 1106.65625,
+            "bottom": 1623.53125,
+            "width": 338.65625,
+            "height": 516.875
+          },
+          {
+            "id": "BCURRENT速度の痕跡を残す。02",
+            "x": 390.65625,
+            "right": 729.328125,
+            "y": 1106.65625,
+            "bottom": 1623.546875,
+            "width": 338.671875,
+            "height": 516.890625
+          },
+          {
+            "id": "CSIGNAL主役をひとつ、決める。03",
+            "x": 751.328125,
+            "right": 1089.984375,
+            "y": 1106.65625,
+            "bottom": 1623.53125,
+            "width": 338.65625,
+            "height": 516.875
+          }
+        ],
+        "chipsFit": true,
+        "chipCount": 1,
+        "stage": {
+          "width": 922,
+          "height": 640,
+          "areaRatio": 0.57625
+        }
+      }
+    },
+    {
+      "name": "1280x800 OUTPUT horizontal fit / current chip",
+      "result": "PASS",
+      "evidence": {
+        "overflow": false,
+        "controls": [
+          {
+            "id": "1RULE法則",
+            "x": 678.921875,
+            "right": 759.875,
+            "y": 27,
+            "bottom": 85,
+            "width": 80.953125,
+            "height": 58
+          },
+          {
+            "id": "2EMERGENCE現象",
+            "x": 773.875,
+            "right": 887.265625,
+            "y": 27,
+            "bottom": 85,
+            "width": 113.390625,
+            "height": 58
+          },
+          {
+            "id": "3PERCEPTION知覚",
+            "x": 901.265625,
+            "right": 1021.15625,
+            "y": 27,
+            "bottom": 85,
+            "width": 119.890625,
+            "height": 58
+          },
+          {
+            "id": "4EDIT編集",
+            "x": 1035.15625,
+            "right": 1116.109375,
+            "y": 27,
+            "bottom": 85,
+            "width": 80.953125,
+            "height": 58
+          },
+          {
+            "id": "5EXPRESSION表現",
+            "x": 1130.109375,
+            "right": 1250,
+            "y": 27,
+            "bottom": 85,
+            "width": 119.890625,
+            "height": 58
+          },
+          {
+            "id": "back",
+            "x": 30,
+            "right": 160.28125,
+            "y": 209,
+            "bottom": 249,
+            "width": 130.28125,
+            "height": 40
+          },
+          {
+            "id": "to-edit",
+            "x": 168.28125,
+            "right": 301.21875,
+            "y": 209,
+            "bottom": 249,
+            "width": 132.9375,
+            "height": 40
+          },
+          {
+            "id": "export-png",
+            "x": 989,
+            "right": 1231,
+            "y": 457.96875,
+            "bottom": 497.96875,
+            "width": 242,
+            "height": 40
+          },
+          {
+            "id": "save-json",
+            "x": 989,
+            "right": 1231,
+            "y": 506.96875,
+            "bottom": 546.96875,
+            "width": 242,
+            "height": 40
+          },
+          {
+            "id": "load-json",
+            "x": 989,
+            "right": 1231,
+            "y": 639.5625,
+            "bottom": 679.5625,
+            "width": 242,
+            "height": 40
+          },
+          {
+            "id": "ASILENCE省略と、余白。01",
+            "x": 30,
+            "right": 368.65625,
+            "y": 1027,
+            "bottom": 1543.875,
+            "width": 338.65625,
+            "height": 516.875
+          },
+          {
+            "id": "BCURRENT速度の痕跡を残す。02",
+            "x": 390.65625,
+            "right": 729.328125,
+            "y": 1027,
+            "bottom": 1543.890625,
+            "width": 338.671875,
+            "height": 516.890625
+          },
+          {
+            "id": "CSIGNAL主役をひとつ、決める。03",
+            "x": 751.328125,
+            "right": 1089.984375,
+            "y": 1027,
+            "bottom": 1543.875,
+            "width": 338.65625,
+            "height": 516.875
+          }
+        ],
+        "chipsFit": true,
+        "chipCount": 1,
+        "stage": {
+          "width": 922,
+          "height": 640,
+          "areaRatio": 0.57625
+        }
+      }
+    },
+    {
+      "name": "1280x800 RULE horizontal fit / current chip",
+      "result": "PASS",
+      "evidence": {
+        "overflow": false,
+        "controls": [
+          {
+            "id": "1RULE法則",
+            "x": 678.921875,
+            "right": 759.875,
+            "y": 27,
+            "bottom": 85,
+            "width": 80.953125,
+            "height": 58
+          },
+          {
+            "id": "2EMERGENCE現象",
+            "x": 773.875,
+            "right": 887.265625,
+            "y": 27,
+            "bottom": 85,
+            "width": 113.390625,
+            "height": 58
+          },
+          {
+            "id": "3PERCEPTION知覚",
+            "x": 901.265625,
+            "right": 1021.15625,
+            "y": 27,
+            "bottom": 85,
+            "width": 119.890625,
+            "height": 58
+          },
+          {
+            "id": "4EDIT編集",
+            "x": 1035.15625,
+            "right": 1116.109375,
+            "y": 27,
+            "bottom": 85,
+            "width": 80.953125,
+            "height": 58
+          },
+          {
+            "id": "5EXPRESSION表現",
+            "x": 1130.109375,
+            "right": 1250,
+            "y": 27,
+            "bottom": 85,
+            "width": 119.890625,
+            "height": 58
+          },
+          {
+            "id": "play",
+            "x": 30,
+            "right": 85.28125,
+            "y": 209,
+            "bottom": 249,
+            "width": 55.28125,
+            "height": 40
+          },
+          {
+            "id": "step",
+            "x": 93.28125,
+            "right": 169.015625,
+            "y": 209,
+            "bottom": 249,
+            "width": 75.734375,
+            "height": 40
+          },
+          {
+            "id": "compare",
+            "x": 177.015625,
+            "right": 363.453125,
+            "y": 209,
+            "bottom": 249,
+            "width": 186.4375,
+            "height": 40
+          },
+          {
+            "id": "take-main",
+            "x": 768.90625,
+            "right": 952,
+            "y": 209,
+            "bottom": 249,
+            "width": 183.09375,
+            "height": 40
+          },
+          {
+            "id": "resume-snapshot",
+            "x": 30,
+            "right": 167.09375,
+            "y": 261,
+            "bottom": 301,
+            "width": 137.09375,
+            "height": 40
+          },
+          {
+            "id": "view-zoom",
+            "x": 124.25,
+            "right": 344.25,
+            "y": 973.5,
+            "bottom": 977.5,
+            "width": 220,
+            "height": 4
+          },
+          {
+            "id": "COHERE",
+            "x": 989,
+            "right": 1065.65625,
+            "y": 236,
+            "bottom": 270,
+            "width": 76.65625,
+            "height": 34
+          },
+          {
+            "id": "DRIFT",
+            "x": 1071.65625,
+            "right": 1148.328125,
+            "y": 236,
+            "bottom": 270,
+            "width": 76.671875,
+            "height": 34
+          },
+          {
+            "id": "FRACTURE",
+            "x": 1154.328125,
+            "right": 1230.984375,
+            "y": 236,
+            "bottom": 270,
+            "width": 76.65625,
+            "height": 34
+          },
+          {
+            "id": "rule-separate",
+            "x": 989,
+            "right": 1231,
+            "y": 323,
+            "bottom": 327,
+            "width": 242,
+            "height": 4
+          },
+          {
+            "id": "rule-align",
+            "x": 989,
+            "right": 1231,
+            "y": 380,
+            "bottom": 384,
+            "width": 242,
+            "height": 4
+          },
+          {
+            "id": "rule-cohere",
+            "x": 989,
+            "right": 1231,
+            "y": 437,
+            "bottom": 441,
+            "width": 242,
+            "height": 4
+          },
+          {
+            "id": "rule-noise",
+            "x": 989,
+            "right": 1231,
+            "y": 494,
+            "bottom": 498,
+            "width": 242,
+            "height": 4
+          },
+          {
+            "id": "align-toggle",
+            "x": 989,
+            "right": 1231,
+            "y": 520,
+            "bottom": 560,
+            "width": 242,
+            "height": 40
+          },
+          {
+            "id": "seed-input",
+            "x": 1021.203125,
+            "right": 1174.53125,
+            "y": 580.5,
+            "bottom": 615.5,
+            "width": 153.328125,
+            "height": 35
+          },
+          {
+            "id": "new-seed",
+            "x": 1182.53125,
+            "right": 1231,
+            "y": 578,
+            "bottom": 618,
+            "width": 48.46875,
+            "height": 40
+          },
+          {
+            "id": "reset",
+            "x": 989,
+            "right": 1231,
+            "y": 627,
+            "bottom": 667,
+            "width": 242,
+            "height": 40
+          },
+          {
+            "id": "load-json",
+            "x": 989,
+            "right": 1231,
+            "y": 870.78125,
+            "bottom": 910.78125,
+            "width": 242,
+            "height": 40
+          }
+        ],
+        "chipsFit": true,
+        "chipCount": 1,
+        "stage": {
+          "width": 922,
+          "height": 640,
+          "areaRatio": 0.57625
+        }
+      }
+    },
+    {
+      "name": "1280x800 COMPARE horizontal fit / current chip",
+      "result": "PASS",
+      "evidence": {
+        "overflow": false,
+        "controls": [
+          {
+            "id": "1RULE法則",
+            "x": 678.921875,
+            "right": 759.875,
+            "y": 27,
+            "bottom": 85,
+            "width": 80.953125,
+            "height": 58
+          },
+          {
+            "id": "2EMERGENCE現象",
+            "x": 773.875,
+            "right": 887.265625,
+            "y": 27,
+            "bottom": 85,
+            "width": 113.390625,
+            "height": 58
+          },
+          {
+            "id": "3PERCEPTION知覚",
+            "x": 901.265625,
+            "right": 1021.15625,
+            "y": 27,
+            "bottom": 85,
+            "width": 119.890625,
+            "height": 58
+          },
+          {
+            "id": "4EDIT編集",
+            "x": 1035.15625,
+            "right": 1116.109375,
+            "y": 27,
+            "bottom": 85,
+            "width": 80.953125,
+            "height": 58
+          },
+          {
+            "id": "5EXPRESSION表現",
+            "x": 1130.109375,
+            "right": 1250,
+            "y": 27,
+            "bottom": 85,
+            "width": 119.890625,
+            "height": 58
+          },
+          {
+            "id": "play",
+            "x": 30,
+            "right": 85.28125,
+            "y": 209,
+            "bottom": 249,
+            "width": 55.28125,
+            "height": 40
+          },
+          {
+            "id": "step",
+            "x": 93.28125,
+            "right": 169.015625,
+            "y": 209,
+            "bottom": 249,
+            "width": 75.734375,
+            "height": 40
+          },
+          {
+            "id": "compare",
+            "x": 177.015625,
+            "right": 343,
+            "y": 209,
+            "bottom": 249,
+            "width": 165.984375,
+            "height": 40
+          },
+          {
+            "id": "take-a",
+            "x": 674.40625,
+            "right": 806.234375,
+            "y": 209,
+            "bottom": 249,
+            "width": 131.828125,
+            "height": 40
+          },
+          {
+            "id": "take-b",
+            "x": 814.234375,
+            "right": 952,
+            "y": 209,
+            "bottom": 249,
+            "width": 137.765625,
+            "height": 40
+          },
+          {
+            "id": "resume-snapshot",
+            "x": 30,
+            "right": 167.09375,
+            "y": 261,
+            "bottom": 301,
+            "width": 137.09375,
+            "height": 40
+          },
+          {
+            "id": "view-zoom",
+            "x": 124.25,
+            "right": 344.25,
+            "y": 973.5,
+            "bottom": 977.5,
+            "width": 220,
+            "height": 4
+          },
+          {
+            "id": "view-lock",
+            "x": 62.203125,
+            "right": 158.625,
+            "y": 994,
+            "bottom": 1033,
+            "width": 96.421875,
+            "height": 39
+          },
+          {
+            "id": "view-follow",
+            "x": 166.625,
+            "right": 288.125,
+            "y": 994,
+            "bottom": 1033,
+            "width": 121.5,
+            "height": 39
+          },
+          {
+            "id": "replay-compare",
+            "x": 296.125,
+            "right": 460.484375,
+            "y": 995.5,
+            "bottom": 1031.5,
+            "width": 164.359375,
+            "height": 36
+          },
+          {
+            "id": "COHERE",
+            "x": 989,
+            "right": 1065.65625,
+            "y": 236,
+            "bottom": 270,
+            "width": 76.65625,
+            "height": 34
+          },
+          {
+            "id": "DRIFT",
+            "x": 1071.65625,
+            "right": 1148.328125,
+            "y": 236,
+            "bottom": 270,
+            "width": 76.671875,
+            "height": 34
+          },
+          {
+            "id": "FRACTURE",
+            "x": 1154.328125,
+            "right": 1230.984375,
+            "y": 236,
+            "bottom": 270,
+            "width": 76.65625,
+            "height": 34
+          },
+          {
+            "id": "rule-separate",
+            "x": 989,
+            "right": 1231,
+            "y": 323,
+            "bottom": 327,
+            "width": 242,
+            "height": 4
+          },
+          {
+            "id": "rule-align",
+            "x": 989,
+            "right": 1231,
+            "y": 380,
+            "bottom": 384,
+            "width": 242,
+            "height": 4
+          },
+          {
+            "id": "rule-cohere",
+            "x": 989,
+            "right": 1231,
+            "y": 437,
+            "bottom": 441,
+            "width": 242,
+            "height": 4
+          },
+          {
+            "id": "rule-noise",
+            "x": 989,
+            "right": 1231,
+            "y": 494,
+            "bottom": 498,
+            "width": 242,
+            "height": 4
+          },
+          {
+            "id": "align-toggle",
+            "x": 989,
+            "right": 1231,
+            "y": 520,
+            "bottom": 560,
+            "width": 242,
+            "height": 40
+          },
+          {
+            "id": "seed-input",
+            "x": 1021.203125,
+            "right": 1174.53125,
+            "y": 657.890625,
+            "bottom": 692.890625,
+            "width": 153.328125,
+            "height": 35
+          },
+          {
+            "id": "new-seed",
+            "x": 1182.53125,
+            "right": 1231,
+            "y": 655.390625,
+            "bottom": 695.390625,
+            "width": 48.46875,
+            "height": 40
+          },
+          {
+            "id": "reset",
+            "x": 989,
+            "right": 1231,
+            "y": 704.390625,
+            "bottom": 744.390625,
+            "width": 242,
+            "height": 40
+          },
+          {
+            "id": "load-json",
+            "x": 989,
+            "right": 1231,
+            "y": 948.171875,
+            "bottom": 988.171875,
+            "width": 242,
+            "height": 40
+          }
+        ],
+        "chipsFit": true,
+        "chipCount": 1,
+        "stage": {
+          "width": 922,
+          "height": 640,
+          "areaRatio": 0.57625
+        }
+      }
+    },
+    {
+      "name": "390x844 EDIT horizontal fit / current chip",
+      "result": "PASS",
+      "evidence": {
+        "overflow": false,
+        "controls": [
+          {
+            "id": "1RULE法則",
+            "x": 16,
+            "right": 85.1875,
+            "y": 108,
+            "bottom": 179,
+            "width": 69.1875,
+            "height": 71
+          },
+          {
+            "id": "2EMERGENCE現象",
+            "x": 88.1875,
+            "right": 157.390625,
+            "y": 108,
+            "bottom": 179,
+            "width": 69.203125,
+            "height": 71
+          },
+          {
+            "id": "3PERCEPTION知覚",
+            "x": 160.390625,
+            "right": 229.59375,
+            "y": 108,
+            "bottom": 179,
+            "width": 69.203125,
+            "height": 71
+          },
+          {
+            "id": "4EDIT編集",
+            "x": 232.59375,
+            "right": 301.796875,
+            "y": 108,
+            "bottom": 179,
+            "width": 69.203125,
+            "height": 71
+          },
+          {
+            "id": "5EXPRESSION表現",
+            "x": 304.796875,
+            "right": 374,
+            "y": 108,
+            "bottom": 179,
+            "width": 69.203125,
+            "height": 71
+          },
+          {
+            "id": "back",
+            "x": 16,
+            "right": 191,
+            "y": 272,
+            "bottom": 316,
+            "width": 175,
+            "height": 44
+          },
+          {
+            "id": "to-output",
+            "x": 199,
+            "right": 374,
+            "y": 272,
+            "bottom": 316,
+            "width": 175,
+            "height": 44
+          },
+          {
+            "id": "CONTROLS 構図を編集する＋",
+            "x": 17,
+            "right": 373,
+            "y": 882.953125,
+            "bottom": 930.953125,
+            "width": 356,
+            "height": 48
+          },
+          {
+            "id": "SILENCE",
+            "x": 37,
+            "right": 138.328125,
+            "y": 1008.953125,
+            "bottom": 1052.953125,
+            "width": 101.328125,
+            "height": 44
+          },
+          {
+            "id": "CURRENT",
+            "x": 144.328125,
+            "right": 245.65625,
+            "y": 1008.953125,
+            "bottom": 1052.953125,
+            "width": 101.328125,
+            "height": 44
+          },
+          {
+            "id": "SIGNAL",
+            "x": 251.65625,
+            "right": 353,
+            "y": 1008.953125,
+            "bottom": 1052.953125,
+            "width": 101.34375,
+            "height": 44
+          },
+          {
+            "id": "edit-keep",
+            "x": 37,
+            "right": 353,
+            "y": 1133.75,
+            "bottom": 1137.75,
+            "width": 316,
+            "height": 4
+          },
+          {
+            "id": "edit-focusAmt",
+            "x": 37,
+            "right": 353,
+            "y": 1200.75,
+            "bottom": 1204.75,
+            "width": 316,
+            "height": 4
+          },
+          {
+            "id": "edit-space",
+            "x": 37,
+            "right": 353,
+            "y": 1267.75,
+            "bottom": 1271.75,
+            "width": 316,
+            "height": 4
+          },
+          {
+            "id": "edit-trace",
+            "x": 37,
+            "right": 353,
+            "y": 1334.75,
+            "bottom": 1338.75,
+            "width": 316,
+            "height": 4
+          },
+          {
+            "id": "type-on",
+            "x": 41,
+            "right": 54,
+            "y": 1458.03125,
+            "bottom": 1471.03125,
+            "width": 13,
+            "height": 13
+          },
+          {
+            "id": "title-input",
+            "x": 37,
+            "right": 353,
+            "y": 1521.03125,
+            "bottom": 1556.03125,
+            "width": 316,
+            "height": 35
+          },
+          {
+            "id": "sub-input",
+            "x": 37,
+            "right": 353,
+            "y": 1591.03125,
+            "bottom": 1626.03125,
+            "width": 316,
+            "height": 35
+          },
+          {
+            "id": "load-json",
+            "x": 37,
+            "right": 353,
+            "y": 1666.03125,
+            "bottom": 1710.03125,
+            "width": 316,
+            "height": 44
+          },
+          {
+            "id": "ASILENCE省略と、余白。01",
+            "x": 16,
+            "right": 129.328125,
+            "y": 1059.953125,
+            "bottom": 1268.390625,
+            "width": 113.328125,
+            "height": 208.4375
+          },
+          {
+            "id": "BCURRENT速度の痕跡を残す。02",
+            "x": 138.328125,
+            "right": 251.65625,
+            "y": 1059.953125,
+            "bottom": 1291.390625,
+            "width": 113.328125,
+            "height": 231.4375
+          },
+          {
+            "id": "CSIGNAL主役をひとつ、決める。03",
+            "x": 260.65625,
+            "right": 374,
+            "y": 1059.953125,
+            "bottom": 1306.40625,
+            "width": 113.34375,
+            "height": 246.453125
+          }
+        ],
+        "chipsFit": true,
+        "chipCount": 1,
+        "stage": {
+          "width": 358,
+          "height": 497.953125,
+          "areaRatio": 0.5415822662231133
+        }
+      }
+    },
+    {
+      "name": "390x844 OUTPUT horizontal fit / current chip",
+      "result": "PASS",
+      "evidence": {
+        "overflow": false,
+        "controls": [
+          {
+            "id": "1RULE法則",
+            "x": 16,
+            "right": 85.1875,
+            "y": -723,
+            "bottom": -652,
+            "width": 69.1875,
+            "height": 71
+          },
+          {
+            "id": "2EMERGENCE現象",
+            "x": 88.1875,
+            "right": 157.390625,
+            "y": -723,
+            "bottom": -652,
+            "width": 69.203125,
+            "height": 71
+          },
+          {
+            "id": "3PERCEPTION知覚",
+            "x": 160.390625,
+            "right": 229.59375,
+            "y": -723,
+            "bottom": -652,
+            "width": 69.203125,
+            "height": 71
+          },
+          {
+            "id": "4EDIT編集",
+            "x": 232.59375,
+            "right": 301.796875,
+            "y": -723,
+            "bottom": -652,
+            "width": 69.203125,
+            "height": 71
+          },
+          {
+            "id": "5EXPRESSION表現",
+            "x": 304.796875,
+            "right": 374,
+            "y": -723,
+            "bottom": -652,
+            "width": 69.203125,
+            "height": 71
+          },
+          {
+            "id": "back",
+            "x": 16,
+            "right": 191,
+            "y": -559,
+            "bottom": -515,
+            "width": 175,
+            "height": 44
+          },
+          {
+            "id": "to-edit",
+            "x": 199,
+            "right": 374,
+            "y": -559,
+            "bottom": -515,
+            "width": 175,
+            "height": 44
+          },
+          {
+            "id": "CONTROLS 作品を書き出す＋",
+            "x": 17,
+            "right": 373,
+            "y": 51.953125,
+            "bottom": 99.953125,
+            "width": 356,
+            "height": 48
+          },
+          {
+            "id": "export-png",
+            "x": 37,
+            "right": 353,
+            "y": 399.921875,
+            "bottom": 443.921875,
+            "width": 316,
+            "height": 44
+          },
+          {
+            "id": "save-json",
+            "x": 37,
+            "right": 353,
+            "y": 452.921875,
+            "bottom": 496.921875,
+            "width": 316,
+            "height": 44
+          },
+          {
+            "id": "load-json",
+            "x": 37,
+            "right": 353,
+            "y": 589.515625,
+            "bottom": 633.515625,
+            "width": 316,
+            "height": 44
+          },
+          {
+            "id": "ASILENCE省略と、余白。01",
+            "x": 16,
+            "right": 129.328125,
+            "y": 866.109375,
+            "bottom": 1074.546875,
+            "width": 113.328125,
+            "height": 208.4375
+          },
+          {
+            "id": "BCURRENT速度の痕跡を残す。02",
+            "x": 138.328125,
+            "right": 251.65625,
+            "y": 866.109375,
+            "bottom": 1097.546875,
+            "width": 113.328125,
+            "height": 231.4375
+          },
+          {
+            "id": "CSIGNAL主役をひとつ、決める。03",
+            "x": 260.65625,
+            "right": 374,
+            "y": 866.109375,
+            "bottom": 1112.5625,
+            "width": 113.34375,
+            "height": 246.453125
+          }
+        ],
+        "chipsFit": true,
+        "chipCount": 1,
+        "stage": {
+          "width": 358,
+          "height": 497.953125,
+          "areaRatio": 0.5415822662231133
+        }
+      }
+    },
+    {
+      "name": "390x844 RULE horizontal fit / current chip",
+      "result": "PASS",
+      "evidence": {
+        "overflow": false,
+        "controls": [
+          {
+            "id": "1RULE法則",
+            "x": 16,
+            "right": 85.1875,
+            "y": 108,
+            "bottom": 179,
+            "width": 69.1875,
+            "height": 71
+          },
+          {
+            "id": "2EMERGENCE現象",
+            "x": 88.1875,
+            "right": 157.390625,
+            "y": 108,
+            "bottom": 179,
+            "width": 69.203125,
+            "height": 71
+          },
+          {
+            "id": "3PERCEPTION知覚",
+            "x": 160.390625,
+            "right": 229.59375,
+            "y": 108,
+            "bottom": 179,
+            "width": 69.203125,
+            "height": 71
+          },
+          {
+            "id": "4EDIT編集",
+            "x": 232.59375,
+            "right": 301.796875,
+            "y": 108,
+            "bottom": 179,
+            "width": 69.203125,
+            "height": 71
+          },
+          {
+            "id": "5EXPRESSION表現",
+            "x": 304.796875,
+            "right": 374,
+            "y": 108,
+            "bottom": 179,
+            "width": 69.203125,
+            "height": 71
+          },
+          {
+            "id": "play",
+            "x": 16,
+            "right": 191,
+            "y": 272,
+            "bottom": 316,
+            "width": 175,
+            "height": 44
+          },
+          {
+            "id": "step",
+            "x": 199,
+            "right": 374,
+            "y": 272,
+            "bottom": 316,
+            "width": 175,
+            "height": 44
+          },
+          {
+            "id": "compare",
+            "x": 16,
+            "right": 191,
+            "y": 324,
+            "bottom": 368,
+            "width": 175,
+            "height": 44
+          },
+          {
+            "id": "take-main",
+            "x": 199,
+            "right": 374,
+            "y": 324,
+            "bottom": 368,
+            "width": 175,
+            "height": 44
+          },
+          {
+            "id": "resume-snapshot",
+            "x": 16,
+            "right": 374,
+            "y": 380,
+            "bottom": 424,
+            "width": 358,
+            "height": 44
+          },
+          {
+            "id": "view-zoom",
+            "x": 110.25,
+            "right": 329.75,
+            "y": 954.453125,
+            "bottom": 958.453125,
+            "width": 219.5,
+            "height": 4
+          },
+          {
+            "id": "CONTROLS 法則を変える＋",
+            "x": 17,
+            "right": 373,
+            "y": 1021.953125,
+            "bottom": 1069.953125,
+            "width": 356,
+            "height": 48
+          },
+          {
+            "id": "COHERE",
+            "x": 37,
+            "right": 138.328125,
+            "y": 1147.953125,
+            "bottom": 1191.953125,
+            "width": 101.328125,
+            "height": 44
+          },
+          {
+            "id": "DRIFT",
+            "x": 144.328125,
+            "right": 245.65625,
+            "y": 1147.953125,
+            "bottom": 1191.953125,
+            "width": 101.328125,
+            "height": 44
+          },
+          {
+            "id": "FRACTURE",
+            "x": 251.65625,
+            "right": 353,
+            "y": 1147.953125,
+            "bottom": 1191.953125,
+            "width": 101.34375,
+            "height": 44
+          },
+          {
+            "id": "rule-separate",
+            "x": 37,
+            "right": 353,
+            "y": 1249.953125,
+            "bottom": 1253.953125,
+            "width": 316,
+            "height": 4
+          },
+          {
+            "id": "rule-align",
+            "x": 37,
+            "right": 353,
+            "y": 1316.953125,
+            "bottom": 1320.953125,
+            "width": 316,
+            "height": 4
+          },
+          {
+            "id": "rule-cohere",
+            "x": 37,
+            "right": 353,
+            "y": 1383.953125,
+            "bottom": 1387.953125,
+            "width": 316,
+            "height": 4
+          },
+          {
+            "id": "rule-noise",
+            "x": 37,
+            "right": 353,
+            "y": 1450.953125,
+            "bottom": 1454.953125,
+            "width": 316,
+            "height": 4
+          },
+          {
+            "id": "align-toggle",
+            "x": 37,
+            "right": 353,
+            "y": 1481.953125,
+            "bottom": 1525.953125,
+            "width": 316,
+            "height": 44
+          },
+          {
+            "id": "seed-input",
+            "x": 69.203125,
+            "right": 296.53125,
+            "y": 1548.453125,
+            "bottom": 1583.453125,
+            "width": 227.328125,
+            "height": 35
+          },
+          {
+            "id": "new-seed",
+            "x": 304.53125,
+            "right": 353,
+            "y": 1543.953125,
+            "bottom": 1587.953125,
+            "width": 48.46875,
+            "height": 44
+          },
+          {
+            "id": "reset",
+            "x": 37,
+            "right": 353,
+            "y": 1596.953125,
+            "bottom": 1640.953125,
+            "width": 316,
+            "height": 44
+          },
+          {
+            "id": "load-json",
+            "x": 37,
+            "right": 353,
+            "y": 1844.734375,
+            "bottom": 1888.734375,
+            "width": 316,
+            "height": 44
+          }
+        ],
+        "chipsFit": true,
+        "chipCount": 1,
+        "stage": {
+          "width": 358,
+          "height": 497.953125,
+          "areaRatio": 0.5415822662231133
+        }
+      }
+    },
+    {
+      "name": "390x844 COMPARE horizontal fit / current chip",
+      "result": "PASS",
+      "evidence": {
+        "overflow": false,
+        "controls": [
+          {
+            "id": "1RULE法則",
+            "x": 16,
+            "right": 85.1875,
+            "y": 108,
+            "bottom": 179,
+            "width": 69.1875,
+            "height": 71
+          },
+          {
+            "id": "2EMERGENCE現象",
+            "x": 88.1875,
+            "right": 157.390625,
+            "y": 108,
+            "bottom": 179,
+            "width": 69.203125,
+            "height": 71
+          },
+          {
+            "id": "3PERCEPTION知覚",
+            "x": 160.390625,
+            "right": 229.59375,
+            "y": 108,
+            "bottom": 179,
+            "width": 69.203125,
+            "height": 71
+          },
+          {
+            "id": "4EDIT編集",
+            "x": 232.59375,
+            "right": 301.796875,
+            "y": 108,
+            "bottom": 179,
+            "width": 69.203125,
+            "height": 71
+          },
+          {
+            "id": "5EXPRESSION表現",
+            "x": 304.796875,
+            "right": 374,
+            "y": 108,
+            "bottom": 179,
+            "width": 69.203125,
+            "height": 71
+          },
+          {
+            "id": "play",
+            "x": 16,
+            "right": 191,
+            "y": 272,
+            "bottom": 316,
+            "width": 175,
+            "height": 44
+          },
+          {
+            "id": "step",
+            "x": 199,
+            "right": 374,
+            "y": 272,
+            "bottom": 316,
+            "width": 175,
+            "height": 44
+          },
+          {
+            "id": "compare",
+            "x": 16,
+            "right": 191,
+            "y": 324,
+            "bottom": 368,
+            "width": 175,
+            "height": 44
+          },
+          {
+            "id": "take-a",
+            "x": 199,
+            "right": 374,
+            "y": 324,
+            "bottom": 368,
+            "width": 175,
+            "height": 44
+          },
+          {
+            "id": "take-b",
+            "x": 16,
+            "right": 191,
+            "y": 376,
+            "bottom": 420,
+            "width": 175,
+            "height": 44
+          },
+          {
+            "id": "resume-snapshot",
+            "x": 16,
+            "right": 374,
+            "y": 432,
+            "bottom": 476,
+            "width": 358,
+            "height": 44
+          },
+          {
+            "id": "view-zoom",
+            "x": 110.25,
+            "right": 329.75,
+            "y": 1006.453125,
+            "bottom": 1010.453125,
+            "width": 219.5,
+            "height": 4
+          },
+          {
+            "id": "view-lock",
+            "x": 48.203125,
+            "right": 144.625,
+            "y": 1026.953125,
+            "bottom": 1065.953125,
+            "width": 96.421875,
+            "height": 39
+          },
+          {
+            "id": "view-follow",
+            "x": 152.625,
+            "right": 274.125,
+            "y": 1026.953125,
+            "bottom": 1065.953125,
+            "width": 121.5,
+            "height": 39
+          },
+          {
+            "id": "replay-compare",
+            "x": 16,
+            "right": 180.359375,
+            "y": 1073.953125,
+            "bottom": 1109.953125,
+            "width": 164.359375,
+            "height": 36
+          },
+          {
+            "id": "CONTROLS 法則を変える＋",
+            "x": 17,
+            "right": 373,
+            "y": 1232.546875,
+            "bottom": 1280.546875,
+            "width": 356,
+            "height": 48
+          },
+          {
+            "id": "COHERE",
+            "x": 37,
+            "right": 138.328125,
+            "y": 1358.546875,
+            "bottom": 1402.546875,
+            "width": 101.328125,
+            "height": 44
+          },
+          {
+            "id": "DRIFT",
+            "x": 144.328125,
+            "right": 245.65625,
+            "y": 1358.546875,
+            "bottom": 1402.546875,
+            "width": 101.328125,
+            "height": 44
+          },
+          {
+            "id": "FRACTURE",
+            "x": 251.65625,
+            "right": 353,
+            "y": 1358.546875,
+            "bottom": 1402.546875,
+            "width": 101.34375,
+            "height": 44
+          },
+          {
+            "id": "rule-separate",
+            "x": 37,
+            "right": 353,
+            "y": 1460.546875,
+            "bottom": 1464.546875,
+            "width": 316,
+            "height": 4
+          },
+          {
+            "id": "rule-align",
+            "x": 37,
+            "right": 353,
+            "y": 1527.546875,
+            "bottom": 1531.546875,
+            "width": 316,
+            "height": 4
+          },
+          {
+            "id": "rule-cohere",
+            "x": 37,
+            "right": 353,
+            "y": 1594.546875,
+            "bottom": 1598.546875,
+            "width": 316,
+            "height": 4
+          },
+          {
+            "id": "rule-noise",
+            "x": 37,
+            "right": 353,
+            "y": 1661.546875,
+            "bottom": 1665.546875,
+            "width": 316,
+            "height": 4
+          },
+          {
+            "id": "align-toggle",
+            "x": 37,
+            "right": 353,
+            "y": 1692.546875,
+            "bottom": 1736.546875,
+            "width": 316,
+            "height": 44
+          },
+          {
+            "id": "seed-input",
+            "x": 69.203125,
+            "right": 296.53125,
+            "y": 1816.640625,
+            "bottom": 1851.640625,
+            "width": 227.328125,
+            "height": 35
+          },
+          {
+            "id": "new-seed",
+            "x": 304.53125,
+            "right": 353,
+            "y": 1812.140625,
+            "bottom": 1856.140625,
+            "width": 48.46875,
+            "height": 44
+          },
+          {
+            "id": "reset",
+            "x": 37,
+            "right": 353,
+            "y": 1865.140625,
+            "bottom": 1909.140625,
+            "width": 316,
+            "height": 44
+          },
+          {
+            "id": "load-json",
+            "x": 37,
+            "right": 353,
+            "y": 2112.921875,
+            "bottom": 2156.921875,
+            "width": 316,
+            "height": 44
+          }
+        ],
+        "chipsFit": true,
+        "chipCount": 1,
+        "stage": {
+          "width": 358,
+          "height": 497.953125,
+          "areaRatio": 0.5415822662231133
+        }
+      }
+    },
+    {
+      "name": "Mobile keyboard range input",
+      "result": "PASS",
+      "evidence": {
+        "before": 0.85,
+        "after": 0.84
+      }
+    },
+    {
+      "name": "844x390 EDIT horizontal fit / current chip",
+      "result": "PASS",
+      "evidence": {
+        "overflow": false,
+        "controls": [
+          {
+            "id": "1RULE法則",
+            "x": 417.75,
+            "right": 477.34375,
+            "y": -700,
+            "bottom": -653,
+            "width": 59.59375,
+            "height": 47
+          },
+          {
+            "id": "2EMERGENCE現象",
+            "x": 480.34375,
+            "right": 569.4375,
+            "y": -700,
+            "bottom": -653,
+            "width": 89.09375,
+            "height": 47
+          },
+          {
+            "id": "3PERCEPTION知覚",
+            "x": 572.4375,
+            "right": 667.421875,
+            "y": -700,
+            "bottom": -653,
+            "width": 94.984375,
+            "height": 47
+          },
+          {
+            "id": "4EDIT編集",
+            "x": 670.421875,
+            "right": 730.015625,
+            "y": -700,
+            "bottom": -653,
+            "width": 59.59375,
+            "height": 47
+          },
+          {
+            "id": "5EXPRESSION表現",
+            "x": 733.015625,
+            "right": 828,
+            "y": -700,
+            "bottom": -653,
+            "width": 94.984375,
+            "height": 47
+          },
+          {
+            "id": "back",
+            "x": 16,
+            "right": 418,
+            "y": -562,
+            "bottom": -518,
+            "width": 402,
+            "height": 44
+          },
+          {
+            "id": "to-output",
+            "x": 426,
+            "right": 828,
+            "y": -562,
+            "bottom": -518,
+            "width": 402,
+            "height": 44
+          },
+          {
+            "id": "CONTROLS 構図を編集する＋",
+            "x": 17,
+            "right": 827,
+            "y": -137,
+            "bottom": -89,
+            "width": 810,
+            "height": 48
+          },
+          {
+            "id": "SILENCE",
+            "x": 37,
+            "right": 289.65625,
+            "y": -11,
+            "bottom": 33,
+            "width": 252.65625,
+            "height": 44
+          },
+          {
+            "id": "CURRENT",
+            "x": 295.65625,
+            "right": 548.328125,
+            "y": -11,
+            "bottom": 33,
+            "width": 252.671875,
+            "height": 44
+          },
+          {
+            "id": "SIGNAL",
+            "x": 554.328125,
+            "right": 807,
+            "y": -11,
+            "bottom": 33,
+            "width": 252.671875,
+            "height": 44
+          },
+          {
+            "id": "edit-keep",
+            "x": 37,
+            "right": 807,
+            "y": 113.796875,
+            "bottom": 117.796875,
+            "width": 770,
+            "height": 4
+          },
+          {
+            "id": "edit-focusAmt",
+            "x": 37,
+            "right": 807,
+            "y": 180.796875,
+            "bottom": 184.796875,
+            "width": 770,
+            "height": 4
+          },
+          {
+            "id": "edit-space",
+            "x": 37,
+            "right": 807,
+            "y": 247.796875,
+            "bottom": 251.796875,
+            "width": 770,
+            "height": 4
+          },
+          {
+            "id": "edit-trace",
+            "x": 37,
+            "right": 807,
+            "y": 314.796875,
+            "bottom": 318.796875,
+            "width": 770,
+            "height": 4
+          },
+          {
+            "id": "type-on",
+            "x": 41,
+            "right": 54,
+            "y": 418.28125,
+            "bottom": 431.28125,
+            "width": 13,
+            "height": 13
+          },
+          {
+            "id": "title-input",
+            "x": 37,
+            "right": 807,
+            "y": 481.28125,
+            "bottom": 516.28125,
+            "width": 770,
+            "height": 35
+          },
+          {
+            "id": "sub-input",
+            "x": 37,
+            "right": 807,
+            "y": 551.28125,
+            "bottom": 586.28125,
+            "width": 770,
+            "height": 35
+          },
+          {
+            "id": "load-json",
+            "x": 37,
+            "right": 807,
+            "y": 626.28125,
+            "bottom": 670.28125,
+            "width": 770,
+            "height": 44
+          },
+          {
+            "id": "ASILENCE省略と、余白。01",
+            "x": 16,
+            "right": 280.65625,
+            "y": 839.078125,
+            "bottom": 1249.28125,
+            "width": 264.65625,
+            "height": 410.203125
+          },
+          {
+            "id": "BCURRENT速度の痕跡を残す。02",
+            "x": 289.65625,
+            "right": 554.328125,
+            "y": 839.078125,
+            "bottom": 1249.296875,
+            "width": 264.671875,
+            "height": 410.21875
+          },
+          {
+            "id": "CSIGNAL主役をひとつ、決める。03",
+            "x": 563.328125,
+            "right": 827.984375,
+            "y": 839.078125,
+            "bottom": 1249.28125,
+            "width": 264.65625,
+            "height": 410.203125
+          }
+        ],
+        "chipsFit": true,
+        "chipCount": 1,
+        "stage": {
+          "width": 812,
+          "height": 312,
+          "areaRatio": 0.7696682464454976
+        }
+      }
+    },
+    {
+      "name": "844x390 OUTPUT horizontal fit / current chip",
+      "result": "PASS",
+      "evidence": {
+        "overflow": false,
+        "controls": [
+          {
+            "id": "1RULE法則",
+            "x": 417.75,
+            "right": 477.34375,
+            "y": -738,
+            "bottom": -691,
+            "width": 59.59375,
+            "height": 47
+          },
+          {
+            "id": "2EMERGENCE現象",
+            "x": 480.34375,
+            "right": 569.4375,
+            "y": -738,
+            "bottom": -691,
+            "width": 89.09375,
+            "height": 47
+          },
+          {
+            "id": "3PERCEPTION知覚",
+            "x": 572.4375,
+            "right": 667.421875,
+            "y": -738,
+            "bottom": -691,
+            "width": 94.984375,
+            "height": 47
+          },
+          {
+            "id": "4EDIT編集",
+            "x": 670.421875,
+            "right": 730.015625,
+            "y": -738,
+            "bottom": -691,
+            "width": 59.59375,
+            "height": 47
+          },
+          {
+            "id": "5EXPRESSION表現",
+            "x": 733.015625,
+            "right": 828,
+            "y": -738,
+            "bottom": -691,
+            "width": 94.984375,
+            "height": 47
+          },
+          {
+            "id": "back",
+            "x": 16,
+            "right": 418,
+            "y": -600,
+            "bottom": -556,
+            "width": 402,
+            "height": 44
+          },
+          {
+            "id": "to-edit",
+            "x": 426,
+            "right": 828,
+            "y": -600,
+            "bottom": -556,
+            "width": 402,
+            "height": 44
+          },
+          {
+            "id": "CONTROLS 作品を書き出す＋",
+            "x": 17,
+            "right": 827,
+            "y": -175,
+            "bottom": -127,
+            "width": 810,
+            "height": 48
+          },
+          {
+            "id": "export-png",
+            "x": 37,
+            "right": 807,
+            "y": 172.96875,
+            "bottom": 216.96875,
+            "width": 770,
+            "height": 44
+          },
+          {
+            "id": "save-json",
+            "x": 37,
+            "right": 807,
+            "y": 225.96875,
+            "bottom": 269.96875,
+            "width": 770,
+            "height": 44
+          },
+          {
+            "id": "load-json",
+            "x": 37,
+            "right": 807,
+            "y": 342.765625,
+            "bottom": 386.765625,
+            "width": 770,
+            "height": 44
+          },
+          {
+            "id": "ASILENCE省略と、余白。01",
+            "x": 16,
+            "right": 280.65625,
+            "y": 555.5625,
+            "bottom": 965.765625,
+            "width": 264.65625,
+            "height": 410.203125
+          },
+          {
+            "id": "BCURRENT速度の痕跡を残す。02",
+            "x": 289.65625,
+            "right": 554.328125,
+            "y": 555.5625,
+            "bottom": 965.78125,
+            "width": 264.671875,
+            "height": 410.21875
+          },
+          {
+            "id": "CSIGNAL主役をひとつ、決める。03",
+            "x": 563.328125,
+            "right": 827.984375,
+            "y": 555.5625,
+            "bottom": 965.765625,
+            "width": 264.65625,
+            "height": 410.203125
+          }
+        ],
+        "chipsFit": true,
+        "chipCount": 1,
+        "stage": {
+          "width": 812,
+          "height": 312,
+          "areaRatio": 0.7696682464454976
+        }
+      }
+    },
+    {
+      "name": "844x390 RULE horizontal fit / current chip",
+      "result": "PASS",
+      "evidence": {
+        "overflow": false,
+        "controls": [
+          {
+            "id": "1RULE法則",
+            "x": 417.75,
+            "right": 477.34375,
+            "y": 14,
+            "bottom": 61,
+            "width": 59.59375,
+            "height": 47
+          },
+          {
+            "id": "2EMERGENCE現象",
+            "x": 480.34375,
+            "right": 569.4375,
+            "y": 14,
+            "bottom": 61,
+            "width": 89.09375,
+            "height": 47
+          },
+          {
+            "id": "3PERCEPTION知覚",
+            "x": 572.4375,
+            "right": 667.421875,
+            "y": 14,
+            "bottom": 61,
+            "width": 94.984375,
+            "height": 47
+          },
+          {
+            "id": "4EDIT編集",
+            "x": 670.421875,
+            "right": 730.015625,
+            "y": 14,
+            "bottom": 61,
+            "width": 59.59375,
+            "height": 47
+          },
+          {
+            "id": "5EXPRESSION表現",
+            "x": 733.015625,
+            "right": 828,
+            "y": 14,
+            "bottom": 61,
+            "width": 94.984375,
+            "height": 47
+          },
+          {
+            "id": "play",
+            "x": 16,
+            "right": 213,
+            "y": 152,
+            "bottom": 196,
+            "width": 197,
+            "height": 44
+          },
+          {
+            "id": "step",
+            "x": 221,
+            "right": 418,
+            "y": 152,
+            "bottom": 196,
+            "width": 197,
+            "height": 44
+          },
+          {
+            "id": "compare",
+            "x": 426,
+            "right": 623,
+            "y": 152,
+            "bottom": 196,
+            "width": 197,
+            "height": 44
+          },
+          {
+            "id": "take-main",
+            "x": 631,
+            "right": 828,
+            "y": 152,
+            "bottom": 196,
+            "width": 197,
+            "height": 44
+          },
+          {
+            "id": "resume-snapshot",
+            "x": 16,
+            "right": 828,
+            "y": 208,
+            "bottom": 252,
+            "width": 812,
+            "height": 44
+          },
+          {
+            "id": "view-zoom",
+            "x": 110.25,
+            "right": 330.25,
+            "y": 596.5,
+            "bottom": 600.5,
+            "width": 220,
+            "height": 4
+          },
+          {
+            "id": "CONTROLS 法則を変える＋",
+            "x": 17,
+            "right": 827,
+            "y": 664,
+            "bottom": 712,
+            "width": 810,
+            "height": 48
+          },
+          {
+            "id": "COHERE",
+            "x": 37,
+            "right": 289.65625,
+            "y": 790,
+            "bottom": 834,
+            "width": 252.65625,
+            "height": 44
+          },
+          {
+            "id": "DRIFT",
+            "x": 295.65625,
+            "right": 548.328125,
+            "y": 790,
+            "bottom": 834,
+            "width": 252.671875,
+            "height": 44
+          },
+          {
+            "id": "FRACTURE",
+            "x": 554.328125,
+            "right": 807,
+            "y": 790,
+            "bottom": 834,
+            "width": 252.671875,
+            "height": 44
+          },
+          {
+            "id": "rule-separate",
+            "x": 37,
+            "right": 807,
+            "y": 892,
+            "bottom": 896,
+            "width": 770,
+            "height": 4
+          },
+          {
+            "id": "rule-align",
+            "x": 37,
+            "right": 807,
+            "y": 959,
+            "bottom": 963,
+            "width": 770,
+            "height": 4
+          },
+          {
+            "id": "rule-cohere",
+            "x": 37,
+            "right": 807,
+            "y": 1026,
+            "bottom": 1030,
+            "width": 770,
+            "height": 4
+          },
+          {
+            "id": "rule-noise",
+            "x": 37,
+            "right": 807,
+            "y": 1093,
+            "bottom": 1097,
+            "width": 770,
+            "height": 4
+          },
+          {
+            "id": "align-toggle",
+            "x": 37,
+            "right": 807,
+            "y": 1124,
+            "bottom": 1168,
+            "width": 770,
+            "height": 44
+          },
+          {
+            "id": "seed-input",
+            "x": 69.203125,
+            "right": 750.53125,
+            "y": 1190.5,
+            "bottom": 1225.5,
+            "width": 681.328125,
+            "height": 35
+          },
+          {
+            "id": "new-seed",
+            "x": 758.53125,
+            "right": 807,
+            "y": 1186,
+            "bottom": 1230,
+            "width": 48.46875,
+            "height": 44
+          },
+          {
+            "id": "reset",
+            "x": 37,
+            "right": 807,
+            "y": 1239,
+            "bottom": 1283,
+            "width": 770,
+            "height": 44
+          },
+          {
+            "id": "load-json",
+            "x": 37,
+            "right": 807,
+            "y": 1447.1875,
+            "bottom": 1491.1875,
+            "width": 770,
+            "height": 44
+          }
+        ],
+        "chipsFit": true,
+        "chipCount": 1,
+        "stage": {
+          "width": 812,
+          "height": 312,
+          "areaRatio": 0.7696682464454976
+        }
+      }
+    },
+    {
+      "name": "844x390 COMPARE horizontal fit / current chip",
+      "result": "PASS",
+      "evidence": {
+        "overflow": false,
+        "controls": [
+          {
+            "id": "1RULE法則",
+            "x": 417.75,
+            "right": 477.34375,
+            "y": 14,
+            "bottom": 61,
+            "width": 59.59375,
+            "height": 47
+          },
+          {
+            "id": "2EMERGENCE現象",
+            "x": 480.34375,
+            "right": 569.4375,
+            "y": 14,
+            "bottom": 61,
+            "width": 89.09375,
+            "height": 47
+          },
+          {
+            "id": "3PERCEPTION知覚",
+            "x": 572.4375,
+            "right": 667.421875,
+            "y": 14,
+            "bottom": 61,
+            "width": 94.984375,
+            "height": 47
+          },
+          {
+            "id": "4EDIT編集",
+            "x": 670.421875,
+            "right": 730.015625,
+            "y": 14,
+            "bottom": 61,
+            "width": 59.59375,
+            "height": 47
+          },
+          {
+            "id": "5EXPRESSION表現",
+            "x": 733.015625,
+            "right": 828,
+            "y": 14,
+            "bottom": 61,
+            "width": 94.984375,
+            "height": 47
+          },
+          {
+            "id": "play",
+            "x": 16,
+            "right": 172,
+            "y": 152,
+            "bottom": 196,
+            "width": 156,
+            "height": 44
+          },
+          {
+            "id": "step",
+            "x": 180,
+            "right": 336,
+            "y": 152,
+            "bottom": 196,
+            "width": 156,
+            "height": 44
+          },
+          {
+            "id": "compare",
+            "x": 344,
+            "right": 500,
+            "y": 152,
+            "bottom": 196,
+            "width": 156,
+            "height": 44
+          },
+          {
+            "id": "take-a",
+            "x": 508,
+            "right": 664,
+            "y": 152,
+            "bottom": 196,
+            "width": 156,
+            "height": 44
+          },
+          {
+            "id": "take-b",
+            "x": 672,
+            "right": 828,
+            "y": 152,
+            "bottom": 196,
+            "width": 156,
+            "height": 44
+          },
+          {
+            "id": "resume-snapshot",
+            "x": 16,
+            "right": 828,
+            "y": 208,
+            "bottom": 252,
+            "width": 812,
+            "height": 44
+          },
+          {
+            "id": "view-zoom",
+            "x": 110.25,
+            "right": 330.25,
+            "y": 596.5,
+            "bottom": 600.5,
+            "width": 220,
+            "height": 4
+          },
+          {
+            "id": "view-lock",
+            "x": 48.203125,
+            "right": 144.625,
+            "y": 617,
+            "bottom": 656,
+            "width": 96.421875,
+            "height": 39
+          },
+          {
+            "id": "view-follow",
+            "x": 152.625,
+            "right": 274.125,
+            "y": 617,
+            "bottom": 656,
+            "width": 121.5,
+            "height": 39
+          },
+          {
+            "id": "replay-compare",
+            "x": 282.125,
+            "right": 446.484375,
+            "y": 618.5,
+            "bottom": 654.5,
+            "width": 164.359375,
+            "height": 36
+          },
+          {
+            "id": "CONTROLS 法則を変える＋",
+            "x": 17,
+            "right": 827,
+            "y": 758.796875,
+            "bottom": 806.796875,
+            "width": 810,
+            "height": 48
+          },
+          {
+            "id": "COHERE",
+            "x": 37,
+            "right": 289.65625,
+            "y": 884.796875,
+            "bottom": 928.796875,
+            "width": 252.65625,
+            "height": 44
+          },
+          {
+            "id": "DRIFT",
+            "x": 295.65625,
+            "right": 548.328125,
+            "y": 884.796875,
+            "bottom": 928.796875,
+            "width": 252.671875,
+            "height": 44
+          },
+          {
+            "id": "FRACTURE",
+            "x": 554.328125,
+            "right": 807,
+            "y": 884.796875,
+            "bottom": 928.796875,
+            "width": 252.671875,
+            "height": 44
+          },
+          {
+            "id": "rule-separate",
+            "x": 37,
+            "right": 807,
+            "y": 986.796875,
+            "bottom": 990.796875,
+            "width": 770,
+            "height": 4
+          },
+          {
+            "id": "rule-align",
+            "x": 37,
+            "right": 807,
+            "y": 1053.796875,
+            "bottom": 1057.796875,
+            "width": 770,
+            "height": 4
+          },
+          {
+            "id": "rule-cohere",
+            "x": 37,
+            "right": 807,
+            "y": 1120.796875,
+            "bottom": 1124.796875,
+            "width": 770,
+            "height": 4
+          },
+          {
+            "id": "rule-noise",
+            "x": 37,
+            "right": 807,
+            "y": 1187.796875,
+            "bottom": 1191.796875,
+            "width": 770,
+            "height": 4
+          },
+          {
+            "id": "align-toggle",
+            "x": 37,
+            "right": 807,
+            "y": 1218.796875,
+            "bottom": 1262.796875,
+            "width": 770,
+            "height": 44
+          },
+          {
+            "id": "seed-input",
+            "x": 69.203125,
+            "right": 750.53125,
+            "y": 1323.09375,
+            "bottom": 1358.09375,
+            "width": 681.328125,
+            "height": 35
+          },
+          {
+            "id": "new-seed",
+            "x": 758.53125,
+            "right": 807,
+            "y": 1318.59375,
+            "bottom": 1362.59375,
+            "width": 48.46875,
+            "height": 44
+          },
+          {
+            "id": "reset",
+            "x": 37,
+            "right": 807,
+            "y": 1371.59375,
+            "bottom": 1415.59375,
+            "width": 770,
+            "height": 44
+          },
+          {
+            "id": "load-json",
+            "x": 37,
+            "right": 807,
+            "y": 1579.78125,
+            "bottom": 1623.78125,
+            "width": 770,
+            "height": 44
+          }
+        ],
+        "chipsFit": true,
+        "chipCount": 1,
+        "stage": {
+          "width": 812,
+          "height": 312,
+          "areaRatio": 0.7696682464454976
+        }
+      }
+    },
+    {
+      "name": "Reduced motion starts paused",
+      "result": "PASS"
+    },
+    {
+      "name": "Reduced motion shortens transition, keeps snapshot",
+      "result": "PASS",
+      "evidence": {
+        "hash": "0a134037",
+        "duration": 100
+      }
+    },
+    {
+      "name": "EDIT idle stops drawing",
+      "result": "PASS",
+      "evidence": {
+        "idle1": 4,
+        "idle2": 4
+      }
+    },
+    {
+      "name": "Synthetic touch BEGIN / FOCUS",
+      "result": "PASS"
+    },
+    {
+      "name": "All swept comparisons synchronized",
+      "result": "PASS",
+      "evidence": [
+        {
+          "name": "COHERE",
+          "seed": 42,
+          "stepA": 600,
+          "stepB": 600,
+          "phiA": 0.9949783491582183,
+          "phiB": 0.04610160222900489
+        },
+        {
+          "name": "COHERE",
+          "seed": 7,
+          "stepA": 600,
+          "stepB": 600,
+          "phiA": 0.997358411929823,
+          "phiB": 0.06098586870924817
+        },
+        {
+          "name": "COHERE",
+          "seed": 2026,
+          "stepA": 600,
+          "stepB": 600,
+          "phiA": 0.9975029711574976,
+          "phiB": 0.03305628058047576
+        },
+        {
+          "name": "DRIFT",
+          "seed": 42,
+          "stepA": 600,
+          "stepB": 600,
+          "phiA": 0.9967400823875007,
+          "phiB": 0.018957799612287024
+        },
+        {
+          "name": "DRIFT",
+          "seed": 7,
+          "stepA": 600,
+          "stepB": 600,
+          "phiA": 0.996614081111328,
+          "phiB": 0.016207100667925994
+        },
+        {
+          "name": "DRIFT",
+          "seed": 2026,
+          "stepA": 600,
+          "stepB": 600,
+          "phiA": 0.9968553328758464,
+          "phiB": 0.09087584652650398
+        },
+        {
+          "name": "FRACTURE",
+          "seed": 42,
+          "stepA": 600,
+          "stepB": 600,
+          "phiA": 0.10717125727572278,
+          "phiB": 0.0625804418330405
+        },
+        {
+          "name": "FRACTURE",
+          "seed": 7,
+          "stepA": 600,
+          "stepB": 600,
+          "phiA": 0.07810638236728175,
+          "phiB": 0.03253115013269176
+        },
+        {
+          "name": "FRACTURE",
+          "seed": 2026,
+          "stepA": 600,
+          "stepB": 600,
+          "phiA": 0.044137648598548754,
+          "phiB": 0.03648398210433116
+        },
+        {
+          "name": "ALIGN strength 0",
+          "seed": 42,
+          "stepA": 600,
+          "stepB": 600,
+          "phiA": 0.04610160222900489,
+          "phiB": 0.04610160222900489
+        }
+      ]
+    },
+    {
+      "name": "Zero ALIGN coefficient removes A/B difference",
+      "result": "PASS",
+      "evidence": {
+        "name": "ALIGN strength 0",
+        "seed": 42,
+        "stepA": 600,
+        "stepB": 600,
+        "phiA": 0.04610160222900489,
+        "phiB": 0.04610160222900489
+      }
+    },
+    {
+      "name": "No application JS / HTTP / external-request errors",
+      "result": "PASS",
+      "evidence": []
+    },
+    {
+      "name": "file:// classic scripts initialize __EC",
+      "result": "PASS"
+    },
+    {
+      "name": "Chips 4/5 disabled before sampling with reasons",
+      "result": "PASS"
+    },
+    {
+      "name": "RULE timed comparison hint appears",
+      "result": "PASS"
+    },
+    {
+      "name": "Chip 2 observation shares unchanged world",
+      "result": "PASS"
+    },
+    {
+      "name": "Comparison hint does not reappear after first visit",
+      "result": "PASS"
+    },
+    {
+      "name": "Direct TAKE exposes EDIT comparison link",
+      "result": "PASS"
+    },
+    {
+      "name": "EDIT comparison link enters PERCEPTION",
+      "result": "PASS"
+    },
+    {
+      "name": "Chip 3 enters COMPARE with matching heading",
+      "result": "PASS"
+    },
+    {
+      "name": "ZOOM isolated from simulation, snapshot and cameras",
+      "result": "PASS",
+      "evidence": {
+        "a": {
+          "phase": "COMPARE",
+          "seed": 42,
+          "step": 600,
+          "rules": {
+            "separate": 1.4,
+            "align": 1.5,
+            "cohere": 0.65,
+            "noise": 0.03,
+            "alignOn": true
+          },
+          "particleCount": 600,
+          "snapshot": {
+            "seed": 42,
+            "step": 600,
+            "rules": {
+              "separate": 1.4,
+              "align": 1.5,
+              "cohere": 0.65,
+              "noise": 0.03,
+              "alignOn": true
+            },
+            "side": "main",
+            "count": 600,
+            "hash": "5828ce7f"
+          },
+          "edit": {
+            "keep": 0.85,
+            "space": 0.04,
+            "trace": 0.18,
+            "focusAmt": 0.8,
+            "focusX": 0.62,
+            "focusY": 0.52,
+            "typeOn": true,
+            "title": "EMER/GENCE",
+            "sub": "A FLOCK BECOMES A COMPOSITION."
+          },
+          "preset": "SIGNAL",
+          "paused": true,
+          "reducedMotion": false,
+          "layout": {
+            "id": "below-signal",
+            "rect": [
+              0.07,
+              0.74,
+              0.86,
+              0.14
+            ],
+            "size": 0.15,
+            "frame": {
+              "box": [
+                0.05,
+                0.1,
+                0.95,
+                0.71
+              ],
+              "ax": 0.5,
+              "ay": 0.5
+            },
+            "density": 0,
+            "bounds": {
+              "left": 0.2381480545419116,
+              "right": 0.7887757902999555,
+              "top": 0.15423948259733314,
+              "bottom": 0.6924319999999999
+            },
+            "focus": {
+              "id": 225,
+              "x": 0.6264340106052639,
+              "y": 0.5205200547864156,
+              "radius": 0.012400000000000001
+            },
+            "candidates": [
+              {
+                "id": "above-signal",
+                "rect": [
+                  0.07,
+                  0.11,
+                  0.86,
+                  0.24
+                ],
+                "size": 0.15,
+                "frame": {
+                  "box": [
+                    0.05,
+                    0.39,
+                    0.95,
+                    0.87
+                  ],
+                  "ax": 0.5,
+                  "ay": 0.5
+                },
+                "density": 0,
+                "score": 0.05517826825127334,
+                "overlapsFocus": false,
+                "scale": 554.0501537972541,
+                "bounds": {
+                  "left": 0.2959422020963283,
+                  "right": 0.7250391982133778,
+                  "top": 0.434585606981623,
+                  "bottom": 0.8539920000000001
+                },
+                "focus": {
+                  "id": 229,
+                  "x": 0.5533463561977389,
+                  "y": 0.5623194639801957,
+                  "radius": 0.012400000000000001
+                },
+                "shrinkPenalty": 0.05517826825127334
+              },
+              {
+                "id": "below-signal",
+                "rect": [
+                  0.07,
+                  0.74,
+                  0.86,
+                  0.14
+                ],
+                "size": 0.15,
+                "frame": {
+                  "box": [
+                    0.05,
+                    0.1,
+                    0.95,
+                    0.71
+                  ],
+                  "ax": 0.5,
+                  "ay": 0.5
+                },
+                "density": 0,
+                "score": 0.00001,
+                "overlapsFocus": false,
+                "scale": 710.9706766592215,
+                "bounds": {
+                  "left": 0.2381480545419116,
+                  "right": 0.7887757902999555,
+                  "top": 0.15423948259733314,
+                  "bottom": 0.6924319999999999
+                },
+                "focus": {
+                  "id": 225,
+                  "x": 0.6264340106052639,
+                  "y": 0.5205200547864156,
+                  "radius": 0.012400000000000001
+                },
+                "shrinkPenalty": 0
+              },
+              {
+                "id": "beside-signal",
+                "rect": [
+                  0.07,
+                  0.37,
+                  0.26,
+                  0.23
+                ],
+                "size": 0.13,
+                "frame": {
+                  "box": [
+                    0.36,
+                    0.1,
+                    0.95,
+                    0.87
+                  ],
+                  "ax": 0.5,
+                  "ay": 0.5
+                },
+                "density": 0,
+                "score": 0.012590124286452072,
+                "overlapsFocus": false,
+                "scale": 675.222717580704,
+                "bounds": {
+                  "left": 0.40631410053814154,
+                  "right": 0.9292560000000002,
+                  "top": 0.24684784607687935,
+                  "bottom": 0.7579797761443859
+                },
+                "focus": {
+                  "id": 485,
+                  "x": 0.6461292319673233,
+                  "y": 0.5069390761699376,
+                  "radius": 0.012400000000000001
+                },
+                "shrinkPenalty": 0.012570124286452072
+              }
+            ]
+          },
+          "view": {
+            "mode": "FOLLOW",
+            "zoom": 1.8,
+            "camX": 0.08364719897746031,
+            "camY": 0.2215646402922311,
+            "A": {
+              "zoom": 1.8,
+              "camX": 0.08364719897746031,
+              "camY": 0.2215646402922311
+            },
+            "B": {
+              "zoom": 1.8,
+              "camX": 0.9960140168581972,
+              "camY": 0.6706861981312984
+            }
+          }
+        },
+        "b": {
+          "phase": "COMPARE",
+          "seed": 42,
+          "step": 600,
+          "rules": {
+            "separate": 1.4,
+            "align": 1.5,
+            "cohere": 0.65,
+            "noise": 0.03,
+            "alignOn": true
+          },
+          "particleCount": 600,
+          "snapshot": {
+            "seed": 42,
+            "step": 600,
+            "rules": {
+              "separate": 1.4,
+              "align": 1.5,
+              "cohere": 0.65,
+              "noise": 0.03,
+              "alignOn": true
+            },
+            "side": "main",
+            "count": 600,
+            "hash": "5828ce7f"
+          },
+          "edit": {
+            "keep": 0.85,
+            "space": 0.04,
+            "trace": 0.18,
+            "focusAmt": 0.8,
+            "focusX": 0.62,
+            "focusY": 0.52,
+            "typeOn": true,
+            "title": "EMER/GENCE",
+            "sub": "A FLOCK BECOMES A COMPOSITION."
+          },
+          "preset": "SIGNAL",
+          "paused": true,
+          "reducedMotion": false,
+          "layout": {
+            "id": "below-signal",
+            "rect": [
+              0.07,
+              0.74,
+              0.86,
+              0.14
+            ],
+            "size": 0.15,
+            "frame": {
+              "box": [
+                0.05,
+                0.1,
+                0.95,
+                0.71
+              ],
+              "ax": 0.5,
+              "ay": 0.5
+            },
+            "density": 0,
+            "bounds": {
+              "left": 0.2381480545419116,
+              "right": 0.7887757902999555,
+              "top": 0.15423948259733314,
+              "bottom": 0.6924319999999999
+            },
+            "focus": {
+              "id": 225,
+              "x": 0.6264340106052639,
+              "y": 0.5205200547864156,
+              "radius": 0.012400000000000001
+            },
+            "candidates": [
+              {
+                "id": "above-signal",
+                "rect": [
+                  0.07,
+                  0.11,
+                  0.86,
+                  0.24
+                ],
+                "size": 0.15,
+                "frame": {
+                  "box": [
+                    0.05,
+                    0.39,
+                    0.95,
+                    0.87
+                  ],
+                  "ax": 0.5,
+                  "ay": 0.5
+                },
+                "density": 0,
+                "score": 0.05517826825127334,
+                "overlapsFocus": false,
+                "scale": 554.0501537972541,
+                "bounds": {
+                  "left": 0.2959422020963283,
+                  "right": 0.7250391982133778,
+                  "top": 0.434585606981623,
+                  "bottom": 0.8539920000000001
+                },
+                "focus": {
+                  "id": 229,
+                  "x": 0.5533463561977389,
+                  "y": 0.5623194639801957,
+                  "radius": 0.012400000000000001
+                },
+                "shrinkPenalty": 0.05517826825127334
+              },
+              {
+                "id": "below-signal",
+                "rect": [
+                  0.07,
+                  0.74,
+                  0.86,
+                  0.14
+                ],
+                "size": 0.15,
+                "frame": {
+                  "box": [
+                    0.05,
+                    0.1,
+                    0.95,
+                    0.71
+                  ],
+                  "ax": 0.5,
+                  "ay": 0.5
+                },
+                "density": 0,
+                "score": 0.00001,
+                "overlapsFocus": false,
+                "scale": 710.9706766592215,
+                "bounds": {
+                  "left": 0.2381480545419116,
+                  "right": 0.7887757902999555,
+                  "top": 0.15423948259733314,
+                  "bottom": 0.6924319999999999
+                },
+                "focus": {
+                  "id": 225,
+                  "x": 0.6264340106052639,
+                  "y": 0.5205200547864156,
+                  "radius": 0.012400000000000001
+                },
+                "shrinkPenalty": 0
+              },
+              {
+                "id": "beside-signal",
+                "rect": [
+                  0.07,
+                  0.37,
+                  0.26,
+                  0.23
+                ],
+                "size": 0.13,
+                "frame": {
+                  "box": [
+                    0.36,
+                    0.1,
+                    0.95,
+                    0.87
+                  ],
+                  "ax": 0.5,
+                  "ay": 0.5
+                },
+                "density": 0,
+                "score": 0.012590124286452072,
+                "overlapsFocus": false,
+                "scale": 675.222717580704,
+                "bounds": {
+                  "left": 0.40631410053814154,
+                  "right": 0.9292560000000002,
+                  "top": 0.24684784607687935,
+                  "bottom": 0.7579797761443859
+                },
+                "focus": {
+                  "id": 485,
+                  "x": 0.6461292319673233,
+                  "y": 0.5069390761699376,
+                  "radius": 0.012400000000000001
+                },
+                "shrinkPenalty": 0.012570124286452072
+              }
+            ]
+          },
+          "view": {
+            "mode": "FOLLOW",
+            "zoom": 1,
+            "camX": 0.08364719897746031,
+            "camY": 0.2215646402922311,
+            "A": {
+              "zoom": 1,
+              "camX": 0.08364719897746031,
+              "camY": 0.2215646402922311
+            },
+            "B": {
+              "zoom": 1,
+              "camX": 0.9960140168581972,
+              "camY": 0.6706861981312984
+            }
+          }
+        },
+        "c": {
+          "phase": "COMPARE",
+          "seed": 42,
+          "step": 600,
+          "rules": {
+            "separate": 1.4,
+            "align": 1.5,
+            "cohere": 0.65,
+            "noise": 0.03,
+            "alignOn": true
+          },
+          "particleCount": 600,
+          "snapshot": {
+            "seed": 42,
+            "step": 600,
+            "rules": {
+              "separate": 1.4,
+              "align": 1.5,
+              "cohere": 0.65,
+              "noise": 0.03,
+              "alignOn": true
+            },
+            "side": "main",
+            "count": 600,
+            "hash": "5828ce7f"
+          },
+          "edit": {
+            "keep": 0.85,
+            "space": 0.04,
+            "trace": 0.18,
+            "focusAmt": 0.8,
+            "focusX": 0.62,
+            "focusY": 0.52,
+            "typeOn": true,
+            "title": "EMER/GENCE",
+            "sub": "A FLOCK BECOMES A COMPOSITION."
+          },
+          "preset": "SIGNAL",
+          "paused": true,
+          "reducedMotion": false,
+          "layout": {
+            "id": "below-signal",
+            "rect": [
+              0.07,
+              0.74,
+              0.86,
+              0.14
+            ],
+            "size": 0.15,
+            "frame": {
+              "box": [
+                0.05,
+                0.1,
+                0.95,
+                0.71
+              ],
+              "ax": 0.5,
+              "ay": 0.5
+            },
+            "density": 0,
+            "bounds": {
+              "left": 0.2381480545419116,
+              "right": 0.7887757902999555,
+              "top": 0.15423948259733314,
+              "bottom": 0.6924319999999999
+            },
+            "focus": {
+              "id": 225,
+              "x": 0.6264340106052639,
+              "y": 0.5205200547864156,
+              "radius": 0.012400000000000001
+            },
+            "candidates": [
+              {
+                "id": "above-signal",
+                "rect": [
+                  0.07,
+                  0.11,
+                  0.86,
+                  0.24
+                ],
+                "size": 0.15,
+                "frame": {
+                  "box": [
+                    0.05,
+                    0.39,
+                    0.95,
+                    0.87
+                  ],
+                  "ax": 0.5,
+                  "ay": 0.5
+                },
+                "density": 0,
+                "score": 0.05517826825127334,
+                "overlapsFocus": false,
+                "scale": 554.0501537972541,
+                "bounds": {
+                  "left": 0.2959422020963283,
+                  "right": 0.7250391982133778,
+                  "top": 0.434585606981623,
+                  "bottom": 0.8539920000000001
+                },
+                "focus": {
+                  "id": 229,
+                  "x": 0.5533463561977389,
+                  "y": 0.5623194639801957,
+                  "radius": 0.012400000000000001
+                },
+                "shrinkPenalty": 0.05517826825127334
+              },
+              {
+                "id": "below-signal",
+                "rect": [
+                  0.07,
+                  0.74,
+                  0.86,
+                  0.14
+                ],
+                "size": 0.15,
+                "frame": {
+                  "box": [
+                    0.05,
+                    0.1,
+                    0.95,
+                    0.71
+                  ],
+                  "ax": 0.5,
+                  "ay": 0.5
+                },
+                "density": 0,
+                "score": 0.00001,
+                "overlapsFocus": false,
+                "scale": 710.9706766592215,
+                "bounds": {
+                  "left": 0.2381480545419116,
+                  "right": 0.7887757902999555,
+                  "top": 0.15423948259733314,
+                  "bottom": 0.6924319999999999
+                },
+                "focus": {
+                  "id": 225,
+                  "x": 0.6264340106052639,
+                  "y": 0.5205200547864156,
+                  "radius": 0.012400000000000001
+                },
+                "shrinkPenalty": 0
+              },
+              {
+                "id": "beside-signal",
+                "rect": [
+                  0.07,
+                  0.37,
+                  0.26,
+                  0.23
+                ],
+                "size": 0.13,
+                "frame": {
+                  "box": [
+                    0.36,
+                    0.1,
+                    0.95,
+                    0.87
+                  ],
+                  "ax": 0.5,
+                  "ay": 0.5
+                },
+                "density": 0,
+                "score": 0.012590124286452072,
+                "overlapsFocus": false,
+                "scale": 675.222717580704,
+                "bounds": {
+                  "left": 0.40631410053814154,
+                  "right": 0.9292560000000002,
+                  "top": 0.24684784607687935,
+                  "bottom": 0.7579797761443859
+                },
+                "focus": {
+                  "id": 485,
+                  "x": 0.6461292319673233,
+                  "y": 0.5069390761699376,
+                  "radius": 0.012400000000000001
+                },
+                "shrinkPenalty": 0.012570124286452072
+              }
+            ]
+          },
+          "view": {
+            "mode": "FOLLOW",
+            "zoom": 3,
+            "camX": 0.08364719897746031,
+            "camY": 0.2215646402922311,
+            "A": {
+              "zoom": 3,
+              "camX": 0.08364719897746031,
+              "camY": 0.2215646402922311
+            },
+            "B": {
+              "zoom": 3,
+              "camX": 0.9960140168581972,
+              "camY": 0.6706861981312984
+            }
+          }
+        },
+        "deterministic": [
+          "5828ce7f",
+          "5828ce7f"
+        ],
+        "stats": {
+          "stepA": 600,
+          "stepB": 600,
+          "phiA": 0.9949783491582183,
+          "phiB": 0.04610160222900489
+        }
+      }
+    },
+    {
+      "name": "COMPARE shared zoom / independent cameras / synchronized steps",
+      "result": "PASS",
+      "evidence": {
+        "stepA": 600,
+        "stepB": 600,
+        "phiA": 0.9949783491582183,
+        "phiB": 0.04610160222900489
+      }
+    },
+    {
+      "name": "FREEZE exact screen positions and real velocity tails / torus copies",
+      "result": "PASS",
+      "evidence": {
+        "taken": "5828ce7f",
+        "different": 0,
+        "actual": true,
+        "sources": 668,
+        "unique": 600,
+        "from": {
+          "x": 0,
+          "y": 0,
+          "w": 0.5,
+          "h": 1,
+          "view": {
+            "zoom": 1,
+            "camX": 0.08364719897746031,
+            "camY": 0.2215646402922311
+          }
+        }
+      }
+    },
+    {
+      "name": "Chips 4/5 enabled after sampling",
+      "result": "PASS"
+    },
+    {
+      "name": "file:// presets x3 / 1800x2400 PNG / JSON roundtrip / zoom invariant",
+      "result": "PASS",
+      "evidence": {
+        "rows": [
+          {
+            "name": "SILENCE",
+            "width": 1800,
+            "height": 2400,
+            "hash": "5828ce7f",
+            "widthRatio": 0.24007400046018612
+          },
+          {
+            "name": "CURRENT",
+            "width": 1800,
+            "height": 2400,
+            "hash": "5828ce7f",
+            "widthRatio": 0.8462337301608126
+          },
+          {
+            "name": "SIGNAL",
+            "width": 1800,
+            "height": 2400,
+            "hash": "5828ce7f",
+            "widthRatio": 0.5570402335023658
+          }
+        ],
+        "unchanged": true,
+        "loaded": {
+          "ok": true
+        },
+        "imageEqual": true
+      }
+    },
+    {
+      "name": "CURRENT and SIGNAL dominate paper width on seed42 step600",
+      "result": "FAIL",
+      "evidence": [
+        {
+          "name": "SILENCE",
+          "width": 1800,
+          "height": 2400,
+          "hash": "5828ce7f",
+          "widthRatio": 0.24007400046018612
+        },
+        {
+          "name": "CURRENT",
+          "width": 1800,
+          "height": 2400,
+          "hash": "5828ce7f",
+          "widthRatio": 0.8462337301608126
+        },
+        {
+          "name": "SIGNAL",
+          "width": 1800,
+          "height": 2400,
+          "hash": "5828ce7f",
+          "widthRatio": 0.5570402335023658
+        }
+      ]
+    },
+    {
+      "name": "Chip 5 opens OUTPUT",
+      "result": "PASS"
+    },
+    {
+      "name": "file:// actual PNG / JSON downloads and file picker import",
+      "result": "PASS"
+    },
+    {
+      "name": "Chip 4 restores EDIT",
+      "result": "PASS"
+    },
+    {
+      "name": "Circular camera follows seam by shortest path",
+      "result": "PASS",
+      "evidence": {
+        "c": {
+          "camX": 0.9922499999999999,
+          "camY": 0.9815
+        },
+        "shortPath": true
+      }
+    },
+    {
+      "name": "Paused camera and zoom settle without idle draws",
+      "result": "PASS",
+      "evidence": {
+        "f1": 86,
+        "f2": 86
+      }
+    },
+    {
+      "name": "ALIGN immediately reveals one-time comparison hint",
+      "result": "PASS"
+    },
+    {
+      "name": "file:// zero console / page / load errors",
+      "result": "PASS",
+      "evidence": []
+    }
+  ],
+  "metrics": [
+    {
+      "name": "Phi seed42 default step600",
+      "stepA": 600,
+      "stepB": 600,
+      "phiA": 0.9949783491582183,
+      "phiB": 0.04610160222900489,
+      "onHigher": true
+    },
+    {
+      "mode": "PLAY",
+      "samples": 61,
+      "ms": 1012,
+      "p95ms": 16.799999999999727,
+      "heap": 34948293,
+      "exportMs": null,
+      "TaskDurationMs": 291.93600000000004,
+      "ScriptDurationMs": 211.81900000000002
+    },
+    {
+      "mode": "COMPARE",
+      "samples": 61,
+      "ms": 1020.7999999523163,
+      "p95ms": 16.700000000000728,
+      "heap": 14643496,
+      "exportMs": null,
+      "TaskDurationMs": 377.897,
+      "ScriptDurationMs": 292.37500000000006
+    },
+    {
+      "mode": "PAUSE",
+      "samples": 61,
+      "ms": 1010.2999999523163,
+      "p95ms": 16.700000000000728,
+      "heap": 15029401,
+      "exportMs": null,
+      "TaskDurationMs": 44.23699999999997,
+      "ScriptDurationMs": 8.071999999999967
+    },
+    {
+      "mode": "EXPORT",
+      "samples": 58,
+      "ms": 1007.8999999761581,
+      "p95ms": 16.799999999999272,
+      "heap": 9971597,
+      "exportMs": 62.89999997615814,
+      "TaskDurationMs": 131.656,
+      "ScriptDurationMs": 11.90100000000005
+    },
+    {
+      "name": "Unfiltered comparison sweep",
+      "rows": [
+        {
+          "name": "COHERE",
+          "seed": 42,
+          "stepA": 600,
+          "stepB": 600,
+          "phiA": 0.9949783491582183,
+          "phiB": 0.04610160222900489
+        },
+        {
+          "name": "COHERE",
+          "seed": 7,
+          "stepA": 600,
+          "stepB": 600,
+          "phiA": 0.997358411929823,
+          "phiB": 0.06098586870924817
+        },
+        {
+          "name": "COHERE",
+          "seed": 2026,
+          "stepA": 600,
+          "stepB": 600,
+          "phiA": 0.9975029711574976,
+          "phiB": 0.03305628058047576
+        },
+        {
+          "name": "DRIFT",
+          "seed": 42,
+          "stepA": 600,
+          "stepB": 600,
+          "phiA": 0.9967400823875007,
+          "phiB": 0.018957799612287024
+        },
+        {
+          "name": "DRIFT",
+          "seed": 7,
+          "stepA": 600,
+          "stepB": 600,
+          "phiA": 0.996614081111328,
+          "phiB": 0.016207100667925994
+        },
+        {
+          "name": "DRIFT",
+          "seed": 2026,
+          "stepA": 600,
+          "stepB": 600,
+          "phiA": 0.9968553328758464,
+          "phiB": 0.09087584652650398
+        },
+        {
+          "name": "FRACTURE",
+          "seed": 42,
+          "stepA": 600,
+          "stepB": 600,
+          "phiA": 0.10717125727572278,
+          "phiB": 0.0625804418330405
+        },
+        {
+          "name": "FRACTURE",
+          "seed": 7,
+          "stepA": 600,
+          "stepB": 600,
+          "phiA": 0.07810638236728175,
+          "phiB": 0.03253115013269176
+        },
+        {
+          "name": "FRACTURE",
+          "seed": 2026,
+          "stepA": 600,
+          "stepB": 600,
+          "phiA": 0.044137648598548754,
+          "phiB": 0.03648398210433116
+        },
+        {
+          "name": "ALIGN strength 0",
+          "seed": 42,
+          "stepA": 600,
+          "stepB": 600,
+          "phiA": 0.04610160222900489,
+          "phiB": 0.04610160222900489
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "screenshots": [
+    "1440x900-seed.png",
+    "compare-step600.png",
+    "freeze-before-A.png",
+    "freeze-start.png",
+    "freeze-mid.png",
+    "freeze-after.png",
+    "1440x900-silence.png",
+    "1440x900-current.png",
+    "1440x900-signal.png",
+    "json-validation-error.png",
+    "1440x900-edit.png",
+    "1440x900-output.png",
+    "1440x900-rule.png",
+    "1440x900-compare.png",
+    "1280x800-edit.png",
+    "1280x800-output.png",
+    "1280x800-rule.png",
+    "1280x800-compare.png",
+    "390x844-edit.png",
+    "390x844-output.png",
+    "390x844-rule.png",
+    "390x844-compare.png",
+    "390x844-controls-open.png",
+    "844x390-edit.png",
+    "844x390-output.png",
+    "844x390-rule.png",
+    "844x390-compare.png",
+    "844x390-seed.png",
+    "844x390-reduced-motion.png"
+  ],
+  "browser": "155.0.8059.79",
+  "fileProtocol": {
+    "url": "file:///C:/Users/so173/Documents/Claude/Projects/WORLD%20TO%20EXPRESSION/expression-composer/index.html",
+    "errors": [],
+    "freeze": {
+      "taken": "5828ce7f",
+      "different": 0,
+      "actual": true,
+      "sources": 668,
+      "unique": 600,
+      "from": {
+        "x": 0,
+        "y": 0,
+        "w": 0.5,
+        "h": 1,
+        "view": {
+          "zoom": 1,
+          "camX": 0.08364719897746031,
+          "camY": 0.2215646402922311
+        }
+      }
+    },
+    "exports": {
+      "rows": [
+        {
+          "name": "SILENCE",
+          "width": 1800,
+          "height": 2400,
+          "hash": "5828ce7f",
+          "widthRatio": 0.24007400046018612
+        },
+        {
+          "name": "CURRENT",
+          "width": 1800,
+          "height": 2400,
+          "hash": "5828ce7f",
+          "widthRatio": 0.8462337301608126
+        },
+        {
+          "name": "SIGNAL",
+          "width": 1800,
+          "height": 2400,
+          "hash": "5828ce7f",
+          "widthRatio": 0.5570402335023658
+        }
+      ],
+      "unchanged": true,
+      "loaded": {
+        "ok": true
+      },
+      "imageEqual": true
+    }
+  },
+  "existingPages": [
+    {
+      "relative": "/index.html",
+      "status": 200,
+      "title": "",
+      "errors": [
+        "Error: failed to load https://unpkg.com/react@18.3.1/umd/react.production.min.js"
+      ],
+      "note": "External network blocked; smoke only, not full regression."
+    },
+    {
+      "relative": "/scroll-experience/",
+      "status": 200,
+      "title": "WORLD TO EXPRESSION — From rules to worlds.",
+      "errors": [],
+      "note": "External network blocked; smoke only, not full regression."
+    },
+    {
+      "relative": "/cognitive/01-proximity.html",
+      "status": 200,
+      "title": "01 Proximity / 近接 — COGNITIVE STAGE",
+      "errors": [],
+      "note": "External network blocked; smoke only, not full regression."
+    },
+    {
+      "relative": "/Emergence%20Engine/04_flock.html",
+      "status": 200,
+      "title": "EE_04 // FLOCK",
+      "errors": [],
+      "note": "External network blocked; smoke only, not full regression."
+    }
+  ],
+  "summary": {
+    "pass": 75,
+    "fail": 1,
+    "errors": 0
+  }
+}

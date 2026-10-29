@@ -1,0 +1,229 @@
+{
+  "browser": "155.0.8059.79",
+  "checks": [
+    {
+      "name": "1440x900 LOCK step0 identical world / projection / pixels",
+      "pass": true,
+      "evidence": {
+        "diff": 0,
+        "half": 527,
+        "view": {
+          "mode": "LOCK",
+          "zoom": 1.8,
+          "camX": 0.18411381905676416,
+          "camY": 0.7074728834457662,
+          "A": {
+            "zoom": 1.8,
+            "camX": 0.18411381905676416,
+            "camY": 0.707472883445766
+          },
+          "B": {
+            "zoom": 1.8,
+            "camX": 0.18411381905676416,
+            "camY": 0.707472883445766
+          }
+        },
+        "sameWorld": true,
+        "sameProjection": true
+      }
+    },
+    {
+      "name": "1280x800 LOCK step0 identical world / projection / pixels",
+      "pass": true,
+      "evidence": {
+        "diff": 0,
+        "half": 460,
+        "view": {
+          "mode": "LOCK",
+          "zoom": 1.8,
+          "camX": 0.18411381905676416,
+          "camY": 0.7074728834457662,
+          "A": {
+            "zoom": 1.8,
+            "camX": 0.18411381905676416,
+            "camY": 0.707472883445766
+          },
+          "B": {
+            "zoom": 1.8,
+            "camX": 0.18411381905676416,
+            "camY": 0.707472883445766
+          }
+        },
+        "sameWorld": true,
+        "sameProjection": true
+      }
+    },
+    {
+      "name": "390x844 LOCK step0 identical world / projection / pixels",
+      "pass": true,
+      "evidence": {
+        "diff": 0,
+        "half": 178,
+        "view": {
+          "mode": "LOCK",
+          "zoom": 1.8,
+          "camX": 0.18411381905676416,
+          "camY": 0.7074728834457662,
+          "A": {
+            "zoom": 1.8,
+            "camX": 0.18411381905676416,
+            "camY": 0.707472883445766
+          },
+          "B": {
+            "zoom": 1.8,
+            "camX": 0.18411381905676416,
+            "camY": 0.707472883445766
+          }
+        },
+        "sameWorld": true,
+        "sameProjection": true
+      }
+    },
+    {
+      "name": "844x390 LOCK step0 identical world / projection / pixels",
+      "pass": true,
+      "evidence": {
+        "diff": 0,
+        "half": 405,
+        "view": {
+          "mode": "LOCK",
+          "zoom": 1.8,
+          "camX": 0.18411381905676416,
+          "camY": 0.7074728834457662,
+          "A": {
+            "zoom": 1.8,
+            "camX": 0.18411381905676416,
+            "camY": 0.707472883445766
+          },
+          "B": {
+            "zoom": 1.8,
+            "camX": 0.18411381905676416,
+            "camY": 0.707472883445766
+          }
+        },
+        "sameWorld": true,
+        "sameProjection": true
+      }
+    },
+    {
+      "name": "step600 hash and Phi match live v02 baseline",
+      "pass": true,
+      "evidence": {
+        "stepA": 600,
+        "stepB": 600,
+        "phiA": 0.9949783491582183,
+        "phiB": 0.04610160222900489
+      }
+    },
+    {
+      "name": "LOCK FOLLOW ZOOM preserve sim stats and artwork document",
+      "pass": true,
+      "evidence": {
+        "views": [
+          {
+            "mode": "FOLLOW",
+            "zoom": 1,
+            "camX": 0.18411381905676416,
+            "camY": 0.7074728834457662,
+            "A": {
+              "zoom": 1,
+              "camX": 0.08364719897746031,
+              "camY": 0.2215646402922311
+            },
+            "B": {
+              "zoom": 1,
+              "camX": 0.9960140168581972,
+              "camY": 0.6706861981312984
+            }
+          },
+          {
+            "mode": "FOLLOW",
+            "zoom": 3,
+            "camX": 0.18411381905676416,
+            "camY": 0.7074728834457662,
+            "A": {
+              "zoom": 3,
+              "camX": 0.08364719897746031,
+              "camY": 0.2215646402922311
+            },
+            "B": {
+              "zoom": 3,
+              "camX": 0.9960140168581972,
+              "camY": 0.6706861981312984
+            }
+          },
+          {
+            "mode": "FOLLOW",
+            "zoom": 1.8,
+            "camX": 0.18411381905676416,
+            "camY": 0.7074728834457662,
+            "A": {
+              "zoom": 1.8,
+              "camX": 0.08364719897746031,
+              "camY": 0.2215646402922311
+            },
+            "B": {
+              "zoom": 1.8,
+              "camX": 0.9960140168581972,
+              "camY": 0.6706861981312984
+            }
+          },
+          {
+            "mode": "LOCK",
+            "zoom": 1,
+            "camX": 0.18411381905676416,
+            "camY": 0.7074728834457662,
+            "A": {
+              "zoom": 1,
+              "camX": 0.07692774869030838,
+              "camY": 0.23517237069908403
+            },
+            "B": {
+              "zoom": 1,
+              "camX": 0.07692774869030838,
+              "camY": 0.23517237069908403
+            }
+          },
+          {
+            "mode": "LOCK",
+            "zoom": 3,
+            "camX": 0.18411381905676416,
+            "camY": 0.7074728834457662,
+            "A": {
+              "zoom": 3,
+              "camX": 0.07692774869030838,
+              "camY": 0.23517237069908403
+            },
+            "B": {
+              "zoom": 3,
+              "camX": 0.07692774869030838,
+              "camY": 0.23517237069908403
+            }
+          },
+          {
+            "mode": "LOCK",
+            "zoom": 1.8,
+            "camX": 0.18411381905676416,
+            "camY": 0.7074728834457662,
+            "A": {
+              "zoom": 1.8,
+              "camX": 0.07692774869030838,
+              "camY": 0.23517237069908403
+            },
+            "B": {
+              "zoom": 1.8,
+              "camX": 0.07692774869030838,
+              "camY": 0.23517237069908403
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "FOLLOW keeps independent tracking",
+      "pass": true
+    }
+  ],
+  "pass": 7,
+  "fail": 0
+}

@@ -32,3 +32,6 @@ desktop.ini
 # scroll-experience の検証画像・レビュー zip（重い・ローカルだけ）
 scroll-experience/verification/
 90_Log/backups/
+
+# Exports / review packages (vault convention: outputs go under _out/)
+_out/

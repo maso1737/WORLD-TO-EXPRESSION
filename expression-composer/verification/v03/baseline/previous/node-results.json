@@ -1,0 +1,36 @@
+{
+  "node": "v24.14.1",
+  "date": "2026-10-27T02:25:09.285Z",
+  "checks": [
+    {
+      "name": "Same engine fresh simulation equality",
+      "pass": true,
+      "hashes": [
+        "772e5451",
+        "772e5451"
+      ]
+    },
+    {
+      "name": "A/B synchronous steps",
+      "pass": true
+    },
+    {
+      "name": "Deep immutable snapshot",
+      "pass": true
+    },
+    {
+      "name": "Validated coordinate roundtrip",
+      "pass": true
+    }
+  ],
+  "comparison": {
+    "stepA": 600,
+    "stepB": 600,
+    "phiA": 0.996714404917138,
+    "phiB": 0.09888315739707167
+  },
+  "summary": {
+    "pass": 4,
+    "fail": 0
+  }
+}

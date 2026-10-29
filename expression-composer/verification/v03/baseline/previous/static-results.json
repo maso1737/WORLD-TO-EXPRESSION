@@ -1,0 +1,259 @@
+{
+  "date": "2026-10-27T02:30:11.856Z",
+  "files": [
+    {
+      "file": "index.html",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "7b2f976fd929da5a10bbb3782fb1fe50826b197b812fd940f5cbcd1f85858eee"
+    },
+    {
+      "file": "styles.css",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "aafca24207cf71df93047ed3d1825b791105868e4b16aeabae5f8d7d8b952ee4"
+    },
+    {
+      "file": "README.md",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "47cb433b6a4a7f2e3930b74f8dbcf3312ed4676ae12f1c0197c0982a38f0c5e9"
+    },
+    {
+      "file": "js/compare.js",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "4872eb8667eaca0dbbbb9f6d89f652ca0d3d6775773d00fedec2311ee6863dbf",
+      "syntax": true
+    },
+    {
+      "file": "js/composition.js",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "c05414f610a31c033326864f9e982c33da86b6420a71f18ead8dbb373cc0aec0",
+      "syntax": true
+    },
+    {
+      "file": "js/export.js",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "3c17f3d58814ee35b71dc1bf7e745bb9f399a265ec835f05b763103339001a05",
+      "syntax": true
+    },
+    {
+      "file": "js/main.js",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "e6f5ad15625635e7ed66d92305a08c17e0ce7ae9903d7abda12f50287a6f17a7",
+      "syntax": true
+    },
+    {
+      "file": "js/render.js",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "35a011e9210ebb7bcc0e39a3a569a1f15034fb2e05ce27d7ebed8ac4670920a5",
+      "syntax": true
+    },
+    {
+      "file": "js/sim.js",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "a83c6b0c386c41c3e9da529b0c0bbd7b2a3defa25c97b1b6833f79884f0bfee2",
+      "syntax": true
+    },
+    {
+      "file": "js/snapshot.js",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "0506a697189a7f0a90c8f460820d25113058689815406a9ad62429d01989ed4e",
+      "syntax": true
+    },
+    {
+      "file": "docs/00_AUDIT.md",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "3970df7b83bb815838fa410ffc3edc89bf749de613babb54e8d6b983308bccd9"
+    },
+    {
+      "file": "docs/01_MODEL_NOTES.md",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "4f28e0bbae427ce1c918bf0cd43a881d47203672bac01a0355c5150294aff618"
+    },
+    {
+      "file": "docs/02_CREATIVE_DECISIONS.md",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "5c4ca9cc6fef9afc3e4972c16c1ae184b40c775f14cd75b9aa43d888e7868666"
+    },
+    {
+      "file": "docs/03_QA_REPORT.md",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "5b5910f55bf392d629bd7fcf3b4509efd00cbc016285e221a1f912f741a07a9b"
+    },
+    {
+      "file": "docs/04_NEXT_ROADMAP.md",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "b63022c3b9cd3a448347e4d1389e4f4800a6568246c3ef134a0c6f61bd15a67b"
+    },
+    {
+      "file": "verification/claude-review/freeze.cjs",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "01a6c473a3cf8591762860612b8bcdcea4c68d9a75122d1ad1f75e78029165ec",
+      "syntax": true
+    },
+    {
+      "file": "verification/claude-review/paramcheck.cjs",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "7cb3304b28a38aed7841f9ef67cef7d38ea96e2cf3c785ab921aa6d93f122e52",
+      "syntax": true
+    },
+    {
+      "file": "verification/claude-review/paramcheck.json",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "b2660c340224a199d37d5efe8678d8abbe0ab50a5c58ef668339fb1ad3a0cd19"
+    },
+    {
+      "file": "verification/claude-review/sheets.cjs",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "b24419b2fa0ea8017195c97224e04a957c7afc6f47db9f09709d90b8cb45424c",
+      "syntax": true
+    },
+    {
+      "file": "verification/claude-review/state.json",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "1b88475c4ac1dccca646cc37952d358e3f164c9179e67a265db25aee732db532"
+    },
+    {
+      "file": "verification/downloaded-state.json",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "21944ba38ee1f454319fc7c06081d2b7e0b395a9925741281e9ece18a0af2d19"
+    },
+    {
+      "file": "verification/file-download.json",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "54c3cac51a54201cd25a674ee79f7056c2b6206813586470066e89d2c60571e4"
+    },
+    {
+      "file": "verification/node-results.json",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "40b23b6b8143e1aaafaab0f8bf4e33747b898241b96cdb5d243c6acc69bf6e14"
+    },
+    {
+      "file": "verification/report-v02.cjs",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "fcc65c821c5248a9b92343b0f5ee176571618a13ee3ce71a1c7935869e966afb",
+      "syntax": true
+    },
+    {
+      "file": "verification/reproduction.json",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "ccb3b74a715ad8f03342056e6450152262e60081ddbfab4f110395a66a5f72bb"
+    },
+    {
+      "file": "verification/serve.cjs",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "7631f290a4f74cc9c0c50c9f902e43ecac1ab6eeddf73add62b05fcff9ad1c9c",
+      "syntax": true
+    },
+    {
+      "file": "verification/test-results.json",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "263fea20a6a52d15486c0029e822e17f1ed4cfcc2960fdaea0e9b7643067cc9b"
+    },
+    {
+      "file": "verification/verify-browser.cjs",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "34babbb54863ef7ce19ab0301af164db0452447b0f1df0cf15e9b7dc3577ac44",
+      "syntax": true
+    },
+    {
+      "file": "verification/verify-model.mjs",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "6ec5c31de688fd59ca037628e6bad2576e6cd9b5e46362d020a00cb17b1664db",
+      "syntax": true
+    },
+    {
+      "file": "verification/verify-static.cjs",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "d0a1e8ceb5ef90c13009404654797a187cc94b4f9d45b33cd7a644069e730440",
+      "syntax": true
+    },
+    {
+      "file": "verification/verify-v02.cjs",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "7926b457f4b937e9dfa73498ce62086efb5b4aa168fb0410d9487b14d4c09315",
+      "syntax": true
+    },
+    {
+      "file": "verification/write-handoff.cjs",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "a1c44aa5b140355821fca612d50670f5bd2d2017ed3da1902b165c4ce8c6bc07",
+      "syntax": true
+    },
+    {
+      "file": "_codex/REPORT_01.md",
+      "utf8": true,
+      "cr": false,
+      "bom": false,
+      "sha256": "aecb87dd205969d06f18e56808f495ddcc71e5e09285cfc7ab691c4ea6bcdad5"
+    }
+  ],
+  "errors": [],
+  "summary": {
+    "files": 33,
+    "syntax": 17,
+    "errors": 0
+  }
+}

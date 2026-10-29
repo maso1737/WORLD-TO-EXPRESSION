@@ -16,6 +16,9 @@
 | `90_Log/` | 日付ごとの作業ログ／申し送り |
 | `cognitive/` | 完成HTML — 認識エンジン（ゲシュタルト/錯視/視覚重力/余白）＋ FEW/MANY |
 | `natural-patterns/` | 試作HTML — 黄金比・フィボナッチ（Level 2） |
+| `scroll-experience/` | 鑑賞作品 — From rules to worlds.（世界の生成から知覚・編集へ進むスクロール体験） |
+| `Emergence Engine/` | 生成作品 — 局所ルールから秩序が生じる現象を観察・操作する連作 |
+| `expression-composer/` | L7 制作体験 — Boids のルールを A/B 比較 → 実粒子を採取 → 同じ素材から 3 構図 → PNG / 再現 JSON |
 | `12-Principles-of-Animation/` | アニメーション12原則（独立リポジトリ・Level 6） |
 | `Mindmap_GEN-EX/` | GEN-EX デザイン言語の本体＋マインドマップ・アプリ |
 
@@ -25,6 +28,7 @@ https://maso1737.github.io/WORLD-TO-EXPRESSION/
 
 - 認識エンジン: `/cognitive/index.html`
 - FEW / MANY（サビタイジング）: `/cognitive/few-many.html`
+- EXPRESSION COMPOSER（L7 v0.3）: `/expression-composer/`
 
 ## ツール連携
 

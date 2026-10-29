@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#070707">
+  <meta name="description" content="Boids の法則を変え、実在した粒子の状態から一枚の表現をつくる。">
+  <title>EXPRESSION COMPOSER — From seeing to making.</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./styles.css">
+  <script defer src="./js/sim.js"></script>
+  <script defer src="./js/compare.js"></script>
+  <script defer src="./js/composition.js"></script>
+  <script defer src="./js/snapshot.js"></script>
+  <script defer src="./js/render.js"></script>
+  <script defer src="./js/export.js"></script>
+  <script defer src="./js/main.js"></script>
+</head>
+<body>
+  <header class="masthead">
+    <a class="brand" href="./index.html" aria-label="EXPRESSION COMPOSER 初期画面へ">
+      <h1>EXPRESSION <span>COMPOSER</span></h1>
+      <p>発見した法則を、観客自身が使って表現する。</p>
+      <small>FROM SEEING TO MAKING.</small>
+    </a>
+    <ol class="process" aria-label="制作の現在段階">
+      <li><button type="button" data-chip="RULE"><b>1</b><span>RULE<small>法則</small></span></button></li>
+      <li><button type="button" data-chip="EMERGENCE"><b>2</b><span>EMERGENCE<small>現象</small></span></button></li>
+      <li><button type="button" data-chip="PERCEPTION"><b>3</b><span>PERCEPTION<small>知覚</small></span></button></li>
+      <li><button type="button" data-chip="EDIT"><b>4</b><span>EDIT<small>編集</small></span></button></li>
+      <li><button type="button" data-chip="EXPRESSION"><b>5</b><span>EXPRESSION<small>表現</small></span></button></li>
+    </ol>
+  </header>
+  <main>
+    <div class="workbench">
+      <section class="stage-panel" aria-labelledby="scene-title">
+        <div class="section-heading"><span class="number" id="scene-number">00</span><div><h2 id="scene-title">SEED <small>はじまり</small></h2><p id="scene-copy">形を決めずに、法則から始める。</p></div><span class="edition">L7 / 0.2</span></div>
+        <div id="stage" class="stage">
+          <canvas id="world" tabindex="0" aria-label="粒子のステージ。編集時はクリックまたは矢印キーで注目位置を指定できます。"></canvas>
+          <div id="intro" class="intro"><span class="eyebrow">A FLOCK BECOMES A COMPOSITION.</span><h3>まだ、<br>形のない世界。</h3><p>ひとつの法則を変える。<br>そこに生まれた瞬間を、あなたの一枚へ。</p><button id="begin" class="primary">BEGIN <span>始める →</span></button></div>
+          <div id="compare-labels" class="compare-labels" hidden><span>A / ALIGN ON <b id="phi-a">Φ 0.00</b></span><span>B / ALIGN OFF <b id="phi-b">Φ 0.00</b></span></div>
+          <div id="paper-caption" class="paper-caption" hidden>SAME PARTICLES.<br>YOUR DECISIONS.</div>
+        </div>
+        <div id="view-controls" class="view-controls"><label for="view-zoom">ZOOM <span>表示のみ</span></label><input id="view-zoom" type="range" min="1" max="3" step="0.05" value="1.8"><output id="zoom-value" for="view-zoom">1.80×</output></div>
+        <p id="compare-view-note" class="note" hidden>同じズームで各群れを追跡。映る場所が違っても同 seed・同歩数・ALIGN 以外のルールは共通。</p>
+        <div class="stage-footer"><span id="readout">SEED 42 / STEP 0 / 600 PARTICLES</span><span id="play-state">READY</span></div>
+        <div class="transport" id="transport"><button id="play">PLAY</button><button id="step">STEP +1</button><button id="compare">COMPARE <span>同条件で比較 →</span></button><button id="take-main" class="primary">TAKE STATE <span>この瞬間を採る</span></button><button id="take-a" class="primary" hidden>TAKE A <span>ALIGN ON</span></button><button id="take-b" hidden>TAKE B <span>ALIGN OFF</span></button></div>
+        <p id="compare-hint" class="compare-hint" hidden><button id="compare-hint-link">同じ条件で、ALIGN だけ違う世界と比べる → COMPARE</button></p>
+        <div class="edit-actions" id="edit-actions" hidden><button id="back">← BACK TO RULES</button><button id="resume-snapshot" hidden>RETURN TO EDIT →</button><button id="to-output" class="primary">FINISH <span>書き出しへ →</span></button><button id="to-edit" hidden>← EDIT <span>編集へ戻る</span></button></div>
+      </section>
+      <details class="controls" id="controls" open>
+        <summary>CONTROLS <span id="controls-summary">法則を変える</span><span class="disclosure">＋</span></summary>
+        <div class="controls-inner">
+          <section id="seed-controls"><span class="eyebrow">00 / A POSSIBLE WORLD</span><h3>完成形は、<br>まだ決めない。</h3><p class="note">600 個の点。それぞれが近くの点だけを見て動く。リーダーはいない。</p><p class="note">BEGIN から、最初のルールへ。</p></section>
+          <section id="rule-controls" hidden>
+            <div class="section-heading compact"><span class="number">1</span><div><h2>GENERATE <small>生成</small></h2><p>近くの点との関係が、形になる。</p></div></div>
+            <div class="preset-row" id="rule-presets"><button data-rule-preset="COHERE">COHERE</button><button data-rule-preset="DRIFT">DRIFT</button><button data-rule-preset="FRACTURE">FRACTURE</button></div>
+            <div id="rule-sliders"></div>
+            <button id="align-toggle" class="toggle" aria-pressed="true">ALIGN <span>ON</span></button>
+            <p id="compare-note" class="note" hidden>同じ seed・同じ歩数。A は ALIGN ON、B は OFF。ほかの条件は共通です。比較の開始時は step 0 に戻ります。</p>
+            <div class="seed-row"><label for="seed-input">SEED</label><input id="seed-input" type="number" min="0" max="4294967295" step="1" value="42"><button id="new-seed" aria-label="新しい seed">NEW</button></div>
+            <button id="reset" class="wide">RESET WORLD <span>同じ seed で初期化</span></button>
+            <p class="note">RESET は世界だけを初期化。ルールと採取済みの素材・編集値は保持します。</p>
+            <p class="metric-note">Φ = |Σ v̂| / N<br>平均進行方向の一致度 · 0–1<br><span>測定時点はステージの STEP。黄金比 φ とは別の量です。高いほど全体の向きが揃います。</span></p>
+          </section>
+          <section id="freeze-controls" hidden><span class="eyebrow">WORLD → PAPER</span><h3>現象を、<br>素材にする。</h3><p class="note">今ここにあった点が、そのまま紙面へ。元の粒子は固定されます。</p></section>
+          <section id="edit-controls" hidden>
+            <div class="section-heading compact"><span class="number">4</span><div><h2>EDIT <small>編集</small></h2><p>何を残すかを、あなたが決める。</p></div></div>
+            <div class="preset-row" id="layout-presets"><button data-preset="SILENCE">SILENCE</button><button data-preset="CURRENT">CURRENT</button><button data-preset="SIGNAL">SIGNAL</button></div>
+            <button id="edit-compare-link" class="quiet-link" hidden>比べてから採ることもできる（③ PERCEPTION）</button>
+            <div id="edit-sliders"></div>
+            <p id="focus-readout" class="focus-readout"></p>
+            <p class="note focus-hint">FOCUS は紙面をクリック／タップ。紙面に Tab で移動して矢印キーでも調整できます。作者が指定する注目点です。</p>
+            <label class="check"><input id="type-on" type="checkbox" checked> TYPE <span>文字を残す</span></label>
+            <label class="text-label" for="title-input">TITLE <span>/ で改行 · 32文字まで</span></label><input id="title-input" type="text" maxlength="64" value="EMER/GENCE">
+            <label class="text-label" for="sub-input">SUB <span>80文字まで</span></label><input id="sub-input" type="text" maxlength="160" value="A FLOCK BECOMES A COMPOSITION.">
+          </section>
+          <section id="output-controls" hidden>
+            <div class="section-heading compact"><span class="number">5</span><div><h2>EXPORT <small>出力</small></h2><p>見つけた世界を、持ち帰る。</p></div></div>
+            <div class="output-format"><span>PNG</span><b>1800 × 2400</b></div>
+            <p class="note">紙面だけを高解像度で描き直します。</p>
+            <ul class="included"><li>✓ Seed / Step / Rules</li><li>✓ Particle ID / Position / Velocity</li><li>✓ Layout / Edit / Typography</li></ul>
+            <button id="export-png" class="primary wide">↓ EXPORT PNG</button><button id="save-json" class="wide">SAVE STATE JSON</button>
+            <p class="note">JSON には採取した全粒子を保存。同じ素材と構図を再び開けます。</p>
+          </section>
+          <div class="persistent"><button id="load-json" class="wide">LOAD STATE JSON <span>制作を再開</span></button><input id="json-file" type="file" accept=".json,application/json" hidden><p id="snapshot-note" class="note">まだ素材は採取されていません。</p><p id="status" role="status" aria-live="polite">準備ができました。</p></div>
+        </div>
+      </details>
+    </div>
+    <section id="examples" class="examples" hidden aria-labelledby="examples-title">
+      <div class="examples-heading"><h2 id="examples-title">OUTPUT EXAMPLES</h2><p>同じ生成現象から、まったく違うグラフィック作品が生まれる。</p><span id="shared-hash"></span></div>
+      <div class="poster-strip">
+        <button class="poster-card" data-preset="SILENCE"><canvas width="450" height="600" aria-label="SILENCE の構図プレビュー"></canvas><span><b>A</b><span>SILENCE<small>省略と、余白。</small></span><em>01</em></span></button>
+        <button class="poster-card" data-preset="CURRENT"><canvas width="450" height="600" aria-label="CURRENT の構図プレビュー"></canvas><span><b>B</b><span>CURRENT<small>速度の痕跡を残す。</small></span><em>02</em></span></button>
+        <button class="poster-card" data-preset="SIGNAL"><canvas width="450" height="600" aria-label="SIGNAL の構図プレビュー"></canvas><span><b>C</b><span>SIGNAL<small>主役をひとつ、決める。</small></span><em>03</em></span></button>
+      </div>
+      <p class="strip-note">同一素材の 3 つの出発点。選択中の一枚には現在の編集を反映。切り替えると KEEP / SPACE / TRACE / FOCUS 強度を各構図の初期値に戻します。</p>
+    </section>
+  </main>
+  <footer class="site-footer"><span>GEN–EX / WORLD TO EXPRESSION</span><a href="../index.html">WORLD TO EXPRESSION ↗</a><span>FROM RULES TO WORLDS.</span></footer>
+  <noscript>この作品には JavaScript が必要です。</noscript>
+</body>
+</html>
