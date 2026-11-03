@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ja" data-look="np">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CONSONANCE — 協和の境界 · STYLE FRAME (SP-03)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=IBM+Plex+Sans+JP:wght@400;500&family=IBM+Plex+Mono:wght@400;500&family=Barlow+Condensed:wght@500;600&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:"Bank Gothic";src:url("../cognitive/fonts/bank-gothic-light-bt.ttf") format("truetype");font-weight:300 600;font-display:swap}
+@font-face{font-family:"Square 721";src:url("../cognitive/fonts/Square_721_BT.ttf") format("truetype");font-weight:400 700;font-display:swap}
+/* ── LOOK：3 案を同じ画面で切り替えて決める（スタイルフレームの目的） */
+:root,[data-look=np]{ /* natural-patterns の型 */
+  --bg:#0a0a0a;--bg-2:#121212;--ink:#f2f2ef;--ink-2:#cfcfca;--mute:#9a9a93;--mute-2:#3a3a37;
+  --line:#2a2a27;--acc:#ffd400;--acc-ink:#0a0a0a;--warn:#ff6a3d;--fill:rgba(242,242,239,.06);
+  --grid:rgba(242,242,239,0.035);--panel-bg:#0e0e0e;
+  --mono:"JetBrains Mono","IBM Plex Mono",ui-monospace,monospace;
+  --display:"Bank Gothic","Square 721","Space Grotesk",system-ui,sans-serif;
+  --sans:"Square 721","Bank Gothic","Helvetica Neue",system-ui,sans-serif;
+}
+[data-look=ks]{ /* KINETIC STAGE（Emergence Engine） */
+  --bg:#070707;--bg-2:#100d16;--ink:#F8EFFF;--ink-2:#d9cfe6;--mute:rgba(181,142,255,.62);--mute-2:#2c2438;
+  --line:rgba(181,142,255,.22);--acc:#FFD27A;--acc-ink:#070707;--warn:#FF4FA8;--fill:rgba(90,233,255,.07);
+  --grid:rgba(181,142,255,.05);--panel-bg:#0b0910;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --display:"Barlow Condensed",system-ui,sans-serif;
+  --sans:"Barlow Condensed",system-ui,sans-serif;
+}
+[data-look=sumi]{ /* SL-01/02 の墨色（発光・ネオン・緑なし） */
+  --bg:#141210;--bg-2:#1b1815;--ink:#e8e0d0;--ink-2:#c9bfae;--mute:#8a8174;--mute-2:#3a342d;
+  --line:#2e2a25;--acc:#d9c7a3;--acc-ink:#141210;--warn:#b0574a;--fill:rgba(232,224,208,.05);
+  --grid:rgba(232,224,208,.03);--panel-bg:#171512;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --display:"IBM Plex Mono",ui-monospace,monospace;
+  --sans:"IBM Plex Sans JP",system-ui,sans-serif;
+}
+:root{--ez:cubic-bezier(0.2,0,0,1);--jp:"IBM Plex Sans JP","Noto Sans JP",system-ui,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--sans);font-feature-settings:"tnum"}
+#app{height:100vh;display:grid;grid-template-rows:46px 1fr 30px;grid-template-columns:1fr 320px;grid-template-areas:"top top" "stage aside" "bot bot"}
+.topbar{grid-area:top;display:flex;align-items:center;gap:18px;padding:0 16px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:baseline;gap:8px}
+.mark{font-family:var(--display);font-weight:600;letter-spacing:.14em;font-size:14px}
+.layer-tag{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.16em}
+.ttl{flex:1;font-family:var(--mono);font-size:11px;color:var(--ink-2);letter-spacing:.16em;text-transform:uppercase}
+.sf{font-family:var(--mono);font-size:10px;color:var(--acc-ink);background:var(--acc);padding:2px 7px;letter-spacing:.14em}
+.stage{grid-area:stage;position:relative;overflow:hidden;display:grid;grid-template-rows:minmax(0,1fr) auto 168px;grid-template-columns:1fr 1fr;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+.panel{position:relative;border-right:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;flex-direction:column;min-width:0;min-height:0}
+.panel:nth-child(2){border-right:0}
+.ph{display:flex;align-items:baseline;gap:10px;padding:12px 14px 4px;white-space:nowrap;min-width:0}
+.ph .sub{overflow:hidden;text-overflow:ellipsis}
+.ph .side{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.16em}
+.ph .rat{font-family:var(--display);font-weight:600;font-size:22px;letter-spacing:.08em}
+.ph .sub{font-family:var(--mono);font-size:10px;color:var(--ink-2);letter-spacing:.08em}
+.ph .zone{margin-left:auto;font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:.16em;padding:3px 10px;border:1px solid var(--line)}
+.zone.FUSE{color:var(--acc-ink);background:var(--acc);border-color:var(--acc)}
+.zone.BEAT{color:var(--warn);border-color:var(--warn)}
+.zone.ROUGH{color:var(--bg);background:var(--warn);border-color:var(--warn)}
+.zone.APART{color:var(--ink-2);border-color:var(--mute);border-style:dashed}
+.panel canvas{flex:1 1 0;width:100%;height:0;min-height:0;display:block}
+.curvebox{grid-column:1 / span 2;grid-row:3;position:relative}
+.curvebox canvas{position:absolute;inset:0;width:100%;height:100%}
+.cap{position:absolute;left:14px;top:8px;font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.14em;pointer-events:none}
+.prompt{grid-column:1 / span 2;grid-row:2;text-align:center;padding:8px 16px;border-bottom:1px solid var(--line);pointer-events:none}
+.prompt .pj{display:block;font-family:var(--jp);font-size:10.5px;letter-spacing:.06em;color:var(--mute)}
+.aside{grid-area:aside;border-left:1px solid var(--line);background:var(--panel-bg);overflow-y:auto;padding:14px 14px 24px}
+.aside::-webkit-scrollbar{width:3px}.aside::-webkit-scrollbar-thumb{background:var(--mute-2)}
+.sec{margin-bottom:18px}
+.lt{display:inline-block;font-family:var(--mono);font-size:9px;color:var(--acc-ink);background:var(--acc);padding:1px 5px;margin-right:7px;letter-spacing:.1em}
+.sh{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.16em;text-transform:uppercase;margin-bottom:10px;border-bottom:1px solid var(--line);padding-bottom:5px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;margin-bottom:8px}
+.seg button,.btn{font-family:var(--mono);font-size:10px;letter-spacing:.08em;background:transparent;color:var(--ink-2);border:1px solid var(--line);padding:7px 4px;cursor:pointer}
+.seg button:hover,.btn:hover{border-color:var(--acc);color:var(--acc)}
+.seg button.on{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.btn{width:100%;margin-top:6px;text-align:left;padding:8px 10px}
+.btn.play::before{content:"▶ ";color:var(--acc)}
+.btn.playing{border-color:var(--acc);color:var(--acc)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.grid2 .btn{margin-top:0}
+.hint{font-family:var(--jp);font-size:10.5px;color:var(--ink-2);line-height:1.6;margin:4px 0 6px}
+.hint b{color:var(--acc);font-weight:500}
+.kvt{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:10px}
+.kvt th{color:var(--mute);font-weight:400;text-align:left;padding:3px 0;letter-spacing:.06em}
+.kvt td{color:var(--ink-2);text-align:right;padding:3px 0 3px 6px}
+.kvt tr{border-bottom:1px solid var(--line)}
+.row label{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--ink-2);margin-bottom:5px;letter-spacing:.06em}
+.row .val{color:var(--acc)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:2px;background:var(--mute-2);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;background:var(--acc);border:1px solid var(--acc-ink);border-radius:0}
+.bottombar{grid-area:bot;display:flex;align-items:center;gap:16px;padding:0 16px;border-top:1px solid var(--line);font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.1em}
+.bottombar .sp{flex:1}.bottombar b{color:var(--ink-2);font-weight:400}
+@media (max-width:880px){#app{height:auto;min-height:100vh;grid-template-columns:1fr;grid-template-rows:46px 78vh auto 30px;grid-template-areas:"top" "stage" "aside" "bot"}html,body{overflow:auto}.aside{border-left:0;border-top:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="brand"><span class="mark">GEN-EX</span><span class="layer-tag">L1d×L3</span></div>
+    <div class="ttl">CONSONANCE — 協和の境界</div>
+    <span class="sf">SP-03 · STYLE FRAME</span>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="panel" id="pA">
+      <div class="ph"><span class="side">A ⁄ 手前</span><span class="rat" id="ratA">3/2</span><span class="sub" id="subA">JUST · 0¢</span><span class="zone" id="zoneA">FUSE</span></div>
+      <canvas id="cvA"></canvas>
+    </div>
+    <div class="panel" id="pB">
+      <div class="ph"><span class="side">B ⁄ 向こう</span><span class="rat" id="ratB">3/2</span><span class="sub" id="subB">ET</span><span class="zone" id="zoneB">BEAT</span></div>
+      <canvas id="cvB"></canvas>
+    </div>
+    <div class="curvebox">
+      <canvas id="cvC"></canvas>
+      <div class="cap" id="capC">ROUGHNESS ⁄ 0–1200¢ — 谷＝協和（この音色・この音域で）</div>
+    </div>
+    <div class="prompt"><span class="pj" id="promptTxt">比をぴったりから数セントずらす → 重なっていた倍音がゆっくりうなり出す</span></div>
+  </div>
+
+  <div class="aside">
+    <div class="sec">
+      <div class="sh"><span class="lt">0</span>LOOK — 見た目を決める</div>
+      <div class="seg" id="segLook">
+        <button data-v="np" class="on">NATURAL</button><button data-v="ks">KINETIC</button><button data-v="sumi">墨 SUMI</button>
+      </div>
+      <div class="hint">シリーズの見た目の 3 案。<b>NATURAL</b>＝natural-patterns の型（推し）／KINETIC＝Emergence Engine／墨＝SL-01・02。</div>
+    </div>
+
+    <div class="sec">
+      <div class="sh"><span class="lt">A</span>STATES — 境界の手前と向こう</div>
+      <div class="seg" id="segPair" style="grid-auto-flow:row;grid-template-columns:1fr">
+        <button data-v="p5" class="on">5度　純正 ⇄ 平均律</button>
+        <button data-v="m3">長3度　純正 ⇄ 平均律</button>
+        <button data-v="tt">5度 ⇄ 増4度（協和 ⇄ 不協和）</button>
+      </div>
+      <div class="sh" style="margin-top:12px">TIMBRE 音色</div>
+      <div class="seg" id="segTim">
+        <button data-v="sine">SINE</button><button data-v="sl02">SL-02</button><button data-v="rich" class="on">RICH</button>
+      </div>
+      <div class="sh" style="margin-top:12px">REGISTER 音域（下の音）</div>
+      <div class="seg" id="segF0">
+        <button data-v="220">220</button><button data-v="330" class="on">330</button><button data-v="440">440</button>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sh"><span class="lt">B</span>LISTEN — 聴き比べ</div>
+      <div class="grid2"><button class="btn play" id="playA">A を鳴らす</button><button class="btn play" id="playB">B を鳴らす</button></div>
+      <div class="hint" style="margin-top:10px">SL-02 の音色で聴き分けられるか：<b>長3度・4度・増4度</b>。左右で同じ音程を音色だけ変えて鳴らす。濁りの差が RICH より小さく聞こえれば、計算と同じ。</div>
+      <div class="grid2" id="hyp"></div>
+      <div class="row" style="margin-top:12px"><label>MASTER <span class="val" id="vVol">40</span></label><input type="range" id="vol" min="0" max="100" value="40"></div>
+      <div class="hint">ヘッドホン推奨。最初のクリックで音が始まる。</div>
+    </div>
+
+    <div class="sec">
+      <div class="sh"><span class="lt">C</span>READOUT</div>
+      <table class="kvt" id="kv"></table>
+    </div>
+  </div>
+
+  <div class="bottombar">
+    <span>SOUND PATTERNS ⁄ <b>SP-03</b></span><span>LAW <b>_law/sp03_law.js</b></span><span class="sp"></span><span id="botInfo">—</span>
+  </div>
+</div>
+
+<script src="_law/sp03_law.js"></script>
+<script>
+(() => {
+'use strict';
+const L = window.SP03;
+const S = { look: 'np', pair: 'p5', tim: 'rich', f0: L.F0_DEFAULT, vol: .4 };
+const PAIRS = {
+  p5: { A: { r: 3 / 2, name: '3/2', sub: 'JUST' }, B: { r: L.et(7), name: '3/2', sub: 'ET' },
+        prompt: '5度を純正から平均律へ（−2¢）→ 重なっていた倍音が 1 秒に 1 回くらいゆっくりうなる' },
+  m3: { A: { r: 5 / 4, name: '5/4', sub: 'JUST' }, B: { r: L.et(4), name: '5/4', sub: 'ET' },
+        prompt: '長3度を純正から平均律へ（+14¢）→ 5倍音と4倍音が速くうなる。倍音の少ない音色では何も起きない' },
+  tt: { A: { r: 3 / 2, name: '3/2', sub: '完全5度' }, B: { r: 45 / 32, name: '45/32', sub: '増4度' },
+        prompt: '5度 ⇄ 増4度：ざらつきの差は小さい。大きく違うのは図形が閉じるまでの周回（2 周 ⇄ 32 周）＝比の単純さ' },
+};
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const amps = () => L.TIMBRES[S.tim].amps;
+
+function fit(cv) {
+  const d = devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+  if (cv.width !== Math.round(w * d) || cv.height !== Math.round(h * d)) { cv.width = Math.round(w * d); cv.height = Math.round(h * d); }
+  const g = cv.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, w, h); return [g, w, h];
+}
+
+// ── パネル：上＝倍音の梯子（2 音）、下＝リサジュー
+function drawPanel(cv, st) {
+  const [g, w, h] = fit(cv), f0 = S.f0, r = st.r, A = amps();
+  const C = { ink: css('--ink'), ink2: css('--ink-2'), mute: css('--mute'), mute2: css('--mute-2'), line: css('--line'), acc: css('--acc'), warn: css('--warn'), mono: css('--mono') };
+  const pad = 18, lw = w - pad * 2;
+  // 周波数軸（対数）
+  const fLo = f0 * 0.8, fHi = f0 * 2 * 6.6;
+  const X = f => pad + lw * Math.log(f / fLo) / Math.log(fHi / fLo);
+  const top = 26, ladH = Math.min(150, h * 0.36), yU = top + 12, yL = top + ladH - 4, mid = (yU + yL) / 2, tick = ladH * 0.36;
+  g.font = `10px ${C.mono}`; g.textBaseline = 'middle';
+  g.fillStyle = C.mute; g.fillText('HIGH ' + (f0 * r).toFixed(1) + ' Hz', pad, top - 8);
+  g.fillText('LOW ' + f0.toFixed(1) + ' Hz', pad, yL + 14);
+  g.strokeStyle = C.line; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(pad, yU); g.lineTo(w - pad, yU); g.moveTo(pad, yL); g.lineTo(w - pad, yL); g.stroke();
+  const P = L.partials(f0, A), Q = L.partials(f0 * r, A);
+  // 倍音どうしの関係（重なる＝acc の直線／近いのに重ならない＝warn のギザギザ＋うなりの回数）
+  for (const a of P) for (const b of Q) {
+    const df = Math.abs(a.f - b.f); if (df >= 20) continue;
+    const s = Math.min(a.a, b.a), x1 = X(a.f), x2 = X(b.f);
+    if (df < 0.3) {
+      g.strokeStyle = C.acc; g.globalAlpha = .35 + .65 * Math.min(1, s * 3); g.lineWidth = 2;
+      g.beginPath(); g.moveTo(x1, yL - a.a * tick); g.lineTo(x2, yU + b.a * tick); g.stroke();
+    } else {
+      g.strokeStyle = C.warn; g.globalAlpha = .4 + .6 * Math.min(1, s * 3); g.lineWidth = 1.4;
+      const y1 = yL - a.a * tick, y2 = yU + b.a * tick, n = 9; g.beginPath(); g.moveTo(x1, y1);
+      for (let i = 1; i < n; i++) { const t = i / n, z = (i % 2 ? 1 : -1) * 4; g.lineTo(x1 + (x2 - x1) * t + z, y1 + (y2 - y1) * t); }
+      g.lineTo(x2, y2); g.stroke(); g.globalAlpha = 1; g.fillStyle = C.warn;
+      g.fillText(df.toFixed(1) + ' Hz', Math.max(x1, x2) + 6, mid);
+    }
+    g.globalAlpha = 1;
+  }
+  const bar = (p, y, dir) => { const x = X(p.f), L2 = p.a * tick; g.strokeStyle = C.ink; g.lineWidth = 3; g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + dir * L2); g.stroke(); g.fillStyle = C.mute; g.fillText(p.n, x - 3, y - dir * 8); };
+  P.forEach(p => bar(p, yL, -1)); Q.forEach(p => bar(p, yU, 1));
+
+  // リサジュー
+  const ly = yL + 34, lh = h - ly - 40, sz = Math.max(40, Math.min(lh, lw * 0.62)), cx = w / 2, cy = ly + lh / 2, R = sz / 2 - 4;
+  g.strokeStyle = C.line; g.lineWidth = 1; g.strokeRect(cx - sz / 2, cy - sz / 2, sz, sz);
+  g.beginPath(); g.moveTo(cx - sz / 2, cy); g.lineTo(cx + sz / 2, cy); g.moveTo(cx, cy - sz / 2); g.lineTo(cx, cy + sz / 2); g.stroke();
+  const j = L.nearestJust(r), rate = L.lissajousRate(f0, r), drift = Math.abs(j.off) > 0.05;
+  // ずれている時は「回っている途中」の 4 コマを薄い順に重ねる（静止画で回転を見せる）
+  const n = Math.min(24000, 500 * Math.max(2, j.q)), shots = drift ? 4 : 1;
+  for (let k = 0; k < shots; k++) {
+    const ph = drift ? Math.PI / 2 + (k - shots + 1) * 0.22 : Math.PI / 2, pts = L.lissajous(j.p / j.q, ph, n);
+    g.strokeStyle = drift ? C.warn : C.acc; g.globalAlpha = drift ? (0.12 + 0.88 * (k + 1) / shots) * 0.8 : 1;
+    g.lineWidth = drift ? (k === shots - 1 ? 1.4 : 0.8) : 1.4;
+    g.beginPath(); pts.forEach(([x, y], i) => { const px = cx + x * R, py = cy - y * R; i ? g.lineTo(px, py) : g.moveTo(px, py); }); g.stroke();
+  }
+  g.globalAlpha = 1; g.fillStyle = C.mute; g.textAlign = 'left';
+  g.fillText('LISSAJOUS ' + j.name, cx - sz / 2, cy - sz / 2 - 9);
+  // 形が回っても、重なるはずの倍音がこの音色に無ければ耳では揺れない（SL-02 の問題そのもの）
+  const heard = L.beats(f0, r, A).some(b => Math.abs(b.rate - rate) < 0.05 && b.depth >= 0.04);
+  g.textAlign = 'right'; g.fillStyle = drift ? C.warn : C.acc;
+  g.fillText(drift ? '形が回る ' + rate.toFixed(2) + ' Hz' : (j.q <= 5 ? `${j.q} 周で閉じる` : `${j.q} 周でやっと閉じる＝ほぼ面`), cx + sz / 2, cy + sz / 2 + 12);
+  if (drift && !heard) { g.fillStyle = C.mute; g.fillText('…でもこの音色には重なる倍音が無い＝耳では揺れない', cx + sz / 2, cy + sz / 2 + 26); }
+  g.textAlign = 'left';
+}
+
+// ── 下の帯：ざらつきの曲線
+function drawCurve() {
+  const cv = document.getElementById('cvC'), [g, w, h] = fit(cv), f0 = S.f0, A = amps();
+  const C = { ink: css('--ink'), mute: css('--mute'), line: css('--line'), acc: css('--acc'), warn: css('--warn'), fill: css('--fill'), mono: css('--mono') };
+  const padL = 18, padR = 18, top = 28, bot = 26, X = c => padL + (w - padL - padR) * c / 1200, Y = d => top + (h - top - bot) * (1 - Math.min(1, d));
+  g.font = `10px ${C.mono}`; g.textBaseline = 'alphabetic';
+  // 境界のしきい値（ROUGH）
+  g.strokeStyle = C.line; g.setLineDash([3, 4]); g.beginPath(); g.moveTo(padL, Y(L.ROUGH_TH)); g.lineTo(w - padR, Y(L.ROUGH_TH)); g.stroke(); g.setLineDash([]);
+  g.fillStyle = C.mute; g.textAlign = 'right'; g.fillText('ROUGH ↑', w - padR, Y(L.ROUGH_TH) - 4); g.textAlign = 'left';
+  const cur = L.curve(f0, A, 481);
+  g.beginPath(); g.moveTo(X(0), Y(0)); cur.forEach(p => g.lineTo(X(p.c), Y(p.d))); g.lineTo(X(1200), Y(0)); g.closePath(); g.fillStyle = C.fill; g.fill();
+  g.beginPath(); cur.forEach((p, i) => i ? g.lineTo(X(p.c), Y(p.d)) : g.moveTo(X(p.c), Y(p.d))); g.strokeStyle = C.ink; g.lineWidth = 1.2; g.stroke();
+  // 純正の目盛りと谷
+  const V = new Set(L.valleys(f0, A).map(v => v.name));
+  L.JUST.forEach(j => {
+    const x = X(L.cents(j.p / j.q)); g.strokeStyle = C.line; g.beginPath(); g.moveTo(x, h - bot + 2); g.lineTo(x, h - bot + 7); g.stroke();
+    g.fillStyle = V.has(j.name) ? C.acc : C.mute; g.textAlign = 'center'; g.fillText(j.name, x, h - 8);
+    if (V.has(j.name)) { const y = Y(L.roughNorm(f0, j.p / j.q, A)); g.beginPath(); g.arc(x, y, 3.5, 0, Math.PI * 2); g.fill(); }
+  });
+  g.textAlign = 'left';
+  // A / B の位置
+  const pr = PAIRS[S.pair];
+  [['A', pr.A], ['B', pr.B]].forEach(([k, st], i) => {
+    const c = L.cents(st.r), x = X(c), y = Y(L.roughNorm(f0, st.r, A));
+    g.strokeStyle = i ? C.warn : C.acc; g.lineWidth = 1; g.beginPath(); g.moveTo(x, y); g.lineTo(x, h - bot); g.stroke();
+    g.fillStyle = i ? C.warn : C.acc; g.fillRect(x - 3, y - 3, 6, 6);
+    g.textAlign = i ? 'left' : 'right'; g.fillText(k, x + (i ? 6 : -6), y - 6); g.textAlign = 'left';
+  });
+  document.getElementById('capC').textContent = `ROUGHNESS ⁄ 0–1200¢ — ${L.TIMBRES[S.tim].name} · ${f0} Hz — 谷＝協和（` + (V.size ? [...V].join(' ') : '谷なし') + '）';
+}
+
+function header(k, st) {
+  const z = L.zone(S.f0, st.r, amps()), j = L.nearestJust(st.r);
+  document.getElementById('rat' + k).textContent = st.name;
+  document.getElementById('sub' + k).textContent = `${st.sub} · ${j.off >= 0 ? '+' : ''}${j.off.toFixed(1)}¢`;
+  const el = document.getElementById('zone' + k); el.className = 'zone ' + z.id; el.textContent = z.id + ' ' + z.jp;
+  return z;
+}
+function readout() {
+  const pr = PAIRS[S.pair], f0 = S.f0, A = amps(), rows = [['', 'A', 'B']];
+  const za = L.zone(f0, pr.A.r, A), zb = L.zone(f0, pr.B.r, A), ba = L.beats(f0, pr.A.r, A)[0], bb = L.beats(f0, pr.B.r, A)[0];
+  const bt = b => b && b.rate >= 0.05 ? `${b.rate.toFixed(2)}Hz×${b.depth.toFixed(2)}` : '—';
+  rows.push(['比', pr.A.r.toFixed(4), pr.B.r.toFixed(4)]);
+  rows.push(['純正からのずれ', L.nearestJust(pr.A.r).off.toFixed(1) + '¢', L.nearestJust(pr.B.r).off.toFixed(1) + '¢']);
+  rows.push(['ざらつき（頂上=1）', za.rough.toFixed(2), zb.rough.toFixed(2)]);
+  rows.push(['うなり 速さ×深さ', bt(ba), bt(bb)]);
+  const sa = L.simplicity(pr.A.r), sb = L.simplicity(pr.B.r), tn = s => isFinite(s.tenney) ? `${s.turns}周 ${s.tenney.toFixed(1)}` : '—';
+  rows.push(['比の単純さ 周回・log₂pq', tn(sa), tn(sb)]);
+  rows.push(['SL-02 の cons', L.cons(pr.A.r).toFixed(2), L.cons(pr.B.r).toFixed(2)]);
+  rows.push(['境界の読み', za.id, zb.id]);
+  document.getElementById('kv').innerHTML = rows.map((r, i) => `<tr>${r.map((c, k) => k ? (i ? `<td>${c}</td>` : `<th style="text-align:right">${c}</th>`) : `<th>${c}</th>`).join('')}</tr>`).join('');
+  document.getElementById('botInfo').innerHTML = `TIMBRE <b>${L.TIMBRES[S.tim].name}</b> · LOW <b>${f0} Hz</b>`;
+}
+function render() {
+  const pr = PAIRS[S.pair];
+  header('A', pr.A); header('B', pr.B);
+  document.getElementById('promptTxt').textContent = pr.prompt;
+  drawPanel(document.getElementById('cvA'), pr.A); drawPanel(document.getElementById('cvB'), pr.B); drawCurve(); readout();
+}
+
+// ── 音
+let AC = null, master = null, voices = [];
+function audio() {
+  if (!AC) {
+    AC = new AudioContext(); master = AC.createGain(); master.gain.value = S.vol;
+    const lim = AC.createDynamicsCompressor(); lim.threshold.value = -10; lim.ratio.value = 20; lim.attack.value = .003; lim.release.value = .15;
+    master.connect(lim).connect(AC.destination);
+  }
+  if (AC.state === 'suspended') AC.resume();
+  return AC;
+}
+function play(r, tim, btn) {
+  const ac = audio(); voices.forEach(o => { try { o.stop(); } catch (e) {} }); voices = [];
+  document.querySelectorAll('.btn.playing').forEach(b => b.classList.remove('playing'));
+  const dur = 3.2; voices = L.playPair(ac, master, S.f0, r, L.TIMBRES[tim].amps, ac.currentTime + 0.02, dur);
+  if (btn) { btn.classList.add('playing'); setTimeout(() => btn.classList.remove('playing'), dur * 1000); }
+}
+document.getElementById('playA').onclick = e => play(PAIRS[S.pair].A.r, S.tim, e.currentTarget);
+document.getElementById('playB').onclick = e => play(PAIRS[S.pair].B.r, S.tim, e.currentTarget);
+const HYP = [['sl02', 5 / 4, 'SL-02 長3度'], ['rich', 5 / 4, 'RICH 長3度'], ['sl02', 4 / 3, 'SL-02 4度'], ['rich', 4 / 3, 'RICH 4度'], ['sl02', 45 / 32, 'SL-02 増4度'], ['rich', 45 / 32, 'RICH 増4度']];
+document.getElementById('hyp').innerHTML = HYP.map((h, i) => `<button class="btn play" data-i="${i}">${h[2]}</button>`).join('');
+document.querySelectorAll('#hyp .btn').forEach(b => b.onclick = e => { const h = HYP[+b.dataset.i]; play(h[1], h[0], e.currentTarget); });
+document.getElementById('vol').oninput = e => { S.vol = e.target.value / 100; document.getElementById('vVol').textContent = e.target.value; if (master) master.gain.setTargetAtTime(S.vol, AC.currentTime, .03); };
+
+// ── 切り替え
+function seg(id, key, cast = v => v, after) {
+  document.querySelectorAll('#' + id + ' button').forEach(b => b.onclick = () => {
+    document.querySelectorAll('#' + id + ' button').forEach(x => x.classList.toggle('on', x === b));
+    S[key] = cast(b.dataset.v); if (after) after(); render();
+  });
+}
+seg('segLook', 'look', v => v, () => { document.documentElement.dataset.look = S.look; try { localStorage.setItem('sp03.look', S.look); } catch (e) {} });
+seg('segPair', 'pair'); seg('segTim', 'tim'); seg('segF0', 'f0', Number);
+try { const v = localStorage.getItem('sp03.look'); if (v && /^(np|ks|sumi)$/.test(v)) document.querySelector(`#segLook [data-v=${v}]`).click(); } catch (e) {}
+addEventListener('resize', render);
+document.fonts && document.fonts.ready.then(render);
+render();
+
+// ── 検証フック（Claude 側）：実際の音を書き出して測る
+async function measureBeat(r, tim, center, dur = 6) {
+  const sr = 44100, ctx = new OfflineAudioContext(1, Math.ceil(dur * sr), sr);
+  const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = center; bp.Q.value = 25; bp.connect(ctx.destination);
+  L.playPair(ctx, bp, S.f0, r, L.TIMBRES[tim].amps, 0, dur);
+  const x = (await ctx.startRendering()).getChannelData(0);
+  // 包絡線：|x| を 10ms 窓で平均 → 1kHz に間引き。立ち上がり・消えぎわの 0.5 s は捨てる
+  const win = Math.round(sr * 0.01), env = [];
+  for (let m = 500; ; m++) { const i = Math.round(m * sr / 1000); if (i + win >= x.length - sr * .5) break; let s = 0; for (let k = 0; k < win; k++) s += Math.abs(x[i + k]); env.push(s / win); }
+  const mean = env.reduce((a, b) => a + b, 0) / env.length, mx = Math.max(...env), mn = Math.min(...env);
+  let cross = 0; for (let i = 1; i < env.length; i++) if ((env[i - 1] - mean) * (env[i] - mean) < 0) cross++;
+  return { rate: cross / 2 / (env.length / 1000), depth: (mx - mn) / (mx + mn), mean };
+}
+async function measureSpectrum(r, tim, dur = 1) {
+  const sr = 44100, buf = await L.renderOffline(S.f0, r, L.TIMBRES[tim].amps, dur, sr), x = buf.getChannelData(0);
+  const a0 = Math.round(sr * .2), N = Math.round(sr * .5);
+  const goertzel = f => { let re = 0, im = 0; for (let i = 0; i < N; i++) { const w = 2 * Math.PI * f * i / sr; re += x[a0 + i] * Math.cos(w); im -= x[a0 + i] * Math.sin(w); } return 2 * Math.hypot(re, im) / N; };
+  const low = L.partials(S.f0, L.TIMBRES[tim].amps).map(p => +goertzel(p.f).toFixed(4));
+  let peak = 0; for (const v of x) peak = Math.max(peak, Math.abs(v));
+  return { low, expect: L.TIMBRES[tim].amps, peak };
+}
+window.__SP = { law: L, state: S, render, measureBeat, measureSpectrum,
+  audio: () => AC && { state: AC.state, voices: voices.length, freqs: voices.map(o => +o.frequency.value.toFixed(2)), gain: master.gain.value } };
+})();
+</script>
+</body>
+</html>

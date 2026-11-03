@@ -19,6 +19,7 @@
 30_Levels/      7階層ごとの知識ノート L1〜L7
 40_Primitives/  Perception Primitive P-01〜P-30 の個票（_TEMPLATE.md あり）
 90_Log/         日付ごとの作業ログ／申し送り
+sound-patterns/               L1d 音響の教材（PLAN_SOUND_PATTERNS.md・SP-02 本体 02_beats.html・SP-03 本体 03_consonance.html＝11-03／入口 index.html＝APP と SCROLL を横並び／解説 LP scroll/SCROLL_BEATS_LP.html・SCROLL_CONSONANCE_LP.html（音の既定 BOW・方針 20_Design/PLAN_SCROLL_EXPLAINER.md）／法則 _law/sp02_law.js・sp03_law.js／見た目は NATURAL＝natural-patterns の型）
 scroll-experience/            特設LP「From rules to worlds.」（2026-10-24 Codex から引継ぎ・申し送り HANDOFF_20261024.md・制作ルール AGENTS.md）
 cognitive/                    完成HTML（Level 4 GESTALT）※git管理なし
 12-Principles-of-Animation/   完成HTML（Level 6）※独自gitリポジトリ

@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CONSONANCE — 協和の境界 (SP-03)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=IBM+Plex+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:"Bank Gothic";src:url("../cognitive/fonts/bank-gothic-light-bt.ttf") format("truetype");font-weight:300 600;font-display:swap}
+@font-face{font-family:"Square 721";src:url("../cognitive/fonts/Square_721_BT.ttf") format("truetype");font-weight:400 700;font-display:swap}
+:root{
+  --bg:#0a0a0a;--bg-2:#121212;--ink:#f2f2ef;--ink-2:#cfcfca;--mute:#9a9a93;--mute-2:#3a3a37;
+  --line:#2a2a27;--acc:#ffd400;--acc-ink:#0a0a0a;--warn:#ff6a3d;--fill:rgba(242,242,239,.06);
+  --grid:rgba(242,242,239,0.035);--panel-bg:#0e0e0e;--ez:cubic-bezier(0.2,0,0,1);
+  --mono:"JetBrains Mono","IBM Plex Mono",ui-monospace,monospace;
+  --display:"Bank Gothic","Square 721","Space Grotesk",system-ui,sans-serif;
+  --sans:"Square 721","Bank Gothic","Helvetica Neue",system-ui,sans-serif;
+  --jp:"IBM Plex Sans JP","Noto Sans JP",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--sans);font-feature-settings:"tnum"}
+#app{height:100vh;display:grid;grid-template-rows:46px 1fr 30px;grid-template-columns:1fr 320px;grid-template-areas:"top top" "stage aside" "bot bot"}
+.topbar{grid-area:top;display:flex;align-items:center;gap:18px;padding:0 16px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:baseline;gap:8px}
+.mark{font-family:var(--display);font-weight:600;letter-spacing:.14em;font-size:14px}
+.layer-tag{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.16em}
+.ttl{flex:1;font-family:var(--mono);font-size:11px;color:var(--ink-2);letter-spacing:.16em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.esc{font-family:var(--mono);font-size:10px;color:var(--mute);text-decoration:none;border:1px solid var(--line);padding:4px 8px;letter-spacing:.12em;white-space:nowrap}
+.esc:hover{color:var(--acc);border-color:var(--acc)}
+.stage{grid-area:stage;position:relative;overflow:hidden;display:grid;grid-template-rows:minmax(0,30fr) minmax(0,70fr) auto 168px;grid-template-columns:minmax(0,1fr) 300px;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+.cell{position:relative;min-width:0;min-height:0;border-bottom:1px solid var(--line)}
+.cell canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+#ladderBox{grid-column:1 / -1}
+#lissBox{border-right:1px solid var(--line)}
+#readBox{padding:14px 16px;display:flex;flex-direction:column;gap:10px;overflow:hidden}
+#curveBox{grid-column:1 / -1;border-bottom:0;cursor:ew-resize;touch-action:none}
+.cap{position:absolute;left:14px;top:8px;font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.14em;pointer-events:none;white-space:nowrap}
+.cap.r{left:auto;right:14px}
+.prompt{grid-column:1 / -1;text-align:center;padding:8px 16px;border-bottom:1px solid var(--line);pointer-events:none;min-height:34px}
+.prompt .pj{font-family:var(--jp);font-size:11px;letter-spacing:.06em;color:var(--ink-2)}
+.prompt.auto .pj{color:var(--acc)}
+.big{display:flex;align-items:baseline;gap:10px;white-space:nowrap}
+.big .rat{font-family:var(--display);font-weight:600;font-size:34px;letter-spacing:.06em}
+.big .off{font-family:var(--mono);font-size:12px;color:var(--ink-2)}
+.big .jp{font-family:var(--jp);font-size:11px;color:var(--mute)}
+.zone{align-self:flex-start;font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:.16em;padding:5px 12px;border:1px solid var(--line)}
+.zone.FUSE{color:var(--acc-ink);background:var(--acc);border-color:var(--acc)}
+.zone.BEAT{color:var(--warn);border-color:var(--warn)}
+.zone.ROUGH{color:var(--bg);background:var(--warn);border-color:var(--warn)}
+.zone.APART{color:var(--ink-2);border-color:var(--mute);border-style:dashed}
+.meter .top{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--mute);margin-bottom:4px;letter-spacing:.06em}
+.meter .top b{font-family:var(--mono);font-weight:400;color:var(--ink-2)}
+.meter .track{height:10px;background:var(--bg-2);border:1px solid var(--mute-2);position:relative}
+.meter .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--ink-2)}
+.meter .th{position:absolute;top:-3px;bottom:-3px;width:1px;background:var(--mute)}
+.beat{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:10px;color:var(--mute)}
+.beat i{width:14px;height:14px;border:1px solid var(--warn);display:block}
+.beat b{color:var(--warn);font-weight:400}
+.aside{grid-area:aside;border-left:1px solid var(--line);background:var(--panel-bg);overflow-y:auto;padding:14px 14px 24px}
+.aside::-webkit-scrollbar{width:3px}.aside::-webkit-scrollbar-thumb{background:var(--mute-2)}
+.sec{margin-bottom:18px}
+.lt{display:inline-block;font-family:var(--mono);font-size:9px;color:var(--acc-ink);background:var(--acc);padding:1px 5px;margin-right:7px;letter-spacing:.1em}
+.sh{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.16em;text-transform:uppercase;margin-bottom:10px;border-bottom:1px solid var(--line);padding-bottom:5px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;margin-bottom:8px}
+.seg button,.btn{font-family:var(--mono);font-size:10px;letter-spacing:.08em;background:transparent;color:var(--ink-2);border:1px solid var(--line);padding:7px 4px;cursor:pointer}
+.seg button:hover,.btn:hover{border-color:var(--acc);color:var(--acc)}
+.seg button.on,.btn.on{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.btn{width:100%;margin-top:6px;padding:9px 10px;text-align:left}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:4px}.grid2 .btn{margin-top:0}
+.row{margin-bottom:12px}
+.row label{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--ink-2);margin-bottom:5px;letter-spacing:.06em}
+.row .val{color:var(--acc)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:2px;background:var(--mute-2);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;background:var(--acc);border:1px solid var(--acc-ink);border-radius:0}
+input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acc);border:1px solid var(--acc-ink);border-radius:0}
+.hint{font-family:var(--jp);font-size:10.5px;color:var(--ink-2);line-height:1.6;margin:4px 0 6px}
+.hint b{color:var(--acc);font-weight:500}
+.kvt{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:10px}
+.kvt th{color:var(--mute);font-weight:400;text-align:left;padding:3px 0;letter-spacing:.06em}
+.kvt td{color:var(--ink-2);text-align:right;padding:3px 0 3px 6px}
+.kvt tr{border-bottom:1px solid var(--line)}
+.params{font-family:var(--mono);font-size:10px;color:var(--mute);background:var(--bg-2);border:1px solid var(--line);padding:8px;word-break:break-all;line-height:1.5;cursor:pointer}
+.params:hover{border-color:var(--acc)}
+.bottombar{grid-area:bot;display:flex;align-items:center;gap:16px;padding:0 16px;border-top:1px solid var(--line);font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.1em;white-space:nowrap;overflow:hidden}
+.bottombar .sp{flex:1}.bottombar b{color:var(--ink-2);font-weight:400}
+.toast{position:fixed;left:50%;bottom:44px;transform:translateX(-50%);font-family:var(--mono);font-size:11px;color:var(--acc-ink);background:var(--acc);padding:6px 12px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
+.toast.show{opacity:1}
+@media (max-width:880px){
+  html,body{overflow:auto}
+  #app{height:auto;min-height:100vh;grid-template-columns:minmax(0,1fr);grid-template-rows:46px auto auto 30px;grid-template-areas:"top" "stage" "aside" "bot"}
+  .stage{min-width:0;grid-template-columns:minmax(0,1fr);grid-template-rows:150px 340px auto auto 168px}
+  #lissBox{border-right:0}
+  .bottombar span:last-child{display:none}
+  .aside{border-left:0;border-top:1px solid var(--line)}
+  .big .rat{font-size:24px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="brand"><span class="mark">GEN-EX</span><span class="layer-tag">L1d×L3</span></div>
+    <div class="ttl">CONSONANCE — 協和の境界 ⁄ SP-03</div>
+    <a class="esc" href="scroll/SCROLL_CONSONANCE_LP.html">解説 SCROLL →</a>
+    <a class="esc" href="index.html">[ESC] INDEX</a>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="cell" id="ladderBox"><canvas id="cvL"></canvas><div class="cap">HARMONICS ⁄ 2 音の倍音 — 重なる＝黄の線・近いのに重ならない＝うなる</div></div>
+    <div class="cell" id="lissBox"><canvas id="cvX"></canvas><div class="cap">LISSAJOUS ⁄ 横＝下の音・縦＝上の音</div><div class="cap r" id="capTime">表示 1/4 速</div></div>
+    <div class="cell" id="readBox">
+      <div class="big"><span class="rat" id="rRat">1/1</span><span class="off" id="rOff">+0.0¢</span><span class="jp" id="rJp">同度</span></div>
+      <div class="zone FUSE" id="rZone">FUSE 溶け合う</div>
+      <div class="meter"><div class="top"><span>① ざらつき（音色しだい）</span><b id="mR">0.00</b></div><div class="track"><div class="fill" id="fR"></div><i class="th" id="thR"></i></div></div>
+      <div class="meter"><div class="top"><span>② 比の単純さ（閉じる周回）</span><b id="mS">1 周</b></div><div class="track"><div class="fill" id="fS"></div><i class="th" id="thS"></i></div></div>
+      <div class="beat"><i id="beatDot"></i><span>うなり <b id="mB">—</b></span></div>
+      <div class="beat" style="color:var(--mute)"><span id="mC">SL-02 cons —</span></div>
+    </div>
+    <div class="prompt" id="prompt"><span class="pj" id="pj">下の曲線を左右にドラッグ → 谷に入ると澄み、谷から数セント外れると揺れ出す</span></div>
+    <div class="cell" id="curveBox"><canvas id="cvC"></canvas><div class="cap" id="capC">ROUGHNESS</div></div>
+  </div>
+
+  <div class="aside">
+    <div class="sec">
+      <div class="sh"><span class="lt">A</span>INTERVAL — 2 音の比</div>
+      <div class="row"><label>上の音 ⁄ CENTS <span class="val" id="vC">0.0¢</span></label><input type="range" id="cents" min="0" max="1200" step="0.1" value="0"></div>
+      <div class="grid2"><button class="btn" id="toJust">→ 純正 JUST</button><button class="btn" id="toET">→ 平均律 ET</button></div>
+      <div class="hint">曲線のドラッグ・← → でも動く（Shift で 0.1¢）。<b>吸着しない</b>ので、ぴったりの所は自分で探す。</div>
+    </div>
+    <div class="sec">
+      <div class="sh"><span class="lt">B</span>TIMBRE — 音色</div>
+      <div class="seg" id="segTim"><button data-v="sine">SINE</button><button data-v="sl02">SL-02</button><button data-v="rich" class="on">RICH</button></div>
+      <div class="hint">SINE＝倍音なし／SL-02＝GENEX_NEXT の結晶（1・0.25・0.08）／RICH＝倍音 6 本（1/n）。<b>谷を作るのは倍音</b>。</div>
+      <div class="sh" style="margin-top:12px">REGISTER — 下の音</div>
+      <div class="seg" id="segF0"><button data-v="220">220</button><button data-v="330" class="on">330</button><button data-v="440">440</button></div>
+    </div>
+    <div class="sec">
+      <div class="sh"><span class="lt">C</span>SOUND ⁄ SHOW</div>
+      <div class="grid2"><button class="btn" id="bSound">▶ SOUND</button><button class="btn" id="bAuto">◎ AUTO 60s</button></div>
+      <div class="grid2" style="margin-top:4px"><button class="btn" id="bProof">PROOF</button><button class="btn" id="bSlow">表示 1/4 速</button></div>
+      <div class="row" style="margin-top:12px"><label>MASTER <span class="val" id="vVol">35</span></label><input type="range" id="vol" min="0" max="100" value="35"></div>
+      <div class="hint">ヘッドホン推奨。うなりの音は常に実時間。図の動きだけ 1/4 速にできる（速いうなりは画面では止まって見えるため）。</div>
+    </div>
+    <div class="sec">
+      <div class="sh"><span class="lt">D</span>READOUT</div>
+      <table class="kvt" id="kv"></table>
+    </div>
+    <div class="sec">
+      <div class="sh"><span class="lt">E</span>PARAMS — クリックでコピー</div>
+      <div class="params" id="params"></div>
+      <button class="btn" id="bPaste">PASTE</button>
+    </div>
+  </div>
+
+  <div class="bottombar">
+    <span>SOUND PATTERNS ⁄ <b>SP-03</b></span><span id="botInfo">—</span><span class="sp"></span>
+    <span>← → 比 · J 純正 · E 平均律 · 1 2 3 音色 · SPACE 音 · A 自動 · P PROOF</span>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="_law/sp03_law.js"></script>
+<script>
+(() => {
+'use strict';
+const L = window.SP03, $ = id => document.getElementById(id);
+const S = { c: 0, tim: 'rich', f0: L.F0_DEFAULT, vol: .35, sound: false, proof: false, slow: true, auto: null };
+const r = () => L.ratioOf(S.c), amps = () => L.TIMBRES[S.tim].amps;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let C = {};
+const readColors = () => { C = { ink: css('--ink'), ink2: css('--ink-2'), mute: css('--mute'), mute2: css('--mute-2'), line: css('--line'), acc: css('--acc'), warn: css('--warn'), fill: css('--fill'), mono: css('--mono') }; };
+
+function fit(cv) {
+  const d = devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+  if (cv.width !== Math.round(w * d) || cv.height !== Math.round(h * d)) { cv.width = Math.round(w * d); cv.height = Math.round(h * d); }
+  const g = cv.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, w, h); return [g, w, h];
+}
+const toast = m => { const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 1400); };
+
+// ── 曲線は音色×音域ごとにキャッシュ（毎フレーム計算しない）
+const cache = new Map();
+function curveOf(tim, f0) {
+  const k = tim + '|' + f0;
+  if (!cache.has(k)) { const A = L.TIMBRES[tim].amps; cache.set(k, { cur: L.curve(f0, A, 601), val: L.valleys(f0, A) }); }
+  return cache.get(k);
+}
+
+// ── 倍音の梯子（上＝上の音・下＝下の音）
+function drawLadder(t) {
+  const [g, w, h] = fit($('cvL')), f0 = S.f0, rr = r(), A = amps();
+  const pad = 18, lw = w - pad * 2, fLo = f0 * 0.8, fHi = f0 * 2 * 6.6;
+  const X = f => pad + lw * Math.log(f / fLo) / Math.log(fHi / fLo);
+  const yU = 34, yL = h - 22, tick = (yL - yU) * 0.36, mid = (yU + yL) / 2;
+  g.font = `10px ${C.mono}`; g.textBaseline = 'middle';
+  g.strokeStyle = C.line; g.lineWidth = 1; g.beginPath(); g.moveTo(pad, yU); g.lineTo(w - pad, yU); g.moveTo(pad, yL); g.lineTo(w - pad, yL); g.stroke();
+  g.fillStyle = C.mute; g.textAlign = 'right'; g.fillText('上 ' + (f0 * rr).toFixed(1) + ' Hz', w - pad, yU - 10); g.fillText('下 ' + f0.toFixed(1) + ' Hz', w - pad, yL + 12); g.textAlign = 'left';
+  const P = L.partials(f0, A), Q = L.partials(f0 * rr, A), ts = S.slow ? 0.25 : 1;
+  for (const a of P) for (const b of Q) {
+    const df = Math.abs(a.f - b.f); if (df >= 20) continue;
+    const s = Math.min(a.a, b.a), x1 = X(a.f), x2 = X(b.f), y1 = yL - a.a * tick, y2 = yU + b.a * tick;
+    if (df < 0.3) { g.strokeStyle = C.acc; g.globalAlpha = .35 + .65 * Math.min(1, s * 3); g.lineWidth = 2; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); }
+    else {
+      // うなりの速さで明滅（cos² ＝ 2 本の和の音量の揺れ）
+      const pulse = Math.pow(Math.cos(Math.PI * df * t * ts), 2);
+      g.strokeStyle = C.warn; g.globalAlpha = (.25 + .75 * pulse) * (.4 + .6 * Math.min(1, s * 3)); g.lineWidth = 1.4;
+      const n = 9; g.beginPath(); g.moveTo(x1, y1);
+      for (let i = 1; i < n; i++) { const k = i / n, z = (i % 2 ? 1 : -1) * 4; g.lineTo(x1 + (x2 - x1) * k + z, y1 + (y2 - y1) * k); }
+      g.lineTo(x2, y2); g.stroke(); g.globalAlpha = 1; g.fillStyle = C.warn; g.fillText(df.toFixed(1) + ' Hz', Math.max(x1, x2) + 6, mid);
+    }
+    g.globalAlpha = 1;
+  }
+  const bar = (p, y, dir) => { const x = X(p.f); g.strokeStyle = C.ink; g.lineWidth = 3; g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + dir * p.a * tick); g.stroke(); g.fillStyle = C.mute; g.fillText(p.n, x - 3, y - dir * 9); };
+  P.forEach(p => bar(p, yL, -1)); Q.forEach(p => bar(p, yU, 1));
+}
+
+// ── リサジュー：p/q で描き、相対位相を実際のずれの速さで進める
+let lissPhase = Math.PI / 2, lastT = 0;
+function drawLiss(t, dt) {
+  const [g, w, h] = fit($('cvX')), f0 = S.f0, rr = r(), j = L.nearestJust(rr);
+  // 位相の進み＝2π(f上 − p/q·f下)。形は 1/|q f上 − p f下| 秒で一周（＝重なるはずの倍音のうなりと同じ速さ）
+  const dphi = 2 * Math.PI * (f0 * rr - f0 * j.p / j.q);
+  lissPhase += dphi * dt * (S.slow ? 0.25 : 1);
+  const foot = S.proof ? 62 : 46, sz = Math.max(40, Math.min(h - 28 - foot, w - 40)), cx = w / 2, cy = 28 + sz / 2, R = sz / 2 - 4;
+  g.strokeStyle = C.line; g.lineWidth = 1; g.strokeRect(cx - sz / 2, cy - sz / 2, sz, sz);
+  g.beginPath(); g.moveTo(cx - sz / 2, cy); g.lineTo(cx + sz / 2, cy); g.moveTo(cx, cy - sz / 2); g.lineTo(cx, cy + sz / 2); g.stroke();
+  const n = Math.min(24000, 500 * Math.max(2, j.q)), pts = L.lissajous(j.p / j.q, lissPhase, n);
+  const exact = Math.abs(j.off) < 0.05, z = L.zone(f0, rr, amps());
+  g.strokeStyle = exact ? C.acc : (z.id === 'BEAT' ? C.warn : C.ink2); g.lineWidth = 1.3; g.globalAlpha = exact ? 1 : .9;
+  g.beginPath(); pts.forEach(([x, y], i) => { const px = cx + x * R, py = cy - y * R; i ? g.lineTo(px, py) : g.moveTo(px, py); }); g.stroke(); g.globalAlpha = 1;
+  const rate = L.lissajousRate(f0, rr), heard = L.beats(f0, rr, amps()).some(b => Math.abs(b.rate - rate) < 0.05 && b.depth >= 0.04);
+  g.font = `10px ${C.mono}`; g.textAlign = 'center'; g.fillStyle = exact ? C.acc : C.ink2;
+  const msg = exact ? (j.q <= 5 ? `${j.p}/${j.q} — ${j.q} 周で閉じて止まる` : `${j.p}/${j.q} — ${j.q} 周でやっと閉じる＝ほぼ面`) : `${j.p}/${j.q} から ${j.off >= 0 ? '+' : ''}${j.off.toFixed(1)}¢ — 形が ${rate.toFixed(2)} Hz で回る`;
+  g.fillText(msg, cx, cy + sz / 2 + 14);
+  const note = !exact && !heard && rate < 20;
+  if (note) { g.fillStyle = C.mute; g.fillText('…でもこの音色には重なる倍音が無い＝耳では揺れない', cx, cy + sz / 2 + 28); }
+  if (S.proof) { g.fillStyle = C.acc; g.fillText(`PROOF：下の音が ${j.q} 回・上の音が ${j.p} 回振れると元に戻る`, cx, cy + sz / 2 + (note ? 42 : 28)); }
+  g.textAlign = 'left';
+}
+
+// ── ざらつきの曲線（ドラッグで比を動かす）
+const CV = { padL: 18, padR: 18, top: 26, bot: 24 };
+function drawCurve() {
+  const [g, w, h] = fit($('cvC')), f0 = S.f0, { cur, val } = curveOf(S.tim, f0);
+  const X = c => CV.padL + (w - CV.padL - CV.padR) * c / 1200, Y = d => CV.top + (h - CV.top - CV.bot) * (1 - Math.min(1, d));
+  g.font = `10px ${C.mono}`;
+  g.strokeStyle = C.line; g.setLineDash([3, 4]); g.beginPath(); g.moveTo(CV.padL, Y(L.ROUGH_TH)); g.lineTo(w - CV.padR, Y(L.ROUGH_TH)); g.stroke(); g.setLineDash([]);
+  g.fillStyle = C.mute; g.textAlign = 'right'; g.fillText('ROUGH ↑', w - CV.padR, Y(L.ROUGH_TH) - 4); g.textAlign = 'left';
+  if (S.proof) { // 他の音色の曲線を重ねる：谷は倍音が作る
+    for (const k of Object.keys(L.TIMBRES)) { if (k === S.tim) continue; const o = curveOf(k, f0).cur;
+      g.strokeStyle = C.mute; g.setLineDash([2, 3]); g.lineWidth = 1; g.beginPath(); o.forEach((p, i) => i ? g.lineTo(X(p.c), Y(p.d)) : g.moveTo(X(p.c), Y(p.d))); g.stroke(); g.setLineDash([]);
+      const at = o[Math.round(o.length * (k === 'sine' ? 0.8 : 0.72))]; g.fillStyle = C.mute; g.fillText(L.TIMBRES[k].name, X(at.c), Y(at.d) - 6); }
+  }
+  g.beginPath(); g.moveTo(X(0), Y(0)); cur.forEach(p => g.lineTo(X(p.c), Y(p.d))); g.lineTo(X(1200), Y(0)); g.closePath(); g.fillStyle = C.fill; g.fill();
+  g.beginPath(); cur.forEach((p, i) => i ? g.lineTo(X(p.c), Y(p.d)) : g.moveTo(X(p.c), Y(p.d))); g.strokeStyle = C.ink; g.lineWidth = 1.2; g.stroke();
+  const V = new Set(val.map(v => v.name));
+  L.JUST.forEach(j => {
+    const x = X(L.cents(j.p / j.q)); g.strokeStyle = C.line; g.beginPath(); g.moveTo(x, h - CV.bot + 2); g.lineTo(x, h - CV.bot + 7); g.stroke();
+    g.fillStyle = V.has(j.name) ? C.acc : C.mute; g.textAlign = 'center'; g.fillText(j.name, x, h - 7);
+    if (V.has(j.name)) { g.beginPath(); g.arc(x, Y(L.roughNorm(f0, j.p / j.q, amps())), 3.5, 0, Math.PI * 2); g.fill(); }
+  });
+  for (let s = 1; s < 12; s++) { const x = X(s * 100); g.strokeStyle = C.mute2; g.beginPath(); g.moveTo(x, h - CV.bot); g.lineTo(x, h - CV.bot + 3); g.stroke(); }
+  g.textAlign = 'left';
+  const x = X(S.c), y = Y(L.roughNorm(f0, r(), amps())), z = L.zone(f0, r(), amps());
+  const col = z.id === 'FUSE' ? C.acc : z.id === 'APART' ? C.ink2 : C.warn;
+  g.strokeStyle = col; g.lineWidth = 1; g.beginPath(); g.moveTo(x, y); g.lineTo(x, h - CV.bot); g.stroke();
+  g.fillStyle = col; g.fillRect(x - 4, y - 4, 8, 8);
+  $('capC').textContent = `ROUGHNESS ⁄ 0–1200¢ — ${L.TIMBRES[S.tim].name} · ${f0} Hz — 谷＝協和（${val.length ? val.map(v => v.name).join(' ') : '谷なし'}）${S.proof ? ' — 点線＝ほかの音色' : ''}`;
+}
+
+// ── 右の読み
+let lastKey = '';
+function drawRead(t) {
+  const f0 = S.f0, rr = r(), A = amps(), j = L.nearestJust(rr), z = L.zone(f0, rr, A), sp = L.simplicity(rr);
+  const key = [S.c.toFixed(2), S.tim, f0].join('|');
+  if (key !== lastKey) {
+    lastKey = key;
+    $('rRat').textContent = Math.abs(j.off) <= 18 ? j.name : '—';
+    $('rOff').textContent = Math.abs(j.off) <= 18 ? `${j.off >= 0 ? '+' : ''}${j.off.toFixed(1)}¢` : `${S.c.toFixed(1)}¢`;
+    $('rJp').textContent = Math.abs(j.off) <= 18 ? j.jp : '比が定まらない';
+    const zl = $('rZone'); zl.className = 'zone ' + z.id; zl.textContent = z.id + ' ' + z.jp;
+    $('mR').textContent = z.rough.toFixed(2); $('fR').style.width = Math.min(100, z.rough * 100) + '%';
+    $('thR').style.left = (L.ROUGH_TH * 100) + '%';
+    // 周回を対数で：1 周＝満タン、64 周＝0
+    const sv = isFinite(sp.turns) ? Math.max(0, 1 - Math.log2(sp.turns) / 6) : 0;
+    $('mS').textContent = isFinite(sp.turns) ? `${sp.turns} 周` : '閉じない'; $('fS').style.width = sv * 100 + '%';
+    $('thS').style.left = (1 - Math.log2(L.SIMPLE_TURNS) / 6) * 100 + '%';
+    $('fS').style.background = sv >= 1 - Math.log2(L.SIMPLE_TURNS) / 6 ? css('--acc') : css('--ink-2');
+    $('mC').textContent = `SL-02 の協和度 cons ${L.cons(rr).toFixed(2)}`;
+    const b = L.beats(f0, rr, A).find(x => x.rate >= 0.05 && x.depth >= 0.04);
+    $('mB').textContent = b ? `${b.rate.toFixed(2)} Hz（下 ${b.low} 倍音 × 上 ${b.high} 倍音・深さ ${b.depth.toFixed(2)}）` : '—';
+    drawRead.beat = b;
+    readout(z, sp, b);
+    if (!S.auto) $('pj').textContent = hintFor(z, j);
+    $('vC').textContent = S.c.toFixed(1) + '¢'; $('cents').value = S.c;
+    $('params').textContent = JSON.stringify({ cents: +S.c.toFixed(2), timbre: S.tim, f0: S.f0 });
+    $('botInfo').innerHTML = `TIMBRE <b>${L.TIMBRES[S.tim].name}</b> · LOW <b>${f0} Hz</b> · HIGH <b>${(f0 * rr).toFixed(2)} Hz</b>`;
+  }
+  // うなりの点：実時間で明滅（音と同じ速さ）
+  const b = drawRead.beat;
+  $('beatDot').style.background = b ? `rgba(255,106,61,${Math.pow(Math.cos(Math.PI * b.rate * t), 2).toFixed(3)})` : 'transparent';
+}
+function hintFor(z, j) {
+  if (z.id === 'ROUGH') return 'ざらつく：倍音どうしが近すぎてぶつかっている。もっと離すか、谷へ';
+  if (z.id === 'BEAT') return `揺れる：${j.name} から ${Math.abs(j.off).toFixed(1)}¢ ずれている。重なるはずの倍音がうなる → J で純正へ`;
+  if (z.id === 'APART') return Math.abs(j.off) <= 18 ? `溶け合わない：ざらつきは小さいが、${j.q} 周しないと閉じない＝1 本の倍音列に乗らない` : '比が定まらない：どの単純な比からも遠い';
+  return Math.abs(j.off) < 0.05 ? `溶け合う：${j.name} ぴったり。重なった倍音が静まり、図形が ${j.q} 周で閉じて止まる` : `溶け合う：${j.name} の近く。この音色では揺れが聞こえない（重なる倍音が無いか弱い）`;
+}
+function readout(z, sp, b) {
+  const rr = r(), rows = [
+    ['比', rr.toFixed(5)], ['セント', S.c.toFixed(2) + '¢'], ['いちばん近い純正', `${L.nearestJust(rr).name}（${L.nearestJust(rr).off.toFixed(2)}¢）`],
+    ['① ざらつき（頂上=1）', z.rough.toFixed(3)], ['② 閉じる周回・log₂pq', isFinite(sp.turns) ? `${sp.turns} 周・${sp.tenney.toFixed(2)}` : '—'],
+    ['うなり', b ? `${b.rate.toFixed(2)} Hz × ${b.depth.toFixed(2)}` : '—'], ['形が回る速さ', L.lissajousRate(S.f0, rr).toFixed(2) + ' Hz'],
+    ['SL-02 cons', L.cons(rr).toFixed(2)], ['境界の読み', z.id],
+  ];
+  $('kv').innerHTML = rows.map(([a, v]) => `<tr><th>${a}</th><td>${v}</td></tr>`).join('');
+}
+
+// ── 音：2 音 × 倍音 6 本の常設ボイス。比・音色の変更はゲインと周波数を滑らかに追従
+let AC = null, master = null, V = null;
+const MAXP = 6, LEVEL = 0.18;
+function ensureAudio() {
+  if (!AC) {
+    AC = new AudioContext(); master = AC.createGain(); master.gain.value = 0;
+    const lim = AC.createDynamicsCompressor(); lim.threshold.value = -10; lim.ratio.value = 20; lim.attack.value = .003; lim.release.value = .15;
+    master.connect(lim).connect(AC.destination);
+    V = [0, 1].map(() => { const out = AC.createGain(); out.connect(master); const os = [];
+      for (let i = 0; i < MAXP; i++) { const o = AC.createOscillator(), g = AC.createGain(); g.gain.value = 0; o.connect(g).connect(out); o.start(); os.push({ o, g }); }
+      return { out, os }; });
+  }
+  if (AC.state === 'suspended') AC.resume();
+  updateAudio(true);
+}
+function updateAudio(now) {
+  if (!AC) return;
+  const t = AC.currentTime, tc = now ? 0.005 : 0.03, A = amps(), norm = 1 / A.reduce((s, a) => s + a, 0);
+  [S.f0, S.f0 * r()].forEach((f, vi) => V[vi].os.forEach(({ o, g }, i) => {
+    const fi = f * (i + 1), a = (A[i] || 0) * (fi < 16000 ? 1 : 0);
+    o.frequency.setTargetAtTime(fi, t, tc); g.gain.setTargetAtTime(a * norm * LEVEL, t, 0.04);
+  }));
+  master.gain.setTargetAtTime(S.sound ? S.vol : 0, t, S.sound ? 0.08 : 0.15);
+}
+function setSound(on) { S.sound = on; if (on) ensureAudio(); else updateAudio(); $('bSound').classList.toggle('on', on); $('bSound').textContent = on ? '■ SOUND' : '▶ SOUND'; }
+
+// ── 状態の変更
+function setCents(c) { S.c = Math.max(0, Math.min(1200, c)); updateAudio(); }
+function setTim(k) { S.tim = k; document.querySelectorAll('#segTim button').forEach(b => b.classList.toggle('on', b.dataset.v === k)); updateAudio(); lastKey = ''; }
+function setF0(f) { S.f0 = f; document.querySelectorAll('#segF0 button').forEach(b => b.classList.toggle('on', +b.dataset.v === f)); updateAudio(); lastKey = ''; }
+let glide = null, NOW = performance.now(); // NOW＝描画の時計（自動上演・グライドもこれで測る）
+function glideTo(c) { glide = { from: S.c, to: c, t0: NOW, d: 600 }; }
+const justC = () => { const j = L.nearestJust(r()); return L.cents(j.p / j.q); };
+const etC = () => Math.round(S.c / 100) * 100;
+
+// ── 自動上演（60 秒）：境界を一度ずつまたぐ
+const TOUR = [
+  { at: 0, c: 0, tim: 'rich', say: '同じ高さの 2 音。ここから上の音だけを上げていく' },
+  { at: 4, c: 97, say: 'ざらつきの山（330 Hz・RICH では約 100¢）：倍音どうしが近すぎてぶつかる' },
+  { at: 10, c: 701.955, say: '完全5度 3/2 ぴったり：重なった倍音が静まり、図形が 2 周で閉じて止まる' },
+  { at: 17, c: 700, say: '平均律の 5度（−2¢）：重なっていた倍音が 1 秒に 1 回ゆっくりうなる' },
+  { at: 25, c: 386.314, say: '長3度 5/4 ぴったり：4 周で閉じる' },
+  { at: 31, c: 400, say: '平均律の長3度（+14¢）：5 倍音と 4 倍音が 1 秒に 13 回うなる' },
+  { at: 38, tim: 'sl02', say: 'SL-02 の音色に替える：図形は回り続けるのに、耳では揺れない＝重なる倍音が無い' },
+  { at: 45, tim: 'rich', c: 590.224, say: '増4度 45/32：ざらつきは小さいのに、32 周しないと閉じない＝溶け合わない' },
+  { at: 53, c: 1200, say: 'オクターブ 2/1：1 周で閉じる。終わり' },
+  { at: 60 },
+];
+function startAuto() { setF0(330); S.auto = { t0: NOW, i: -1 }; $('bAuto').classList.add('on'); $('prompt').classList.add('auto'); if (!S.sound) toast('SOUND を押すと音も一緒に'); }
+function stopAuto() { S.auto = null; glide = null; $('bAuto').classList.remove('on'); $('prompt').classList.remove('auto'); lastKey = ''; }
+function tickAuto(now) {
+  const el = (now - S.auto.t0) / 1000; let i = S.auto.i;
+  while (i + 1 < TOUR.length && el >= TOUR[i + 1].at) { i++; const k = TOUR[i];
+    if (k.at === 60 || k.say === undefined) { stopAuto(); return; }
+    if (k.tim) setTim(k.tim); if (k.c !== undefined) glide = { from: S.c, to: k.c, t0: now, d: k.at === 0 ? 1 : 2600 };
+    $('pj').textContent = `AUTO ${String(Math.floor(k.at)).padStart(2, '0')}s ⁄ ${k.say}`; }
+  S.auto.i = i;
+}
+
+// ── ループ（step は 1 コマ分。検証では __SP.step で時間を自分で進める）
+function step(now, dt) {
+  NOW = now; const t = now / 1000;
+  if (S.auto) tickAuto(now);
+  if (glide) { const k = Math.min(1, (now - glide.t0) / glide.d), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2; setCents(glide.from + (glide.to - glide.from) * e); if (k >= 1) glide = null; }
+  drawLadder(t); drawLiss(t, dt); drawCurve(); drawRead(t);
+}
+let manual = false;
+function frame(now) {
+  if (!manual) { const t = now / 1000, dt = Math.min(0.05, t - (lastT || t)); lastT = t; step(now, dt); }
+  requestAnimationFrame(frame);
+}
+
+// ── 入力
+const cvC = $('cvC');
+function centsAt(e) { const b = cvC.getBoundingClientRect(); return (e.clientX - b.left - CV.padL) / (b.width - CV.padL - CV.padR) * 1200; }
+cvC.addEventListener('pointerdown', e => { stopAuto(); glide = null; cvC.setPointerCapture(e.pointerId); setCents(centsAt(e)); cvC.onpointermove = ev => setCents(centsAt(ev)); });
+cvC.addEventListener('pointerup', () => { cvC.onpointermove = null; });
+cvC.addEventListener('wheel', e => { e.preventDefault(); stopAuto(); setCents(S.c + Math.sign(e.deltaY) * (e.shiftKey ? 0.1 : 1)); }, { passive: false });
+$('cents').oninput = e => { stopAuto(); glide = null; setCents(+e.target.value); };
+$('toJust').onclick = () => { stopAuto(); glideTo(justC()); };
+$('toET').onclick = () => { stopAuto(); glideTo(etC()); };
+document.querySelectorAll('#segTim button').forEach(b => b.onclick = () => { stopAuto(); setTim(b.dataset.v); });
+document.querySelectorAll('#segF0 button').forEach(b => b.onclick = () => setF0(+b.dataset.v));
+$('bSound').onclick = () => setSound(!S.sound);
+$('bAuto').onclick = () => S.auto ? stopAuto() : startAuto();
+$('bProof').onclick = () => { S.proof = !S.proof; $('bProof').classList.toggle('on', S.proof); };
+$('bSlow').onclick = () => { S.slow = !S.slow; $('bSlow').textContent = S.slow ? '表示 1/4 速' : '表示 実時間'; $('bSlow').classList.toggle('on', !S.slow); $('capTime').textContent = S.slow ? '表示 1/4 速' : '表示 実時間'; };
+$('vol').oninput = e => { S.vol = e.target.value / 100; $('vVol').textContent = e.target.value; updateAudio(); };
+$('params').onclick = async e => { const el = e.currentTarget; try { await navigator.clipboard.writeText(el.textContent); toast('COPIED'); } catch (err) { toast('コピーできない環境'); } };
+$('bPaste').onclick = async () => {
+  try { const o = JSON.parse(await navigator.clipboard.readText()); applyParams(o); toast('PASTED'); }
+  catch (err) { const s = prompt('PARAMS を貼り付け'); if (s) try { applyParams(JSON.parse(s)); toast('PASTED'); } catch (e2) { toast('読めない PARAMS'); } }
+};
+function applyParams(o) {
+  stopAuto();
+  if (L.TIMBRES[o.timbre]) setTim(o.timbre);
+  if ([220, 330, 440].includes(+o.f0)) setF0(+o.f0);
+  if (isFinite(+o.cents)) setCents(+o.cents);
+}
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  const k = e.key;
+  if (k === 'ArrowRight' || k === 'ArrowLeft') { e.preventDefault(); stopAuto(); glide = null; setCents(S.c + (k === 'ArrowRight' ? 1 : -1) * (e.shiftKey ? 0.1 : 1)); }
+  else if (k === 'j' || k === 'J') { stopAuto(); glideTo(justC()); }
+  else if (k === 'e' || k === 'E') { stopAuto(); glideTo(etC()); }
+  else if (k === '1' || k === '2' || k === '3') { stopAuto(); setTim(['sine', 'sl02', 'rich'][+k - 1]); }
+  else if (k === ' ') { e.preventDefault(); setSound(!S.sound); }
+  else if (k === 'a' || k === 'A') S.auto ? stopAuto() : startAuto();
+  else if (k === 'p' || k === 'P') $('bProof').click();
+});
+
+readColors();
+document.fonts && document.fonts.ready.then(readColors);
+requestAnimationFrame(frame);
+
+// ── 検証フック（Claude 側）
+window.__SP = {
+  law: L, state: S, set: c => { stopAuto(); glide = null; setCents(c); }, setTim, setF0, startAuto, stopAuto, setSound,
+  audio: () => AC && { state: AC.state, master: +master.gain.value.toFixed(3), voices: V.map(v => v.os.map(({ o, g }) => [+o.frequency.value.toFixed(2), +g.gain.value.toFixed(4)])) },
+  lissPhase: () => lissPhase,
+  // 手動の時計：manual(true) で rAF を止め、step(秒) で好きなだけ進める
+  manual: on => { manual = on; },
+  step: (sec = 1 / 60, fps = 60) => { for (let i = 0, n = Math.max(1, Math.round(sec * fps)); i < n; i++) step(NOW + 1000 / fps, 1 / fps); },
+};
+})();
+</script>
+</body>
+</html>

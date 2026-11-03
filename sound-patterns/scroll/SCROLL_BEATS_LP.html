@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BEATS — スクロール解説 (SP-02)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=IBM+Plex+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:"Bank Gothic";src:url("../../cognitive/fonts/bank-gothic-light-bt.ttf") format("truetype");font-weight:300 600;font-display:swap}
+@font-face{font-family:"Square 721";src:url("../../cognitive/fonts/Square_721_BT.ttf") format("truetype");font-weight:400 700;font-display:swap}
+:root{
+  --bg:#0a0a0a;--bg-2:#121212;--ink:#f2f2ef;--ink-2:#cfcfca;--mute:#9a9a93;--mute-2:#3a3a37;
+  --line:#2a2a27;--acc:#ffd400;--acc-ink:#0a0a0a;--warn:#ff6a3d;--fill:rgba(242,242,239,.06);
+  --grid:rgba(242,242,239,0.035);--ez:cubic-bezier(0.2,0,0,1);
+  --mono:"JetBrains Mono","IBM Plex Mono",ui-monospace,monospace;
+  --display:"Bank Gothic","Square 721","Space Grotesk",system-ui,sans-serif;
+  --sans:"Square 721","Bank Gothic","Helvetica Neue",system-ui,sans-serif;
+  --jp:"IBM Plex Sans JP","Noto Sans JP",system-ui,sans-serif;
+  --col:400px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg)}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-feature-settings:"tnum"}
+/* 背景：方眼と描画キャンバス（固定）。sticky を殺さないよう body に overflow は付けない */
+#grid{position:fixed;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;pointer-events:none}
+#cv{position:fixed;inset:0;width:100vw;height:100vh;display:block;pointer-events:none}
+
+/* HUD */
+.hud{position:fixed;left:0;right:0;top:0;height:46px;display:flex;align-items:center;gap:16px;padding:0 16px;border-bottom:1px solid var(--line);background:rgba(10,10,10,.92);z-index:5}
+.brand{display:flex;align-items:baseline;gap:8px;white-space:nowrap}
+.mark{font-family:var(--display);font-weight:600;letter-spacing:.14em;font-size:14px}
+.tag{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.16em}
+.chl{flex:1;font-family:var(--mono);font-size:11px;color:var(--ink-2);letter-spacing:.16em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chl b{color:var(--acc);font-weight:400}
+.rd{display:flex;align-items:baseline;gap:6px;white-space:nowrap}
+.rd .n{font-family:var(--display);font-weight:600;font-size:20px;letter-spacing:.04em;min-width:64px;text-align:right}
+.rd .u{font-family:var(--mono);font-size:10px;color:var(--mute)}
+.zone{font-family:var(--display);font-weight:600;font-size:11px;letter-spacing:.16em;padding:3px 8px;border:1px solid var(--line);white-space:nowrap;min-width:64px;text-align:center}
+.zone.ONE{color:var(--ink-2);border-color:var(--mute)}
+.zone.BEAT{color:var(--acc);border-color:var(--acc)}
+.zone.ROUGH{color:var(--bg);background:var(--warn);border-color:var(--warn)}
+.zone.TWO{color:var(--acc-ink);background:var(--acc);border-color:var(--acc)}
+.seg{display:flex;gap:3px}
+.seg button,.lnk{font-family:var(--mono);font-size:10px;letter-spacing:.08em;background:transparent;color:var(--ink-2);border:1px solid var(--line);padding:5px 8px;cursor:pointer;text-decoration:none;white-space:nowrap}
+.seg button:hover,.lnk:hover{border-color:var(--acc);color:var(--acc)}
+.seg button.on{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.vol{width:70px;-webkit-appearance:none;appearance:none;height:2px;background:var(--mute-2);outline:none;cursor:pointer}
+.vol::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;background:var(--acc);border:1px solid var(--acc-ink);border-radius:0}
+.vol::-moz-range-thumb{width:11px;height:11px;background:var(--acc);border:1px solid var(--acc-ink);border-radius:0}
+.prog{position:fixed;left:0;top:46px;height:2px;width:0;background:var(--acc);z-index:5}
+.ticks{position:fixed;left:0;right:0;top:46px;height:6px;z-index:4;pointer-events:none}
+.ticks i{position:absolute;top:0;width:1px;height:6px;background:var(--mute-2)}
+
+/* 章（縦長のトラック）＋ sticky のカード */
+main{position:relative;z-index:2}
+.ch{position:relative}
+.card{position:sticky;top:76px;width:var(--col);margin-left:40px;padding:20px 22px 22px;background:rgba(10,10,10,.88);border:1px solid var(--line);border-left:2px solid var(--acc)}
+.card .no{font-family:var(--mono);font-size:10px;color:var(--acc);letter-spacing:.18em;margin-bottom:8px}
+.card h2{font-family:var(--display);font-weight:600;font-size:22px;letter-spacing:.06em;line-height:1.2;margin-bottom:4px}
+.card .jh{font-family:var(--jp);font-weight:500;font-size:15px;color:var(--ink);margin-bottom:12px;line-height:1.5}
+.card p{font-family:var(--jp);font-size:13px;line-height:1.85;color:var(--ink-2);margin-bottom:10px}
+.card p b{color:var(--acc);font-weight:500}
+.card p em{font-style:normal;color:var(--warn)}
+.card .note{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.04em;line-height:1.6;border-top:1px solid var(--line);padding-top:8px;margin-top:4px}
+.card .live{font-family:var(--mono);color:var(--acc);font-weight:400}
+.hero h1{font-family:var(--display);font-weight:600;font-size:64px;letter-spacing:.08em;line-height:1;margin:2px 0 10px}
+.hero .jh{font-size:18px}
+.btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.btn{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;background:transparent;color:var(--ink-2);border:1px solid var(--line);padding:8px 10px;cursor:pointer;text-decoration:none}
+.btn:hover{border-color:var(--acc);color:var(--acc)}
+.btn.pri{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.scrollcue{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.2em;margin-top:14px}
+
+/* FORMULA RAIL（左下・固定）：いま絵で動いている項だけが光る */
+#rail{position:fixed;left:40px;bottom:18px;width:var(--col);z-index:3;background:rgba(10,10,10,.9);border:1px solid var(--line);padding:9px 12px 8px;pointer-events:none}
+#rail .rh{font-family:var(--mono);font-size:9px;color:var(--mute);letter-spacing:.16em;margin-bottom:5px;display:flex;justify-content:space-between}
+.fr{display:flex;justify-content:space-between;gap:10px;font-family:var(--mono);font-size:10.5px;line-height:1.75;color:var(--mute-2);transition:color .25s}
+.fr.on{color:var(--mute)}
+.fr .fv{color:inherit;text-align:right;white-space:nowrap}
+.fr.on .fv{color:var(--ink-2)}
+.fr .fx{white-space:nowrap}
+.t{transition:color .25s,background .25s;padding:0 1px}
+.t.on{color:var(--acc-ink);background:var(--acc)}
+
+@media (max-width:880px){
+  :root{--col:auto}
+  .hud{gap:8px;padding:0 10px}
+  .brand,.chl,.vol,.lnk.app{display:none}
+  .rd .n{font-size:16px;min-width:48px}
+  .rd .u{display:none}
+  .zone{min-width:0;padding:3px 6px}
+  .seg button,.lnk{padding:5px 6px}
+  /* スマホ：上から 図（36vh まで）→ 式の帯 → カード の順に積む */
+  .card{margin:0 12px;width:auto;top:calc(36vh + 62px);padding:14px 16px 14px}
+  .card p{font-size:12px;line-height:1.75;margin-bottom:8px}
+  .card .jh{margin-bottom:8px}
+  .hero h1{font-size:40px}
+  .scrollcue{display:none}
+  #rail{left:12px;right:12px;width:auto;top:calc(36vh + 2px);bottom:auto;padding:6px 10px}
+  #rail .rh{display:none}
+  .fr:not(.lit){display:none}
+  .fr .fv{display:none}
+}
+@media (prefers-reduced-motion:reduce){.t,.fr{transition:none}}
+</style>
+</head>
+<body>
+<div id="grid"></div>
+<canvas id="cv"></canvas>
+
+<div class="hud">
+  <div class="brand"><span class="mark">GEN-EX</span><span class="tag">L1d ⁄ SP-02 SCROLL</span></div>
+  <div class="chl" id="chl">00 ⁄ 08 <b>BEATS</b></div>
+  <div class="rd"><span class="n" id="hDf">0.00</span><span class="u">Hz Δf</span></div>
+  <div class="zone ONE" id="hZone">ONE</div>
+  <div class="seg" id="segSnd" title="S キーでも切り替え"><button data-v="off" class="on">OFF</button><button data-v="bow">BOW</button><button data-v="on">♪ ON</button></div>
+  <input class="vol" id="vol" type="range" min="0" max="100" value="35" title="MASTER">
+  <a class="lnk app" href="../02_beats.html">APP →</a>
+  <a class="lnk" href="../index.html">INDEX</a>
+</div>
+<div class="prog" id="prog"></div>
+<div class="ticks" id="ticks"></div>
+
+<main id="main">
+  <section class="ch" data-ch="0" style="height:150vh">
+    <div class="card hero">
+      <div class="no">SOUND PATTERNS ⁄ SP-02 ⁄ SCROLL EXPLAINER</div>
+      <h1>BEATS</h1>
+      <div class="jh">近い 2 つの音は、なぜ揺れる？</div>
+      <p><b>これは何か</b>：同じ高さの純音（倍音のない、いちばん素の音）を 2 つ鳴らし、片方だけを少しずつ高くしていく。聞こえ方は <b>1 つの音 → 揺れ → ざらつき → 2 つの音</b> と 4 回変わる。このページはその境目を、スクロールで順に歩く。</p>
+      <p>音は <b>BOW</b>：スクロールしている間だけ 2 音が鳴る＝スクロールが楽器の弓になる（ヘッドホン推奨）。ページのどこかを 1 回クリックすると入る。鳴りっぱなしにしたいときは右上の <b>♪ ON</b>。</p>
+      <div class="btns"><button class="btn pri" id="bStart">♪ 音を出して読む（BOW）</button><a class="btn" href="../02_beats.html">アプリで触る →</a></div>
+      <div class="scrollcue">↓ SCROLL</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="1" style="height:170vh">
+    <div class="card">
+      <div class="no">01 ⁄ 08</div>
+      <h2>ONE</h2>
+      <div class="jh">同じ高さは、1 つの音</div>
+      <p>2 本の矢印が 2 つの音。矢印の長さが音の大きさ、向きが「波がいまどこにいるか」。</p>
+      <p>同じ高さなら 2 本はいつも同じ向きを向く。足す（矢印をつなぐ）と <b>2 倍の長さ</b>＝ただ大きくなった 1 つの音。</p>
+      <div class="note">sin a + sin a ＝ 2 sin a</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="2" style="height:210vh">
+    <div class="card">
+      <div class="no">02 ⁄ 08</div>
+      <h2>DRIFT</h2>
+      <div class="jh">上の音を 1 Hz だけ高くする</div>
+      <p>すると灰色の矢印が、白い矢印の先で <b>1 秒に 1 回</b>まわり始める（いま <span class="live" data-live="df">0</span> Hz）。</p>
+      <p>同じ向きのときは足して大きく、逆を向いたときは打ち消し合ってほぼ無音。だから音が 1 秒に 1 回、<b>ふくらんではくびれる</b>。これが「うなり」。</p>
+      <div class="note">黄の矢印＝白＋灰。下の帯は足した波を時間で流したもの。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="3" style="height:250vh">
+    <div class="card">
+      <div class="no">03 ⁄ 08</div>
+      <h2>PROOF</h2>
+      <div class="jh">足し算は、かけ算に書き直せる</div>
+      <p>三角関数の公式で、2 つの波の和は <b>ゆっくりした波 × 速い波</b> に書き直せる。</p>
+      <p>上の段＝音量の変化 2cos(πΔf t)。中の段＝聞こえる高さ（2 音の平均 f̄）。下の段＝その積＝2 音の和。</p>
+      <p>ゆっくりした波そのものは Δf⁄2 Hz だが、音量は<b>大きさ（絶対値）</b>で聞くので、くびれは 1 秒に <b>Δf 回</b>来る。</p>
+      <div class="note">sin a + sin b ＝ 2 cos((a−b)⁄2) · sin((a+b)⁄2)</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="4" style="height:270vh">
+    <div class="card">
+      <div class="no">04 ⁄ 08</div>
+      <h2>BEAT</h2>
+      <div class="jh">数えられる揺れ（〜15 Hz）</div>
+      <p>差を 3 → 14 Hz と広げる。くびれは差と同じ回数だけ毎秒来る（いま 1 秒に <span class="live" data-live="df1">0</span> 回）。</p>
+      <p>8 Hz くらいまでは、手で叩いて一緒に数えられる。<b>15 Hz を超えるあたりから、もう 1 つずつは追えない</b>。</p>
+      <div class="note">右上の四角がくびれに合わせて明滅する（音と同じ速さ・実時間）。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="5" style="height:290vh">
+    <div class="card">
+      <div class="no">05 ⁄ 08</div>
+      <h2>ROUGH</h2>
+      <div class="jh">速すぎる揺れは、ざらつきになる</div>
+      <p>揺れが数えられない速さになると、耳には<em>「ざらざら」「濁り」</em>として届く。これが<b>不協和の違和感の正体のひとつ</b>。</p>
+      <p>下のグラフはざらつきの強さ。330 Hz では Δf ≈ <span class="live" data-live="peak">24</span> Hz がいちばん粗く、そこを過ぎると薄れていく。</p>
+      <div class="note">曲線：Plomp & Levelt（1965）の聴取実験を Sethares（1993）が式にしたもの。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="6" style="height:290vh">
+    <div class="card">
+      <div class="no">06 ⁄ 08</div>
+      <h2>TWO</h2>
+      <div class="jh">耳の中で、別々の場所に分かれる</div>
+      <p>耳の奥（蝸牛）では、音の高さごとに震える場所が違う。1 つの音が震わせる幅を<b>臨界帯域</b>と呼ぶ。</p>
+      <p>2 音の山が重なっている間は、同じ場所で干渉して揺れ・ざらつきになる。離れると別々の場所で聞かれて、<b>2 つの音</b>になる。330 Hz では約 <span class="live" data-live="cb">95</span> Hz 離れると分かれる。</p>
+      <div class="note">上の図は模式図（山の幅＝臨界帯域）。臨界帯域 ≈ いちばん粗い Δf の 4 倍。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="7" style="height:270vh">
+    <div class="card">
+      <div class="no">07 ⁄ 08</div>
+      <h2>REGISTER</h2>
+      <div class="jh">同じ長3度でも、低いと濁る</div>
+      <p>音程を長3度（比 5:4 ほど）に固定して、音域を 110 → 440 Hz へ上げる（いま <span class="live" data-live="f0">110</span> Hz・Δf <span class="live" data-live="df">0</span> Hz）。</p>
+      <p>比が同じなら、<b>低い所ほど 2 音の差 Δf が小さい</b>（110 Hz で 29 Hz、440 Hz で 114 Hz）。臨界帯域はそれほど縮まない（78 → 103 Hz）ので、低い 3 度はざらつきの山のまん中に落ちる。</p>
+      <p>低音に 3 度を重ねると濁る、と和声で言われるわけ。</p>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="8" style="height:230vh">
+    <div class="card">
+      <div class="no">08 ⁄ 08</div>
+      <h2>BLUEPRINT</h2>
+      <div class="jh">このページは、地図の上を歩いていた</div>
+      <p>背景の地図は、横＝2 音の差 Δf、縦＝下の音の高さ、色＝ざらつき。黄の線は、あなたがスクロールで歩いた道そのもの（ページの中の同じ式から引いている）。</p>
+      <p>違和感（ざらつき）は、地図の<em>橙の帯</em>の中にある。では「合ってる感じ」はどこから来るのか ― それは<b>倍音の重なり</b>の話で、次の SP-03 へ。</p>
+      <div class="btns"><button class="btn" id="bRewind">◀◀ REWIND</button><a class="btn pri" href="../02_beats.html">アプリで自分で歩く →</a><a class="btn" href="../03_consonance.html">SP-03 CONSONANCE →</a><a class="btn" href="../index.html">INDEX</a></div>
+      <div class="note">REWIND はスクロールを巻き戻すだけ。音も絵も同じ道を逆にたどる。</div>
+    </div>
+  </section>
+</main>
+
+<div id="rail">
+  <div class="rh"><span>FORMULA RAIL</span><span>いま動いている項が光る</span></div>
+  <div class="fr" data-row="a"><span class="fx">y ＝ sin 2π<span class="t" data-t="f1">f₁</span>t ＋ sin 2π<span class="t" data-t="f2">f₂</span>t</span><span class="fv" id="fvA">—</span></div>
+  <div class="fr" data-row="b"><span class="fx">　＝ <span class="t" data-t="env">2cos(π·Δf·t)</span> · <span class="t" data-t="car">sin(2π·f̄·t)</span></span><span class="fv" id="fvB">—</span></div>
+  <div class="fr" data-row="c"><span class="fx">rough ＝ <span class="t" data-t="rough">e<sup>−3.51sΔf</sup> − e<sup>−5.75sΔf</sup></span></span><span class="fv" id="fvC">—</span></div>
+  <div class="fr" data-row="d"><span class="fx"><span class="t" data-t="s">s</span> ＝ 0.24 ⁄ (0.0207·<span class="t" data-t="f0">f₀</span> ＋ 18.96)</span><span class="fv" id="fvD">—</span></div>
+  <div class="fr" data-row="e"><span class="fx"><span class="t" data-t="peak">Δf*</span> ＝ 0.220⁄s　<span class="t" data-t="cb">CB</span> ≈ 4·Δf*</span><span class="fv" id="fvE">—</span></div>
+</div>
+
+<script src="../_law/sp02_law.js"></script>
+<script>
+(() => {
+'use strict';
+const L = window.SP02, $ = id => document.getElementById(id);
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+const seg = (u, a, b) => clamp((u - a) / (b - a));
+const sm = t => t * t * (3 - 2 * t);
+const lerp = (a, b, t) => a + (b - a) * t;
+const sqLerp = (a, b, t) => { const s = Math.sqrt(a) + (Math.sqrt(b) - Math.sqrt(a)) * t; return s * s; };
+const logLerp = (a, b, t) => a * Math.pow(b / a, t);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let C = {};
+const readColors = () => { C = { ink: css('--ink'), ink2: css('--ink-2'), mute: css('--mute'), mute2: css('--mute-2'), line: css('--line'), acc: css('--acc'), warn: css('--warn'), bg: css('--bg'), mono: css('--mono'), display: css('--display'), jp: css('--jp') }; };
+
+// ── 章：状態（Δf・下の音）はスクロール位置の純関数。P＝その章で出す図と置き場所（ステージ内 0..1）
+const PEAK330 = L.dfPeak(330);
+const M3 = f => L.dfOfInterval(f, 4);
+const CH = [
+  { id: 'BEATS', at: () => ({ df: 0, f0: 330 }), P: { WAVES: [.04, .2, .92, .56] }, lit: ['f1', 'f2'], rows: 'a' },
+  { id: 'ONE', at: () => ({ df: 0, f0: 330 }), P: { PHASE: [.0, .0, .36, .58], WAVES: [.39, .0, .61, .58], SUM: [.0, .63, 1, .37] }, lit: ['f1', 'f2'], rows: 'a' },
+  { id: 'DRIFT', at: u => ({ df: lerp(0, 1, sm(seg(u, .08, .6))), f0: 330 }), P: { PHASE: [.0, .0, .36, .58], WAVES: [.39, .0, .61, .58], SUM: [.0, .63, 1, .37] }, lit: ['f2', 'env'], rows: 'ab' },
+  { id: 'PROOF', at: u => ({ df: sqLerp(1, 3, sm(seg(u, .15, .75))), f0: 330 }), P: { PROOF: [.0, .0, 1, 1] }, lit: ['env', 'car'], rows: 'ab' },
+  { id: 'BEAT', at: u => ({ df: lerp(3, 14, seg(u, .05, .92)), f0: 330 }), P: { PHASE: [.0, .0, .34, .5], WAVES: [.37, .0, .63, .5], SUM: [.0, .55, 1, .45] }, lit: ['env'], rows: 'ab' },
+  { id: 'ROUGH', at: u => ({ df: u < .45 ? lerp(14, PEAK330, sm(seg(u, .03, .45))) : u < .6 ? PEAK330 : lerp(PEAK330, 40, sm(seg(u, .6, .95))), f0: 330 }), P: { SUM: [.0, .0, 1, .4], CURVE: [.0, .46, 1, .54] }, lit: ['rough'], rows: 'bcd' },
+  { id: 'TWO', at: u => ({ df: sqLerp(40, 150, seg(u, .05, .9)), f0: 330 }), P: { EAR: [.0, .0, 1, .54], CURVE: [.0, .6, 1, .4] }, lit: ['cb', 'peak'], rows: 'cde' },
+  { id: 'REGISTER', at: u => { const f0 = logLerp(110, 440, sm(seg(u, .15, .85))); return { df: M3(f0), f0 }; }, P: { MAP: [.0, .0, 1, .62], CURVE: [.0, .67, 1, .33] }, lit: ['s', 'f0', 'cb'], rows: 'cde' },
+  { id: 'BLUEPRINT', at: () => ({ df: M3(440), f0: 440 }), P: { MAP: [.0, .0, 1, 1] }, lit: ['rough', 's'], rows: 'abcde' },
+];
+// スマホ：図は 1〜2 枚だけ（狭い所に詰めると文字が重なる）
+const PM = [{ WAVES: [0, 0, 1, 1] }, { PHASE: [0, 0, .4, 1], WAVES: [.42, 0, .58, 1] }, { PHASE: [0, 0, .4, 1], WAVES: [.42, 0, .58, 1] }, { PROOF: [0, 0, 1, 1] }, { SUM: [0, 0, 1, 1] }, { CURVE: [0, 0, 1, 1] }, { EAR: [0, 0, 1, 1] }, { MAP: [0, 0, 1, 1] }, { MAP: [0, 0, 1, 1] }];
+CH.forEach((c, i) => { c.PM = PM[i]; });
+
+// ── スクロールの採寸。章 i の中の進み u（カードが止まっている間 0→1）と、次の章へのつなぎ k（最後の 1 画面ぶん 0→1）
+const chEls = [...document.querySelectorAll('.ch')];
+let M = [], VH = innerHeight, MAXY = 1;
+function measure() {
+  VH = innerHeight; M = chEls.map(el => ({ top: el.offsetTop, h: el.offsetHeight }));
+  MAXY = Math.max(1, document.documentElement.scrollHeight - VH);
+  $('ticks').innerHTML = M.slice(1).map(m => `<i style="left:${(m.top / MAXY * 100).toFixed(2)}%"></i>`).join('');
+}
+function locate(y) {
+  let i = 0; while (i < M.length - 1 && y >= M[i + 1].top) i++;
+  const m = M[i], dwell = Math.max(1, m.h - VH);
+  const u = clamp((y - m.top) / dwell), k = i < M.length - 1 ? sm(clamp((y - m.top - dwell) / VH)) : 0;
+  return { i, u, k };
+}
+function stateAt(loc) {
+  const a = CH[loc.i].at(loc.u); if (!loc.k) return a;
+  const b = CH[loc.i + 1].at(0);
+  return { df: sqLerp(a.df, b.df, loc.k), f0: logLerp(a.f0, b.f0, loc.k) };
+}
+// 歩いた道（BLUEPRINT の線）：上と同じ stateAt を、章の中とつなぎの両方で細かく取る
+function walkPath() {
+  const pts = [];
+  for (let i = 1; i < CH.length - 1; i++) {
+    for (let j = 0; j <= 40; j++) pts.push({ ...stateAt({ i, u: j / 40, k: 0 }), ch: i });
+    for (let j = 1; j <= 12; j++) pts.push({ ...stateAt({ i, u: 1, k: sm(j / 12) }), ch: i });
+  }
+  return pts;
+}
+const PATH = walkPath();
+
+// ── 状態
+const S = { df: 0, f0: 330, mode: 'off', vol: .35 };
+const f1 = () => S.f0 + S.df;
+let T = 0; // 絵の時計（実時間・音と同じ速さ）
+
+// ── 描画
+const cv = $('cv'); let g = null, W = 0, H = 0;
+function fitAll() {
+  const d = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight;
+  if (cv.width !== Math.round(W * d) || cv.height !== Math.round(H * d)) { cv.width = Math.round(W * d); cv.height = Math.round(H * d); }
+  g = cv.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, W, H);
+}
+const MOBILE = () => W < 880;
+function stageRect() {
+  if (MOBILE()) return { x: 12, y: 54, w: W - 24, h: H * .36 - 58 };
+  const x = Math.min(40 + 400 + 36, W * .44); return { x, y: 68, w: W - x - 24, h: H - 68 - 22 };
+}
+function frameBox(x, y, w, h, cap) {
+  g.strokeStyle = C.line; g.lineWidth = 1; g.strokeRect(Math.round(x) + .5, Math.round(y) + .5, Math.round(w) - 1, Math.round(h) - 1);
+  g.fillStyle = 'rgba(10,10,10,.55)'; g.fillRect(x + 1, y + 1, w - 2, h - 2);
+  g.font = `10px ${C.mono}`; g.fillStyle = C.mute; g.textAlign = 'left'; g.fillText(cap, x + 10, y + 16);
+}
+function arrow(x0, y0, x1, y1, col, lw) {
+  g.strokeStyle = col; g.fillStyle = col; g.lineWidth = lw; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
+  const a = Math.atan2(y1 - y0, x1 - x0), l = Math.hypot(x1 - x0, y1 - y0); if (l < 3) return;
+  g.beginPath(); g.moveTo(x1, y1); g.lineTo(x1 - 8 * Math.cos(a - .4), y1 - 8 * Math.sin(a - .4)); g.lineTo(x1 - 8 * Math.cos(a + .4), y1 - 8 * Math.sin(a + .4)); g.closePath(); g.fill();
+}
+
+const PANELS = {
+  // 矢印の足し算：白＝下の音（固定）・灰＝上の音（1 秒に Δf 回まわる）・黄＝和
+  PHASE(x, y, w, h) {
+    frameBox(x, y, w, h, 'PHASE ⁄ 矢印＝音');
+    const phi = 2 * Math.PI * S.df * T, R = Math.max(10, Math.min(w - 20, h - 50) / 4.4), cx = x + w / 2, cy = y + 24 + (h - 40) / 2;
+    g.strokeStyle = C.line; g.lineWidth = 1; g.beginPath(); g.arc(cx, cy, R * 2, 0, Math.PI * 2); g.stroke();
+    const ax = cx, ay = cy - R, bx = ax + R * Math.sin(phi), by = ay - R * Math.cos(phi);
+    arrow(cx, cy, ax, ay, C.ink, 2); arrow(ax, ay, bx, by, C.mute, 2); arrow(cx, cy, bx, by, C.acc, 1.6);
+    g.font = `10px ${C.mono}`; g.fillStyle = C.mute; g.textAlign = 'center';
+    g.fillText(`和の長さ ${(2 * Math.abs(Math.cos(phi / 2))).toFixed(2)}`, cx, y + h - 10);
+  },
+  // 2 つの波（下の音 4 周期ぶん）と、その和
+  WAVES(x, y, w, h) {
+    frameBox(x, y, w, h, 'WAVES ⁄ 白＋灰＝黄');
+    const phi = 2 * Math.PI * S.df * T, ratio = f1() / S.f0, x0 = x + 14, x1 = x + w - 14, hh = (h - 30) / 4, yA = y + 26 + hh, yB = y + 26 + hh * 3, amp = hh * .72;
+    const wave = (fn, yy, col, lw, a) => { g.strokeStyle = col; g.lineWidth = lw; g.beginPath(); for (let i = 0; i <= 240; i++) { const u = 4 * i / 240, xx = x0 + (x1 - x0) * i / 240, v = fn(u); i ? g.lineTo(xx, yy - v * a) : g.moveTo(xx, yy - v * a); } g.stroke(); };
+    g.strokeStyle = C.line; g.lineWidth = 1; g.beginPath(); g.moveTo(x0, yA); g.lineTo(x1, yA); g.moveTo(x0, yB); g.lineTo(x1, yB); g.stroke();
+    wave(u => Math.sin(2 * Math.PI * u), yA, C.ink, 1.4, amp);
+    wave(u => Math.sin(2 * Math.PI * ratio * u + phi), yA, C.mute, 1.2, amp);
+    wave(u => Math.sin(2 * Math.PI * u) + Math.sin(2 * Math.PI * ratio * u + phi), yB, C.acc, 1.6, amp / 2 * 1.3);
+    g.font = `10px ${C.mono}`; g.textAlign = 'right'; g.fillStyle = C.mute; g.fillText(`白 ${S.f0.toFixed(0)} Hz · 灰 ${f1().toFixed(2)} Hz`, x1, y + 16);
+  },
+  // 足した波を時間で流す。窓＝くびれ 3 つぶん。1 列に半周以上入るときは包絡線で塗る
+  SUM(x, y, w, h) {
+    frameBox(x, y, w, h, 'SUM ⁄ 足した波を時間で流す');
+    const Wn = S.df < .75 ? 4 : clamp(3 / S.df, .03, 4), fm = L.mean(S.f0, f1()), pl = x + 14, pw = w - 28, cy = y + 22 + (h - 44) / 2, A = (h - 44) / 2 / 2.1;
+    const tAt = xx => T - Wn + Wn * (xx - pl) / pw;
+    g.strokeStyle = C.line; g.lineWidth = 1; g.beginPath(); g.moveTo(pl, cy); g.lineTo(pl + pw, cy); g.stroke();
+    const dense = fm * Wn / pw > .5;
+    g.strokeStyle = C.ink2; g.beginPath();
+    for (let xx = pl; xx <= pl + pw; xx++) {
+      if (dense) { const e = L.envelope(S.df, tAt(xx + .5)); g.moveTo(xx + .5, cy - e * A); g.lineTo(xx + .5, cy + e * A + .5); }
+      else { const v = L.sum(S.f0, f1(), tAt(xx)); xx === pl ? g.moveTo(xx, cy - v * A) : g.lineTo(xx, cy - v * A); }
+    }
+    g.stroke();
+    g.strokeStyle = C.acc; g.lineWidth = 1.3;
+    for (const sg of [1, -1]) { g.beginPath(); for (let xx = pl; xx <= pl + pw; xx += 2) { const v = sg * L.envelope(S.df, tAt(xx)); xx === pl ? g.moveTo(xx, cy - v * A) : g.lineTo(xx, cy - v * A); } g.stroke(); }
+    let nd = 0;
+    if (S.df >= .05) { const k0 = Math.ceil((T - Wn) * S.df - .5), k1 = Math.floor(T * S.df - .5); g.fillStyle = C.acc;
+      for (let k = k0; k <= k1 && nd < 60; k++, nd++) { const xx = pl + pw * (((k + .5) / S.df) - (T - Wn)) / Wn; g.fillRect(xx - 1, y + h - 18, 2, 6); } }
+    g.font = `10px ${C.mono}`; g.fillStyle = C.mute; g.textAlign = 'right';
+    g.fillText(`窓 ${Wn >= 1 ? Wn.toFixed(1) + ' 秒' : (Wn * 1000).toFixed(0) + ' ms'} · くびれ ${nd} 個 → 1 秒に ${S.df.toFixed(S.df < 10 ? 2 : 1)} 回`, x + w - 12, y + 16);
+    // うなりのランプ：くびれに合わせて明滅（数えられない速さでは橙で止める）
+    const z = L.zone(S.f0, S.df), lx = x + w - 30, ly = y + 26;
+    g.strokeStyle = z.id === 'ROUGH' ? C.warn : C.acc; g.strokeRect(lx + .5, ly + .5, 16, 16);
+    if (z.id === 'BEAT' || (z.id === 'ONE' && S.df > 0)) { g.fillStyle = `rgba(255,212,0,${Math.pow(Math.cos(Math.PI * S.df * T), 2).toFixed(3)})`; g.fillRect(lx + 2, ly + 2, 13, 13); }
+    else if (z.id === 'ROUGH') { g.fillStyle = 'rgba(255,106,61,.55)'; g.fillRect(lx + 2, ly + 2, 13, 13); }
+  },
+  // 和＝ゆっくりした波 × 速い波。中の段は 20 ms を拡大して本物の波を見せる
+  PROOF(x, y, w, h) {
+    frameBox(x, y, w, h, 'PROOF ⁄ 和 ＝ ゆっくりした波 × 速い波');
+    const Wn = clamp(3 / Math.max(S.df, .01), .5, 3), fm = L.mean(S.f0, f1()), pl = x + 34, pw = w - 48, lh = (h - 60) / 3;
+    const tAt = xx => T - Wn + Wn * (xx - pl) / pw;
+    const lane = (k, label, sub) => { const top = y + 30 + k * (lh + 8), cy = top + lh / 2; g.strokeStyle = C.line; g.beginPath(); g.moveTo(pl, cy); g.lineTo(pl + pw, cy); g.stroke();
+      g.font = `10px ${C.mono}`; g.textAlign = 'left'; g.fillStyle = C.mute; g.fillText(label, pl, top + 10); g.textAlign = 'right'; g.fillText(sub, pl + pw, top + 10); return { top, cy, A: lh / 2 / 2.2 }; };
+    // 1 段目：ゆっくりした波（符号つき＝点線）と、その大きさ（実線）
+    let a = lane(0, '① 音量 2cos(π·Δf·t)', `${(S.df / 2).toFixed(2)} Hz の波 → 大きさは 1 秒に ${S.df.toFixed(2)} 回くびれる`);
+    g.setLineDash([4, 3]); g.strokeStyle = C.acc; g.lineWidth = 1.2; g.beginPath();
+    for (let xx = pl; xx <= pl + pw; xx += 2) { const v = L.envelopeSigned(S.df, tAt(xx)); xx === pl ? g.moveTo(xx, a.cy - v * a.A) : g.lineTo(xx, a.cy - v * a.A); } g.stroke(); g.setLineDash([]);
+    g.lineWidth = 1.6; g.beginPath(); for (let xx = pl; xx <= pl + pw; xx += 2) { const v = L.envelope(S.df, tAt(xx)); xx === pl ? g.moveTo(xx, a.cy - v * a.A) : g.lineTo(xx, a.cy - v * a.A); } g.stroke();
+    // 2 段目：速い波（f̄）。全体は帯に見えるので、20 ms の拡大窓を重ねる
+    let b = lane(1, '② 高さ sin(2π·f̄·t)', `f̄ ＝ ${fm.toFixed(2)} Hz（窓の中に ${(fm * Wn).toFixed(0)} 回）`);
+    g.fillStyle = 'rgba(207,207,202,.16)'; g.fillRect(pl, b.cy - b.A, pw, b.A * 2);
+    const zx = pl + pw * .58, zw = pw * .38, zt = b.cy - b.A * 1.7, zh = b.A * 3.4, zs = .02;
+    g.fillStyle = 'rgba(10,10,10,.92)'; g.fillRect(zx, zt, zw, zh); g.strokeStyle = C.mute; g.strokeRect(zx + .5, zt + .5, zw, zh);
+    g.strokeStyle = C.ink2; g.lineWidth = 1.3; g.beginPath();
+    for (let i = 0; i <= 200; i++) { const t = T - zs + zs * i / 200, xx = zx + 6 + (zw - 12) * i / 200, v = Math.sin(2 * Math.PI * fm * t); i ? g.lineTo(xx, b.cy - v * b.A) : g.moveTo(xx, b.cy - v * b.A); } g.stroke();
+    g.font = `9px ${C.mono}`; g.fillStyle = C.mute; g.textAlign = 'left'; g.fillText('拡大 20 ms', zx + 6, zt + 11);
+    // 3 段目：積＝2 音の和（包絡線で塗る）
+    let c = lane(2, '③ ＝ ①×② ＝ 2 音の和', 'くびれ＝①が 0 の所');
+    g.strokeStyle = C.ink2; g.lineWidth = 1; g.beginPath();
+    for (let xx = pl; xx <= pl + pw; xx++) { const e = L.envelope(S.df, tAt(xx + .5)); g.moveTo(xx + .5, c.cy - e * c.A); g.lineTo(xx + .5, c.cy + e * c.A + .5); } g.stroke();
+    g.strokeStyle = C.acc; g.lineWidth = 1.3; for (const sg of [1, -1]) { g.beginPath(); for (let xx = pl; xx <= pl + pw; xx += 2) { const v = sg * L.envelope(S.df, tAt(xx)); xx === pl ? g.moveTo(xx, c.cy - v * c.A) : g.lineTo(xx, c.cy - v * c.A); } g.stroke(); }
+    g.font = `600 16px ${C.display}`; g.fillStyle = C.acc; g.textAlign = 'center';
+    g.fillText('×', x + 17, b.cy + 5); g.fillText('＝', x + 17, c.cy + 5);
+  },
+  // ざらつきの曲線（横＝Δf の平方根目盛り）
+  CURVE(x, y, w, h) {
+    frameBox(x, y, w, h, `ROUGHNESS ⁄ 下の音 ${S.f0.toFixed(0)} Hz のざらつき（頂上＝1）`);
+    const pl = x + 40, pr = x + w - 16, pt = y + 26, pb = y + h - 22, X = d => pl + (pr - pl) * Math.sqrt(Math.max(0, d) / L.DF_MAX), Y = r => pb - (pb - pt) * r;
+    const cb = L.critBand(S.f0), pk = L.dfPeak(S.f0);
+    g.fillStyle = 'rgba(255,212,0,.05)'; g.fillRect(X(L.ONE_MAX), pt, X(L.BEAT_MAX) - X(L.ONE_MAX), pb - pt);
+    g.beginPath(); g.moveTo(pl, pb); for (let i = 0; i <= 200; i++) { const d = L.DF_MAX * Math.pow(i / 200, 2); g.lineTo(X(d), Y(L.roughNorm(S.f0, d))); } g.lineTo(pr, pb); g.closePath();
+    g.fillStyle = 'rgba(255,106,61,.22)'; g.fill(); g.strokeStyle = C.warn; g.lineWidth = 1.4; g.stroke();
+    const vline = (d, col, dash, lab) => { const xx = X(d); g.setLineDash(dash); g.strokeStyle = col; g.lineWidth = 1; g.beginPath(); g.moveTo(xx, pt); g.lineTo(xx, pb); g.stroke(); g.setLineDash([]); g.fillStyle = col; g.font = `10px ${C.mono}`; g.textAlign = 'left'; g.fillText(lab, xx + 4, pt + 10); };
+    vline(L.BEAT_MAX, C.acc, [4, 4], '15'); vline(pk, C.warn, [1, 3], `粗 ${pk.toFixed(0)}`); vline(cb, C.ink2, [], `CB ${cb.toFixed(0)}`);
+    g.fillStyle = C.mute; g.textAlign = 'center'; g.font = `10px ${C.mono}`;
+    [0, 1, 3, 8, 15, 30, 60, 100, 150, 240].forEach(d => { const xx = X(d); g.fillRect(xx, pb, 1, 4); g.fillText(String(d), xx, pb + 15); });
+    g.textAlign = 'right'; g.fillText('Δf Hz', pr, pb - 6);
+    g.textAlign = 'right'; [0, .5, 1].forEach(r => g.fillText(r.toFixed(1), pl - 6, Y(r) + 3));
+    const xx = X(S.df), yy = Y(L.roughNorm(S.f0, S.df)), z = L.zone(S.f0, S.df);
+    g.strokeStyle = z.id === 'ROUGH' ? C.warn : C.acc; g.globalAlpha = .5; g.beginPath(); g.moveTo(xx, pt); g.lineTo(xx, pb); g.stroke(); g.globalAlpha = 1;
+    g.fillStyle = z.id === 'ROUGH' ? C.warn : C.acc; g.fillRect(xx - 5, yy - 5, 10, 10); g.strokeStyle = C.bg; g.strokeRect(xx - 5, yy - 5, 10, 10);
+  },
+  // 耳の奥の模式図：2 つの山（幅＝臨界帯域）。重なり＝同じ場所で干渉
+  EAR(x, y, w, h) {
+    frameBox(x, y, w, h, 'EAR ⁄ 蝸牛の震える場所（模式図・山の幅＝臨界帯域）');
+    const cb = L.critBand(S.f0), lo = S.f0 - cb * 1.1, hi = S.f0 + Math.max(cb * 1.9, S.df + cb * .9), pl = x + 20, pr = x + w - 20, pt = y + 40, pb = y + h - 30;
+    const X = f => pl + (pr - pl) * (f - lo) / (hi - lo), sg = cb / 4, bump = (f, c) => Math.exp(-Math.pow(f - c, 2) / (2 * sg * sg));
+    const z = L.zone(S.f0, S.df), col = z.id === 'ROUGH' ? C.warn : z.id === 'TWO' ? C.acc : C.acc;
+    // 重なり
+    g.beginPath(); g.moveTo(pl, pb);
+    for (let i = 0; i <= 300; i++) { const f = lo + (hi - lo) * i / 300; g.lineTo(X(f), pb - (pb - pt) * Math.min(bump(f, S.f0), bump(f, f1()))); }
+    g.lineTo(pr, pb); g.closePath(); g.fillStyle = z.id === 'ROUGH' ? 'rgba(255,106,61,.45)' : z.id === 'TWO' ? 'rgba(255,212,0,.08)' : 'rgba(255,212,0,.3)'; g.fill();
+    for (const [c, cc] of [[S.f0, C.ink], [f1(), C.mute]]) { g.strokeStyle = cc; g.lineWidth = 1.6; g.beginPath(); for (let i = 0; i <= 300; i++) { const f = lo + (hi - lo) * i / 300, yy = pb - (pb - pt) * bump(f, c); i ? g.lineTo(X(f), yy) : g.moveTo(X(f), yy); } g.stroke(); }
+    g.strokeStyle = C.line; g.beginPath(); g.moveTo(pl, pb); g.lineTo(pr, pb); g.stroke();
+    // 臨界帯域の幅（下の音の山）
+    const bx0 = X(S.f0 - cb / 2), bx1 = X(S.f0 + cb / 2), by = pt - 12;
+    g.strokeStyle = C.ink2; g.lineWidth = 1; g.beginPath(); g.moveTo(bx0, by + 5); g.lineTo(bx0, by); g.lineTo(bx1, by); g.lineTo(bx1, by + 5); g.stroke();
+    g.font = `10px ${C.mono}`; g.fillStyle = C.ink2; g.textAlign = 'center'; g.fillText(`臨界帯域 ${cb.toFixed(0)} Hz`, (bx0 + bx1) / 2, by - 4);
+    g.fillStyle = C.ink; g.fillText(`下 ${S.f0.toFixed(0)}`, X(S.f0), pb + 14); g.fillStyle = C.mute; g.fillText(`上 ${f1().toFixed(0)}`, X(f1()), pb + 26);
+    g.textAlign = 'right'; g.fillStyle = col; g.font = `600 13px ${C.display}`;
+    g.fillText(z.id === 'TWO' ? 'TWO — 別々の場所' : z.id === 'ROUGH' ? 'ROUGH — 同じ場所で干渉' : 'BEAT', pr, pt - 2 + 0);
+  },
+  // 地図：横＝Δf（平方根）・縦＝下の音（対数）・色＝ざらつき。BLUEPRINT では歩いた道を引く
+  MAP(x, y, w, h, o) {
+    frameBox(x, y, w, h, 'MAP ⁄ 横＝Δf・縦＝下の音・色＝ざらつき');
+    const ml = x + 46, mr = x + w - 16, mt = y + 30, mb = y + h - 26;
+    const X = d => ml + (mr - ml) * Math.sqrt(Math.max(0, d) / L.DF_MAX), Y = f => mt + (mb - mt) * (1 - Math.log(f / L.F0_MIN) / Math.log(L.F0_MAX / L.F0_MIN));
+    g.imageSmoothingEnabled = true; g.drawImage(heatImage(), ml, mt, mr - ml, mb - mt);
+    g.fillStyle = 'rgba(255,212,0,0.05)'; g.fillRect(X(L.ONE_MAX), mt, X(L.BEAT_MAX) - X(L.ONE_MAX), mb - mt);
+    const curve = (fn, col, lw, dash) => { g.strokeStyle = col; g.lineWidth = lw; g.setLineDash(dash || []); g.beginPath(); for (let i = 0; i <= 80; i++) { const f = L.F0_MIN * Math.pow(L.F0_MAX / L.F0_MIN, i / 80), xx = X(fn(f)), yy = Y(f); i ? g.lineTo(xx, yy) : g.moveTo(xx, yy); } g.stroke(); g.setLineDash([]); };
+    g.setLineDash([4, 4]); g.strokeStyle = C.acc; g.globalAlpha = .6; g.beginPath(); g.moveTo(X(L.BEAT_MAX), mt); g.lineTo(X(L.BEAT_MAX), mb); g.stroke(); g.globalAlpha = 1; g.setLineDash([]);
+    curve(M3, o.m3 ? C.ink : C.mute2, o.m3 ? 1.4 : 1, [3, 3]);
+    curve(L.dfPeak, C.warn, 1, [1, 3]); curve(L.critBand, C.ink2, 1.2);
+    g.font = `10px ${C.mono}`; g.textAlign = 'left'; g.fillStyle = C.ink2; g.fillText('臨界帯域', X(L.critBand(140)) + 6, Y(140));
+    g.fillStyle = o.m3 ? C.ink : C.mute; g.fillText('長3度', X(M3(800)) + 6, Y(800) + 3);
+    g.fillStyle = C.mute; g.textAlign = 'center';
+    [0, 1, 3, 8, 15, 30, 60, 100, 150, 240].forEach(d => { const xx = X(d); g.fillRect(xx, mb, 1, 4); g.fillText(String(d), xx, mb + 15); });
+    g.textAlign = 'right'; [110, 220, 330, 440, 660, 880].forEach(f => { const yy = Y(f); g.fillRect(ml - 4, yy, 4, 1); g.fillText(String(f), ml - 7, yy + 3); });
+    g.fillText('Δf Hz →', mr, mb - 6);
+    // 歩いた道
+    if (o.path > 0) {
+      const n = Math.max(2, Math.round(PATH.length * o.path));
+      g.strokeStyle = C.acc; g.lineWidth = 2; g.beginPath();
+      for (let i = 0; i < n; i++) { const p = PATH[i], xx = X(p.df), yy = Y(p.f0); i ? g.lineTo(xx, yy) : g.moveTo(xx, yy); } g.stroke();
+      g.font = `600 11px ${C.display}`; g.textAlign = 'center';
+      // 章番号：章の終わりの位置に置く。前の番号と重なる所は並べて書く（01〜03 は Δf がほぼ 0 で重なる）
+      let px = -1e9, py = -1e9, lab = [];
+      const flush = () => { if (!lab.length) return; const t = lab.join('·'), tw = g.measureText(t).width + 8;
+        g.fillStyle = C.bg; g.fillRect(px - tw / 2, py - 18, tw, 13); g.fillStyle = C.acc; g.fillText(t, px, py - 8); lab = []; };
+      for (let i = 1; i < CH.length - 1; i++) { const idx = PATH.findIndex(p => p.ch === i); if (idx < 0 || idx > n) continue; const s = stateAt({ i, u: 1, k: 0 }), xx = X(s.df), yy = Y(s.f0);
+        if (Math.hypot(xx - px, yy - py) > 30) { flush(); px = xx; py = yy; } lab.push(String(i).padStart(2, '0')); }
+      flush();
+    }
+    const z = L.zone(S.f0, S.df), xx = X(S.df), yy = Y(S.f0), col = z.id === 'ROUGH' ? C.warn : C.acc;
+    g.fillStyle = col; g.fillRect(xx - 6, yy - 6, 12, 12); g.strokeStyle = C.bg; g.strokeRect(xx - 6, yy - 6, 12, 12);
+  },
+};
+let heat = null;
+function heatImage() {
+  if (heat) return heat;
+  const w = 240, h = 120, c = document.createElement('canvas'); c.width = w; c.height = h;
+  const gg = c.getContext('2d'), im = gg.createImageData(w, h);
+  for (let j = 0; j < h; j++) { const f0 = L.F0_MIN * Math.pow(L.F0_MAX / L.F0_MIN, 1 - (j + .5) / h);
+    for (let i = 0; i < w; i++) { const df = L.DF_MAX * Math.pow((i + .5) / w, 2), r = L.roughNorm(f0, df), k = (j * w + i) * 4;
+      im.data[k] = 255; im.data[k + 1] = 106; im.data[k + 2] = 61; im.data[k + 3] = Math.round(200 * Math.pow(r, 1.3)); } }
+  gg.putImageData(im, 0, 0); heat = c; return c;
+}
+
+// 章 i と i+1 の配置を k で混ぜる（両方にある図は動き、片方だけの図はフェード）
+function draw(loc) {
+  fitAll();
+  const st = stageRect(), key = MOBILE() ? 'PM' : 'P', A = CH[loc.i][key], B = loc.k > 0 ? CH[loc.i + 1][key] : {};
+  const names = new Set([...Object.keys(A), ...Object.keys(B)]);
+  const opt = { path: loc.i === 8 ? sm(seg(loc.u, 0, .7)) : 0,m3: loc.i >= 7 || (loc.i === 6 && loc.k > .5) };
+  for (const n of names) {
+    let r, al;
+    if (A[n] && B[n]) { r = A[n].map((v, j) => lerp(v, B[n][j], loc.k)); al = 1; }
+    else if (A[n]) { r = A[n]; al = 1 - loc.k; } else { r = B[n]; al = loc.k; }
+    if (al < .01) continue;
+    const px = st.x + r[0] * st.w, py = st.y + r[1] * st.h, pw = r[2] * st.w, ph = r[3] * st.h;
+    if (pw < 40 || ph < 40) continue;
+    g.save(); g.globalAlpha = al; g.beginPath(); g.rect(px, py, pw, ph); g.clip();
+    PANELS[n](px, py, pw, ph, opt); g.restore();
+  }
+}
+
+// ── HUD と FORMULA RAIL
+let lastHud = '';
+function hud(loc, y) {
+  const z = L.zone(S.f0, S.df), ci = loc.k > .5 ? loc.i + 1 : loc.i, key = [S.df.toFixed(2), S.f0.toFixed(1), ci].join('|');
+  $('prog').style.width = (clamp(y / MAXY) * 100).toFixed(2) + '%';
+  if (key === lastHud) return; lastHud = key;
+  $('chl').innerHTML = `${String(ci).padStart(2, '0')} ⁄ 08 <b>${CH[ci].id}</b>`;
+  $('hDf').textContent = S.df < 10 ? S.df.toFixed(2) : S.df.toFixed(1);
+  const zl = $('hZone'); zl.className = 'zone ' + z.id; zl.textContent = z.id;
+  const lit = new Set(CH[ci].lit), rows = CH[ci].rows;
+  document.querySelectorAll('#rail .t').forEach(e => e.classList.toggle('on', lit.has(e.dataset.t)));
+  document.querySelectorAll('#rail .fr').forEach(e => { e.classList.toggle('on', rows.includes(e.dataset.row)); e.classList.toggle('lit', !!e.querySelector('.t.on')); });
+  const s = L.sOf(S.f0);
+  $('fvA').textContent = `f₁ ${S.f0.toFixed(1)} · f₂ ${f1().toFixed(2)}`;
+  $('fvB').textContent = `Δf ${S.df.toFixed(2)} · f̄ ${L.mean(S.f0, f1()).toFixed(1)}`;
+  $('fvC').textContent = `${z.rough.toFixed(2)}（頂上＝1）`;
+  $('fvD').textContent = `s ${s.toFixed(5)}`;
+  $('fvE').textContent = `Δf* ${L.dfPeak(S.f0).toFixed(1)} · CB ${z.cb.toFixed(1)}`;
+  document.querySelectorAll('[data-live]').forEach(e => { const k = e.dataset.live;
+    e.textContent = k === 'df' ? S.df.toFixed(S.df < 10 ? 2 : 1) : k === 'df1' ? S.df.toFixed(1) : k === 'peak' ? L.dfPeak(S.f0).toFixed(1) : k === 'cb' ? z.cb.toFixed(0) : k === 'f0' ? S.f0.toFixed(0) : ''; });
+}
+
+// ── 音：純音 2 つ。周波数はスクロールの状態を滑らかに追う。ON＝鳴りっぱなし／BOW＝スクロールの速さで鳴る（弓）
+let AC = null, master = null, OS = null;
+const LEVEL = .18;
+function ensureAudio() {
+  if (!AC) {
+    AC = new AudioContext(); master = AC.createGain(); master.gain.value = 0;
+    const lim = AC.createDynamicsCompressor(); lim.threshold.value = -10; lim.ratio.value = 20; lim.attack.value = .003; lim.release.value = .15;
+    master.connect(lim).connect(AC.destination);
+    OS = [0, 1].map(() => { const o = AC.createOscillator(), gg = AC.createGain(); gg.gain.value = LEVEL; o.connect(gg).connect(master); o.start(); return o; });
+  }
+  if (AC.state === 'suspended') AC.resume();
+}
+let vel = 0, bowG = 0;
+function updateAudio() {
+  if (!AC) return;
+  const t = AC.currentTime;
+  OS[0].frequency.setTargetAtTime(S.f0, t, .03); OS[1].frequency.setTargetAtTime(f1(), t, .03);
+  let target = 0, tc = .12;
+  if (S.mode === 'on') target = S.vol;
+  else if (S.mode === 'bow') { const b = clamp(vel / 900); target = S.vol * b; tc = target > bowG ? .06 : .55; }
+  bowG = target;
+  master.gain.setTargetAtTime(target, t, tc);
+}
+function setMode(m) {
+  S.mode = m; autoArm = false; if (m !== 'off') ensureAudio();
+  document.querySelectorAll('#segSnd button').forEach(b => b.classList.toggle('on', b.dataset.v === m));
+  updateAudio();
+}
+
+// ── なめらかな慣性：ホイールだけ目標位置を作り、毎コマそこへ近づける（キー・スクロールバー・タッチはブラウザのまま）
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let tY = scrollY, cY = scrollY, smoothing = false, rewind = null;
+addEventListener('wheel', e => {
+  if (e.ctrlKey || REDUCED) return;
+  e.preventDefault(); rewind = null;
+  if (!smoothing) { tY = cY = scrollY; }
+  const d = e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? VH : 1);
+  tY = clamp(tY + d, 0, MAXY); smoothing = true;
+}, { passive: false });
+const stopRewind = () => { rewind = null; };
+addEventListener('keydown', stopRewind); addEventListener('touchstart', stopRewind, { passive: true }); addEventListener('mousedown', e => { if (e.target.id !== 'bRewind') stopRewind(); });
+function scrollStep(dt) {
+  if (rewind) {
+    const k = clamp((NOW - rewind.t0) / rewind.d), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    window.scrollTo(0, rewind.y0 * (1 - e)); if (k >= 1) rewind = null; return;
+  }
+  if (!smoothing) return;
+  cY += (tY - cY) * (1 - Math.exp(-dt * 6));   // 6/秒：0.16/コマより遅く、なめらか
+  if (Math.abs(tY - cY) < .5) { cY = tY; smoothing = false; }
+  window.scrollTo(0, cY);
+}
+function startRewind() { smoothing = false; rewind = { y0: scrollY, t0: NOW, d: clamp(scrollY / 2400, 3, 9) * 1000 }; }
+
+// ── ループ
+let NOW = performance.now(), lastY = scrollY, LOC = { i: 0, u: 0, k: 0 };
+function tick(now, dt) {
+  NOW = now; T += dt;
+  scrollStep(dt);
+  const y = scrollY;
+  vel = lerp(vel, Math.abs(y - lastY) / Math.max(dt, 1e-3), .25); lastY = y;
+  LOC = locate(y); const st = stateAt(LOC); S.df = st.df; S.f0 = st.f0;
+  updateAudio(); draw(LOC); hud(LOC, y);
+}
+let manual = false, lastT = 0;
+function frame(now) {
+  if (!manual) { const t = now / 1000, dt = Math.min(.05, t - (lastT || t)); lastT = t; tick(now, dt); }
+  requestAnimationFrame(frame);
+}
+
+// ── 入力
+document.querySelectorAll('#segSnd button').forEach(b => b.onclick = () => setMode(b.dataset.v));
+$('bStart').onclick = () => { setMode('bow'); };
+// 既定は BOW：ブラウザは操作なしに音を出せないので、最初のクリックで BOW を入れる（自分で OFF を選んだら入れない）
+let autoArm = true;
+addEventListener('pointerdown', e => { if (!autoArm) return; autoArm = false; if (S.mode === 'off' && !e.target.closest('#segSnd')) setMode('bow'); }, true);
+$('bRewind').onclick = startRewind;
+$('vol').oninput = e => { S.vol = e.target.value / 100; updateAudio(); };
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === 's' || e.key === 'S') { const order = ['off', 'bow', 'on']; setMode(order[(order.indexOf(S.mode) + 1) % 3]); }
+});
+addEventListener('resize', () => { measure(); lastHud = ''; });
+readColors(); measure();
+document.fonts && document.fonts.ready.then(() => { readColors(); measure(); lastHud = ''; });
+requestAnimationFrame(frame);
+// ?ch=章&u=0..1 でその場面から開く（共有・検証用）
+(() => { const q = new URLSearchParams(location.search), ch = q.get('ch'); if (ch == null) return;
+  const go = () => { measure(); const i = clamp(+ch | 0, 0, M.length - 1), m = M[i]; window.scrollTo(0, m.top + clamp(+(q.get('u') || 0)) * Math.max(1, m.h - VH)); tY = cY = scrollY; };
+  go(); document.fonts && document.fonts.ready.then(go); })();
+
+// ── 検証フック（Claude 側）：goto(章, u) で章の中の位置へ飛ぶ。manual(true)＋step(秒) で時計を手で進める
+window.__LP = {
+  law: L, state: S, CH, PATH, locate, stateAt, measure,
+  loc: () => LOC, maxY: () => MAXY, metrics: () => M,
+  goto: (i, u = 0) => { smoothing = false; rewind = null; const m = M[i], y = m.top + u * Math.max(1, m.h - VH); window.scrollTo(0, y); tY = cY = scrollY; return scrollY; },
+  setMode, rewind: startRewind, rewinding: () => !!rewind,
+  audio: () => AC && { state: AC.state, master: +master.gain.value.toFixed(3), freqs: OS.map(o => +o.frequency.value.toFixed(3)) },
+  vel: () => vel,
+  manual: on => { manual = on; },
+  step: (sec = 1 / 60, fps = 60) => { for (let i = 0, n = Math.max(1, Math.round(sec * fps)); i < n; i++) tick(NOW + 1000 / fps, 1 / fps); },
+  wheel: (dy) => { if (!smoothing) tY = cY = scrollY; tY = clamp(tY + dy, 0, MAXY); smoothing = true; },
+};
+})();
+</script>
+</body>
+</html>

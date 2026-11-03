@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CONSONANCE — スクロール解説 (SP-03)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=IBM+Plex+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:"Bank Gothic";src:url("../../cognitive/fonts/bank-gothic-light-bt.ttf") format("truetype");font-weight:300 600;font-display:swap}
+@font-face{font-family:"Square 721";src:url("../../cognitive/fonts/Square_721_BT.ttf") format("truetype");font-weight:400 700;font-display:swap}
+:root{
+  --bg:#0a0a0a;--bg-2:#121212;--ink:#f2f2ef;--ink-2:#cfcfca;--mute:#9a9a93;--mute-2:#3a3a37;
+  --line:#2a2a27;--acc:#ffd400;--acc-ink:#0a0a0a;--warn:#ff6a3d;--fill:rgba(242,242,239,.06);
+  --grid:rgba(242,242,239,0.035);--ez:cubic-bezier(0.2,0,0,1);
+  --mono:"JetBrains Mono","IBM Plex Mono",ui-monospace,monospace;
+  --display:"Bank Gothic","Square 721","Space Grotesk",system-ui,sans-serif;
+  --sans:"Square 721","Bank Gothic","Helvetica Neue",system-ui,sans-serif;
+  --jp:"IBM Plex Sans JP","Noto Sans JP",system-ui,sans-serif;
+  --col:400px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg)}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-feature-settings:"tnum"}
+/* 背景：方眼と描画キャンバス（固定）。sticky を殺さないよう body に overflow は付けない */
+#grid{position:fixed;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;pointer-events:none}
+#cv{position:fixed;inset:0;width:100vw;height:100vh;display:block;pointer-events:none}
+
+/* HUD */
+.hud{position:fixed;left:0;right:0;top:0;height:46px;display:flex;align-items:center;gap:16px;padding:0 16px;border-bottom:1px solid var(--line);background:rgba(10,10,10,.92);z-index:5}
+.brand{display:flex;align-items:baseline;gap:8px;white-space:nowrap}
+.mark{font-family:var(--display);font-weight:600;letter-spacing:.14em;font-size:14px}
+.tag{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.16em}
+.chl{flex:1;font-family:var(--mono);font-size:11px;color:var(--ink-2);letter-spacing:.16em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chl b{color:var(--acc);font-weight:400}
+.rd{display:flex;align-items:baseline;gap:6px;white-space:nowrap}
+.rd .n{font-family:var(--display);font-weight:600;font-size:20px;letter-spacing:.04em;min-width:64px;text-align:right}
+.rd .u{font-family:var(--mono);font-size:10px;color:var(--mute)}
+.zone{font-family:var(--display);font-weight:600;font-size:11px;letter-spacing:.16em;padding:3px 8px;border:1px solid var(--line);white-space:nowrap;min-width:64px;text-align:center}
+.zone.ONE{color:var(--ink-2);border-color:var(--mute)}
+.zone.BEAT{color:var(--acc);border-color:var(--acc)}
+.zone.ROUGH{color:var(--bg);background:var(--warn);border-color:var(--warn)}
+.zone.TWO{color:var(--acc-ink);background:var(--acc);border-color:var(--acc)}
+.seg{display:flex;gap:3px}
+.seg button,.lnk{font-family:var(--mono);font-size:10px;letter-spacing:.08em;background:transparent;color:var(--ink-2);border:1px solid var(--line);padding:5px 8px;cursor:pointer;text-decoration:none;white-space:nowrap}
+.seg button:hover,.lnk:hover{border-color:var(--acc);color:var(--acc)}
+.seg button.on{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.vol{width:70px;-webkit-appearance:none;appearance:none;height:2px;background:var(--mute-2);outline:none;cursor:pointer}
+.vol::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;background:var(--acc);border:1px solid var(--acc-ink);border-radius:0}
+.vol::-moz-range-thumb{width:11px;height:11px;background:var(--acc);border:1px solid var(--acc-ink);border-radius:0}
+.prog{position:fixed;left:0;top:46px;height:2px;width:0;background:var(--acc);z-index:5}
+.ticks{position:fixed;left:0;right:0;top:46px;height:6px;z-index:4;pointer-events:none}
+.ticks i{position:absolute;top:0;width:1px;height:6px;background:var(--mute-2)}
+
+/* 章（縦長のトラック）＋ sticky のカード */
+main{position:relative;z-index:2}
+.ch{position:relative}
+.card{position:sticky;top:76px;width:var(--col);margin-left:40px;padding:20px 22px 22px;background:rgba(10,10,10,.88);border:1px solid var(--line);border-left:2px solid var(--acc)}
+.card .no{font-family:var(--mono);font-size:10px;color:var(--acc);letter-spacing:.18em;margin-bottom:8px}
+.card h2{font-family:var(--display);font-weight:600;font-size:22px;letter-spacing:.06em;line-height:1.2;margin-bottom:4px}
+.card .jh{font-family:var(--jp);font-weight:500;font-size:15px;color:var(--ink);margin-bottom:12px;line-height:1.5}
+.card p{font-family:var(--jp);font-size:13px;line-height:1.85;color:var(--ink-2);margin-bottom:10px}
+.card p b{color:var(--acc);font-weight:500}
+.card p em{font-style:normal;color:var(--warn)}
+.card .note{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.04em;line-height:1.6;border-top:1px solid var(--line);padding-top:8px;margin-top:4px}
+.card .live{font-family:var(--mono);color:var(--acc);font-weight:400}
+.hero h1{font-family:var(--display);font-weight:600;font-size:64px;letter-spacing:.08em;line-height:1;margin:2px 0 10px}
+.hero .jh{font-size:18px}
+.btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.btn{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;background:transparent;color:var(--ink-2);border:1px solid var(--line);padding:8px 10px;cursor:pointer;text-decoration:none}
+.btn:hover{border-color:var(--acc);color:var(--acc)}
+.btn.pri{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.scrollcue{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.2em;margin-top:14px}
+
+/* FORMULA RAIL（左下・固定）：いま絵で動いている項だけが光る */
+#rail{position:fixed;left:40px;bottom:18px;width:var(--col);z-index:3;background:rgba(10,10,10,.9);border:1px solid var(--line);padding:9px 12px 8px;pointer-events:none}
+#rail .rh{font-family:var(--mono);font-size:9px;color:var(--mute);letter-spacing:.16em;margin-bottom:5px;display:flex;justify-content:space-between}
+.fr{display:flex;justify-content:space-between;gap:10px;font-family:var(--mono);font-size:10.5px;line-height:1.75;color:var(--mute-2);transition:color .25s}
+.fr.on{color:var(--mute)}
+.fr .fv{color:inherit;text-align:right;white-space:nowrap}
+.fr.on .fv{color:var(--ink-2)}
+.fr .fx{white-space:nowrap}
+.t{transition:color .25s,background .25s;padding:0 1px}
+.t.on{color:var(--acc-ink);background:var(--acc)}
+
+@media (max-width:880px){
+  :root{--col:auto}
+  .hud{gap:8px;padding:0 10px}
+  .brand,.chl,.vol,.lnk.app{display:none}
+  .rd .n{font-size:16px;min-width:48px}
+  .rd .u{display:none}
+  .zone{min-width:0;padding:3px 6px}
+  .seg button,.lnk{padding:5px 6px}
+  /* スマホ：上から 図（36vh まで）→ 式の帯 → カード の順に積む */
+  .card{margin:0 12px;width:auto;top:calc(36vh + 62px);padding:14px 16px 14px}
+  .card p{font-size:12px;line-height:1.75;margin-bottom:8px}
+  .card .jh{margin-bottom:8px}
+  .hero h1{font-size:40px}
+  .scrollcue{display:none}
+  #rail{left:12px;right:12px;width:auto;top:calc(36vh + 2px);bottom:auto;padding:6px 10px}
+  #rail .rh{display:none}
+  .fr:not(.lit){display:none}
+  .fr .fv{display:none}
+}
+@media (prefers-reduced-motion:reduce){.t,.fr{transition:none}}
+.zone.FUSE{color:var(--acc-ink);background:var(--acc);border-color:var(--acc)}
+.zone.APART{color:var(--ink-2);border-color:var(--ink-2)}
+.hero h1{font-size:40px;letter-spacing:.06em}
+.rd .n{min-width:72px}
+@media (max-width:880px){.hero h1{font-size:30px}}
+</style>
+</head>
+<body>
+<div id="grid"></div>
+<canvas id="cv"></canvas>
+
+<div class="hud">
+  <div class="brand"><span class="mark">GEN-EX</span><span class="tag">L1d ⁄ SP-03 SCROLL</span></div>
+  <div class="chl" id="chl">00 ⁄ 08 <b>CONSONANCE</b></div>
+  <div class="rd"><span class="n" id="hRat">1/1</span><span class="u" id="hOff">+0.0¢</span></div>
+  <div class="zone FUSE" id="hZone">FUSE</div>
+  <div class="seg" id="segSnd" title="S キーでも切り替え"><button data-v="off" class="on">OFF</button><button data-v="bow">BOW</button><button data-v="on">♪ ON</button></div>
+  <input class="vol" id="vol" type="range" min="0" max="100" value="35" title="MASTER">
+  <a class="lnk app" href="../03_consonance.html">APP →</a>
+  <a class="lnk" href="../index.html">INDEX</a>
+</div>
+<div class="prog" id="prog"></div>
+<div class="ticks" id="ticks"></div>
+
+<main id="main">
+  <section class="ch" data-ch="0" style="height:150vh">
+    <div class="card hero">
+      <div class="no">SOUND PATTERNS ⁄ SP-03 ⁄ SCROLL EXPLAINER</div>
+      <h1>CONSONANCE</h1>
+      <div class="jh">「合ってる感じ」は、どこから来る？</div>
+      <p><b>これは何か</b>：2 つの音の高さの比を、1 オクターブの中でなめらかに動かしていく。楽器や声のような音では、決まった比のところだけ急に澄む<b>「谷」</b>が現れる。このページは、その谷が何でできているかをスクロールで順に見る（SP-02「違和感の正体」の反対側）。</p>
+      <p>音は <b>BOW</b>：スクロールしている間だけ鳴る（ヘッドホン推奨・どこかを 1 回クリックで入る）。鳴りっぱなしは右上の <b>♪ ON</b>。</p>
+      <div class="btns"><button class="btn pri" id="bStart">♪ 音を出して読む（BOW）</button><a class="btn" href="../03_consonance.html">アプリで触る →</a><a class="btn" href="SCROLL_BEATS_LP.html">SP-02 の解説</a></div>
+      <div class="scrollcue">↓ SCROLL</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="1" style="height:260vh">
+    <div class="card">
+      <div class="no">01 ⁄ 08</div>
+      <h2>SINE</h2>
+      <div class="jh">純音には、谷がない</div>
+      <p>倍音のない純音 2 つで、比を同度からオクターブまで動かす（いま <span class="live" data-live="c">0</span>¢）。</p>
+      <p>ざらつくのは 2 音が近い間（SP-02 の臨界帯域）だけ。離れたあとは、5 度（3/2）も増4度（45/32）もほぼ同じくらい澄んでいる（ざらつき <b>0.02</b> と <b>0.07</b>）。</p>
+      <p>純音だけでは「5 度は特別に合う」を説明できない。</p>
+      <div class="note">曲線＝比ごとのざらつき（下の音 330 Hz・いちばん粗い所＝1）。横軸はセント（100¢＝半音）。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="2" style="height:220vh">
+    <div class="card">
+      <div class="no">02 ⁄ 08</div>
+      <h2>HARMONICS</h2>
+      <div class="jh">本物の音は、倍音の束</div>
+      <p>楽器や声の音は、基音 f の上に 2f・3f・4f… の<b>倍音</b>が重なっている。純音から、倍音 6 本（強さ 1⁄n）の音へ少しずつ変える。</p>
+      <p>上の図は 2 音の倍音の並び（下の段＝下の音、上の段＝上の音・棒の長さ＝強さ）。いまはオクターブ 2/1 なので、上の音の倍音は全部、下の音の偶数番の倍音と<b>ぴったり重なる</b>（黄の線）。</p>
+      <div class="note">横軸は対数（音程が等間隔に並ぶ）。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="3" style="height:300vh">
+    <div class="card">
+      <div class="no">03 ⁄ 08</div>
+      <h2>VALLEYS</h2>
+      <div class="jh">ぶつかると山、重なると谷</div>
+      <p>倍音のある音で、比をオクターブから下げていく（いま <span class="live" data-live="c">0</span>¢）。</p>
+      <p>倍音どうしが近すぎると、SP-02 と同じようにぶつかってざらつく（<em>橙のギザギザ線</em>＝うなっている組）。ぴったり重なると、ぶつからずに静まる（<b>黄の線</b>）。</p>
+      <p>だから曲線には、重なる比のところにだけ<b>谷</b>ができる：<span class="live" data-live="valleys">—</span>。最後は、いちばんざらつく山（約 100¢＝半音）で止まる。</p>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="4" style="height:220vh">
+    <div class="card">
+      <div class="no">04 ⁄ 08</div>
+      <h2>FIFTH</h2>
+      <div class="jh">5 度 3/2：倍音が重なる</div>
+      <p>3/2 ぴったり。下の音の <b>3 倍音</b>と上の音の <b>2 倍音</b>が同じ高さになる（3 × 330 ＝ 2 × 495 ＝ 990 Hz）。6 倍音と 4 倍音も重なる。</p>
+      <p>右の図（リサジュー）は、横＝下の音、縦＝上の音の揺れ。比が p/q ちょうどなら、図形は <b>q 周で閉じて止まる</b>。5 度は 2 周。</p>
+      <div class="note">q·f上 ＝ p·f下 のとき、上の q 倍音と下の p 倍音が重なる。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="5" style="height:320vh">
+    <div class="card">
+      <div class="no">05 ⁄ 08</div>
+      <h2>TEMPERED</h2>
+      <div class="jh">平均律にずらすと、重なりがうなる</div>
+      <p>ピアノの平均律の 5 度は、3/2 より <b>2¢</b> だけ狭い。たったそれだけで、重なっていた倍音が 1 秒に約 1 回うなり、図形がゆっくり回り出す。</p>
+      <p>長3度ではずれがもっと大きい（+14¢）。5 倍音と 4 倍音が 1 秒に約 13 回うなる＝細かく震えて聞こえる。</p>
+      <p>うなりの速さ ＝ |q·f上 − p·f下|。図形が一周する速さと同じ（いま <span class="live" data-live="beat">—</span>）。</p>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="6" style="height:250vh">
+    <div class="card">
+      <div class="no">06 ⁄ 08</div>
+      <h2>TIMBRE</h2>
+      <div class="jh">音色が変わると、谷も変わる</div>
+      <p>平均律の長3度のまま、音色を GENEX_NEXT の <b>SL-02 結晶</b>の音（倍音 3 本だけ：1・0.25・0.08）に変える。</p>
+      <p>長3度で重なるはずの 5 倍音と 4 倍音が、この音色には無い。だから図形は回り続けるのに、<b>耳では揺れない</b>（いま <span class="live" data-live="beat">—</span>）。曲線の谷も 5 度だけになる。</p>
+      <p>「合ってる感じ」の半分は、音色が決めている。</p>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="7" style="height:320vh">
+    <div class="card">
+      <div class="no">07 ⁄ 08</div>
+      <h2>SIMPLE</h2>
+      <div class="jh">2 本目の物差し：比の単純さ</div>
+      <p>もう一つの物差しは、比がどれだけ単純か。p/q の 2 音は、f⁄q を基音とする<b>1 本の倍音列</b>に乗る。q が小さいほど「1 つの音の一部」に聞こえやすい。</p>
+      <p>長3度 5/4 は 4 周、増4度 45/32 は <b>32 周</b>しないと閉じない。増4度はざらつきが小さい（0.23）のに、溶け合わない。5 度は 2 周、オクターブは 1 周。</p>
+      <div class="note">右の地図：横＝① ざらつき・縦＝② 閉じる周回（q）。いまの点が動く。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="8" style="height:230vh">
+    <div class="card">
+      <div class="no">08 ⁄ 08</div>
+      <h2>BLUEPRINT</h2>
+      <div class="jh">「合ってる感じ」の地図</div>
+      <p>2 本の物差しを縦横にした地図に、このページで立ち寄った比を番号で置いた（ページの中と同じ式で計算）。</p>
+      <p>合ってる感じ ＝ <b>左下の黄の角</b>：① 倍音がぶつからない（ざらつきの谷）、そして ② 比が単純（数周で閉じる）。片方が欠けると、ざらつくか、溶け合わない。</p>
+      <p>違和感の正体は SP-02 へ。</p>
+      <div class="btns"><button class="btn" id="bRewind">◀◀ REWIND</button><a class="btn pri" href="../03_consonance.html">アプリで自分で探す →</a><a class="btn" href="SCROLL_BEATS_LP.html">SP-02 BEATS の解説</a><a class="btn" href="../index.html">INDEX</a></div>
+      <div class="note">REWIND はスクロールを巻き戻すだけ。音も絵も同じ道を逆にたどる。</div>
+    </div>
+  </section>
+</main>
+
+<div id="rail">
+  <div class="rh"><span>FORMULA RAIL</span><span>いま動いている項が光る</span></div>
+  <div class="fr" data-row="a"><span class="fx">倍音 ＝ <span class="t" data-t="nf">n·f</span>（f, 2f, 3f …）</span><span class="fv" id="fvA">—</span></div>
+  <div class="fr" data-row="b"><span class="fx">重なる ⇔ <span class="t" data-t="pq">q·f上 ＝ p·f下</span></span><span class="fv" id="fvB">—</span></div>
+  <div class="fr" data-row="c"><span class="fx">うなり ＝ <span class="t" data-t="beat">|q·f上 − p·f下|</span></span><span class="fv" id="fvC">—</span></div>
+  <div class="fr" data-row="d"><span class="fx">rough ＝ Σ <span class="t" data-t="amp">aᵢaⱼ</span>·<span class="t" data-t="rough">(e<sup>−3.51sΔf</sup> − e<sup>−5.75sΔf</sup>)</span></span><span class="fv" id="fvD">—</span></div>
+  <div class="fr" data-row="e"><span class="fx"><span class="t" data-t="turns">閉じる周回 ＝ q</span>　log₂(p·q)</span><span class="fv" id="fvE">—</span></div>
+</div>
+
+<script src="../_law/sp03_law.js"></script>
+<script>
+(() => {
+'use strict';
+const L = window.SP03, $ = id => document.getElementById(id);
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+const seg = (u, a, b) => clamp((u - a) / (b - a));
+const sm = t => t * t * (3 - 2 * t);
+const lerp = (a, b, t) => a + (b - a) * t;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let C = {};
+const readColors = () => { C = { ink: css('--ink'), ink2: css('--ink-2'), mute: css('--mute'), mute2: css('--mute-2'), line: css('--line'), acc: css('--acc'), warn: css('--warn'), bg: css('--bg'), mono: css('--mono'), display: css('--display'), jp: css('--jp') }; };
+
+// ── 音色は倍音 6 本ぶんの強さの配列。章のあいだは要素ごとに混ぜる（純音→RICH→SL-02 がなめらかにつながる）
+const F0 = 330, NP = 6;
+const pad6 = a => Array.from({ length: NP }, (_, i) => a[i] || 0);
+const TIM = { sine: pad6(L.TIMBRES.sine.amps), sl02: pad6(L.TIMBRES.sl02.amps), rich: pad6(L.TIMBRES.rich.amps) };
+const mixA = (a, b, t) => a.map((v, i) => lerp(v, b[i], t));
+const trimA = A => { let n = A.length; while (n > 1 && A[n - 1] < 1e-4) n--; return A.slice(0, n); };
+const timName = A => { const d = k => TIM[k].reduce((s, v, i) => s + Math.abs(v - A[i]), 0); const k = ['sine', 'sl02', 'rich'].sort((x, y) => d(x) - d(y))[0]; return d(k) < .02 ? L.TIMBRES[k].name : 'MIX'; };
+const JC = (p, q) => L.cents(p / q);
+const P5 = JC(3, 2), M3J = JC(5, 4), TRI = JC(45, 32);
+
+// ── 章：状態（セント c・音色 A）はスクロール位置の純関数。P＝図と置き場所（ステージ内 0..1）
+const CH = [
+  { id: 'CONSONANCE', at: () => ({ c: 0, A: TIM.rich }), P: { LADDER: [.0, .14, 1, .6] }, lit: ['nf'], rows: 'a' },
+  { id: 'SINE', at: u => ({ c: lerp(0, 1200, seg(u, .05, .95)), A: TIM.sine }), P: { LADDER: [.0, .0, 1, .34], CURVE: [.0, .4, 1, .6] }, lit: ['rough'], rows: 'ad' },
+  { id: 'HARMONICS', at: u => ({ c: 1200, A: mixA(TIM.sine, TIM.rich, sm(seg(u, .1, .85))) }), P: { LADDER: [.0, .0, 1, .62], CURVE: [.0, .67, 1, .33] }, lit: ['nf', 'amp'], rows: 'ad' },
+  { id: 'VALLEYS', at: u => ({ c: u < .8 ? lerp(1200, 97, sm(seg(u, .04, .8))) : 97, A: TIM.rich }), P: { LADDER: [.0, .0, 1, .4], CURVE: [.0, .46, 1, .54] }, lit: ['rough', 'pq'], rows: 'bd' },
+  { id: 'FIFTH', at: () => ({ c: P5, A: TIM.rich }), P: { LADDER: [.0, .0, .62, .58], LISS: [.65, .0, .35, .58], CURVE: [.0, .63, 1, .37] }, lit: ['pq'], rows: 'ab' },
+  { id: 'TEMPERED', at: u => { const c = u < .15 ? P5 : u < .35 ? lerp(P5, 700, sm(seg(u, .15, .35))) : u < .55 ? 700 : u < .7 ? lerp(700, M3J, sm(seg(u, .55, .7))) : u < .78 ? M3J : lerp(M3J, 400, sm(seg(u, .78, .92))); return { c, A: TIM.rich }; },
+    P: { LADDER: [.0, .0, .62, .58], LISS: [.65, .0, .35, .58], CURVE: [.0, .63, 1, .37] }, lit: ['beat'], rows: 'bc' },
+  { id: 'TIMBRE', at: u => ({ c: 400, A: mixA(TIM.rich, TIM.sl02, sm(seg(u, .15, .75))) }), P: { LADDER: [.0, .0, .62, .58], LISS: [.65, .0, .35, .58], CURVE: [.0, .63, 1, .37] }, lit: ['amp', 'beat'], rows: 'cd' },
+  { id: 'SIMPLE', at: u => { const c = u < .2 ? M3J : u < .3 ? lerp(M3J, TRI, sm(seg(u, .2, .3))) : u < .55 ? TRI : u < .65 ? lerp(TRI, P5, sm(seg(u, .55, .65))) : u < .8 ? P5 : lerp(P5, 1200, sm(seg(u, .8, .9))); return { c, A: TIM.rich }; },
+    P: { LISS: [.0, .0, .4, .62], RULERS: [.43, .0, .57, 1], LADDER: [.0, .66, .4, .34] }, lit: ['turns'], rows: 'be' },
+  { id: 'BLUEPRINT', at: () => ({ c: 1200, A: TIM.rich }), P: { RULERS: [.0, .0, 1, 1] }, lit: ['rough', 'turns'], rows: 'de' },
+];
+// スマホ：図は 1〜2 枚だけ（狭い所に詰めると文字が重なる）
+const PM = [{ LADDER: [0, 0, 1, 1] }, { CURVE: [0, 0, 1, 1] }, { LADDER: [0, 0, 1, 1] }, { CURVE: [0, 0, 1, 1] }, { LADDER: [0, 0, .6, 1], LISS: [.62, 0, .38, 1] }, { LADDER: [0, 0, .6, 1], LISS: [.62, 0, .38, 1] }, { LADDER: [0, 0, .6, 1], LISS: [.62, 0, .38, 1] }, { RULERS: [0, 0, 1, 1] }, { RULERS: [0, 0, 1, 1] }];
+CH.forEach((c, i) => { c.PM = PM[i]; });
+// 立ち寄った所（BLUEPRINT の番号）：各章が止まっている u をそのまま CH.at で評価する
+const STOPS = [[1, 1], [3, 1], [4, .5], [5, .5], [5, .74], [5, 1], [6, 1], [7, .42], [7, .72], [7, 1]].map(([i, u]) => ({ ch: i, ...CH[i].at(u) }));
+
+// ── スクロールの採寸（SP-02 の LP と同じ）
+const chEls = [...document.querySelectorAll('.ch')];
+let M = [], VH = innerHeight, MAXY = 1;
+function measure() {
+  VH = innerHeight; M = chEls.map(el => ({ top: el.offsetTop, h: el.offsetHeight }));
+  MAXY = Math.max(1, document.documentElement.scrollHeight - VH);
+  $('ticks').innerHTML = M.slice(1).map(m => `<i style="left:${(m.top / MAXY * 100).toFixed(2)}%"></i>`).join('');
+}
+function locate(y) {
+  let i = 0; while (i < M.length - 1 && y >= M[i + 1].top) i++;
+  const m = M[i], dwell = Math.max(1, m.h - VH);
+  const u = clamp((y - m.top) / dwell), k = i < M.length - 1 ? sm(clamp((y - m.top - dwell) / VH)) : 0;
+  return { i, u, k };
+}
+function stateAt(loc) {
+  const a = CH[loc.i].at(loc.u); if (!loc.k) return a;
+  const b = CH[loc.i + 1].at(0);
+  return { c: lerp(a.c, b.c, loc.k), A: mixA(a.A, b.A, loc.k) };
+}
+
+// ── 状態と、その読み（毎コマ 1 回だけ計算）
+const S = { c: 0, A: TIM.rich, mode: 'off', vol: .35 };
+const ratio = () => L.ratioOf(S.c);
+let R = null;
+const curveCache = new Map();
+function curveOf(A) {
+  const key = A.map(v => v.toFixed(3)).join(',');
+  if (!curveCache.has(key)) { if (curveCache.size > 400) curveCache.clear(); const a = trimA(A); curveCache.set(key, { cur: L.curve(F0, a, 301), val: L.valleys(F0, a), a }); }
+  return curveCache.get(key);
+}
+function readState() {
+  const cv = curveOf(S.A), a = cv.a, r = ratio(), j = L.nearestJust(r), z = L.zone(F0, r, a), sp = L.simplicity(r);
+  const heard = L.beats(F0, r, a).find(b => b.rate >= .05 && b.depth >= .04) || null;
+  R = { cv, a, r, j, z, sp, heard, liss: L.lissajousRate(F0, r) };
+}
+let T = 0;
+
+// ── 描画
+const cvs = $('cv'); let g = null, W = 0, H = 0;
+function fitAll() {
+  const d = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight;
+  if (cvs.width !== Math.round(W * d) || cvs.height !== Math.round(H * d)) { cvs.width = Math.round(W * d); cvs.height = Math.round(H * d); }
+  g = cvs.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, W, H);
+}
+const MOBILE = () => W < 880;
+function stageRect() {
+  if (MOBILE()) return { x: 12, y: 54, w: W - 24, h: H * .36 - 58 };
+  const x = Math.min(40 + 400 + 36, W * .44); return { x, y: 68, w: W - x - 24, h: H - 68 - 22 };
+}
+function frameBox(x, y, w, h, cap) {
+  g.strokeStyle = C.line; g.lineWidth = 1; g.strokeRect(Math.round(x) + .5, Math.round(y) + .5, Math.round(w) - 1, Math.round(h) - 1);
+  g.fillStyle = 'rgba(10,10,10,.55)'; g.fillRect(x + 1, y + 1, w - 2, h - 2);
+  g.font = `10px ${C.mono}`; g.fillStyle = C.mute; g.textAlign = 'left'; g.textBaseline = 'alphabetic'; g.fillText(cap, x + 10, y + 16);
+}
+const zoneCol = id => id === 'FUSE' ? C.acc : id === 'APART' ? C.ink2 : C.warn;
+
+const PANELS = {
+  // 倍音の梯子：下の段＝下の音・上の段＝上の音。重なる＝黄の線・近いのに重ならない（20 Hz 未満）＝橙のギザギザ（うなりの速さで明滅）
+  LADDER(x, y, w, h) {
+    frameBox(x, y, w, h, `HARMONICS ⁄ ${timName(S.A)} — 重なる＝黄・ぶつかる＝橙`);
+    const r = R.r, A = S.A, padX = 18, lw = w - padX * 2, fLo = F0 * .8, fHi = F0 * 2 * 6.6;
+    const X = f => x + padX + lw * Math.log(f / fLo) / Math.log(fHi / fLo);
+    const yU = y + 40, yL = y + h - 24, tick = (yL - yU) * .36, mid = (yU + yL) / 2;
+    g.font = `10px ${C.mono}`; g.textBaseline = 'middle';
+    g.strokeStyle = C.line; g.lineWidth = 1; g.beginPath(); g.moveTo(x + padX, yU); g.lineTo(x + w - padX, yU); g.moveTo(x + padX, yL); g.lineTo(x + w - padX, yL); g.stroke();
+    g.fillStyle = C.mute; g.textAlign = 'right'; g.fillText('上 ' + (F0 * r).toFixed(1) + ' Hz', x + w - padX, yU - 10); g.fillText('下 ' + F0.toFixed(1) + ' Hz', x + w - padX, yL + 12); g.textAlign = 'left';
+    const P = A.map((a, i) => ({ f: F0 * (i + 1), a, n: i + 1 })).filter(p => p.a > .003), Q = A.map((a, i) => ({ f: F0 * r * (i + 1), a, n: i + 1 })).filter(p => p.a > .003);
+    for (const a of P) for (const b of Q) {
+      const df = Math.abs(a.f - b.f); if (df >= 20) continue;
+      const s = Math.min(a.a, b.a), x1 = X(a.f), x2 = X(b.f), y1 = yL - a.a * tick, y2 = yU + b.a * tick;
+      if (df < .3) { g.strokeStyle = C.acc; g.globalAlpha = .35 + .65 * Math.min(1, s * 3); g.lineWidth = 2; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); }
+      else {
+        const pulse = Math.pow(Math.cos(Math.PI * df * T), 2);
+        g.strokeStyle = C.warn; g.globalAlpha = (.25 + .75 * pulse) * (.4 + .6 * Math.min(1, s * 3)); g.lineWidth = 1.4;
+        const n = 9; g.beginPath(); g.moveTo(x1, y1);
+        for (let i = 1; i < n; i++) { const k = i / n, z = (i % 2 ? 1 : -1) * 4; g.lineTo(x1 + (x2 - x1) * k + z, y1 + (y2 - y1) * k); }
+        g.lineTo(x2, y2); g.stroke(); g.globalAlpha = 1; g.fillStyle = C.warn; g.fillText(df.toFixed(1) + ' Hz', Math.max(x1, x2) + 6, mid);
+      }
+      g.globalAlpha = 1;
+    }
+    const bar = (p, yy, dir) => { const xx = X(p.f); g.strokeStyle = C.ink; g.globalAlpha = .3 + .7 * Math.min(1, p.a * 4); g.lineWidth = 3; g.beginPath(); g.moveTo(xx, yy); g.lineTo(xx, yy + dir * p.a * tick); g.stroke(); g.globalAlpha = 1; g.fillStyle = C.mute; g.textAlign = 'center'; g.fillText(p.n, xx, yy - dir * 9); g.textAlign = 'left'; };
+    P.forEach(p => bar(p, yL, -1)); Q.forEach(p => bar(p, yU, 1));
+    g.textBaseline = 'alphabetic';
+  },
+  // ざらつきの曲線（0〜1200¢）。谷＝黄の点。いまの位置＝四角
+  CURVE(x, y, w, h) {
+    const { cur, val, a } = R.cv;
+    frameBox(x, y, w, h, `ROUGHNESS ⁄ ${timName(S.A)} · 330 Hz — 谷＝${val.length ? val.map(v => v.name).join(' ') : 'なし'}`);
+    const pl = x + 16, pr = x + w - 16, pt = y + 26, pb = y + h - 22;
+    const X = c => pl + (pr - pl) * c / 1200, Y = d => pt + (pb - pt) * (1 - Math.min(1, d));
+    g.font = `10px ${C.mono}`;
+    g.strokeStyle = C.line; g.setLineDash([3, 4]); g.beginPath(); g.moveTo(pl, Y(L.ROUGH_TH)); g.lineTo(pr, Y(L.ROUGH_TH)); g.stroke(); g.setLineDash([]);
+    g.fillStyle = C.mute; g.textAlign = 'right'; g.fillText('ROUGH ↑', pr, Y(L.ROUGH_TH) - 4);
+    g.beginPath(); g.moveTo(X(0), Y(0)); cur.forEach(p => g.lineTo(X(p.c), Y(p.d))); g.lineTo(X(1200), Y(0)); g.closePath(); g.fillStyle = 'rgba(255,106,61,.14)'; g.fill();
+    g.beginPath(); cur.forEach((p, i) => i ? g.lineTo(X(p.c), Y(p.d)) : g.moveTo(X(p.c), Y(p.d))); g.strokeStyle = C.ink; g.lineWidth = 1.3; g.stroke();
+    const V = new Set(val.map(v => v.name));
+    L.JUST.forEach(j => {
+      const xx = X(L.cents(j.p / j.q)); g.strokeStyle = C.line; g.beginPath(); g.moveTo(xx, pb + 2); g.lineTo(xx, pb + 7); g.stroke();
+      if (h > 120 || V.has(j.name)) { g.fillStyle = V.has(j.name) ? C.acc : C.mute; g.textAlign = 'center'; g.fillText(j.name, xx, pb + 17); }
+      if (V.has(j.name)) { g.beginPath(); g.arc(xx, Y(L.roughNorm(F0, j.p / j.q, a)), 3.5, 0, Math.PI * 2); g.fill(); }
+    });
+    const xx = X(S.c), yy = Y(R.z.rough), col = zoneCol(R.z.id);
+    g.strokeStyle = col; g.lineWidth = 1; g.beginPath(); g.moveTo(xx, yy); g.lineTo(xx, pb); g.stroke();
+    g.fillStyle = col; g.fillRect(xx - 5, yy - 5, 10, 10); g.strokeStyle = C.bg; g.strokeRect(xx - 5, yy - 5, 10, 10);
+  },
+  // リサジュー：p/q で描き、相対位相を実際のずれの速さで回す（実時間）
+  LISS(x, y, w, h) {
+    frameBox(x, y, w, h, 'LISSAJOUS ⁄ 横＝下・縦＝上');
+    const j = R.j, sz = Math.max(30, Math.min(h - 70, w - 30)), cx = x + w / 2, cy = y + 28 + sz / 2, Rr = sz / 2 - 4;
+    g.strokeStyle = C.line; g.lineWidth = 1; g.strokeRect(cx - sz / 2, cy - sz / 2, sz, sz);
+    const near = Math.abs(j.off) <= 18, exact = Math.abs(j.off) < .05;
+    if (near) {
+      const n = Math.min(24000, 500 * Math.max(2, j.q)), pts = L.lissajous(j.p / j.q, lissPhase, n);
+      g.strokeStyle = exact ? C.acc : (R.heard ? C.warn : C.ink2); g.lineWidth = 1.2;
+      g.beginPath(); pts.forEach(([px, py], i) => { const X = cx + px * Rr, Y = cy - py * Rr; i ? g.lineTo(X, Y) : g.moveTo(X, Y); }); g.stroke();
+    } else { g.fillStyle = C.mute2; g.fillRect(cx - sz / 2 + 1, cy - sz / 2 + 1, sz - 2, sz - 2); }
+    g.font = `10px ${C.mono}`; g.textAlign = 'center'; g.fillStyle = exact ? C.acc : C.ink2;
+    const msg = !near ? '比が定まらない＝閉じない' : exact ? `${j.name} — ${j.q} 周で閉じて止まる` : `${j.name} ${j.off >= 0 ? '+' : ''}${j.off.toFixed(1)}¢ — ${R.liss.toFixed(2)} Hz で回る`;
+    g.fillText(msg, cx, cy + sz / 2 + 16);
+    if (near && !exact && !R.heard && R.liss < 20) { g.fillStyle = C.mute; g.fillText('耳では揺れない（重なる倍音が無い）', cx, cy + sz / 2 + 30); }
+    g.textAlign = 'left';
+  },
+  // 2 本の物差し：横＝① ざらつき・縦＝② 閉じる周回 q（対数）。左下＝溶け合う
+  RULERS(x, y, w, h, o) {
+    frameBox(x, y, w, h, '2 RULERS ⁄ 横＝① ざらつき・縦＝② 閉じる周回');
+    const pl = x + 44, pr = x + w - 18, pt = y + 30, pb = y + h - 28, a = R.cv.a;
+    const X = d => pl + 8 + (pr - pl - 16) * Math.min(1, d), Y = q => pb - (pb - pt) * (isFinite(q) ? Math.log2(q) / 6 : 1);
+    // 溶け合う角（① < ROUGH_TH かつ ② ≤ 5 周）
+    g.fillStyle = 'rgba(255,212,0,.09)'; g.fillRect(pl, Y(L.SIMPLE_TURNS), X(L.ROUGH_TH) - pl, pb - Y(L.SIMPLE_TURNS));
+    g.fillStyle = 'rgba(255,106,61,.07)'; g.fillRect(X(L.ROUGH_TH), pt, pr - X(L.ROUGH_TH), pb - pt);
+    g.strokeStyle = C.line; g.lineWidth = 1; g.strokeRect(pl + .5, pt + .5, pr - pl, pb - pt);
+    g.setLineDash([3, 4]); g.beginPath(); g.moveTo(X(L.ROUGH_TH), pt); g.lineTo(X(L.ROUGH_TH), pb); g.moveTo(pl, Y(L.SIMPLE_TURNS)); g.lineTo(pr, Y(L.SIMPLE_TURNS)); g.stroke(); g.setLineDash([]);
+    g.font = `600 12px ${C.display}`; g.textAlign = 'left';
+    g.fillStyle = C.acc; g.fillText('FUSE 溶け合う', pl + 8, Y(L.SIMPLE_TURNS) + 16);
+    g.fillStyle = C.ink2; g.fillText('APART 溶け合わない', pl + 8, pt + 16);
+    g.fillStyle = C.warn; g.textAlign = 'right'; g.fillText('ROUGH ざらつく', pr - 8, pt + 16);
+    g.font = `10px ${C.mono}`; g.fillStyle = C.mute; g.textAlign = 'right';
+    [1, 2, 4, 8, 16, 32].forEach(q => { const yy = Y(q); g.fillRect(pl - 4, yy, 4, 1); g.fillText(q + ' 周', pl - 7, yy + 3); });
+    g.textAlign = 'center'; [0, .25, .5, .75, 1].forEach(d => { const xx = X(d); g.fillRect(xx, pb, 1, 4); g.fillText(d.toFixed(2), xx, pb + 15); });
+    // 純正の比を点で
+    const few = w < 520, KEY = ['16/15', '5/4', '4/3', '45/32', '3/2', '2/1'];
+    L.JUST.forEach(j => { if (j.p === j.q) return; const d = L.roughNorm(F0, j.p / j.q, a), xx = X(d), yy = Y(j.q);
+      g.fillStyle = C.mute; g.beginPath(); g.arc(xx, yy, 3, 0, Math.PI * 2); g.fill(); if (few && !KEY.includes(j.name)) return; const rt = xx > pr - 90; g.textAlign = rt ? 'right' : 'left'; g.fillText(`${j.name} ${j.jp}`, xx + (rt ? -6 : 6), yy - 4); });
+    // BLUEPRINT：立ち寄った所に章番号
+    if (o.stops > 0) {
+      const n = Math.round(STOPS.length * o.stops); g.font = `600 11px ${C.display}`; g.textAlign = 'center';
+      const placed = [];
+      STOPS.slice(0, n).forEach(s => { const A = trimA(s.A), r = L.ratioOf(s.c), sp = L.simplicity(r), d = L.roughNorm(F0, r, A), xx = X(d), yy = Y(isFinite(sp.turns) ? sp.turns : Infinity);
+        let k = placed.filter(p => Math.hypot(p[0] - xx, p[1] - yy) < 14).length; placed.push([xx, yy]);
+        g.strokeStyle = C.acc; g.lineWidth = 1.4; g.beginPath(); g.arc(xx, yy, 7, 0, Math.PI * 2); g.stroke();
+        const lx = xx + 16 + k * 18, ly = yy + 14; g.fillStyle = C.bg; g.fillRect(lx - 9, ly - 10, 18, 13); g.fillStyle = C.acc; g.fillText(String(s.ch).padStart(2, '0'), lx, ly); });
+    }
+    // いまの点
+    const xx = X(R.z.rough), yy = Y(isFinite(R.sp.turns) ? R.sp.turns : Infinity), col = zoneCol(R.z.id);
+    g.fillStyle = col; g.fillRect(xx - 6, yy - 6, 12, 12); g.strokeStyle = C.bg; g.strokeRect(xx - 6, yy - 6, 12, 12);
+    g.textAlign = 'left';
+  },
+};
+let lissPhase = Math.PI / 2;
+
+function draw(loc) {
+  fitAll();
+  const st = stageRect(), key = MOBILE() ? 'PM' : 'P', A = CH[loc.i][key], B = loc.k > 0 ? CH[loc.i + 1][key] : {};
+  const names = new Set([...Object.keys(A), ...Object.keys(B)]);
+  const opt = { stops: loc.i === 8 ? sm(seg(loc.u, 0, .6)) : 0 };
+  for (const n of names) {
+    let r, al;
+    if (A[n] && B[n]) { r = A[n].map((v, j) => lerp(v, B[n][j], loc.k)); al = 1; }
+    else if (A[n]) { r = A[n]; al = 1 - loc.k; } else { r = B[n]; al = loc.k; }
+    if (al < .01) continue;
+    const px = st.x + r[0] * st.w, py = st.y + r[1] * st.h, pw = r[2] * st.w, ph = r[3] * st.h;
+    if (pw < 40 || ph < 40) continue;
+    g.save(); g.globalAlpha = al; g.beginPath(); g.rect(px, py, pw, ph); g.clip();
+    PANELS[n](px, py, pw, ph, opt); g.restore();
+  }
+}
+
+// ── HUD と FORMULA RAIL
+let lastHud = '';
+function hud(loc, y) {
+  const ci = loc.k > .5 ? loc.i + 1 : loc.i, j = R.j, z = R.z, near = Math.abs(j.off) <= 18, key = [S.c.toFixed(2), S.A.map(v => v.toFixed(2)).join(), ci].join('|');
+  $('prog').style.width = (clamp(y / MAXY) * 100).toFixed(2) + '%';
+  if (key === lastHud) return; lastHud = key;
+  $('chl').innerHTML = `${String(ci).padStart(2, '0')} ⁄ 08 <b>${CH[ci].id}</b>`;
+  $('hRat').textContent = near ? j.name : '—';
+  $('hOff').textContent = near ? `${j.off >= 0 ? '+' : ''}${j.off.toFixed(1)}¢` : `${S.c.toFixed(0)}¢`;
+  const zl = $('hZone'); zl.className = 'zone ' + z.id; zl.textContent = z.id;
+  const lit = new Set(CH[ci].lit), rows = CH[ci].rows;
+  document.querySelectorAll('#rail .t').forEach(e => e.classList.toggle('on', lit.has(e.dataset.t)));
+  document.querySelectorAll('#rail .fr').forEach(e => { e.classList.toggle('on', rows.includes(e.dataset.row)); e.classList.toggle('lit', !!e.querySelector('.t.on')); });
+  $('fvA').textContent = `${timName(S.A)} · 倍音 ${R.a.length} 本`;
+  $('fvB').textContent = near ? `${j.name}：下 ${j.p} 倍音 ＝ 上 ${j.q} 倍音` : '比が定まらない';
+  $('fvC').textContent = near ? `${R.liss.toFixed(2)} Hz${R.heard ? '' : '（耳では揺れない）'}` : '—';
+  $('fvD').textContent = `${z.rough.toFixed(2)}（頂上＝1）`;
+  $('fvE').textContent = isFinite(R.sp.turns) ? `${R.sp.turns} 周 · ${R.sp.tenney.toFixed(2)}` : '閉じない';
+  document.querySelectorAll('[data-live]').forEach(e => { const k = e.dataset.live;
+    e.textContent = k === 'c' ? S.c.toFixed(0) : k === 'valleys' ? (R.cv.val.length ? R.cv.val.map(v => v.name).join('・') : 'まだ無い') : k === 'beat' ? (R.heard ? `${R.heard.rate.toFixed(2)} Hz` : (near && R.liss > .05 ? `図形は ${R.liss.toFixed(2)} Hz・耳では揺れない` : 'うなりなし')) : ''; });
+}
+
+// ── 音：2 音 × 倍音 6 本。音色は各倍音の強さ、比は周波数がスクロールを追う。BOW（既定）＝スクロールの速さで鳴る／♪ ON＝鳴りっぱなし
+let AC = null, master = null, V = null;
+const LEVEL = .18;
+function ensureAudio() {
+  if (!AC) {
+    AC = new AudioContext(); master = AC.createGain(); master.gain.value = 0;
+    const lim = AC.createDynamicsCompressor(); lim.threshold.value = -10; lim.ratio.value = 20; lim.attack.value = .003; lim.release.value = .15;
+    master.connect(lim).connect(AC.destination);
+    V = [0, 1].map(() => { const out = AC.createGain(); out.connect(master); const os = [];
+      for (let i = 0; i < NP; i++) { const o = AC.createOscillator(), gg = AC.createGain(); gg.gain.value = 0; o.connect(gg).connect(out); o.start(); os.push({ o, g: gg }); }
+      return { out, os }; });
+  }
+  if (AC.state === 'suspended') AC.resume();
+}
+let vel = 0, bowG = 0;
+function updateAudio() {
+  if (!AC) return;
+  const t = AC.currentTime, norm = 1 / S.A.reduce((s, a) => s + a, 0);
+  [F0, F0 * ratio()].forEach((f, vi) => V[vi].os.forEach(({ o, g: gg }, i) => {
+    const fi = f * (i + 1); o.frequency.setTargetAtTime(fi, t, .03); gg.gain.setTargetAtTime((fi < 16000 ? S.A[i] : 0) * norm * LEVEL, t, .04);
+  }));
+  let target = 0, tc = .12;
+  if (S.mode === 'on') target = S.vol;
+  else if (S.mode === 'bow') { target = S.vol * clamp(vel / 900); tc = target > bowG ? .06 : .55; }
+  bowG = target;
+  master.gain.setTargetAtTime(target, t, tc);
+}
+let autoArm = true;
+function setMode(m) {
+  S.mode = m; autoArm = false; if (m !== 'off') ensureAudio();
+  document.querySelectorAll('#segSnd button').forEach(b => b.classList.toggle('on', b.dataset.v === m));
+  updateAudio();
+}
+
+// ── なめらかな慣性（SP-02 の LP と同じ）
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let tY = scrollY, cY = scrollY, smoothing = false, rewind = null;
+addEventListener('wheel', e => {
+  if (e.ctrlKey || REDUCED) return;
+  e.preventDefault(); rewind = null;
+  if (!smoothing) { tY = cY = scrollY; }
+  const d = e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? VH : 1);
+  tY = clamp(tY + d, 0, MAXY); smoothing = true;
+}, { passive: false });
+const stopRewind = () => { rewind = null; };
+addEventListener('keydown', stopRewind); addEventListener('touchstart', stopRewind, { passive: true }); addEventListener('mousedown', e => { if (e.target.id !== 'bRewind') stopRewind(); });
+function scrollStep(dt) {
+  if (rewind) {
+    const k = clamp((NOW - rewind.t0) / rewind.d), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    window.scrollTo(0, rewind.y0 * (1 - e)); if (k >= 1) rewind = null; return;
+  }
+  if (!smoothing) return;
+  cY += (tY - cY) * (1 - Math.exp(-dt * 6));
+  if (Math.abs(tY - cY) < .5) { cY = tY; smoothing = false; }
+  window.scrollTo(0, cY);
+}
+function startRewind() { smoothing = false; rewind = { y0: scrollY, t0: NOW, d: clamp(scrollY / 2400, 3, 9) * 1000 }; }
+
+// ── ループ
+let NOW = performance.now(), lastY = scrollY, LOC = { i: 0, u: 0, k: 0 };
+function tick(now, dt) {
+  NOW = now; T += dt;
+  scrollStep(dt);
+  const y = scrollY;
+  vel = lerp(vel, Math.abs(y - lastY) / Math.max(dt, 1e-3), .25); lastY = y;
+  LOC = locate(y); const st = stateAt(LOC); S.c = st.c; S.A = st.A;
+  readState();
+  // リサジューの位相：形は |q·f上 − p·f下| Hz で一周（実時間）
+  const j = R.j; lissPhase += 2 * Math.PI * (F0 * R.r - F0 * j.p / j.q) * dt;
+  updateAudio(); draw(LOC); hud(LOC, y);
+}
+let manual = false, lastT = 0;
+function frame(now) {
+  if (!manual) { const t = now / 1000, dt = Math.min(.05, t - (lastT || t)); lastT = t; tick(now, dt); }
+  requestAnimationFrame(frame);
+}
+
+// ── 入力
+document.querySelectorAll('#segSnd button').forEach(b => b.onclick = () => setMode(b.dataset.v));
+$('bStart').onclick = () => setMode('bow');
+// 既定は BOW：ブラウザは操作なしに音を出せないので、最初のクリックで BOW を入れる（自分で OFF を選んだら入れない）
+addEventListener('pointerdown', e => { if (!autoArm) return; autoArm = false; if (S.mode === 'off' && !e.target.closest('#segSnd')) setMode('bow'); }, true);
+$('bRewind').onclick = startRewind;
+$('vol').oninput = e => { S.vol = e.target.value / 100; updateAudio(); };
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === 's' || e.key === 'S') { const order = ['off', 'bow', 'on']; setMode(order[(order.indexOf(S.mode) + 1) % 3]); }
+});
+addEventListener('resize', () => { measure(); lastHud = ''; });
+readColors(); measure();
+document.fonts && document.fonts.ready.then(() => { readColors(); measure(); lastHud = ''; });
+requestAnimationFrame(frame);
+// ?ch=章&u=0..1 でその場面から開く（共有・検証用）
+(() => { const q = new URLSearchParams(location.search), ch = q.get('ch'); if (ch == null) return;
+  const go = () => { measure(); const i = clamp(+ch | 0, 0, M.length - 1), m = M[i]; window.scrollTo(0, m.top + clamp(+(q.get('u') || 0)) * Math.max(1, m.h - VH)); tY = cY = scrollY; };
+  go(); document.fonts && document.fonts.ready.then(go); })();
+
+// ── 検証フック（Claude 側）
+window.__LP = {
+  law: L, state: S, CH, STOPS, TIM, locate, stateAt, measure, read: () => R,
+  loc: () => LOC, maxY: () => MAXY, metrics: () => M,
+  goto: (i, u = 0) => { smoothing = false; rewind = null; const m = M[i], y = m.top + u * Math.max(1, m.h - VH); window.scrollTo(0, y); tY = cY = scrollY; return scrollY; },
+  setMode, rewind: startRewind, rewinding: () => !!rewind,
+  audio: () => AC && { state: AC.state, master: +master.gain.value.toFixed(3), f: V.map(v => +v.os[0].o.frequency.value.toFixed(2)), gains: V[0].os.map(x => +x.g.gain.value.toFixed(4)) },
+  vel: () => vel, autoArm: () => autoArm,
+  manual: on => { manual = on; },
+  step: (sec = 1 / 60, fps = 60) => { for (let i = 0, n = Math.max(1, Math.round(sec * fps)); i < n; i++) tick(NOW + 1000 / fps, 1 / fps); },
+};
+})();
+</script>
+</body>
+</html>

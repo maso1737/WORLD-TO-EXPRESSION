@@ -1,7 +1,44 @@
 # HANDOFF — 次セッションへの申し送り
 
-最終更新: 2026-10-29 ／ 直近セッション: **EE-05 LENIA を追加（WebGL2・6 種族・自動上演 64 秒・VJ）＋ 01〜05 の COPY 表示バグ修正**
+最終更新: 2026-11-02 ／ 直近セッション: **EE-08 SYNC を追加（ホタルの同期・結合振動子・6 種族・位相円の PROOF・自動上演 75 秒・VJ の ENTRAIN で群れが曲のテンポに引き込まれる／Codex astra → 上限で報告だけ欠けた → Claude 検証）**（その前 **EE-07 SANDPILE を追加（砂山モデル・自己組織化臨界・6 モード・べき乗則の PROOF・自動上演 75 秒・VJ／Codex は上限で停止→サブエージェントが実装→Claude 検証）**（前回 EE-06 TURING を追加（Gray-Scott 反応拡散・F–k MAP・7 種族・自動上演 70 秒・VJ／実装は Codex astra → Claude 検証）**（同日その前に EE-05 LENIA）
 （COGNITIVE ブラッシュアップは 2026-08-31 に完走済み → 下の「COGNITIVE（前の仕事）」）
+
+---
+
+## 🆕 2026-10-31 方針の整理 — Gen-EX と WTE をつなぎ直す
+
+相談セッション（claude.ai）の申し送り → [[2026-10-31]]。地図は [[Gen-EX 座標マップ]]（`00_Hub/`）。
+要点：Gen-EX＝実験側・WTE＝理論側。Gen-EX が「ピンと来ない」のは**下から触った基礎（特に L1d 音響）が無い**から。HTML は「主戦場」から「設計台」へ。デザインは先に作る。
+
+✅ 10-31 済み：座標マップの「？」を確定（v1：14 件すべて ✅。LIVE_LED_BRUSH→L3／Explosion・Poster BG→L6／Lumina→L1b／Stardust→L1c 副 など。理由はマップの「確定の記録」）
+✅ 10-31 済み：[[L1 PHYSICAL WORLD]] を 4 小区分に節分け（各節＝触れるパラメータ／境界／アプリ。光学は ①曲がる・割れる ②積み上がる＝光ブラシ族）
+✅ 10-31 済み：音の教材 6 本を設計 → `sound-patterns/PLAN_SOUND_PATTERNS.md`（SP-01 倍音列／02 うなり／03 協和比／04 定在波／05 クラドニ／06 音の高さと上下・並列カード・実装なし）
+🔎 設計中の発見（11-02 に訂正）：協和の物差しは 2 本＝① ざらつき（音色・音域しだい）② 比の単純さ（リサジューが閉じる周回・音色によらない）。**SL-02 の協和度の表は ② の順そのもの**。① だけだと倍音 6 本でも増4度は長3度より滑らかに出るので、「SL-02 の音色のせい」は言いすぎだった。SL-02 の音色に特有なのは：谷が 5 度だけ／**4・5 倍音が無いので長3度を平均律にずらしても耳では揺れない**（PLAN §0）
+✅ 11-02 済み：**SP-03 の法則の正本**（`sound-patterns/_law/sp03_law.js`）＋**スタイルフレーム**（`sound-patterns/sp03_styleframe.html`・LOOK 3 案切替・聴き比べ・OfflineAudioContext で実測＝平均律 5 度 1.14 Hz／長3度 13.04 Hz）→ [[2026-11-02]]
+
+✅ 11-03 済み：**見た目は NATURAL に決定** → **SP-03 本体 `sound-patterns/03_consonance.html`**（比を連続で動かす・SOUND・→純正／→平均律・PROOF・AUTO 60s・表示 1/4 速・PARAMS）。実測と動作チェック表は [[2026-11-03]]
+✅ 11-03 その3：**解説スクロール LP `sound-patterns/scroll/SCROLL_BEATS_LP.html`**（8 章・FORMULA RAIL・スクロールで鳴る ON／BOW・なめらかな慣性・BLUEPRINT＝歩いた道・REWIND）＋**入口 `sound-patterns/index.html`**（APP と SCROLL を横並び）＋ stage.js 登録。方針 [[PLAN_SCROLL_EXPLAINER]]＝今後の教材は解説 LP と 1 組。Emergence Engine の解説はユーザーが過去セッションの共有リンクを貼ってくれる予定
+✅ 11-03 その4：**SP-03 の解説 LP `sound-patterns/scroll/SCROLL_CONSONANCE_LP.html`**（純音には谷がない→倍音→谷→3/2→平均律のうなり→SL-02 で揺れが消える→比の単純さ→2 本の物差しの地図）。2 本とも音の既定を **BOW**（ユーザーの好み）・`?ch=&u=` で場面から開ける
+✅ 11-03 その2：**SP-02 本体 `sound-patterns/02_beats.html`**＋法則 `_law/sp02_law.js`（Δf × 音域の地図をドラッグ・ONE／BEAT／ROUGH／TWO・矢印の足し算・足した波の包絡線・TAP・音程ボタンで「低い 3 度が濁る」・PROOF＝和を積に・AUTO 75s）。実測は [[2026-11-03]] の「その2」
+
+### ⚠️ 音の教材：ユーザーが決めること
+- SP-03 本体：11-03 にユーザーが聴いた（感想はまだ聞いていない）
+- SCROLL_BEATS_LP：11-03 好評（BOW がいい）→ 既定 BOW に済み
+- **SCROLL_CONSONANCE_LP を読む**（BOW）＝確認待ち
+- **SP-02 本体を音を出して触る**：1〜8 Hz のうなりを TAP で数えられるか・24 Hz 前後で「揺れ→ざらつき」に変わって聞こえるか・臨界帯域の外で 2 音に分かれるか・110 Hz と 440 Hz の長3度の違い＝確認待ち
+- SL-02 の件を GENEX_NEXT に持ち込むか：(a) 音色の倍音を増やす (b) 結合の瞬間に「閉じる」形を見せる＝判断待ち（SP-03 を聴いた後）
+
+### 次の候補（10-31 の方針から・上から順）
+- 解説 LP の次：Emergence Engine 08→07→…（ユーザーが過去セッションの共有リンクを貼ってくれる → 解説を拾って台本に）
+- 音の教材：次の 1 本（推し SP-05 CHLADNI。SP-02 は 11-03 済み）。見た目は NATURAL・法則の正本 `_law/` ＋本体の型は SP-03 をそのまま使う
+- Primitive カードを書き始める（P-04 Fibonacci／P-06 Voronoi／P-07 Turing から）。「核＝何が見えたら成功か」欄を足す
+- PROJECT HUB にマップを載せる（原本を読むだけ・「WTE 座標」欄）
+- PROJECT HUB のデザインを先に固める（`image3/未来型プロジェクトハブUIポスター.png` が正本）
+- Unity / UE の最初の一手（GENEX_NEXT `07_LOOKDEV` 手順 3）
+
+### ユーザーが決めること
+- ✅ 10-31 決定：音の教材が先（SL-02 LOOK v1.1 は後）
+- PROJECT HUB が KINETIC STAGE デザインシステムを使うか、ポスター由来の独自システムを持つか＝判断待ち
 
 ---
 
@@ -13,10 +50,13 @@
 | `02_highway.html` | ラングトンのアリ（1万歩で道・トーラスで衝突→また道） | VJ ／ EVENTS 欄のカタカタ修正 |
 | `03_slime_network.html` | 粘菌（Jones 2010）・6種・餌／LURE／CUT | VJ ／ 下部に「網の量」グラフ帯を追加 |
 | `04_flock.html` | ボイド・鷹／餌の渦・相転移（NOISE≈0.3） | VJ |
-| `05_lenia.html` | 🆕 Lenia（なめらかなライフゲーム）・WebGL2・6 種族（ORBIUM〜CONWAY）・GROWTH MAP | 2026-10-29 新規・VJ |
+| `05_lenia.html` | Lenia（なめらかなライフゲーム）・WebGL2・6 種族（ORBIUM〜CONWAY）・GROWTH MAP | 2026-10-29 新規・VJ |
+| `07_sandpile.html` | 🆕 砂山（BTW 1987）・DRIP／TOWER／TWIN／HEX／EIGHT／IDENTITY・雪崩の両対数分布（傾き ≈ −1.3）・崩れたマスが光る | 2026-10-30 新規・VJ |
+| `08_sync.html` | 🆕 同期（Kuramoto 1975）・FIREFLIES／THRESHOLD／WAVES／CHIMERA／SWARM／TWO TRIBES・位相円と r(t)・ENTRAIN で曲のテンポへ | 2026-11-02 新規・VJ |
+| `06_turing.html` | 反応拡散（Gray-Scott）・F–k MAP（GPU で育てた本物の地図・クリックで移動）・7 種族（ATLAS＝世界全体が地図）・CHEMICALS | 2026-10-29 新規・VJ |
 | `index.html` | シリーズ入口（ホバーでライブ再生） | — |
 
-詳細と実測は [[2026-10-22]]（01〜04・末尾に 10-25 分）と [[2026-10-29]]（05 LENIA・発見と動作チェック表）。
+詳細と実測は [[2026-11-02]] の「その2」（08 SYNC）・[[2026-10-30]]（07 SANDPILE）・[[2026-10-22]]（01〜04・末尾に 10-25 分）と [[2026-10-29]]（05 LENIA・発見と動作チェック表）。
 
 ### VJ パネル（4作品共通・右パネルの PARAMS の上）
 - ♪ LOAD AUDIO → PLAY ／ 帯域メーター ／ SENS ／ BPM＋TAP（`T`）＋拍 LED ／ BEAT FROM（OFF・MP3 KICK・BPM CLOCK）／ ON BEAT ／ N 拍ごと ／ MID→・HIGH→ ／ REC WebM（音つき）／ 連番PNG（拍ぴったり・1080p/4K）
@@ -28,11 +68,14 @@
 実際の mp3 でキックの反応が合う（SENS 55 のまま）・連番PNG が実フォルダに保存できる・REC WebM に音が入る。
 
 ### ⚠️ ユーザー確認待ち
+00. **08 SYNC を触った感想と実曲**：1 FIREFLIES で 20 秒ほど待つと一斉に光る／BEAT FROM を MP3 KICK にして ENTRAIN（2 小節ほどで群れが曲に引き込まれる）／4 CHIMERA の「そろう側・ほどける側」が見えるか／ユーザー PC の重さ（5 SWARM と 6 TWO TRIBES が重め）。
+0. **07 SANDPILE の 10-31 版を実曲で**（LIGHT DOT・拍で崩れる寸前のマスが瞬く・ON BEAT 既定 QUAKE・雪崩は前線として広がる）。前の版の感想＝「画面が変わらない・ぼかしよりドット・音の変化が少ない」→ 対応済み。
+   以前の項目：**07 SANDPILE を触った感想**（2 TOWER で曼荼羅・D で崩す・6 IDENTITY は 20〜30 秒待つ）。06 は 10-30 に「重さ問題なし・かなり面白い」。
 1. **05 LENIA を触った感想**と、ユーザーの PC での重さ（READOUT の STEPS / s が 120 前後なら OK）。
 2. 自動上演の一巡の通し視聴（02 約4.5分／03 約5分／04 74秒／05 64秒）。
 
 ### 次の候補（ユーザー選択）
-① EE-05b 反応拡散（Gray-Scott・同じ GPU の骨格で作れる）② EE-01b 3D 版 ③ vj-audio-export-kit スキルに「ハイハットの誤検出」「シミュレーション作品の連番PNG＝1/60 秒刻みのオフラインレンダ」「WebGL キャンバスの書き出し（preserveDrawingBuffer）」「COPY の currentTarget の罠」を追記（実曲で確認が取れたので材料はそろった。スキルの書き換えなのでユーザーの OK が要る）④ 05 に多チャンネル Lenia（色ちがいの生きものが食べ合う）
+① ~~反応拡散~~ → 06 で済 ② EE-01b 3D 版 ⑤ 06 に「場所ごとに F を塗る」地形ブラシ（作者＝環境を設計する人） ③ vj-audio-export-kit スキルに「ハイハットの誤検出」「シミュレーション作品の連番PNG＝1/60 秒刻みのオフラインレンダ」「WebGL キャンバスの書き出し（preserveDrawingBuffer）」「COPY の currentTarget の罠」を追記（実曲で確認が取れたので材料はそろった。スキルの書き換えなのでユーザーの OK が要る）④ 05 に多チャンネル Lenia（色ちがいの生きものが食べ合う）
 
 ### 🔧 この系列で効いた検証のやり方
 - Browser ペインは裏に回ると rAF が毎秒1回程度になる → `advance(1/60)` を JS から回して `draw()` → スクショ／画素で確認。

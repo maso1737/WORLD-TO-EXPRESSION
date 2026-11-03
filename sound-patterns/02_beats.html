@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BEATS — うなりの境界 (SP-02)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=IBM+Plex+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:"Bank Gothic";src:url("../cognitive/fonts/bank-gothic-light-bt.ttf") format("truetype");font-weight:300 600;font-display:swap}
+@font-face{font-family:"Square 721";src:url("../cognitive/fonts/Square_721_BT.ttf") format("truetype");font-weight:400 700;font-display:swap}
+:root{
+  --bg:#0a0a0a;--bg-2:#121212;--ink:#f2f2ef;--ink-2:#cfcfca;--mute:#9a9a93;--mute-2:#3a3a37;
+  --line:#2a2a27;--acc:#ffd400;--acc-ink:#0a0a0a;--warn:#ff6a3d;--fill:rgba(242,242,239,.06);
+  --grid:rgba(242,242,239,0.035);--panel-bg:#0e0e0e;--ez:cubic-bezier(0.2,0,0,1);
+  --mono:"JetBrains Mono","IBM Plex Mono",ui-monospace,monospace;
+  --display:"Bank Gothic","Square 721","Space Grotesk",system-ui,sans-serif;
+  --sans:"Square 721","Bank Gothic","Helvetica Neue",system-ui,sans-serif;
+  --jp:"IBM Plex Sans JP","Noto Sans JP",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--sans);font-feature-settings:"tnum"}
+#app{height:100vh;display:grid;grid-template-rows:46px 1fr 30px;grid-template-columns:1fr 320px;grid-template-areas:"top top" "stage aside" "bot bot"}
+.topbar{grid-area:top;display:flex;align-items:center;gap:18px;padding:0 16px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:baseline;gap:8px}
+.mark{font-family:var(--display);font-weight:600;letter-spacing:.14em;font-size:14px}
+.layer-tag{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.16em}
+.ttl{flex:1;font-family:var(--mono);font-size:11px;color:var(--ink-2);letter-spacing:.16em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.esc{font-family:var(--mono);font-size:10px;color:var(--mute);text-decoration:none;border:1px solid var(--line);padding:4px 8px;letter-spacing:.12em;white-space:nowrap}
+.esc:hover{color:var(--acc);border-color:var(--acc)}
+.stage{grid-area:stage;position:relative;overflow:hidden;display:grid;grid-template-rows:minmax(0,25fr) minmax(0,27fr) auto minmax(0,48fr);grid-template-columns:minmax(0,1fr) 300px;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+.cell{position:relative;min-width:0;min-height:0;border-bottom:1px solid var(--line)}
+.cell canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+#phaseBox,#sumBox{border-right:1px solid var(--line)}
+#readBox{grid-column:2;grid-row:1 / 3;padding:14px 16px;display:flex;flex-direction:column;gap:10px;overflow:hidden}
+#mapBox{grid-column:1 / -1;border-bottom:0;cursor:crosshair;touch-action:none}
+.cap{position:absolute;left:14px;top:8px;font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.14em;pointer-events:none;white-space:nowrap}
+.cap.r{left:auto;right:14px}
+.prompt{grid-column:1 / -1;text-align:center;padding:8px 16px;border-bottom:1px solid var(--line);pointer-events:none;min-height:34px}
+.prompt .pj{font-family:var(--jp);font-size:11px;letter-spacing:.06em;color:var(--ink-2)}
+.prompt.auto .pj{color:var(--acc)}
+.big{display:flex;align-items:baseline;gap:10px;white-space:nowrap}
+.big .rat{font-family:var(--display);font-weight:600;font-size:34px;letter-spacing:.04em}
+.big .off{font-family:var(--mono);font-size:12px;color:var(--ink-2)}
+.big .jp{font-family:var(--jp);font-size:11px;color:var(--mute)}
+.zone{align-self:flex-start;font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:.16em;padding:5px 12px;border:1px solid var(--line)}
+.zone.ONE{color:var(--ink-2);border-color:var(--mute)}
+.zone.BEAT{color:var(--acc);border-color:var(--acc)}
+.zone.ROUGH{color:var(--bg);background:var(--warn);border-color:var(--warn)}
+.zone.TWO{color:var(--acc-ink);background:var(--acc);border-color:var(--acc)}
+.meter .top{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--mute);margin-bottom:4px;letter-spacing:.06em}
+.meter .top b{font-family:var(--mono);font-weight:400;color:var(--ink-2)}
+.meter .track{height:10px;background:var(--bg-2);border:1px solid var(--mute-2);position:relative}
+.meter .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--ink-2)}
+.meter .th{position:absolute;top:-3px;bottom:-3px;width:1px;background:var(--mute)}
+.beat{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:10px;color:var(--mute)}
+.beat i{width:14px;height:14px;border:1px solid var(--acc);display:block;flex:none}
+.beat b{color:var(--acc);font-weight:400}
+.tapv{font-family:var(--mono);font-size:10px;color:var(--mute);line-height:1.6}
+.tapv b{color:var(--ink);font-weight:400}
+.aside{grid-area:aside;border-left:1px solid var(--line);background:var(--panel-bg);overflow-y:auto;padding:14px 14px 24px}
+.aside::-webkit-scrollbar{width:3px}.aside::-webkit-scrollbar-thumb{background:var(--mute-2)}
+.sec{margin-bottom:18px}
+.lt{display:inline-block;font-family:var(--mono);font-size:9px;color:var(--acc-ink);background:var(--acc);padding:1px 5px;margin-right:7px;letter-spacing:.1em}
+.sh{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.16em;text-transform:uppercase;margin-bottom:10px;border-bottom:1px solid var(--line);padding-bottom:5px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;margin-bottom:8px}
+.seg button,.btn{font-family:var(--mono);font-size:10px;letter-spacing:.08em;background:transparent;color:var(--ink-2);border:1px solid var(--line);padding:7px 4px;cursor:pointer}
+.seg button:hover,.btn:hover{border-color:var(--acc);color:var(--acc)}
+.seg button.on,.btn.on{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.btn{width:100%;margin-top:6px;padding:9px 10px;text-align:left}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:4px}.grid2 .btn{margin-top:0}
+.row{margin-bottom:12px}
+.row label{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--ink-2);margin-bottom:5px;letter-spacing:.06em}
+.row .val{color:var(--acc)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:2px;background:var(--mute-2);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;background:var(--acc);border:1px solid var(--acc-ink);border-radius:0}
+input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acc);border:1px solid var(--acc-ink);border-radius:0}
+.hint{font-family:var(--jp);font-size:10.5px;color:var(--ink-2);line-height:1.6;margin:4px 0 6px}
+.hint b{color:var(--acc);font-weight:500}
+.kvt{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:10px}
+.kvt th{color:var(--mute);font-weight:400;text-align:left;padding:3px 0;letter-spacing:.06em}
+.kvt td{color:var(--ink-2);text-align:right;padding:3px 0 3px 6px}
+.kvt tr{border-bottom:1px solid var(--line)}
+.params{font-family:var(--mono);font-size:10px;color:var(--mute);background:var(--bg-2);border:1px solid var(--line);padding:8px;word-break:break-all;line-height:1.5;cursor:pointer}
+.params:hover{border-color:var(--acc)}
+.bottombar{grid-area:bot;display:flex;align-items:center;gap:16px;padding:0 16px;border-top:1px solid var(--line);font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.1em;white-space:nowrap;overflow:hidden}
+.bottombar .sp{flex:1}.bottombar b{color:var(--ink-2);font-weight:400}
+.toast{position:fixed;left:50%;bottom:44px;transform:translateX(-50%);font-family:var(--mono);font-size:11px;color:var(--acc-ink);background:var(--acc);padding:6px 12px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
+.toast.show{opacity:1}
+@media (max-width:880px){
+  html,body{overflow:auto}
+  #app{height:auto;min-height:100vh;grid-template-columns:minmax(0,1fr);grid-template-rows:46px auto auto 30px;grid-template-areas:"top" "stage" "aside" "bot"}
+  .stage{min-width:0;grid-template-columns:minmax(0,1fr);grid-template-rows:170px 170px auto auto 320px}
+  #phaseBox,#sumBox{border-right:0}
+  .cap.r{display:none}
+  #readBox{grid-column:1;grid-row:auto}
+  .bottombar span:last-child{display:none}
+  .aside{border-left:0;border-top:1px solid var(--line)}
+  .big .rat{font-size:24px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="brand"><span class="mark">GEN-EX</span><span class="layer-tag">L1d×L3</span></div>
+    <div class="ttl">BEATS — うなりの境界 ⁄ SP-02</div>
+    <a class="esc" href="scroll/SCROLL_BEATS_LP.html">解説 SCROLL →</a>
+    <a class="esc" href="03_consonance.html">SP-03 →</a>
+    <a class="esc" href="index.html">[ESC] INDEX</a>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="cell" id="phaseBox"><canvas id="cvP"></canvas><div class="cap">PHASE ⁄ 2 つの矢印＝2 つの音 — 向きが揃うと大きく、逆を向くと消える</div><div class="cap r" id="capTime">表示 1/4 速</div></div>
+    <div class="cell" id="sumBox"><canvas id="cvS"></canvas><div class="cap" id="capS">SUM ⁄ 足した波 — くびれの数＝1 秒に Δf 回</div></div>
+    <div class="cell" id="readBox">
+      <div class="big"><span class="rat" id="rDf">0.00</span><span class="off">Hz</span><span class="jp" id="rJp">1 秒に 0 回</span></div>
+      <div class="zone ONE" id="rZone">ONE 1 つの音</div>
+      <div class="meter"><div class="top"><span>ざらつき（頂上=1）</span><b id="mR">0.00</b></div><div class="track"><div class="fill" id="fR"></div></div></div>
+      <div class="meter"><div class="top"><span>Δf ⁄ 臨界帯域</span><b id="mCB">0.00</b></div><div class="track"><div class="fill" id="fCB"></div><i class="th" id="thB"></i><i class="th" id="thC" style="left:100%"></i></div></div>
+      <div class="beat"><i id="beatDot"></i><span>うなり <b id="mB">—</b></span></div>
+      <div class="tapv" id="tapv">TAP（T）：うなりに合わせて叩くと、数えた速さと Δf を並べる</div>
+    </div>
+    <div class="prompt" id="prompt"><span class="pj" id="pj">下の地図をドラッグ：右へ＝2 音を離す（Δf）・上へ＝高い音域。揺れ → ざらつき → 2 音の切り替わりを探す</span></div>
+    <div class="cell" id="mapBox"><canvas id="cvM"></canvas><div class="cap" id="capM">MAP ⁄ Δf × 音域 — 色＝ざらつき</div></div>
+  </div>
+
+  <div class="aside">
+    <div class="sec">
+      <div class="sh"><span class="lt">A</span>Δf — 2 音の差</div>
+      <div class="row"><label>上の音 − 下の音 <span class="val" id="vDf">0.00 Hz</span></label><input type="range" id="dfR" min="0" max="1000" step="1" value="0"></div>
+      <div class="seg" id="segDf"><button data-v="1">1</button><button data-v="3">3</button><button data-v="8">8</button><button data-v="24">24</button><button data-v="60">60</button><button data-v="150">150</button></div>
+      <div class="hint">地図のドラッグ・← → でも動く（Shift で 0.1 Hz）。0 で <b>ぴったり同じ高さ</b>。</div>
+    </div>
+    <div class="sec">
+      <div class="sh"><span class="lt">B</span>REGISTER — 下の音</div>
+      <div class="row"><label>下の音 <span class="val" id="vF0">330 Hz</span></label><input type="range" id="f0R" min="0" max="1000" step="1" value="0"></div>
+      <div class="sh" style="margin-top:12px">INTERVAL — 音程で Δf を決める</div>
+      <div class="seg" id="segIv"><button data-v="1">半音</button><button data-v="2">全音</button><button data-v="3">短3度</button><button data-v="4">長3度</button></div>
+      <div class="hint">同じ音程でも、<b>低い所ほど Δf が小さい</b>＝山に近い。低い音域の 3 度が濁るわけ。</div>
+    </div>
+    <div class="sec">
+      <div class="sh"><span class="lt">C</span>SOUND ⁄ SHOW</div>
+      <div class="grid2"><button class="btn" id="bSound">▶ SOUND</button><button class="btn" id="bAuto">◎ AUTO 75s</button></div>
+      <div class="grid2" style="margin-top:4px"><button class="btn" id="bProof">PROOF</button><button class="btn" id="bSlow">表示 1/4 速</button></div>
+      <button class="btn" id="bTap">TAP（T）— うなりに合わせて叩く</button>
+      <div class="row" style="margin-top:12px"><label>MASTER <span class="val" id="vVol">35</span></label><input type="range" id="vol" min="0" max="100" value="35"></div>
+      <div class="hint">ヘッドホン推奨。音は純音 2 つ（倍音なし）。音は常に実時間・図の動きだけ 1/4 速にできる。</div>
+    </div>
+    <div class="sec">
+      <div class="sh"><span class="lt">D</span>READOUT</div>
+      <table class="kvt" id="kv"></table>
+    </div>
+    <div class="sec">
+      <div class="sh"><span class="lt">E</span>PARAMS — クリックでコピー</div>
+      <div class="params" id="params"></div>
+      <button class="btn" id="bPaste">PASTE</button>
+    </div>
+  </div>
+
+  <div class="bottombar">
+    <span>SOUND PATTERNS ⁄ <b>SP-02</b></span><span id="botInfo">—</span><span class="sp"></span>
+    <span>← → Δf · ↑ ↓ 音域 · 0 同じ高さ · 1–4 音程 · T TAP · SPACE 音 · A 自動 · P PROOF</span>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="_law/sp02_law.js"></script>
+<script>
+(() => {
+'use strict';
+const L = window.SP02, $ = id => document.getElementById(id);
+const S = { df: 0, f0: L.F0_DEFAULT, vol: .35, sound: false, proof: false, slow: true, auto: null };
+const f1 = () => S.f0 + S.df;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let C = {};
+const readColors = () => { C = { ink: css('--ink'), ink2: css('--ink-2'), mute: css('--mute'), mute2: css('--mute-2'), line: css('--line'), acc: css('--acc'), warn: css('--warn'), fill: css('--fill'), bg: css('--bg'), mono: css('--mono'), jp: css('--jp') }; };
+
+function fit(cv) {
+  const d = devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+  if (cv.width !== Math.round(w * d) || cv.height !== Math.round(h * d)) { cv.width = Math.round(w * d); cv.height = Math.round(h * d); }
+  const g = cv.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, w, h); return [g, w, h];
+}
+const toast = m => { const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 1400); };
+
+// ── 表示の時計 τ（1/4 速のときは図だけゆっくり）。音とうなりの点は実時間
+let TAU = 0;
+
+// ── PHASE：左＝矢印の足し算（下の音に乗って見る）・右＝2 つの波を下の音にそろえて並べる
+function drawPhase() {
+  const [g, w, h] = fit($('cvP')), phi = 2 * Math.PI * S.df * TAU;
+  const R = Math.max(14, Math.min((h - 44) / 4.4, 64)), cx = 18 + R * 2.2, cy = 28 + (h - 28) / 2;
+  g.strokeStyle = C.line; g.lineWidth = 1; g.beginPath(); g.arc(cx, cy, R * 2, 0, Math.PI * 2); g.stroke();
+  const arrow = (x0, y0, x1, y1, col, lw) => {
+    g.strokeStyle = col; g.fillStyle = col; g.lineWidth = lw; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
+    const a = Math.atan2(y1 - y0, x1 - x0), L2 = Math.hypot(x1 - x0, y1 - y0); if (L2 < 3) return;
+    g.beginPath(); g.moveTo(x1, y1); g.lineTo(x1 - 7 * Math.cos(a - .4), y1 - 7 * Math.sin(a - .4)); g.lineTo(x1 - 7 * Math.cos(a + .4), y1 - 7 * Math.sin(a + .4)); g.closePath(); g.fill();
+  };
+  // 下の音の矢印は上向きに固定、上の音の矢印はその先で 1 秒に Δf 回まわる
+  const ax = cx, ay = cy - R, bx = ax + R * Math.sin(phi), by = ay - R * Math.cos(phi);
+  arrow(cx, cy, ax, ay, C.ink, 2); arrow(ax, ay, bx, by, C.mute, 2); arrow(cx, cy, bx, by, C.acc, 1.4);
+  g.font = `10px ${C.mono}`; g.fillStyle = C.mute; g.textAlign = 'center';
+  g.fillText(`和の長さ ${(2 * Math.abs(Math.cos(phi / 2))).toFixed(2)}`, cx, Math.min(h - 6, cy + R * 2 + 14));
+  if (S.proof) { g.fillStyle = C.acc; g.fillText('黄＝白＋灰', cx, cy + R * 2 + 26 > h - 4 ? 40 : cy + R * 2 + 26); }
+  // 右：波（下の音 4 周期ぶん。下の音にそろえて見ると、上の音だけがずれていく）
+  const x0 = cx + R * 2 + 26, x1 = w - 16; if (x1 - x0 < 60) return;
+  const span = 4, ratio = f1() / S.f0, hh = (h - 40) / 4, yA = 30 + hh * 0.9, yB = 30 + hh * 2.9, amp = hh * 0.7;
+  const wave = (fn, y, col, lw, a) => { g.strokeStyle = col; g.lineWidth = lw; g.beginPath(); for (let i = 0; i <= 240; i++) { const u = span * i / 240, x = x0 + (x1 - x0) * i / 240, v = fn(u); i ? g.lineTo(x, y - v * a) : g.moveTo(x, y - v * a); } g.stroke(); };
+  g.strokeStyle = C.line; g.lineWidth = 1; g.beginPath(); g.moveTo(x0, yA); g.lineTo(x1, yA); g.moveTo(x0, yB); g.lineTo(x1, yB); g.stroke();
+  wave(u => Math.sin(2 * Math.PI * u), yA, C.ink, 1.4, amp);
+  wave(u => Math.sin(2 * Math.PI * ratio * u + phi), yA, C.mute, 1.2, amp);
+  wave(u => Math.sin(2 * Math.PI * u) + Math.sin(2 * Math.PI * ratio * u + phi), yB, C.acc, 1.4, amp / 2 * 1.4);
+  g.textAlign = 'left'; g.fillStyle = C.mute;
+  g.fillText(`白 ${S.f0.toFixed(1)} Hz · 灰 ${f1().toFixed(2)} Hz`, x0, yA - amp - 4);
+  g.fillStyle = C.acc; g.fillText('足すと', x0, yB - amp * 0.7 - 6);
+}
+
+// ── SUM：足した波を時間で流す。窓＝くびれ 3 つぶん
+function sumWindow() { return S.df < 0.75 ? 4 : Math.max(0.03, Math.min(4, 3 / S.df)); }
+function drawSum() {
+  const [g, w, h] = fit($('cvS')), W = sumWindow(), fa = S.f0, fb = f1(), fm = L.mean(fa, fb);
+  const padL = 14, padR = 14, top = S.proof ? 44 : 26, bot = 22, cy = top + (h - top - bot) / 2, A = (h - top - bot) / 2 / 2.1, pw = w - padL - padR;
+  const tAt = x => TAU - W + W * (x - padL) / pw;
+  g.strokeStyle = C.line; g.lineWidth = 1; g.beginPath(); g.moveTo(padL, cy); g.lineTo(w - padR, cy); g.stroke();
+  const dense = fm * W / pw > 0.5;    // 1 ピクセルに波が半周より多い＝塗りで描く
+  g.strokeStyle = C.ink2; g.lineWidth = 1;
+  g.beginPath();
+  for (let x = padL; x <= w - padR; x++) {
+    if (dense) { // 1 列に半周以上入る＝その列の山と谷は包絡線そのもの（和＝2cos(πΔf t)·sin(2πf̄ t)）
+      const e = L.envelope(S.df, tAt(x + .5));
+      g.moveTo(x + .5, cy - e * A); g.lineTo(x + .5, cy + e * A + .5);
+    } else { const v = L.sum(fa, fb, tAt(x)); x === padL ? g.moveTo(x, cy - v * A) : g.lineTo(x, cy - v * A); }
+  }
+  g.stroke();
+  // 包絡線（ふくらみとくびれ）
+  g.strokeStyle = C.acc; g.lineWidth = 1.2; g.globalAlpha = .85;
+  for (const sg of [1, -1]) { g.beginPath(); for (let x = padL; x <= w - padR; x += 2) { const v = sg * L.envelope(S.df, tAt(x)); x === padL ? g.moveTo(x, cy - v * A) : g.lineTo(x, cy - v * A); } g.stroke(); }
+  g.globalAlpha = 1;
+  if (S.proof && S.df > 0) { // 包絡線そのものも、ゆっくりした波（2cos πΔf t）
+    g.setLineDash([4, 3]); g.strokeStyle = C.acc; g.beginPath();
+    for (let x = padL; x <= w - padR; x += 2) { const v = L.envelopeSigned(S.df, tAt(x)); x === padL ? g.moveTo(x, cy - v * A) : g.lineTo(x, cy - v * A); } g.stroke(); g.setLineDash([]);
+  }
+  // くびれの印
+  g.font = `10px ${C.mono}`; g.fillStyle = C.acc; let nd = 0;
+  if (S.df >= 0.05) { const k0 = Math.ceil((TAU - W) * S.df - 0.5), k1 = Math.floor(TAU * S.df - 0.5);
+    for (let k = k0; k <= k1 && nd < 60; k++, nd++) { const x = padL + pw * (((k + 0.5) / S.df) - (TAU - W)) / W; g.fillRect(x - 1, h - bot + 4, 2, 6); } }
+  g.fillStyle = C.mute; g.textAlign = 'right';
+  g.fillText(`窓 ${W >= 1 ? W.toFixed(1) + ' 秒' : (W * 1000).toFixed(0) + ' ms'} · くびれ ${nd} 個 → 1 秒に ${S.df.toFixed(2)} 回`, w - padR, h - 6);
+  g.textAlign = 'left';
+  if (S.proof) { g.fillStyle = C.acc; g.fillText(`sin a + sin b ＝ 2 cos(π·Δf·t) × sin(2π·f̄·t)　f̄ ＝ ${fm.toFixed(2)} Hz・Δf ＝ ${S.df.toFixed(2)} Hz`, padL, 34); }
+}
+
+// ── MAP：横＝Δf（平方根の目盛り）・縦＝下の音（対数）。色＝ざらつき
+const MP = { l: 46, r: 16, t: 26, b: 26 };
+const mapX = (w, df) => MP.l + (w - MP.l - MP.r) * Math.sqrt(Math.max(0, df) / L.DF_MAX);
+const mapY = (h, f0) => MP.t + (h - MP.t - MP.b) * (1 - Math.log(f0 / L.F0_MIN) / Math.log(L.F0_MAX / L.F0_MIN));
+const dfAt = (w, x) => L.DF_MAX * Math.pow(Math.max(0, Math.min(1, (x - MP.l) / (w - MP.l - MP.r))), 2);
+const f0At = (h, y) => L.F0_MIN * Math.pow(L.F0_MAX / L.F0_MIN, Math.max(0, Math.min(1, 1 - (y - MP.t) / (h - MP.t - MP.b))));
+let heat = null;
+function heatImage() {
+  if (heat) return heat;
+  const W = 240, H = 120, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const g = cv.getContext('2d'), im = g.createImageData(W, H);
+  for (let j = 0; j < H; j++) { const f0 = L.F0_MIN * Math.pow(L.F0_MAX / L.F0_MIN, 1 - (j + .5) / H);
+    for (let i = 0; i < W; i++) { const df = L.DF_MAX * Math.pow((i + .5) / W, 2), r = L.roughNorm(f0, df), k = (j * W + i) * 4;
+      im.data[k] = 255; im.data[k + 1] = 106; im.data[k + 2] = 61; im.data[k + 3] = Math.round(200 * Math.pow(r, 1.3)); } }
+  g.putImageData(im, 0, 0); heat = cv; return cv;
+}
+function drawMap() {
+  const [g, w, h] = fit($('cvM')), X = df => mapX(w, df), Y = f => mapY(h, f);
+  g.imageSmoothingEnabled = true; g.drawImage(heatImage(), MP.l, MP.t, w - MP.l - MP.r, h - MP.t - MP.b);
+  g.font = `10px ${C.mono}`;
+  // 揺れの帯（Δf < 15 Hz）
+  g.fillStyle = 'rgba(255,212,0,0.05)'; g.fillRect(X(L.ONE_MAX), MP.t, X(L.BEAT_MAX) - X(L.ONE_MAX), h - MP.t - MP.b);
+  g.setLineDash([4, 4]); g.strokeStyle = C.acc; g.globalAlpha = .7; g.beginPath(); g.moveTo(X(L.BEAT_MAX), MP.t); g.lineTo(X(L.BEAT_MAX), h - MP.b); g.stroke(); g.globalAlpha = 1; g.setLineDash([]);
+  // 線：いちばん粗い所（点線）・臨界帯域（実線）・音程（細い）
+  const curve = (fn, col, lw, dash) => { g.strokeStyle = col; g.lineWidth = lw; g.setLineDash(dash || []); g.beginPath();
+    for (let i = 0; i <= 80; i++) { const f = L.F0_MIN * Math.pow(L.F0_MAX / L.F0_MIN, i / 80), x = X(fn(f)), y = Y(f); i ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke(); g.setLineDash([]); };
+  L.INTERVALS.forEach(iv => { curve(f => L.dfOfInterval(f, iv.k), C.mute2, 1, [2, 3]); const f = L.F0_MAX, x = X(L.dfOfInterval(f, iv.k));
+    if (x < w - MP.r) { g.fillStyle = C.mute; g.textAlign = 'center'; g.fillText(iv.jp, x, MP.t - 6); } });
+  curve(L.dfPeak, C.warn, 1, [1, 3]); curve(L.critBand, C.ink2, 1.2);
+  g.textAlign = 'left'; g.fillStyle = C.ink2; const yl = Y(140);
+  g.fillText('臨界帯域', X(L.critBand(140)) + 6, yl);
+  g.fillStyle = C.ink2; g.fillText('点線＝いちばん粗い', X(L.dfPeak(700)) + 6, Y(700));
+  // 領域の名前
+  g.font = `600 12px ${css('--display')}`; g.globalAlpha = .9;
+  g.fillStyle = C.acc; g.textAlign = 'center'; g.fillText('BEAT', (X(L.ONE_MAX) + X(L.BEAT_MAX)) / 2, h - MP.b - 8);
+  g.fillStyle = C.ink; g.fillText('ROUGH', (X(L.BEAT_MAX) + X(L.critBand(L.F0_MIN))) / 2, h - MP.b - 8);
+  g.fillStyle = C.acc; g.fillText('TWO', (X(L.critBand(L.F0_MAX)) + w - MP.r) / 2, MP.t + 18);
+  g.globalAlpha = 1; g.font = `10px ${C.mono}`;
+  // 目盛り
+  g.fillStyle = C.mute; g.textAlign = 'center';
+  [0, 1, 3, 8, 15, 30, 60, 100, 150, 240].forEach(d => { const x = X(d); g.fillRect(x, h - MP.b, 1, 4); g.fillText(String(d), x, h - 8); });
+  g.textAlign = 'right'; [110, 220, 330, 440, 660, 880].forEach(f => { const y = Y(f); g.fillRect(MP.l - 4, y, 4, 1); g.fillText(String(f), MP.l - 7, y + 3); });
+  g.textAlign = 'left'; g.fillText('Δf Hz →', w - MP.r - 52, h - MP.b - 8 > MP.t ? h - 8 - 12 : h - 8);
+  g.save(); g.translate(12, (MP.t + h - MP.b) / 2); g.rotate(-Math.PI / 2); g.textAlign = 'center'; g.fillText('下の音 Hz', 0, 0); g.restore();
+  // いまの位置
+  const x = X(S.df), y = Y(S.f0), z = L.zone(S.f0, S.df), col = z.id === 'ROUGH' ? C.warn : z.id === 'ONE' ? C.ink2 : C.acc;
+  g.strokeStyle = col; g.lineWidth = 1; g.globalAlpha = .5; g.beginPath(); g.moveTo(x, MP.t); g.lineTo(x, h - MP.b); g.moveTo(MP.l, y); g.lineTo(w - MP.r, y); g.stroke(); g.globalAlpha = 1;
+  g.fillStyle = col; g.fillRect(x - 5, y - 5, 10, 10); g.strokeStyle = C.bg; g.strokeRect(x - 5, y - 5, 10, 10);
+}
+
+// ── 右の読み
+let lastKey = '';
+function drawRead(t) {
+  const z = L.zone(S.f0, S.df), key = [S.df.toFixed(3), S.f0.toFixed(2)].join('|');
+  if (key !== lastKey) {
+    lastKey = key;
+    $('rDf').textContent = S.df < 10 ? S.df.toFixed(2) : S.df.toFixed(1);
+    $('rJp').textContent = z.id === 'BEAT' || z.id === 'ONE' ? `1 秒に ${S.df.toFixed(S.df < 1 ? 2 : 1)} 回` : z.id === 'ROUGH' ? '速すぎて数えられない' : '別々の 2 音';
+    const zl = $('rZone'); zl.className = 'zone ' + z.id; zl.textContent = z.id + ' ' + z.jp;
+    $('mR').textContent = z.rough.toFixed(2); $('fR').style.width = Math.min(100, z.rough * 100) + '%'; $('fR').style.background = z.id === 'ROUGH' ? css('--warn') : css('--ink-2');
+    const k = S.df / z.cb; $('mCB').textContent = k.toFixed(2) + `（帯域 ${z.cb.toFixed(0)} Hz）`;
+    $('fCB').style.width = Math.min(100, k * 100) + '%'; $('thB').style.left = Math.min(100, L.BEAT_MAX / z.cb * 100) + '%';
+    $('fCB').style.background = k >= 1 ? css('--acc') : css('--ink-2');
+    $('mB').textContent = z.id === 'BEAT' ? `${S.df.toFixed(2)} Hz — 数えられる` : z.id === 'ONE' ? (S.df > 0 ? `${(1 / S.df).toFixed(1)} 秒に 1 回` : 'なし') : z.id === 'ROUGH' ? `${S.df.toFixed(1)} Hz — ざらつきに変わった` : '—（2 音に分かれた）';
+    readout(z);
+    if (!S.auto) $('pj').textContent = hintFor(z);
+    $('vDf').textContent = S.df.toFixed(2) + ' Hz'; $('dfR').value = Math.round(1000 * Math.sqrt(S.df / L.DF_MAX));
+    $('vF0').textContent = S.f0.toFixed(1) + ' Hz'; $('f0R').value = Math.round(1000 * Math.log(S.f0 / L.F0_MIN) / Math.log(L.F0_MAX / L.F0_MIN));
+    $('params').textContent = JSON.stringify({ df: +S.df.toFixed(3), f0: +S.f0.toFixed(2) });
+    $('botInfo').innerHTML = `LOW <b>${S.f0.toFixed(1)} Hz</b> · HIGH <b>${f1().toFixed(2)} Hz</b> · ${L.centsOf(S.f0, S.df).toFixed(1)}¢`;
+    document.querySelectorAll('#segDf button').forEach(b => b.classList.toggle('on', Math.abs(+b.dataset.v - S.df) < 0.005));
+    document.querySelectorAll('#segIv button').forEach(b => b.classList.toggle('on', Math.abs(L.dfOfInterval(S.f0, +b.dataset.v) - S.df) < 0.01));
+  }
+  // うなりの点：実時間で明滅（音と同じ速さ）。数えられない速さでは止める
+  const on = z.id === 'BEAT' || (z.id === 'ONE' && S.df > 0);
+  $('beatDot').style.background = on ? `rgba(255,212,0,${Math.pow(Math.cos(Math.PI * S.df * t), 2).toFixed(3)})` : z.id === 'ROUGH' ? 'rgba(255,106,61,.55)' : 'transparent';
+  $('beatDot').style.borderColor = z.id === 'ROUGH' ? css('--warn') : css('--acc');
+}
+function hintFor(z) {
+  if (z.id === 'ONE') return S.df === 0 ? 'ぴったり同じ高さ＝1 つの音。地図を右へ少しだけ動かすと、揺れ始める' : `ほぼ 1 つの音：揺れは ${(1 / S.df).toFixed(1)} 秒に 1 回`;
+  if (z.id === 'BEAT') return `揺れる 1 音：1 秒に ${S.df.toFixed(1)} 回ふくらんでくびれる。T で一緒に叩いてみる。15 Hz を超えると数えられなくなる`;
+  if (z.id === 'ROUGH') return `ざらつく：揺れが速すぎて数えられない。いちばん粗いのは約 ${L.dfPeak(S.f0).toFixed(0)} Hz。臨界帯域 ${z.cb.toFixed(0)} Hz を超えると 2 音に分かれる`;
+  return `2 つに分かれる：臨界帯域（${z.cb.toFixed(0)} Hz）の外。耳の中で 2 音が別の場所で聞かれている`;
+}
+function readout(z) {
+  const rows = [
+    ['下の音', S.f0.toFixed(2) + ' Hz'], ['上の音', f1().toFixed(2) + ' Hz'], ['Δf', S.df.toFixed(3) + ' Hz'], ['音程', L.centsOf(S.f0, S.df).toFixed(1) + '¢'],
+    ['平均の高さ f̄', L.mean(S.f0, f1()).toFixed(2) + ' Hz'], ['いちばん粗い Δf', L.dfPeak(S.f0).toFixed(1) + ' Hz'], ['臨界帯域', z.cb.toFixed(1) + ' Hz'],
+    ['ざらつき（頂上=1）', z.rough.toFixed(3)], ['境界の読み', z.id],
+  ];
+  $('kv').innerHTML = rows.map(([a, v]) => `<tr><th>${a}</th><td>${v}</td></tr>`).join('');
+}
+
+// ── TAP：叩いた間隔の平均から「数えた速さ」
+let taps = [];
+function tap() {
+  const now = performance.now() / 1000;
+  if (taps.length && now - taps[taps.length - 1] > 2.5) taps = [];
+  taps.push(now); if (taps.length > 9) taps.shift();
+  $('bTap').classList.add('on'); clearTimeout(tap.t); tap.t = setTimeout(() => $('bTap').classList.remove('on'), 90);
+  showTap();
+}
+function tapRate() { return taps.length >= 3 ? (taps.length - 1) / (taps[taps.length - 1] - taps[0]) : null; }
+function showTap() {
+  const r = tapRate(), z = L.zone(S.f0, S.df);
+  if (r == null) { $('tapv').innerHTML = `TAP：あと ${3 - taps.length} 回`; return; }
+  const pct = S.df > 0 ? r / S.df * 100 : 0;
+  $('tapv').innerHTML = `TAP：あなた <b>${r.toFixed(2)} 回/秒</b> ⁄ Δf <b>${S.df.toFixed(2)} Hz</b>` + (S.df > 0 ? `（${pct.toFixed(0)}%）` : '') +
+    (z.id === 'ROUGH' || z.id === 'TWO' ? '<br>15 Hz を超えると、もう数えられない' : Math.abs(pct - 50) < 8 ? '<br>半分＝ふくらみ 2 つで 1 回と数えている' : '');
+}
+
+// ── 音：純音 2 つ。周波数は滑らかに追従
+let AC = null, master = null, OS = null;
+const LEVEL = 0.18;
+function ensureAudio() {
+  if (!AC) {
+    AC = new AudioContext(); master = AC.createGain(); master.gain.value = 0;
+    const lim = AC.createDynamicsCompressor(); lim.threshold.value = -10; lim.ratio.value = 20; lim.attack.value = .003; lim.release.value = .15;
+    master.connect(lim).connect(AC.destination);
+    OS = [0, 1].map(() => { const o = AC.createOscillator(), g = AC.createGain(); g.gain.value = LEVEL; o.connect(g).connect(master); o.start(); return o; });
+  }
+  if (AC.state === 'suspended') AC.resume();
+  updateAudio(true);
+}
+function updateAudio(now) {
+  if (!AC) return;
+  const t = AC.currentTime, tc = now ? 0.005 : 0.03;
+  OS[0].frequency.setTargetAtTime(S.f0, t, tc); OS[1].frequency.setTargetAtTime(f1(), t, tc);
+  master.gain.setTargetAtTime(S.sound ? S.vol : 0, t, S.sound ? 0.08 : 0.15);
+}
+function setSound(on) { S.sound = on; if (on) ensureAudio(); else updateAudio(); $('bSound').classList.toggle('on', on); $('bSound').textContent = on ? '■ SOUND' : '▶ SOUND'; }
+
+// ── 状態の変更
+function setDf(d) { S.df = Math.max(0, Math.min(L.DF_MAX, d)); updateAudio(); }
+function setF0(f) { S.f0 = Math.max(L.F0_MIN, Math.min(L.F0_MAX, f)); updateAudio(); }
+let glide = null, NOW = performance.now(); // NOW＝描画の時計（自動上演・グライドもこれで測る）
+function glideTo(df, f0, d = 600) { glide = { d0: S.df, d1: df, f0a: S.f0, f0b: f0 == null ? S.f0 : f0, t0: NOW, d }; }
+
+// ── 自動上演（75 秒）：1 つの音 → 揺れ → ざらつき → 2 音 → 音域で 3 度の濁りが変わる
+const TOUR = [
+  { at: 0, df: 0, f0: 330, say: '同じ高さの 2 音＝1 つの音。ここから上の音だけを少しずつ上げる' },
+  { at: 5, df: 1, say: '1 Hz ずらす：1 秒に 1 回ふくらんでくびれる。上の矢印が 1 秒で一周する' },
+  { at: 14, df: 3, say: '3 Hz：1 秒に 3 回。T で一緒に叩ける' },
+  { at: 22, df: 8, say: '8 Hz：まだ数えられる。ぎりぎり' },
+  { at: 30, df: 24, say: '24 Hz：もう数えられない。揺れがざらつきに変わる＝ここがいちばん粗い' },
+  { at: 39, df: 55, say: '55 Hz：ざらつきが薄れていく' },
+  { at: 46, df: 130, say: '130 Hz：臨界帯域（約 95 Hz）を超えて、2 つの音に分かれる' },
+  { at: 54, df: L.dfOfInterval(110, 4), f0: 110, say: '低い所の長3度（110 Hz・Δf 29 Hz）：ざらつきの真ん中＝低音の 3 度が濁るわけ' },
+  { at: 63, df: L.dfOfInterval(440, 4), f0: 440, say: '高い所の長3度（440 Hz・Δf 114 Hz）：同じ 3 度でも 2 つに分かれて澄む' },
+  { at: 71, df: 1, f0: 330, say: 'もう一度 1 Hz へ。終わり' },
+  { at: 76 },
+];
+function startAuto() { S.auto = { t0: NOW, i: -1 }; $('bAuto').classList.add('on'); $('prompt').classList.add('auto'); if (!S.sound) toast('SOUND を押すと音も一緒に'); }
+function stopAuto() { S.auto = null; glide = null; $('bAuto').classList.remove('on'); $('prompt').classList.remove('auto'); lastKey = ''; }
+function tickAuto(now) {
+  const el = (now - S.auto.t0) / 1000; let i = S.auto.i;
+  while (i + 1 < TOUR.length && el >= TOUR[i + 1].at) { i++; const k = TOUR[i];
+    if (k.say === undefined) { stopAuto(); return; }
+    glide = { d0: S.df, d1: k.df, f0a: S.f0, f0b: k.f0 == null ? S.f0 : k.f0, t0: now, d: k.at === 0 ? 1 : 2600 };
+    $('pj').textContent = `AUTO ${String(Math.floor(k.at)).padStart(2, '0')}s ⁄ ${k.say}`; }
+  S.auto.i = i;
+}
+
+// ── ループ（step は 1 コマ分。検証では __SP.step で時間を自分で進める）
+function step(now, dt) {
+  NOW = now; const t = now / 1000;
+  TAU += dt * (S.slow ? 0.25 : 1);
+  if (S.auto) tickAuto(now);
+  if (glide) { const k = Math.min(1, (now - glide.t0) / glide.d), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    // Δf は平方根、音域は対数で補間（地図の上をまっすぐ歩く）
+    const sd = Math.sqrt(glide.d0) + (Math.sqrt(glide.d1) - Math.sqrt(glide.d0)) * e;
+    setF0(glide.f0a * Math.pow(glide.f0b / glide.f0a, e)); setDf(sd * sd); if (k >= 1) glide = null; }
+  drawPhase(); drawSum(); drawMap(); drawRead(t);
+}
+let manual = false, lastT = 0;
+function frame(now) {
+  if (!manual) { const t = now / 1000, dt = Math.min(0.05, t - (lastT || t)); lastT = t; step(now, dt); }
+  requestAnimationFrame(frame);
+}
+
+// ── 入力
+const cvM = $('cvM');
+function mapAt(e) { const b = cvM.getBoundingClientRect(), x = e.clientX - b.left, y = e.clientY - b.top; setDf(dfAt(b.width, x)); setF0(f0At(b.height, y)); }
+cvM.addEventListener('pointerdown', e => { stopAuto(); cvM.setPointerCapture(e.pointerId); mapAt(e); cvM.onpointermove = mapAt; });
+cvM.addEventListener('pointerup', () => { cvM.onpointermove = null; });
+cvM.addEventListener('wheel', e => { e.preventDefault(); stopAuto(); setDf(S.df + Math.sign(-e.deltaY) * (e.shiftKey ? 0.01 : 0.1)); }, { passive: false });
+$('dfR').oninput = e => { stopAuto(); setDf(L.DF_MAX * Math.pow(e.target.value / 1000, 2)); };
+$('f0R').oninput = e => { stopAuto(); setF0(L.F0_MIN * Math.pow(L.F0_MAX / L.F0_MIN, e.target.value / 1000)); };
+document.querySelectorAll('#segDf button').forEach(b => b.onclick = () => { stopAuto(); glideTo(+b.dataset.v); });
+document.querySelectorAll('#segIv button').forEach(b => b.onclick = () => { stopAuto(); glideTo(L.dfOfInterval(S.f0, +b.dataset.v)); });
+$('bSound').onclick = () => setSound(!S.sound);
+$('bAuto').onclick = () => S.auto ? stopAuto() : startAuto();
+$('bProof').onclick = () => { S.proof = !S.proof; $('bProof').classList.toggle('on', S.proof); };
+$('bSlow').onclick = () => { S.slow = !S.slow; const s = S.slow ? '表示 1/4 速' : '表示 実時間'; $('bSlow').textContent = s; $('bSlow').classList.toggle('on', !S.slow); $('capTime').textContent = s; };
+$('bTap').onclick = tap;
+$('vol').oninput = e => { S.vol = e.target.value / 100; $('vVol').textContent = e.target.value; updateAudio(); };
+$('params').onclick = async e => { const el = e.currentTarget; try { await navigator.clipboard.writeText(el.textContent); toast('COPIED'); } catch (err) { toast('コピーできない環境'); } };
+$('bPaste').onclick = async () => {
+  try { const o = JSON.parse(await navigator.clipboard.readText()); applyParams(o); toast('PASTED'); }
+  catch (err) { const s = prompt('PARAMS を貼り付け'); if (s) try { applyParams(JSON.parse(s)); toast('PASTED'); } catch (e2) { toast('読めない PARAMS'); } }
+};
+function applyParams(o) { stopAuto(); if (isFinite(+o.f0)) setF0(+o.f0); if (isFinite(+o.df)) setDf(+o.df); }
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  const k = e.key;
+  if (k === 'ArrowRight' || k === 'ArrowLeft') { e.preventDefault(); stopAuto(); setDf(S.df + (k === 'ArrowRight' ? 1 : -1) * (e.shiftKey ? 0.1 : 1)); }
+  else if (k === 'ArrowUp' || k === 'ArrowDown') { e.preventDefault(); stopAuto(); setF0(S.f0 * Math.pow(2, (k === 'ArrowUp' ? 1 : -1) / 12)); }
+  else if (k === '0') { stopAuto(); glideTo(0); }
+  else if ('1234'.includes(k) && k.length === 1) { stopAuto(); glideTo(L.dfOfInterval(S.f0, +k)); }
+  else if (k === 't' || k === 'T') { if (!e.repeat) tap(); }
+  else if (k === ' ') { e.preventDefault(); setSound(!S.sound); }
+  else if (k === 'a' || k === 'A') S.auto ? stopAuto() : startAuto();
+  else if (k === 'p' || k === 'P') $('bProof').click();
+});
+
+readColors();
+document.fonts && document.fonts.ready.then(readColors);
+requestAnimationFrame(frame);
+
+// ── 検証フック（Claude 側）
+window.__SP = {
+  law: L, state: S, set: (df, f0) => { stopAuto(); glide = null; if (f0 != null) setF0(f0); setDf(df); }, startAuto, stopAuto, setSound, tap, tapRate, taps: () => taps,
+  audio: () => AC && { state: AC.state, master: +master.gain.value.toFixed(3), freqs: OS.map(o => +o.frequency.value.toFixed(3)) },
+  tau: () => TAU,
+  // 手動の時計：manual(true) で rAF を止め、step(秒) で好きなだけ進める
+  manual: on => { manual = on; },
+  step: (sec = 1 / 60, fps = 60) => { for (let i = 0, n = Math.max(1, Math.round(sec * fps)); i < n; i++) step(NOW + 1000 / fps, 1 / fps); },
+};
+})();
+</script>
+</body>
+</html>

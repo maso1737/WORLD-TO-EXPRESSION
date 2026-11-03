@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOUND PATTERNS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=IBM+Plex+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:"Bank Gothic";src:url("../cognitive/fonts/bank-gothic-light-bt.ttf") format("truetype");font-weight:300 600;font-display:swap}
+@font-face{font-family:"Square 721";src:url("../cognitive/fonts/Square_721_BT.ttf") format("truetype");font-weight:400 700;font-display:swap}
+:root{
+  --bg:#0a0a0a;--bg-2:#121212;--ink:#f2f2ef;--ink-2:#cfcfca;--mute:#9a9a93;--mute-2:#3a3a37;
+  --line:#2a2a27;--acc:#ffd400;--acc-ink:#0a0a0a;--warn:#ff6a3d;--grid:rgba(242,242,239,0.035);
+  --mono:"JetBrains Mono","IBM Plex Mono",ui-monospace,monospace;
+  --display:"Bank Gothic","Square 721","Space Grotesk",system-ui,sans-serif;
+  --sans:"Square 721","Bank Gothic","Helvetica Neue",system-ui,sans-serif;
+  --jp:"IBM Plex Sans JP","Noto Sans JP",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);min-height:100vh;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+.top{display:flex;align-items:center;gap:18px;height:46px;padding:0 16px;border-bottom:1px solid var(--line)}
+.mark{font-family:var(--display);font-weight:600;letter-spacing:.14em;font-size:14px}
+.tag{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.16em;flex:1}
+.esc{font-family:var(--mono);font-size:10px;color:var(--mute);text-decoration:none;border:1px solid var(--line);padding:4px 8px;letter-spacing:.12em}
+.esc:hover{color:var(--acc);border-color:var(--acc)}
+.wrap{max-width:1080px;margin:0 auto;padding:40px 16px 60px}
+h1{font-family:var(--display);font-weight:600;font-size:44px;letter-spacing:.08em;line-height:1}
+.lead{font-family:var(--jp);font-size:13px;line-height:1.9;color:var(--ink-2);margin:14px 0 8px;max-width:720px}
+.lead b{color:var(--acc);font-weight:500}
+.legend{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.08em;margin-bottom:26px}
+.list{display:grid;gap:10px}
+.row{display:grid;grid-template-columns:80px minmax(0,1fr) 300px;gap:18px;align-items:center;border:1px solid var(--line);background:rgba(10,10,10,.7);padding:16px 18px}
+.row.plan{opacity:.55}
+.no{font-family:var(--display);font-weight:600;font-size:22px;letter-spacing:.06em;color:var(--acc)}
+.row.plan .no{color:var(--mute)}
+.ttl{font-family:var(--display);font-weight:600;font-size:16px;letter-spacing:.1em}
+.jp{font-family:var(--jp);font-size:12px;color:var(--ink-2);margin-top:4px}
+.q{font-family:var(--jp);font-size:11.5px;color:var(--mute);margin-top:6px;line-height:1.7}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.pair a,.pair span{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-decoration:none;border:1px solid var(--line);padding:10px;color:var(--ink-2);display:block}
+.pair a small,.pair span small{display:block;font-size:9px;color:var(--mute);margin-top:3px;letter-spacing:.04em;font-family:var(--jp)}
+.pair a:hover{border-color:var(--acc);color:var(--acc)}
+.pair a.lp{border-color:var(--acc);color:var(--acc)}
+.pair a.lp:hover{background:var(--acc);color:var(--acc-ink)}
+.pair a.lp:hover small{color:var(--acc-ink)}
+.pair span{color:var(--mute-2);border-style:dashed}
+@media (max-width:760px){.row{grid-template-columns:56px minmax(0,1fr)}.pair{grid-column:1 / -1}h1{font-size:32px}}
+</style>
+</head>
+<body>
+<div class="top"><span class="mark">GEN-EX</span><span class="tag">WORLD TO EXPRESSION ⁄ L1d 音響</span><a class="esc" href="PLAN_SOUND_PATTERNS.md">PLAN</a></div>
+<div class="wrap">
+  <h1>SOUND PATTERNS</h1>
+  <p class="lead">音を手で触る教材。1 本が 1 つの「境界」（数値をまたぐと聞こえ方が切り替わる所）を扱う。<br>
+  各教材は <b>APP</b>（自分で触って確かめる）と <b>SCROLL</b>（スクロールで仕組みを読む・数式つき）の 2 本で 1 組。どちらから入ってもいい。</p>
+  <div class="legend">APP＝触る ⁄ SCROLL＝読む ⁄ 点線＝まだ無い</div>
+
+  <div class="list">
+    <div class="row plan"><div class="no">01</div><div><div class="ttl">HARMONIC LADDER</div><div class="jp">倍音列</div><div class="q">1 つの音の中には、何本の音が重なっている？</div></div>
+      <div class="pair"><span>APP<small>設計のみ</small></span><span>SCROLL<small>—</small></span></div></div>
+
+    <div class="row"><div class="no">02</div><div><div class="ttl">BEATS</div><div class="jp">うなり</div><div class="q">近い 2 つの音は、なぜ揺れる？ 揺れ → ざらつき → 2 つの音、の境目。不協和の違和感の正体。</div></div>
+      <div class="pair"><a href="02_beats.html">APP →<small>地図をドラッグして探す</small></a><a class="lp" href="scroll/SCROLL_BEATS_LP.html">SCROLL →<small>8 章・音つき</small></a></div></div>
+
+    <div class="row"><div class="no">03</div><div><div class="ttl">CONSONANCE</div><div class="jp">協和比</div><div class="q">「合ってる感じ」はどこから来る？ 倍音の重なりと、比の単純さ。</div></div>
+      <div class="pair"><a href="03_consonance.html">APP →<small>比を連続で動かす</small></a><a class="lp" href="scroll/SCROLL_CONSONANCE_LP.html">SCROLL →<small>8 章・音つき</small></a></div></div>
+
+    <div class="row plan"><div class="no">04</div><div><div class="ttl">STANDING WAVE</div><div class="jp">定在波</div><div class="q">弦が鳴ってよい高さは、なぜ決まっている？</div></div>
+      <div class="pair"><span>APP<small>設計のみ</small></span><span>SCROLL<small>—</small></span></div></div>
+
+    <div class="row plan"><div class="no">05</div><div><div class="ttl">CHLADNI</div><div class="jp">クラドニ図形</div><div class="q">音で砂が模様になる瞬間。</div></div>
+      <div class="pair"><span>APP<small>設計のみ</small></span><span>SCROLL<small>—</small></span></div></div>
+
+    <div class="row plan"><div class="no">06</div><div><div class="ttl">UP &amp; DOWN</div><div class="jp">音の高さと上下</div><div class="q">「高い音＝上」は、音の性質？</div></div>
+      <div class="pair"><span>APP<small>設計のみ</small></span><span>SCROLL<small>—</small></span></div></div>
+  </div>
+</div>
+</body>
+</html>
