@@ -302,8 +302,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
   </div>
 </div>
 
+<script src="_law/ee01_bifurcation.js"></script>
 <script>
 "use strict";
+/* logistic, detectPeriodOf, lyapTerm, mapCounts, FEIG, R_MIN/R_MAX live in _law/ee01_bifurcation.js — shared with scroll/SCROLL_BIFURCATION_LP.html */
 /* ══════════════════════════════════════════════════════════════
    STATE
    ══════════════════════════════════════════════════════════════ */
@@ -320,7 +322,6 @@ const state = {
   paused: false,
   idle: true,             // attract-drift until first user input
 };
-const R_MIN = 2.5, R_MAX = 4.0;
 const flashAmp = reduceMotion ? 0.5 : 1.0;
 if (reduceMotion && state.genPerSec > 12) state.genPerSec = 12;
 
@@ -374,29 +375,18 @@ let hist = [];          // recent x values
 let lyapBuf = [];       // recent ln|r(1-2x)| terms
 let period = 1, lambda = 0;
 
-function detectPeriod(){
-  const n = hist.length;
-  for (let p=1; p<=32; p++){
-    if (n < 3*p+1) break;
-    let ok = true;
-    for (let k=1; k<=3*p; k++){
-      if (Math.abs(hist[n-k] - hist[n-k-p]) > 1e-4){ ok=false; break; }
-    }
-    if (ok) return p;
-  }
-  return 0; // none => chaos/edge, decided by lambda
-}
+function detectPeriod(){ return detectPeriodOf(hist); } // 0 => chaos/edge, decided by lambda
 
 /* one generation tick — advance every particle once */
 function tick(){
   const r = state.r;
   for (const p of P){
-    p.x = r * p.x * (1 - p.x);
+    p.x = logistic(r, p.x);
     p.flash = flashAmp;                 // pulse
   }
   const h = P[0].x;
   hist.push(h); if (hist.length > 220) hist.shift();
-  const term = Math.log(Math.abs(r*(1-2*h)) + 1e-12);
+  const term = lyapTerm(r, h);
   lyapBuf.push(term); if (lyapBuf.length > 500) lyapBuf.shift();
   lambda = lyapBuf.reduce((a,b)=>a+b,0) / lyapBuf.length;
   period = detectPeriod();
@@ -571,15 +561,7 @@ function renderMapChunk(){
   for (let c=0;c<cols;c++){
     const col = mapCol + c;
     const r = w0 + (col/MW)*span;
-    const counts = new Uint16Array(MH);
-    let x = 0.31;
-    for (let i=0;i<300;i++) x = r*x*(1-x);          // warm-up
-    let maxc = 1;
-    for (let i=0;i<200;i++){
-      x = r*x*(1-x);
-      let yi = ((1-x)*MH)|0; if (yi<0)yi=0; else if(yi>=MH)yi=MH-1;
-      counts[yi]++; if (counts[yi]>maxc) maxc=counts[yi];
-    }
+    const counts = mapCounts(r, MH);
     for (let y=0;y<MH;y++){
       const cval = counts[y];
       const a = cval? Math.min(1, Math.pow(cval/6, 0.6)) : 0;
@@ -597,10 +579,6 @@ function pushFootprint(r){
   const n = footprints.length;
   if (n===0 || Math.abs(footprints[n-1]-r) > 0.0008){ footprints.push(r); if (footprints.length>4000) footprints.shift(); }
 }
-const FEIG = [
-  {r:3.0,     l:'r₁'}, {r:3.44949, l:'r₂'}, {r:3.54409, l:'r₃'},
-  {r:3.56441, l:'r₄'}, {r:3.569946,l:'r∞'}
-];
 function rToX(r){ const [w0,w1]=state.mapWindow; return (r-w0)/(w1-w0)*MW; }
 function drawOverlay(){
   octx.clearRect(0,0,MW,MH);

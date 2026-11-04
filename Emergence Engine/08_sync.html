@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>EE_08 // SYNC</title>
+<style>
+/* ══════════════════════════════════════════════════════════════
+   EMERGENCE ENGINE // EE_08 — SYNC (coupled oscillators / spontaneous synchronization)
+   KINETIC STAGE design system + EE overrides (SPEC EE-01 §2)
+   NOIR base · ice=data · gold=labels & the world's edge · rouge=here&now (your hand)
+   ══════════════════════════════════════════════════════════════ */
+:root{
+  --rouge:#FF4FA8; --ice:#5AE9FF; --gold:#FFD27A; --lavender:#B58EFF;
+  --white:#F8EFFF; --noir:#070707;
+  --mono:'IBM Plex Mono',monospace;
+  --disp:'Barlow Condensed',sans-serif;
+  --orn:'Cormorant Garamond',serif;
+  --jp:'Noto Sans JP',sans-serif;
+  --jp-serif:'Noto Serif JP',serif;
+  --mute:rgba(181,142,255,0.62);      /* 二次テキスト下限（既存規約） */
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;background:var(--noir);color:var(--white);
+  font-family:var(--mono);overflow:hidden;-webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;}
+
+#app{display:grid;height:100vh;width:100vw;}
+body.naked #app{grid-template-rows:1fr;grid-template-columns:1fr;}
+body.naked #topbar,body.naked #side,body.naked #graphwrap,body.naked #bottombar{display:none;}
+body.naked #stage{grid-column:1/-1;grid-row:1/-1;}
+body.naked .stage-deco{opacity:0;}
+body.revealed #app{grid-template-rows:44px 1fr 130px 44px;grid-template-columns:1fr 300px;}
+body.revealed #topbar{grid-area:1/1/2/-1;}
+body.revealed #stage {grid-area:2/1/3/2;}
+body.revealed #graphwrap{grid-area:3/1/4/2;}
+body.revealed #side  {grid-area:2/2/4/3;}
+body.revealed #bottombar{grid-area:4/1/5/-1;}
+
+#stage{position:relative;overflow:hidden;background:var(--noir);touch-action:none;cursor:crosshair;}
+#world{display:block;width:100%;height:100%;}
+#over{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+
+.stage-deco{position:absolute;inset:0;pointer-events:none;transition:opacity .4s ease;z-index:3;}
+.corner{position:absolute;width:14px;height:14px;}
+.corner::before,.corner::after{content:'';position:absolute;background:linear-gradient(90deg,var(--gold),var(--rouge));box-shadow:0 0 6px rgba(255,79,168,.4);}
+.corner::before{width:100%;height:1px;} .corner::after{width:1px;height:100%;}
+.corner.tl{top:10px;left:10px;} .corner.tr{top:10px;right:10px;transform:scaleX(-1);}
+.corner.bl{bottom:10px;left:10px;transform:scaleY(-1);} .corner.br{bottom:10px;right:10px;transform:scale(-1);}
+.po{position:absolute;top:12px;right:16px;text-align:right;}
+.po-num{font-family:var(--orn);font-style:italic;font-weight:700;font-size:clamp(40px,6vw,72px);line-height:1;letter-spacing:-.03em;
+  color:var(--ice);filter:drop-shadow(0 0 16px rgba(90,233,255,.35));}
+.po-en{font-family:var(--orn);font-style:italic;font-weight:700;font-size:clamp(14px,2vw,22px);color:var(--gold);line-height:1;}
+.po-jp{font-family:var(--jp-serif);font-size:11px;color:var(--mute);margin-top:5px;letter-spacing:.22em;}
+.stage-bignum{position:absolute;bottom:-38px;left:-8px;font-family:var(--orn);font-style:italic;font-weight:700;
+  font-size:clamp(160px,26vw,340px);color:transparent;-webkit-text-stroke:1.5px rgba(90,233,255,.10);line-height:1;}
+
+#topbar{border-bottom:1px solid rgba(255,210,122,.12);display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;font-size:10px;color:rgba(248,239,255,.5);letter-spacing:.22em;background:rgba(255,255,255,.012);}
+#topbar a{border:1px solid rgba(255,210,122,.3);color:var(--gold);text-decoration:none;padding:2px 8px;letter-spacing:.2em;}
+#topbar a:hover{background:rgba(255,210,122,.1);}
+#bottombar{border-top:1px solid rgba(255,210,122,.12);display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;font-size:9px;color:var(--mute);letter-spacing:.18em;}
+#bottombar #status.hot{color:var(--rouge);text-shadow:0 0 6px rgba(255,79,168,.4);}
+.kbd{background:rgba(255,79,168,.08);border:1px solid rgba(255,79,168,.35);color:var(--rouge);
+  font-family:var(--mono);font-size:8px;padding:1px 5px;border-radius:2px;letter-spacing:.1em;}
+#sc-open-btn{cursor:pointer;color:var(--mute);font-size:9px;letter-spacing:.25em;padding:2px 8px;
+  border:1px solid rgba(255,210,122,.25);border-radius:2px;transition:all .15s;}
+#sc-open-btn:hover{color:var(--gold);border-color:var(--gold);background:rgba(255,210,122,.06);}
+
+#graphwrap{position:relative;border-top:1px solid rgba(255,210,122,.1);background:var(--noir);overflow:hidden;}
+#graph{position:absolute;inset:0;width:100%;height:100%;display:block;}
+#graph-lbl{position:absolute;top:4px;left:8px;font-size:8px;letter-spacing:.32em;color:var(--mute);pointer-events:none;}
+
+#side{display:flex;flex-direction:column;overflow-y:auto;background:rgba(255,255,255,.015);border-left:1px solid rgba(255,210,122,.08);}
+#side::-webkit-scrollbar{width:2px;} #side::-webkit-scrollbar-thumb{background:var(--rouge);}
+.sp{border-bottom:1px solid rgba(181,142,255,.08);padding:13px 15px;flex-shrink:0;}
+.spl{font-size:9px;letter-spacing:.4em;color:var(--mute);margin-bottom:10px;}
+.tr{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;font-size:10px;color:rgba(248,239,255,.72);letter-spacing:.05em;gap:8px;}
+.tr:last-child{margin-bottom:0;}
+.tr > span:first-child{min-width:62px;}
+.sl{font-size:9px;color:var(--mute);letter-spacing:.12em;white-space:nowrap;min-width:44px;text-align:right;}
+input[type=range]{-webkit-appearance:none;flex:1;height:2px;background:rgba(255,255,255,.12);outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),var(--rouge));box-shadow:0 0 8px rgba(255,79,168,.5);cursor:pointer;}
+input[type=range]:disabled{opacity:.3;}
+.data-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(181,142,255,.08);font-size:10px;}
+.data-row:last-child{border-bottom:none;}
+.dk{color:var(--mute);letter-spacing:.05em;}
+.dv{color:var(--gold);font-weight:600;font-variant-numeric:tabular-nums;}
+.dv.neon{color:var(--ice);text-shadow:0 0 6px rgba(90,233,255,.45);}
+#badge{font-size:9px;letter-spacing:.2em;padding:2px 8px;border-radius:2px;border:1px solid;}
+#badge.gas{color:var(--gold);border-color:rgba(255,210,122,.4);}
+#badge.edge{color:var(--rouge);border-color:rgba(255,79,168,.45);}
+#badge.mill{color:var(--gold);border-color:rgba(255,210,122,.6);box-shadow:0 0 10px rgba(255,210,122,.3);}
+#badge.flock{color:var(--ice);border-color:rgba(90,233,255,.5);box-shadow:0 0 10px rgba(90,233,255,.3);}
+/* the three rules */
+.rule{border:1px solid rgba(181,142,255,.14);border-radius:2px;padding:8px 9px 7px;margin-bottom:7px;}
+.rule:last-of-type{margin-bottom:0;}
+.rule.off{opacity:.45;}
+.rule-h{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.rule-h .n{font-family:var(--orn);font-style:italic;font-weight:700;font-size:18px;line-height:1;width:12px;}
+.rule-h .nm{font-size:10px;letter-spacing:.2em;flex:1;}
+.rule-h .jp{display:block;font-family:var(--jp);font-size:9px;letter-spacing:.06em;color:var(--mute);margin-top:2px;}
+.rule .tr{margin:0;}
+.rule.sep .n,.rule.sep .nm{color:var(--gold);}
+.rule.ali .n,.rule.ali .nm{color:var(--ice);}
+.rule.coh .n,.rule.coh .nm{color:var(--lavender);}
+.rule-cap{font-family:var(--jp);font-size:9px;color:var(--mute);letter-spacing:.08em;line-height:1.7;margin-top:9px;}
+.rule-cap b{color:var(--gold);font-family:var(--mono);font-weight:600;}
+/* presets */
+.walkgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.wb{font-size:8.5px;letter-spacing:.12em;padding:7px 4px;border:1px solid rgba(90,233,255,.25);color:var(--ice);
+  background:rgba(90,233,255,.04);cursor:pointer;border-radius:2px;transition:all .15s;text-align:center;}
+.wb:hover{background:rgba(90,233,255,.14);box-shadow:0 0 8px rgba(90,233,255,.25);}
+.wb i{display:block;font-style:normal;font-family:var(--jp);color:var(--mute);font-size:8px;margin-top:3px;letter-spacing:.04em;}
+.wb.on{border-color:var(--rouge);box-shadow:0 0 8px rgba(255,79,168,.3);}
+.tg{width:34px;height:17px;background:rgba(255,255,255,.07);border-radius:9px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;}
+.tg.on{background:linear-gradient(90deg,var(--rouge),#B850FF);box-shadow:0 0 10px rgba(255,79,168,.45);}
+.tg::after{content:'';position:absolute;width:13px;height:13px;border-radius:50%;background:#fff;top:2px;left:2px;transition:left .2s;}
+.tg.on::after{left:19px;}
+.hand-cap{font-family:var(--jp);font-size:9px;color:var(--mute);letter-spacing:.08em;line-height:1.7;}
+.hand-cap b{color:var(--rouge);font-weight:500;} .hand-cap em{color:var(--gold);font-style:normal;}
+.cpg{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.ed-btn{background:rgba(255,79,168,.05);border:1px solid rgba(255,79,168,.3);color:var(--rouge);font-family:var(--mono);
+  font-size:9px;letter-spacing:.15em;padding:8px;cursor:pointer;border-radius:2px;transition:all .15s;text-align:center;}
+.ed-btn:hover{background:rgba(255,79,168,.14);box-shadow:0 0 8px rgba(255,79,168,.25);}
+.ed-btn.ok{background:rgba(90,233,255,.18);border-color:var(--ice);color:var(--ice);}
+.ed-btn.err{background:rgba(255,79,168,.22);border-color:var(--rouge);color:#fff;}
+
+#naked-hint{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);font-size:8px;letter-spacing:.5em;
+  color:rgba(90,233,255,.9);opacity:0;transition:opacity 1.2s ease;pointer-events:none;z-index:20;}
+#naked-hint.show{opacity:.25;}
+
+#shortcut-modal{display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.85);align-items:center;justify-content:center;}
+#shortcut-modal.open{display:flex;}
+#shortcut-box{background:linear-gradient(180deg,#0d0d0d,#050505);border:1px solid rgba(255,210,122,.4);border-radius:6px;
+  width:min(520px,92vw);max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.7),0 0 60px rgba(90,233,255,.1);}
+.sc-header{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid rgba(255,210,122,.18);
+  font-size:10px;letter-spacing:.4em;color:var(--gold);}
+.sc-header span{cursor:pointer;color:var(--mute);} .sc-header span:hover{color:var(--rouge);}
+.sc-body{padding:14px 18px;}
+.sc-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(181,142,255,.06);font-size:10px;}
+.sc-row:last-child{border-bottom:none;}
+.sc-key{background:#141414;border:1px solid rgba(181,142,255,.3);color:var(--white);font-family:var(--mono);font-size:9px;
+  padding:2px 8px;min-width:30px;text-align:center;border-radius:3px;letter-spacing:.05em;}
+.sc-desc{color:rgba(248,239,255,.7);letter-spacing:.04em;}
+.sc-desc .jp{display:block;font-family:var(--jp);font-size:9px;color:var(--mute);margin-top:1px;letter-spacing:.1em;}
+
+/* ── VJ panel (vj-audio-export-kit) ── */
+.vj-row{display:flex;gap:6px;margin-bottom:8px;align-items:center;}
+.vj-btn{flex:1;background:rgba(90,233,255,.05);border:1px solid rgba(90,233,255,.3);color:var(--ice);font-family:var(--mono);
+  font-size:9px;letter-spacing:.14em;padding:7px 6px;cursor:pointer;border-radius:2px;transition:all .15s;text-align:center;user-select:none;}
+.vj-btn:hover{background:rgba(90,233,255,.14);box-shadow:0 0 8px rgba(90,233,255,.25);}
+.vj-btn.off{opacity:.35;pointer-events:none;}
+.vj-btn.sm{flex:0 0 auto;padding:4px 10px;}
+.vj-btn.rec{border-color:rgba(255,79,168,.4);color:var(--rouge);background:rgba(255,79,168,.05);}
+.vj-btn.rec.on{background:rgba(255,79,168,.25);color:#fff;border-color:var(--rouge);animation:vjblink 1s steps(2) infinite;}
+@keyframes vjblink{50%{box-shadow:0 0 14px rgba(255,79,168,.6);}}
+#vj-file-name{font-size:8px;color:var(--mute);letter-spacing:.08em;margin:-3px 0 6px;min-height:10px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.meters{display:flex;gap:4px;height:6px;margin:2px 0 3px;}
+.meter{flex:1;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;}
+.meter i{display:block;height:100%;width:0;}
+#vj-mLow i{background:var(--rouge);} #vj-mMid i{background:var(--gold);} #vj-mHigh i{background:var(--ice);}
+.meter.hit i{background:#fff !important;}
+.meter-lbl{display:flex;justify-content:space-between;font-size:7.5px;letter-spacing:.2em;color:var(--mute);margin-bottom:10px;}
+#side select,#side input[type=number]{background:#101010;border:1px solid rgba(181,142,255,.3);color:var(--white);font-family:var(--mono);
+  font-size:9px;padding:3px 4px;border-radius:2px;flex:1;min-width:0;outline:none;}
+#side input[type=number]{flex:0 0 52px;text-align:center;}
+#vj-led{color:var(--rouge);font-size:11px;opacity:.15;display:inline-block;margin-left:3px;}
+.tr.dim{opacity:.32;}
+.tr small{font-size:7.5px;color:var(--mute);letter-spacing:.04em;display:block;font-family:var(--jp);}
+.vj-cap{font-family:var(--jp);font-size:9px;color:var(--mute);line-height:1.7;letter-spacing:.06em;margin:4px 0 0;}
+.vj-cap b{color:var(--gold);font-weight:500;}
+
+@media(max-width:720px){
+  body.revealed #app{grid-template-columns:1fr;grid-template-rows:44px 1fr 110px 44px;}
+  body.revealed #side{position:fixed;right:0;top:44px;bottom:44px;width:min(300px,84vw);z-index:40;
+    background:#0b0b0b;box-shadow:-10px 0 40px rgba(0,0,0,.6);}   /* opaque: it sits over the stage here */
+  body.revealed #stage{grid-area:2/1/3/-1;} body.revealed #graphwrap{grid-area:3/1/4/-1;}
+}
+/* EE-08: the rule's three little pictures (tick · flash · pull) */
+.rule .mini{display:block;width:100%;height:46px;margin:6px 0 2px;background:rgba(255,255,255,.02);border-radius:2px;}
+.rule.look .n,.rule.look .nm{color:var(--ice);}
+.rule.grow .n,.rule.grow .nm{color:var(--gold);}
+.rule.step .n,.rule.step .nm{color:var(--lavender);}
+#badge.empty{color:var(--mute);border-color:rgba(181,142,255,.35);}
+#badge.life{color:var(--ice);border-color:rgba(90,233,255,.5);box-shadow:0 0 10px rgba(90,233,255,.3);}
+#badge.sea{color:var(--gold);border-color:rgba(255,210,122,.6);box-shadow:0 0 10px rgba(255,210,122,.3);}
+#badge.few{color:var(--rouge);border-color:rgba(255,79,168,.45);}
+/* 08 copies the HUD skeleton of 07, with RULE at the left of the stage. */
+body.revealed #app{grid-template-columns:280px 1fr 300px;}
+body.revealed #stage{grid-area:2/2/3/3;} body.revealed #graphwrap{grid-area:3/2/4/3;}
+body.revealed #side{grid-area:2/3/4/4;}
+body.naked #rules{display:none;}
+body.revealed #rules{grid-area:2/1/4/2;overflow-y:auto;border-right:1px solid rgba(255,210,122,.12);padding:13px 12px;}
+.truth{font-size:8px;color:var(--gold);letter-spacing:.13em;line-height:1.8;margin-top:12px;}
+.truth span{font-family:var(--jp);color:var(--mute);letter-spacing:.03em;}
+#caption{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);width:94%;text-align:center;font-family:var(--jp);font-size:12px;color:rgba(248,239,255,.8);pointer-events:none;text-shadow:0 2px 8px #000;z-index:4;}
+#aval{position:absolute;bottom:48px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:13px;letter-spacing:.32em;color:var(--gold);
+  text-shadow:0 0 10px rgba(255,210,122,.55),0 2px 8px #000;pointer-events:none;z-index:4;opacity:0;transition:opacity .5s ease;white-space:nowrap;}
+#aval.on{opacity:1;transition:none;}
+.stage-deco.quake{animation:quake .32s linear;}
+@keyframes quake{0%{transform:translate(0,0);}20%{transform:translate(2px,-1px);}40%{transform:translate(-2px,1px);}60%{transform:translate(1px,2px);}80%{transform:translate(-1px,-2px);}100%{transform:translate(0,0);}}
+.vj-btn.on{border-color:var(--rouge);color:var(--rouge);box-shadow:0 0 8px rgba(255,79,168,.3);}
+.vj-btn.dis{opacity:.32;pointer-events:none;}
+@media(max-width:1000px){body.revealed #app{grid-template-columns:245px 1fr 260px;} }
+@media(max-width:720px){body.revealed #app{grid-template-columns:1fr;grid-template-rows:44px 1fr 110px 44px;} body.revealed #stage{grid-area:2/1/3/2;} body.revealed #graphwrap{grid-area:3/1/4/2;} body.revealed #rules{display:none;} body.revealed #side #rules{display:block;overflow:visible;border:0;padding:13px 15px;} }
+input:disabled{cursor:default} .truth a{color:var(--gold)}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body class="naked">
+<div id="app">
+
+  <div id="topbar">
+    <span>EMERGENCE_ENGINE // EE_08</span>
+    <a href="#" id="esc-link">[ESC] INDEX</a>
+  </div>
+
+  <div id="stage">
+    <canvas id="world"></canvas>
+    <canvas id="over"></canvas>
+    <div id="aval"></div>
+    <div id="caption"></div>
+    <div class="stage-deco">
+      <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+      <div class="stage-bignum">08</div>
+      <div class="po">
+        <div class="po-num">08</div>
+        <div class="po-en">Sync</div>
+        <div class="po-jp">誰も合図していない</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="graphwrap">
+    <canvas id="graph"></canvas>
+    <div id="graph-lbl">r(t) — 秩序パラメータ · 0 ばらばら → 1 ひとつ<span id="graph-lbl-proof"></span></div>
+  </div>
+  <div id="side">
+    <div class="sp">
+      <div class="spl">READOUT</div>
+<div class="data-row"><span class="dk">ORDER r</span><span class="dv neon" id="ro-r">—</span></div>
+<div class="data-row"><span class="dk">MEAN Hz</span><span class="dv neon" id="ro-hz">—</span></div>
+<div class="data-row"><span class="dk">PHASE CLUSTERS ≈</span><span class="dv neon" id="ro-clusters">—</span></div>
+<div class="data-row"><span class="dk">K / Kc ≈</span><span class="dv neon" id="ro-kc">—</span></div>
+<div class="data-row"><span class="dk">FLASHES / s</span><span class="dv neon" id="ro-fps">—</span></div>
+<div class="data-row"><span class="dk">STEPS / s</span><span class="dv neon" id="ro-steps">—</span></div>
+<div class="data-row"><span class="dk">N</span><span class="dv neon" id="ro-n">—</span></div>
+<div class="data-row"><span class="dk">WORLD TIME</span><span class="dv neon" id="ro-time">—</span></div><div class="data-row"><span class="dk">STATE</span><span id="badge" class="empty">DRIFT</span></div>
+</div>
+    <div class="sp" id="rules">
+      <div class="spl">RULE — THE PROTAGONIST</div>
+ <div class="rule look"><div class="rule-h"><span class="n">1</span><span class="nm">TICK<span class="jp">自分の時計</span></span></div><canvas class="mini" id="mini-d"></canvas><div class="rule-cap">一匹ずつ、少しずつ違う速さで時計が進む。<br>固有振動数 ωᵢ · 個体差＝SPREAD。</div></div>
+ <div class="rule grow"><div class="rule-h"><span class="n">2</span><span class="nm">FLASH<span class="jp">光る</span></span></div><canvas class="mini" id="mini-t"></canvas><div class="rule-cap">時計が一周して 0 を通る瞬間に光る。<br>そして、すぐ暗くなる。</div></div>
+ <div class="rule step"><div class="rule-h"><span class="n">3</span><span class="nm">PULL<span class="jp">引っぱられる</span></span></div><canvas class="mini" id="mini-e"></canvas><div class="rule-cap">見える距離の仲間が進めば少し急ぐ。<br>遅れていれば少し待つ。強さ＝K。</div></div>
+ <div class="rule-cap" id="rule-formula"></div>
+ <div class="truth">WAS ACTUALLY<br><span>同期 — 結合振動子<br>Kuramoto 1975 / Mirollo–Strogatz 1990<br>Buck 1988 · 東南アジアのホタル<br>光の表現はホタル、計算は位相振動子。</span></div>
+    </div>
+    <div class="sp"><div class="spl">SPECIES — 同じ時計、違う結び方</div><div class="walkgrid" id="presets"></div></div>
+    <div class="sp"><div class="spl">HAND — 指は何になるか</div><div class="hand-cap" id="hand-cap">押す＝ランタン。</div></div>
+    <div class="sp"><div class="spl">PARAMS</div>
+      <div class="tr" id="r-k"><span>COUPLING K<small id="note-k">引き合う強さ</small></span><input type="range" id="c-k" min="-1" max="8" step="0.01"><span class="sl" id="v-k"></span></div>
+<div class="tr" id="r-spread"><span>SPREAD<small id="note-spread">ω の標準偏差（rad/s）</small></span><input type="range" id="c-spread" min="0" max="2" step="0.01"><span class="sl" id="v-spread"></span></div>
+<div class="tr" id="r-radius"><span>RADIUS<small id="note-radius">世界の幅に対する距離</small></span><input type="range" id="c-radius" min="0.05" max="1" step="0.01"><span class="sl" id="v-radius"></span></div>
+<div class="tr" id="r-j"><span>J<small id="note-j">SWARM だけ · 似た位相に寄る</small></span><input type="range" id="c-j" min="-1" max="1" step="0.05"><span class="sl" id="v-j"></span></div>
+<div class="tr" id="r-count"><span>COUNT<small id="note-count">変えると作り直す</small></span><input type="range" id="c-count" min="256" max="4000" step="1"><span class="sl" id="v-count"></span></div>
+<div class="tr" id="r-speed"><span>SPEED<small id="note-speed">時間の速さ</small></span><input type="range" id="c-speed" min="0.25" max="4" step="0.25"><span class="sl" id="v-speed"></span></div>
+<div class="tr" id="r-glow"><span>GLOW<small id="note-glow">瞬く光の強さ</small></span><input type="range" id="c-glow" min="0" max="2" step="0.05"><span class="sl" id="v-glow"></span></div>
+<div class="tr" id="r-trail"><span>TRAIL<small id="note-trail">残光（秒）</small></span><input type="range" id="c-trail" min="0.03" max="0.3" step="0.01"><span class="sl" id="v-trail"></span></div>
+ <div class="tr"><span>LOOK</span><select id="c-look"><option value="firefly">FIREFLY — 黄緑</option><option value="lantern">LANTERN — 橙</option><option value="ice">ICE</option></select></div>
+ <div class="tr"><span>LIGHT</span><select id="c-light"><option value="dot">DOT — ランプの粒</option><option value="soft">SOFT</option></select></div>
+ <div class="vj-row"><div class="vj-btn" id="btn-seed">✣ SEED<br><small>この種族を最初から</small></div><div class="vj-btn" id="btn-clear">↝ SCRAMBLE<br><small>全員の時計をばらばらに</small></div></div>
+ </div>
+ <div class="sp"><div class="spl">PROOF</div><div class="tr"><span>PHASE CIRCLE<small>G · 円周の点＝みんなの時計。<br>矢印＝r eⁱψ。r が 0 → 1 に跳ぶ＝相転移。<br>誰も合図していない。</small></span><div class="tg" id="tg-proof"></div></div><div class="rule-cap" id="proof-detail"></div></div>
+    <div class="sp" id="vj-sp">
+      <div class="spl">VJ — 音で動かす・素材にする</div>
+      <div class="vj-row">
+        <label class="vj-btn">♪ LOAD AUDIO<input type="file" id="vj-file" accept="audio/*" hidden></label>
+        <div class="vj-btn off" id="vj-play">▶ PLAY</div>
+      </div>
+      <div id="vj-file-name"></div>
+      <div class="meters"><div class="meter" id="vj-mLow"><i></i></div><div class="meter" id="vj-mMid"><i></i></div><div class="meter" id="vj-mHigh"><i></i></div></div>
+      <div class="meter-lbl"><span>LOW · KICK</span><span>MID</span><span>HIGH</span></div>
+      <div class="tr" id="vj-r-sens"><span>SENS<small>MP3 再生中のみ</small></span><input type="range" id="vj-sens" min="0" max="100" step="1" value="55"><span class="sl" id="vj-v-sens">55</span></div>
+      <div class="tr"><span>BPM<b id="vj-led">●</b></span><input type="number" id="vj-bpm" min="40" max="240" step="1" value="120"><div class="vj-btn sm" id="vj-tap">TAP</div></div>
+      <div class="tr"><span>BEAT FROM</span><select id="vj-src"><option value="off">OFF — 手で遊ぶ</option><option value="kick">MP3 KICK — 曲のキック</option><option value="clock">BPM CLOCK — 拍の時計</option></select></div>
+      <div class="tr" id="vj-r-act"><span>ON BEAT</span><select id="vj-act"></select></div>
+      <div class="tr" id="vj-r-every"><span id="vj-every-lbl">EVERY</span><select id="vj-every"><option value="0">なし</option><option value="2">2 拍ごと</option><option value="4">4 拍ごと</option><option value="8">8 拍ごと</option><option value="16" selected>16 拍ごと</option><option value="32">32 拍ごと</option></select></div>
+      <div class="tr" id="vj-r-mid"><span>MID →<small id="vj-mid-lbl"></small></span><input type="range" id="vj-mid" min="0" max="1" step="0.05" value="0.5"><span class="sl" id="vj-v-mid">0.50</span></div>
+      <div class="tr" id="vj-r-high"><span>HIGH →<small id="vj-high-lbl"></small></span><input type="range" id="vj-high" min="0" max="1" step="0.05" value="0.5"><span class="sl" id="vj-v-high">0.50</span></div>
+      <div class="vj-cap">TAP（<b>T</b> キー）を曲に合わせて叩くと BPM が決まり、● が拍で点滅。BEAT FROM で「拍の出どころ」を選ぶ。MID / HIGH は MP3 再生中だけ効く。</div>
+      <div class="spl" style="margin-top:14px">EXPORT</div>
+      <div class="vj-row"><div class="vj-btn rec" id="vj-rec">● REC WebM</div></div>
+      <div class="tr"><span>PNG SEQ</span><select id="vj-bars"><option value="4">4 小節</option><option value="8" selected>8 小節</option><option value="16">16 小節</option><option value="32">32 小節</option></select><select id="vj-fps"><option value="30">30 fps</option><option value="60">60 fps</option></select></div>
+      <div class="tr"><span>SIZE</span><select id="vj-res"><option value="1920x1080">1920×1080</option><option value="3840x2160">3840×2160 (4K)</option></select></div>
+      <div class="vj-row"><div class="vj-btn" id="vj-seq">⇩ 連番PNG を書き出す</div></div>
+      <div class="vj-cap">REC＝いまの画面を<b>音つき</b>で録画（曲のキックに合った素材）。連番PNG＝BPM の拍ぴったりにオフラインで描く（コマ落ちなし・4K 可・Chrome / Edge）。画面の中央を 16:9 で切り抜くので、横長のウィンドウで。</div>
+    </div>
+    <div class="sp">
+      <div class="spl">PARAMS</div>
+      <div class="cpg">
+        <div class="ed-btn" id="btn-copy">⧉ COPY</div>
+        <div class="ed-btn" id="btn-paste">▣ PASTE</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="bottombar">
+    <span id="status">EE_08 // SYNC</span>
+    <span><span id="sc-open-btn">⌨ SHORTCUTS</span> <span class="kbd">?</span></span>
+  </div>
+</div>
+
+<div id="naked-hint">TAB — REVEAL</div>
+
+<div id="shortcut-modal">
+  <div id="shortcut-box">
+    <div class="sc-header">⌨ KEYBOARD SHORTCUTS <span id="sc-close">✕</span></div>
+    <div class="sc-body">
+      <div class="sc-row"><span class="sc-key">HOLD</span><span class="sc-desc">Lantern — 押した場所の時計を 0 に（長押しで BPM）</span></div>
+      <div class="sc-row"><span class="sc-key">⇧ HOLD</span><span class="sc-desc">Scramble — まわりの時計をかき乱す</span></div>
+      <div class="sc-row"><span class="sc-key">1–6</span><span class="sc-desc">Species — 結び方を選んで最初から</span></div>
+      <div class="sc-row"><span class="sc-key">← →</span><span class="sc-desc">Speed — 時間を遅く / 速く</span></div>
+      <div class="sc-row"><span class="sc-key">↑ ↓</span><span class="sc-desc">Coupling — K を増やす / 減らす</span></div>
+      <div class="sc-row"><span class="sc-key">R</span><span class="sc-desc">Seed — この種族を最初から（統計もリセット）</span></div>
+      <div class="sc-row"><span class="sc-key">C</span><span class="sc-desc">Scramble — 全員の位相をばらばらに</span></div>
+      <div class="sc-row"><span class="sc-key">G</span><span class="sc-desc">Proof — 位相の円と秩序パラメータ</span></div>
+      <div class="sc-row"><span class="sc-key">Space</span><span class="sc-desc">Pause / Resume — 時間停止</span></div>
+      <div class="sc-row"><span class="sc-key">Tab</span><span class="sc-desc">Reveal — HUD と証明ストリップの表示切替</span></div>
+      <div class="sc-row"><span class="sc-key">T</span><span class="sc-desc">Tap tempo — 曲に合わせて叩くと BPM<span class="jp">BEAT FROM が OFF なら BPM CLOCK に切り替わる</span></span></div>
+      <div class="sc-row"><span class="sc-key">?</span><span class="sc-desc">This panel</span></div>
+      <div class="sc-row"><span class="sc-key">Esc</span><span class="sc-desc">Modal → NAKED → Index</span></div>
+    </div>
+  </div>
+</div>
+
+<script src="_law/ee08_sync.js"></script>
+<script>
+"use strict";
+/* SIM (makeSync, stepSync, order, …) lives in _law/ee08_sync.js — shared with scroll/SCROLL_SYNC_LP.html */
+
+const $=id=>document.getElementById(id),clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const reduceMotion=matchMedia('(prefers-reduced-motion:reduce)').matches;
+const state={mode:0,k:.6,spread:.1,radius:.28,j:1,count:2400,speed:1,glow:1,trail:.075,look:'firefly',light:'dot',seed:1,proof:false,revealed:false,paused:reduceMotion,idle:!reduceMotion};
+const stage=$('stage'),worldC=$('world'),overC=$('over'),wctx=worldC.getContext('2d'),octx=overC.getContext('2d'),graphC=$('graph'),gctx=graphC.getContext('2d');
+let W=1,H=1,DPR=Math.min(devicePixelRatio||1,2),GWp=1,GHp=1,pile=null,tickAcc=0,speedAcc=0,simTime=0,quietFor=0,idleT=0,idleNext=0,roAcc=0,rateAcc=0,stepMark=0,flashMark=0,sps=0,fps=0,frameNo=0,baseWidth=innerWidth,baseHeight=innerHeight;
+const hist=[],CTRL=['k','spread','radius','j','count','speed','glow','trail'];
+function resizeWorld(){const r=stage.getBoundingClientRect();W=Math.max(1,r.width|0);H=Math.max(1,r.height|0);worldC.width=overC.width=Math.round(W*DPR);worldC.height=overC.height=Math.round(H*DPR);octx.setTransform(DPR,0,0,DPR,0,0);}
+function resizeGraph(){const r=$('graphwrap').getBoundingClientRect();GWp=Math.max(1,r.width|0);GHp=Math.max(1,r.height|0);graphC.width=GWp*DPR;graphC.height=GHp*DPR;gctx.setTransform(DPR,0,0,DPR,0,0);}
+function startMode(i,defaults=true){
+ state.mode=i;if(defaults){const m=MODES[i];Object.assign(state,{k:m.k,spread:m.spread,radius:m.radius,j:m.j,count:m.n,speed:1});}
+ const opt={n:Math.round(state.count),k:state.k,spread:state.spread,radius:state.radius,j:state.j};
+ if(i===2){const aspect=clamp(innerWidth/Math.max(1,innerHeight),.5,2.5);opt.cols=Math.round(Math.sqrt(opt.n*aspect));opt.rows=Math.round(opt.n/opt.cols);}
+ pile=makeSync(i,state.seed,opt);state.count=pile.n;hist.length=0;tickAcc=speedAcc=0;stepMark=flashMark=0;rateAcc=0;sps=fps=0;baseWidth=innerWidth;baseHeight=innerHeight;syncControls();drawRules();
+}
+function seedMode(){state.seed=(state.seed+1)>>>0;startMode(state.mode,false);}
+function applyParams(){pile.k=state.k;pile.spread=state.spread;pile.j=state.j;if(pile.radius!==state.radius){pile.radius=state.radius;if([0,1,5].includes(state.mode))buildNeighbours(pile);}}
+function stopIdle(){quietFor=0;if(state.idle){state.idle=false;$('caption').textContent='';syncControls();}}
+const IDLE_SCRIPT=[[0,()=>startMode(0)],[38,()=>{state.k=.04;state.spread=1.5;applyParams();}],[46,()=>{startMode(2);state.speed=2;}],[57,()=>{startMode(4);state.speed=4;}],[67,()=>{startMode(3);state.speed=4;}]];
+function startIdle(){state.idle=true;idleT=0;idleNext=0;stepIdle(0);}
+function stepIdle(dt){if(!state.idle)return;idleT+=dt;if(idleT>=75){idleT%=75;idleNext=0;}while(idleNext<IDLE_SCRIPT.length&&idleT>=IDLE_SCRIPT[idleNext][0])IDLE_SCRIPT[idleNext++][1]();$('caption').textContent=idleT<7?'それぞれの夜。':idleT<18?'となりの光に、少しだけ。':idleT<29?'遠くまで、同じ呼吸。':idleT<38?'誰も合図していない。':idleT<46?'ひとつが、またほどける。':idleT<57?'光が、光を追いかける。':idleT<67?'時計が、居場所をつくる。':'そろうこと。そろわないこと。';}
+const hand={on:false,x:0,y:0,mess:false,held:0};
+function view(cw=worldC.width,ch=worldC.height){
+ const ow=VJ.exporting?W*DPR:cw,oh=VJ.exporting?H*DPR:ch;let v;
+ if(state.mode===4){const z=Math.min(ow,oh)*.27;v={sx:z,sy:z,ox:ow/2,oy:oh/2};}
+ else if(state.mode===3){const z=Math.min(ow,oh)*.9;v={sx:z,sy:z,ox:(ow-z)/2,oy:(oh-z)/2};}
+ else v={sx:ow*.94,sy:oh*.9,ox:ow*.03,oy:oh*.05};
+ if(VJ.exporting){const z=Math.max(cw/ow,ch/oh);v={sx:v.sx*z,sy:v.sy*z,ox:v.ox*z+(cw-ow*z)/2,oy:v.oy*z+(ch-oh*z)/2};}
+ return v;
+}
+function pointAt(e){const b=stage.getBoundingClientRect(),v=view();return{x:((e.clientX-b.left)*DPR-v.ox)/v.sx,y:((e.clientY-b.top)*DPR-v.oy)/v.sy};}
+function handRadius(){return state.mode===4?.32:state.mode===3?.16:Math.max(.07,state.radius*.5);}
+function placeHand(e){Object.assign(hand,pointAt(e),{mess:e.shiftKey});}
+stage.addEventListener('pointerdown',e=>{stopIdle();placeHand(e);hand.on=true;hand.held=0;stage.setPointerCapture(e.pointerId);lantern(pile,hand.x,hand.y,handRadius(),hand.mess);});
+stage.addEventListener('pointermove',e=>{if(hand.on)placeHand(e);});for(const k of ['pointerup','pointercancel','lostpointercapture'])stage.addEventListener(k,()=>hand.on=false);
+function tick(){
+ if(state.paused)return;
+ if(hand.on){hand.held+=1/60;const period=60/vjBpm();if(hand.held>=period){hand.held%=period;lantern(pile,hand.x,hand.y,handRadius(),hand.mess);}}
+ speedAcc+=state.speed;const n=Math.floor(speedAcc+1e-9);speedAcc-=n;
+ for(let i=0;i<n;i++){
+  stepSync(pile,1/60,{hz:vjSrc()==='off'?2:vjBpm()/60,mid:2*vjAmt('vj-mid')*VJ.mid,trail:state.trail});
+  if(hand.on&&state.mode===4&&!hand.mess)for(let j=0;j<pile.n;j++){const dx=hand.x-pile.x[j],dy=hand.y-pile.y[j],r=Math.hypot(dx,dy);if(r<.8){pile.x[j]+=dx*.003;pile.y[j]+=dy*.003;}}
+  if(pile.steps%15===0){hist.push({t:pile.time,r:order(pile).r});if(hist.length>480)hist.shift();}
+ }
+ frameNo++;
+}
+function advance(dt){tickAcc+=dt*60;let n=Math.floor(tickAcc+1e-8);tickAcc-=n;while(n-->0){simTime+=1/60;if(!state.paused)stepIdle(1/60);tick();}}
+const LOOKS={firefly:[194,255,105],lantern:[255,173,74],ice:[90,233,255]};
+// Small immutable palette: phase colour belongs to WAVES/SWARM; intensity always comes from an actual crossing.
+const phasePal=Array.from({length:128},(_,i)=>{const h=i/128*6,x=1-Math.abs(h%2-1),q=h<1?[1,x,0]:h<2?[x,1,0]:h<3?[0,1,x]:h<4?[0,x,1]:h<5?[x,0,1]:[1,0,x];return q.map(v=>Math.round(75+180*v));});
+function draw(){
+ const cw=worldC.width,ch=worldC.height,v=view(cw,ch);wctx.fillStyle='#070707';wctx.fillRect(0,0,cw,ch);
+ const phase=state.mode===2||state.mode===4,col=LOOKS[state.look],gain=state.glow*(1+vjAmt('vj-high')*VJ.high*1.8);
+ const chim=state.mode===3,size=state.mode===2?Math.max(1,Math.min(v.sx/pile.cols,v.sy/pile.rows)*.65):chim?Math.max(2,TAU*.4*v.sx/pile.n*.62):state.mode===4?Math.max(2,Math.min(cw,ch)/320):Math.max(1.2,Math.min(cw,ch)/550);
+ if(state.mode===3){wctx.strokeStyle='rgba(255,210,122,.13)';wctx.lineWidth=1;wctx.beginPath();wctx.arc(cw/2,ch/2,v.sx*.4,0,TAU);wctx.stroke();}
+ for(let i=0;i<pile.n;i++){
+  // CHIMERA: each lamp leans in/out with cos θ — the coherent arc breathes as one smooth line, the incoherent side frays.
+  const lean=chim?1+.075*Math.cos(pile.theta[i]):1,x=v.ox+(chim?.5+.4*pile.cx[i]*lean:pile.x[i])*v.sx,y=v.oy+(chim?.5+.4*pile.sx[i]*lean:pile.y[i])*v.sy,a=clamp(pile.light[i]*gain),q=phase?phasePal[Math.floor(pile.theta[i]/TAU*128)%128]:col;
+  const base=state.mode===4?.6:phase?.23:chim?.1+.22*(1+Math.cos(pile.theta[i]))/2:.045,r=Math.round(Math.min(255,q[0]*base+col[0]*a*.85)),g=Math.round(Math.min(255,q[1]*base+col[1]*a*.85)),bl=Math.round(Math.min(255,q[2]*base+col[2]*a*.85));
+  if(state.light==='soft'&&a>.05){const rad=size*(2+4*a),gr=wctx.createRadialGradient(x,y,0,x,y,rad);gr.addColorStop(0,`rgba(${q},${a*.65})`);gr.addColorStop(1,`rgba(${q},0)`);wctx.fillStyle=gr;wctx.fillRect(x-rad,y-rad,rad*2,rad*2);}
+  wctx.fillStyle=`rgb(${r},${g},${bl})`;const z=size*(1+Math.sqrt(a)*1.4);wctx.fillRect(Math.round(x-z/2),Math.round(y-z/2),Math.ceil(z),Math.ceil(z));
+  if(a>.12){const z2=Math.max(1,size*.72);wctx.fillStyle=`rgba(255,255,239,${a})`;wctx.fillRect(Math.round(x-z2/2),Math.round(y-z2/2),Math.ceil(z2),Math.ceil(z2));}
+ }
+ if(hand.on){wctx.strokeStyle='#FF4FA8';wctx.lineWidth=1.5*DPR;wctx.beginPath();wctx.ellipse(v.ox+hand.x*v.sx,v.oy+hand.y*v.sy,handRadius()*v.sx,handRadius()*v.sy,0,0,TAU);wctx.stroke();}
+ // Export uses this same canvas, including PROOF when requested.
+ if(state.proof)drawCircle(wctx,cw,ch);
+ octx.clearRect(0,0,W,H);if(state.revealed)drawGraph();
+}
+function drawCircle(ctx,cw,ch){
+ const scale=Math.min(cw,ch)/650,R=clamp(Math.min(cw,ch)*.115,28,100*DPR),cx=cw-R-25*DPR,cy=ch-R-40*DPR,{r,psi}=order(pile); // bottom-right: the top-right belongs to the 08 / Sync plate
+ ctx.fillStyle='rgba(7,7,7,.8)';ctx.beginPath();ctx.arc(cx,cy,R+18*DPR,0,TAU);ctx.fill();ctx.strokeStyle='rgba(255,210,122,.4)';ctx.lineWidth=Math.max(1,scale);ctx.beginPath();ctx.arc(cx,cy,R,0,TAU);ctx.stroke();ctx.fillStyle='rgba(90,233,255,.25)';
+ for(let i=0;i<pile.n;i++){const a=pile.theta[i];ctx.fillRect(cx+R*Math.cos(a)-1,cy+R*Math.sin(a)-1,Math.max(1,scale*1.6),Math.max(1,scale*1.6));}
+ const ex=cx+R*r*Math.cos(psi),ey=cy+R*r*Math.sin(psi);ctx.strokeStyle='#FFD27A';ctx.lineWidth=2*DPR;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(ex,ey);ctx.lineTo(ex-8*DPR*Math.cos(psi-.5),ey-8*DPR*Math.sin(psi-.5));ctx.moveTo(ex,ey);ctx.lineTo(ex-8*DPR*Math.cos(psi+.5),ey-8*DPR*Math.sin(psi+.5));ctx.stroke();ctx.fillStyle='#FFD27A';ctx.font=`${10*DPR}px monospace`;ctx.fillText('r '+r.toFixed(3),cx-R,cy+R+14*DPR);
+}
+function drawGraph(){
+ const w=GWp,h=GHp;gctx.fillStyle='#070707';gctx.fillRect(0,0,w,h);gctx.font='9px monospace';
+ for(const r of [0,.5,1]){const y=22+(1-r)*(h-38);gctx.strokeStyle='rgba(255,210,122,.12)';gctx.beginPath();gctx.moveTo(25,y);gctx.lineTo(w-10,y);gctx.stroke();gctx.fillStyle='#8b8197';gctx.fillText(String(r),4,y+3);}
+ if(hist.length<2)return;const end=hist[hist.length-1].t,start=Math.max(0,end-120),span=Math.max(30,end-start);gctx.strokeStyle='#5AE9FF';gctx.lineWidth=1.4;gctx.beginPath();hist.forEach((p,i)=>{const x=25+(p.t-start)/span*(w-36),y=22+(1-p.r)*(h-38);i?gctx.lineTo(x,y):gctx.moveTo(x,y);});gctx.stroke();gctx.fillStyle='#8b8197';gctx.fillText(end.toFixed(1)+' s',Math.max(26,w-65),h-3);
+}
+function measure(){
+ const o=order(pile),kc=Math.sqrt(8/Math.PI)*state.spread;$('ro-r').textContent=o.r.toFixed(3);$('ro-hz').textContent=pile.meanHz.toFixed(3);$('ro-clusters').textContent=coherentClusters(pile);$('ro-clusters').title='局所 r > .85、位相差 < .5 rad の空間連結群（8匹以上）。測定半径は最大 .12、SWARM .3。';$('ro-kc').textContent=[0,1].includes(state.mode)?state.k.toFixed(2)+' / '+kc.toFixed(2):state.k.toFixed(2)+' / —';$('ro-kc').title='正規分布・全結合の Kc = √(8/π) SPREAD。有限半径では目安。';$('ro-fps').textContent=fps.toFixed(0);$('ro-steps').textContent=sps.toFixed(0);$('ro-n').textContent=pile.n;$('ro-time').textContent=pile.time.toFixed(1)+' s';
+ const b=$('badge');b.textContent=state.paused?'PAUSED':o.r>.9?'TOGETHER':o.r>.4?'GATHERING':'DRIFT';b.className=o.r>.9?'life':o.r>.4?'sea':'empty';$('status').textContent='EE_08 // '+MODES[state.mode].name+(state.idle?' · AUTO':'')+(state.paused?' · PAUSED':'');
+ $('proof-detail').textContent=state.mode===2?'位相欠陥 '+defects(pile)+' · 4近傍・周期境界':state.mode===3?(()=>{const r=localOrder(pile);return '局所 r（連続65匹） '+Math.min(...r).toFixed(2)+' … '+Math.max(...r).toFixed(2);})():state.mode===4?'位相 × 空間角度 S = '+rainbow(pile).toFixed(3):'r は全員の平均。局所的な島は、全体の r が小さくても育つ。';
+}
+function syncControls(){
+ const mode=state.mode,lo=mode===3?128:mode===4?200:mode===2?512:2000,hi=mode===3?512:mode===4?600:mode===2?6000:4000;$('c-count').min=lo;$('c-count').max=hi;
+ for(const k of CTRL){$('c-'+k).value=state[k];$('v-'+k).textContent=k==='count'?state.count:k==='speed'?'×'+state[k]:state[k].toFixed(2);}
+ const conditions={radius:mode!==3&&mode!==4&&mode!==2,j:mode===4,spread:mode!==3};
+ for(const [k,on]of Object.entries(conditions)){$('c-'+k).disabled=!on;$('r-'+k).classList.toggle('dim',!on);}
+ $('note-radius').textContent=mode===3?'CHIMERA は余弦核（固定）':mode===4?'SWARM は距離の逆数（J を使用）':mode===2?'WAVES は格子の4近傍（固定）':'世界の幅に対する距離';$('note-spread').textContent=mode===3?'CHIMERA は同じ時計（0 固定）':'ω の標準偏差（rad/s）';$('note-count').textContent=mode===2?'格子点数 · 変更で作り直す':'個体数 · 変更で作り直す';
+ $('c-look').value=state.look;$('c-light').value=state.light;$('tg-proof').classList.toggle('on',state.proof);document.querySelectorAll('#presets .wb').forEach(b=>b.classList.toggle('on',+b.dataset.i===mode));
+ const base='dθᵢ/dt = ωᵢ + (K/nᵢ) Σⱼ sin(θⱼ − θᵢ)';
+ $('rule-formula').textContent=mode===3?'dθᵢ/dt = ω + (K/N) Σⱼ [1 + A cos(xⱼ−xᵢ)] sin(θⱼ−θᵢ−α) · A=.995、α=π/2−.18。リング・全員同じ時計。':mode===4?'dθᵢ/dt = ωᵢ + (K/N) Σⱼ sin(θⱼ−θᵢ)/|xⱼ−xᵢ|\n dxᵢ/dt = (1/N) Σⱼ [(xⱼ−xᵢ)/|xⱼ−xᵢ| · (1+J cos(θⱼ−θᵢ)) − (xⱼ−xᵢ)/|xⱼ−xᵢ|²] · J=1: K=0 虹、−.1 分裂、−.75 動く輪。':mode===2?base+' · 4近傍・周期境界。sin の引数に −α（α=.35）を追加。遅れが波を送り出す。':base+' · j は半径 R 内。'+(mode===5?'左は +.65、右は −.65 rad/s。':'');
+ $('hand-cap').innerHTML='押す＝<em>ランタンを掲げる</em>。半径内の時計を 0 にそろえ、その場で光る。<br>長押し＝<b>BPM のペースメーカー</b>。引くだけで引かれない。<br>Shift＋押す＝<b>かき乱す</b>。'+(mode===4?'<br>SWARM はランタンの近くへも寄ってくる。':'');
+ if(pile)measure();
+}
+for(const k of CTRL){$('c-'+k).addEventListener('input',e=>{const value=+e.target.value;stopIdle();state[k]=value;if(k==='count')startMode(state.mode,false);else applyParams();syncControls();});$('c-'+k).addEventListener('change',e=>e.target.blur());}
+for(const k of ['look','light'])$('c-'+k).addEventListener('change',e=>{const value=e.target.value;stopIdle();state[k]=value;syncControls();e.target.blur();});
+$('presets').innerHTML=MODES.map((m,i)=>`<button class="wb" data-i="${i}">${i+1} ${m.name}<i>${m.jp}</i></button>`).join('');$('presets').addEventListener('click',e=>{const b=e.target.closest('.wb');if(b){stopIdle();startMode(+b.dataset.i);b.blur();}});
+$('btn-seed').addEventListener('click',()=>{stopIdle();seedMode();});$('btn-clear').addEventListener('click',()=>{stopIdle();scramble(pile);});$('tg-proof').addEventListener('click',()=>{stopIdle();state.proof=!state.proof;syncControls();});
+function drawRules(){for(const [num,id]of ['mini-d','mini-t','mini-e'].entries()){const cv=$(id),g=cv.getContext('2d'),w=Math.max(160,cv.clientWidth),h=46;cv.width=w*DPR;cv.height=h*DPR;g.scale(DPR,DPR);g.strokeStyle=num===0?'#5AE9FF':num===1?'#FFD27A':'#B58EFF';g.fillStyle=g.strokeStyle;g.lineWidth=1;for(let i=0;i<3;i++){const x=w*(i+1)/4;g.beginPath();g.arc(x,23,12,0,TAU);g.stroke();const a=num===1?0:num===2?-.5+i*.5:-1+i*1.1;g.beginPath();g.moveTo(x,23);g.lineTo(x+11*Math.cos(a),23+11*Math.sin(a));g.stroke();if(num===1){g.fillStyle=i===1?'#fff':'#FFD27A';g.fillRect(x-2,21,4,4);}if(num===2&&i<2){g.beginPath();g.moveTo(x+15,23);g.lineTo(x+w/4-16,23);g.stroke();}}}}
+function layoutRules(){if(innerWidth<=720)$('side').prepend($('rules'));else $('app').append($('rules'));}
+let everRevealed=false;const hintEl=$('naked-hint');let hintTimer=setTimeout(()=>{if(!everRevealed)hintEl.classList.add('show');},45000);
+function setReveal(on){state.revealed=on;document.body.classList.toggle('revealed',on);document.body.classList.toggle('naked',!on);if(on){everRevealed=true;clearTimeout(hintTimer);hintEl.classList.remove('show');}requestAnimationFrame(()=>{resizeWorld();resizeGraph();drawRules();syncControls();});}
+function flash(btn,cls,txt){const old=btn.textContent;btn.textContent=txt;btn.classList.add(cls);setTimeout(()=>{btn.textContent=old;btn.classList.remove(cls);},1200);}
+$('btn-copy').addEventListener('click',async e=>{const btn=e.currentTarget;const data={version:'EE08_sync',...state};delete data.idle;try{await navigator.clipboard.writeText(JSON.stringify(data,null,2));flash(btn,'ok','✓ COPIED');}catch{flash(btn,'err','✗');}});
+$('btn-paste').addEventListener('click',async e=>{const btn=e.currentTarget;try{const p=JSON.parse(await navigator.clipboard.readText());if(!p||p.version!=='EE08_sync')throw Error('version');stopIdle();if(Number.isInteger(p.mode))state.mode=clamp(p.mode,0,5);syncControls();for(const k of CTRL)if(Number.isFinite(p[k])){const el=$('c-'+k);state[k]=clamp(p[k],+el.min,+el.max);}state.count=Math.round(state.count);if(state.mode===3)state.spread=0;if(Number.isInteger(p.seed))state.seed=p.seed>>>0;if(LOOKS[p.look])state.look=p.look;if(['dot','soft'].includes(p.light))state.light=p.light;for(const k of ['proof','paused'])if(typeof p[k]==='boolean')state[k]=p[k];startMode(state.mode,false);if(typeof p.revealed==='boolean')setReveal(p.revealed);flash(btn,'ok','✓ APPLIED');}catch{flash(btn,'err','✗');}});
+const modal=$('shortcut-modal');function openSC(){if(!state.revealed)setReveal(true);modal.classList.add('open');}function closeSC(){modal.classList.remove('open');}function escape(){if(modal.classList.contains('open'))closeSC();else if(state.revealed)setReveal(false);else location.href='index.html';}
+$('sc-open-btn').addEventListener('click',openSC);$('sc-close').addEventListener('click',closeSC);modal.addEventListener('click',e=>{if(e.target===modal)closeSC();});$('esc-link').addEventListener('click',e=>{e.preventDefault();escape();});
+window.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();escape();return;}if(e.key==='Tab'){e.preventDefault();setReveal(!state.revealed);return;}if(e.key==='?'){e.preventDefault();modal.classList.contains('open')?closeSC():openSC();return;}if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement?.tagName))return;const k=e.key.toLowerCase();if(k==='t'){vjTap();return;}if(e.code==='Space'){e.preventDefault();stopIdle();state.paused=!state.paused;syncControls();}if(/^[1-6]$/.test(k)){stopIdle();startMode(+k-1);}if(k==='r'){stopIdle();seedMode();}if(k==='c'){stopIdle();scramble(pile);}if(k==='g'){stopIdle();state.proof=!state.proof;syncControls();}if(e.key.startsWith('Arrow')){e.preventDefault();stopIdle();if(e.key==='ArrowUp')state.k=clamp(state.k+.05,-1,8);if(e.key==='ArrowDown')state.k=clamp(state.k-.05,-1,8);if(e.key==='ArrowRight')state.speed=clamp(state.speed+.25,.25,4);if(e.key==='ArrowLeft')state.speed=clamp(state.speed-.25,.25,4);applyParams();syncControls();}});
+$('side').addEventListener('input',()=>stopIdle());$('side').addEventListener('change',()=>stopIdle());document.addEventListener('pointerdown',()=>quietFor=0);document.addEventListener('keydown',()=>quietFor=0);
+let rebuildTimer=0;
+new ResizeObserver(()=>{if(!VJ.exporting){resizeWorld();resizeGraph();if(state.revealed)drawRules();}}).observe(stage);
+window.addEventListener('resize',()=>{if(VJ.exporting)return;layoutRules();resizeWorld();resizeGraph();clearTimeout(rebuildTimer);rebuildTimer=setTimeout(()=>{if(!VJ.exporting&&(Math.abs(innerWidth-baseWidth)>baseWidth*.15||Math.abs(innerHeight-baseHeight)>baseHeight*.15))startMode(state.mode,false);},300);});
+let last=performance.now();
+function frame(now){if(VJ.exporting)return;const elapsed=Math.max(0,(now-last)/1000),dt=Math.min(.05,elapsed);last=now;quietFor+=dt;if(!state.idle&&!state.paused&&!reduceMotion&&quietFor>45&&!hand.on&&!VJ.playing&&vjSrc()==='off'&&!VJ.recOn&&!modal.classList.contains('open'))startIdle();vjTick(now,dt);advance(dt);draw();roAcc+=dt;rateAcc+=elapsed;if(rateAcc>=1){sps=(pile.steps-stepMark)/rateAcc;fps=(pile.flashes-flashMark)/rateAcc;stepMark=pile.steps;flashMark=pile.flashes;rateAcc=0;}if(roAcc>=.5){roAcc=0;measure();if(state.idle&&state.revealed)syncControls();}queueRaf();}
+
+/* ══════════════════════════════════════════════════════════════
+   VJ — audio / BPM / export   (vj-audio-export-kit · canon: Grid_System_Bauhaus/bauhaus.html)
+   beat sources: MP3 KICK = rise-onset on 30–150 Hz · BPM CLOCK = TAP sets tempo and the downbeat.
+   The piece supplies VJ_HOOKS { name, canvas, acts, everyLabel, midLabel, highLabel,
+                                 touch, onBeat, onEvery, advance, render, beginExport, endExport }.
+   ══════════════════════════════════════════════════════════════ */
+const VJ = { ctx:null, buf:null, src:null, analyser:null, dest:null, freq:null, playing:false,
+  low:0, mid:0, high:0, prevLow:0, lastKick:0, count:0, flash:0,
+  origin:performance.now(), lastIdx:0, taps:[],
+  rec:null, chunks:[], recOn:false, recT0:0, exporting:false };
+const vj$ = id => document.getElementById(id);
+const vjSrc = () => vj$('vj-src').value;
+const vjBpm = () => Math.max(40, Math.min(240, +vj$('vj-bpm').value || 120));
+const vjAmt = id => VJ.playing ? +vj$(id).value : 0;          // MID / HIGH act only while audio plays
+
+/* drive loop: rAF while visible, setInterval while the tab is hidden (rAF stops completely there) */
+let rafQueued = false, hiddenTimer = null;
+function queueRaf(){ if (!rafQueued){ rafQueued = true; requestAnimationFrame(t=>{ rafQueued = false; frame(t); }); } }
+function syncHiddenTimer(){
+  const want = document.hidden && !VJ.exporting;
+  if (want && !hiddenTimer) hiddenTimer = setInterval(()=>frame(performance.now()), 33);
+  if (!want && hiddenTimer){ clearInterval(hiddenTimer); hiddenTimer = null; }
+}
+document.addEventListener('visibilitychange', syncHiddenTimer);
+
+async function vjLoad(file){
+  if (!VJ.ctx) VJ.ctx = new (window.AudioContext||window.webkitAudioContext)();
+  if (VJ.playing) vjStop();
+  vj$('vj-file-name').textContent = 'decoding… ' + file.name;
+  try{ VJ.buf = await VJ.ctx.decodeAudioData(await file.arrayBuffer()); }
+  catch(e){ vj$('vj-file-name').textContent = '読み込めませんでした: ' + file.name; return; }
+  vj$('vj-file-name').textContent = file.name;
+  vjUI();
+}
+function vjPlay(){
+  if (!VJ.buf) return;
+  const c = VJ.ctx; if (c.state === 'suspended') c.resume();   // autoplay policy: resume inside the click
+  VJ.src = c.createBufferSource(); VJ.src.buffer = VJ.buf; VJ.src.loop = true;
+  VJ.analyser = c.createAnalyser(); VJ.analyser.fftSize = 2048;
+  VJ.analyser.smoothingTimeConstant = 0.3;                    // low = attacks stay sharp for kick detection
+  VJ.src.connect(VJ.analyser); VJ.analyser.connect(c.destination);
+  VJ.dest = VJ.dest || c.createMediaStreamDestination();     // tapped by REC so the WebM carries the audio
+  VJ.analyser.connect(VJ.dest);
+  VJ.freq = new Uint8Array(VJ.analyser.frequencyBinCount);
+  VJ.src.start(); VJ.playing = true;
+  if (vjSrc() === 'off') vj$('vj-src').value = 'kick';
+  vjUI();
+}
+function vjStop(){
+  if (VJ.src){ try{ VJ.src.stop(); }catch(e){} VJ.src = null; }
+  VJ.playing = false; VJ.low = VJ.mid = VJ.high = 0;
+  vjMeter('vj-mLow',0); vjMeter('vj-mMid',0); vjMeter('vj-mHigh',0);
+  vjUI();
+}
+function vjBand(lo, hi){
+  const binHz = (VJ.ctx.sampleRate/2)/VJ.freq.length;
+  const a = Math.floor(lo/binHz), b = Math.min(Math.ceil(hi/binHz), VJ.freq.length-1);
+  let s = 0; for (let i=a; i<=b; i++) s += VJ.freq[i];
+  return s/((b-a+1)*255);
+}
+function vjMeter(id, v){ vj$(id).firstElementChild.style.width = Math.round(Math.min(1, v)*100) + '%'; }
+function vjAnalyze(now){
+  VJ.analyser.getByteFrequencyData(VJ.freq);
+  const low = vjBand(30,150), mid = vjBand(400,2000), high = vjBand(4000,12000);
+  VJ.low = low; VJ.mid += (mid-VJ.mid)*0.25; VJ.high += (high-VJ.high)*0.45;
+  vjMeter('vj-mLow', low); vjMeter('vj-mMid', VJ.mid); vjMeter('vj-mHigh', VJ.high);
+  // kick = a sudden RISE in the low band (a moving-average threshold never fires on real music),
+  // and the low band must stand above the highs — a hi-hat is broadband and lifts every band at once
+  const th = 0.14 - (+vj$('vj-sens').value/100)*0.12, rise = low - VJ.prevLow;
+  if (rise > th && low > 0.10 && low - high > 0.06 && now - VJ.lastKick > 150){
+    VJ.lastKick = now;
+    const m = vj$('vj-mLow'); m.classList.add('hit'); setTimeout(()=>m.classList.remove('hit'), 90);
+    if (vjSrc() === 'kick') vjBeat();
+  }
+  VJ.prevLow = low;
+}
+function vjBeat(){
+  VJ.count++; VJ.flash = 1;
+  const act = vj$('vj-act').value;
+  if (act !== 'none') VJ_HOOKS.onBeat(act, VJ.count);
+  const ev = +vj$('vj-every').value;
+  if (ev > 0 && VJ.count % ev === 0) VJ_HOOKS.onEvery(VJ.count);
+}
+function vjTick(now, dt){
+  if (VJ.playing) vjAnalyze(now);
+  const beats = (now - VJ.origin)/1000*vjBpm()/60;
+  if (vjSrc() === 'clock'){
+    const idx = Math.floor(beats);
+    if (idx > VJ.lastIdx){ VJ.lastIdx = idx; vjBeat(); }
+  }
+  VJ.flash *= Math.pow(0.004, dt);
+  const led = vjSrc() === 'kick' ? VJ.flash : Math.pow(1 - (((beats % 1) + 1) % 1), 3);
+  vj$('vj-led').style.opacity = 0.15 + 0.85*led;
+  if (VJ.recOn){
+    const s = Math.floor((now - VJ.recT0)/1000);
+    vj$('vj-rec').textContent = `■ STOP & SAVE  ${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+  }
+}
+function vjTap(){
+  VJ_HOOKS.touch();
+  const now = performance.now();
+  VJ.taps = VJ.taps.filter(t => now - t < 2500); VJ.taps.push(now);
+  if (VJ.taps.length >= 2){
+    const iv = (VJ.taps[VJ.taps.length-1] - VJ.taps[0])/(VJ.taps.length-1);
+    vj$('vj-bpm').value = Math.round(60000/iv);
+  }
+  VJ.origin = now; VJ.lastIdx = 0;                           // the tap is the downbeat
+  if (vjSrc() === 'off') vj$('vj-src').value = 'clock';
+  if (vjSrc() === 'clock') vjBeat();
+  vjUI();
+}
+function vjRec(){
+  const b = vj$('vj-rec');
+  if (VJ.recOn){ VJ.rec.stop(); VJ.recOn = false; b.classList.remove('on'); b.textContent = '● REC WebM'; return; }
+  const stream = VJ_HOOKS.canvas.captureStream(60);
+  if (VJ.playing && VJ.dest) VJ.dest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
+  const mime = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'].find(m => MediaRecorder.isTypeSupported(m));
+  VJ.rec = new MediaRecorder(stream, { mimeType:mime, videoBitsPerSecond:16000000 });
+  VJ.chunks = [];
+  VJ.rec.ondataavailable = e => { if (e.data.size) VJ.chunks.push(e.data); };
+  VJ.rec.onstop = () => {
+    const a = document.createElement('a');
+    a.download = `${VJ_HOOKS.name}_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.webm`;
+    a.href = URL.createObjectURL(new Blob(VJ.chunks, { type:'video/webm' }));
+    a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+  };
+  VJ.rec.start(250);
+  VJ.recOn = true; VJ.recT0 = performance.now(); b.classList.add('on');
+}
+/* PNG sequence — offline and beat-exact: beats land on k·60/BPM from frame 0, the sim advances in
+   60 fps steps (2 per frame at 30 fps), and nothing reads the wall clock while it runs */
+async function vjSeq(){
+  if (!window.showDirectoryPicker){ alert('連番PNG は Chrome / Edge で開いてください（File System Access API を使います）'); return; }
+  const btn = vj$('vj-seq');
+  let dir; try{ dir = await window.showDirectoryPicker({ mode:'readwrite' }); }catch(e){ return; }
+  const fps = +vj$('vj-fps').value, bars = +vj$('vj-bars').value, bpm = vjBpm();
+  const frames = Math.round(bars*4*60/bpm*fps), sub = Math.max(1, Math.round(60/fps));
+  const [w, h] = vj$('vj-res').value.split('x').map(Number);
+  const beatsOn = vjSrc() !== 'off';
+  if (VJ.recOn) vjRec();
+  VJ_HOOKS.touch();
+  VJ.exporting = true; syncHiddenTimer();
+  VJ_HOOKS.beginExport(w, h);
+  let simT = 0, lastIdx = -1;
+  try{
+    for (let f=0; f<frames; f++){
+      for (let k=0; k<sub; k++){
+        if (beatsOn){ const idx = Math.floor(simT*bpm/60 + 1e-9); if (idx > lastIdx){ lastIdx = idx; vjBeat(); } }
+        VJ_HOOKS.advance(1/60); simT += 1/60;
+      }
+      VJ_HOOKS.render(1/fps);
+      const blob = await new Promise(r => VJ_HOOKS.canvas.toBlob(r, 'image/png'));
+      const fh = await dir.getFileHandle(`${VJ_HOOKS.name}_${String(f).padStart(4,'0')}.png`, { create:true });
+      const wr = await fh.createWritable(); await wr.write(blob); await wr.close();
+      btn.textContent = `${f+1} / ${frames}…`;
+    }
+    btn.textContent = `完了 ${frames} 枚 · ${fps}fps · ${bars} 小節 @${bpm}`;
+  }catch(e){ btn.textContent = '失敗: ' + e.message; }
+  VJ_HOOKS.endExport();
+  VJ.exporting = false; syncHiddenTimer(); queueRaf();
+  setTimeout(()=>{ btn.textContent = '⇩ 連番PNG を書き出す'; }, 5000);
+}
+/* gray out what can't act right now, so "it doesn't move" is never a mystery */
+function vjUI(){
+  vj$('vj-play').classList.toggle('off', !VJ.buf);
+  vj$('vj-play').textContent = VJ.playing ? '■ STOP' : '▶ PLAY';
+  for (const id of ['vj-r-sens', 'vj-r-mid', 'vj-r-high']) vj$(id).classList.toggle('dim', !VJ.playing);
+  const off = vjSrc() === 'off';
+  vj$('vj-r-act').classList.toggle('dim', off); vj$('vj-r-every').classList.toggle('dim', off);
+}
+function vjInit(){
+  vj$('vj-act').innerHTML = VJ_HOOKS.acts.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+  vj$('vj-every-lbl').textContent = VJ_HOOKS.everyLabel;
+  vj$('vj-mid-lbl').textContent = VJ_HOOKS.midLabel;
+  vj$('vj-high-lbl').textContent = VJ_HOOKS.highLabel;
+  vj$('vj-file').addEventListener('change', e => { const f = e.target.files[0]; if (f){ VJ_HOOKS.touch(); vjLoad(f); } });
+  vj$('vj-play').addEventListener('click', () => { VJ_HOOKS.touch(); VJ.playing ? vjStop() : vjPlay(); });
+  vj$('vj-tap').addEventListener('click', vjTap);
+  vj$('vj-src').addEventListener('change', () => { VJ_HOOKS.touch(); VJ.origin = performance.now(); VJ.lastIdx = 0; vjUI(); });
+  vj$('vj-sens').addEventListener('input', e => { vj$('vj-v-sens').textContent = e.target.value; });
+  vj$('vj-mid').addEventListener('input', e => { vj$('vj-v-mid').textContent = (+e.target.value).toFixed(2); });
+  vj$('vj-high').addEventListener('input', e => { vj$('vj-v-high').textContent = (+e.target.value).toFixed(2); });
+  vj$('vj-bpm').addEventListener('change', () => { vj$('vj-bpm').value = vjBpm(); });
+  vj$('vj-rec').addEventListener('click', vjRec);
+  vj$('vj-seq').addEventListener('click', vjSeq);
+  document.querySelectorAll('#vj-sp select').forEach(el => el.addEventListener('change', () => el.blur()));  // give the keys back
+  vjUI();
+}
+
+/* what the beat does in this piece */
+/* QUAKE: the 8×8 block holding the most cells one grain from toppling; one grain on such a cell in it */
+function quakeCell(){
+  const B=8,bw=Math.ceil(GW/B),bh=Math.ceil(GH/B),cnt=new Int32Array(bw*bh),v=pile.thr-1,h=pile.hgt;
+  for(let y=0;y<GH;y++)for(let x=0;x<GW;x++)if(h[y*GW+x]===v)cnt[((y/B)|0)*bw+((x/B)|0)]++;
+  let best=0;for(let i=1;i<cnt.length;i++)if(cnt[i]>cnt[best])best=i;
+  const bx=(best%bw)*B,by=((best/bw)|0)*B;
+  for(let y=by;y<Math.min(GH,by+B);y++)for(let x=bx;x<Math.min(GW,bx+B);x++)if(h[y*GW+x]===v)return y*GW+x;
+  return (rnd()*GW*GH)|0;
+}
+const VJ_HOOKS={
+ name:'EE08_sync',canvas:worldC,
+ acts:[['entrain','ENTRAIN — 拍へ少しずつ引き込む'],['flash','FLASH — 一点にランタン'],['scramble','SCRAMBLE — 一点をかき乱す'],['none','なし']],
+ everyLabel:'NEXT SPECIES',midLabel:'結合の強さを一時的に上げる',highLabel:'光る瞬間の輝き',touch:()=>stopIdle(),
+ onBeat(act){if(state.paused)return;if(act==='entrain')entrain(pile);else{const i=Math.floor(pile.rng()*pile.n);lantern(pile,pile.x[i],pile.y[i],handRadius(),act==='scramble');}},
+ onEvery(){const next=[1,2,4,4,5,0];startMode(next[state.mode]);},
+ advance,render:()=>draw(),
+ beginExport(w,h){worldC.width=w;worldC.height=h;tickAcc=speedAcc=0;VJ.mid=VJ.high=0;VJ.count=0;hand.on=false;},
+ endExport(){resizeWorld();last=performance.now();}
+};
+layoutRules();resizeWorld();resizeGraph();startMode(0);if(!reduceMotion)startIdle();syncControls();vjInit();
+// Stay on this species by default: ENTRAIN needs time to gather a scattered population.
+$('vj-every').value='0';queueRaf();
+
+</script>
+</body>
+</html>

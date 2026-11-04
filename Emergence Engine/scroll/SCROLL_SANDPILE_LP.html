@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SANDPILE — スクロール解説 (EE-07)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Cormorant+Garamond:ital,wght@1,700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500&family=Noto+Serif+JP:wght@400&display=swap" rel="stylesheet">
+<style>
+/* EE の見た目（KINETIC STAGE NOIR）：ice＝データ・gold＝ラベルと式・rouge＝いま／崩れ・砂＝アプリの DESERT */
+:root{
+  --bg:#070707;--ink:#F8EFFF;--ink-2:rgba(248,239,255,.80);--mute:rgba(181,142,255,.62);--mute-2:rgba(181,142,255,.30);
+  --line:rgba(255,210,122,.16);--acc:#FFD27A;--acc-ink:#070707;--ice:#5AE9FF;--rouge:#FF4FA8;--sand:#F6D696;
+  --grid:rgba(90,233,255,.028);
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --disp:"Barlow Condensed","Helvetica Neue",sans-serif;
+  --orn:"Cormorant Garamond",serif;
+  --jp:"Noto Sans JP",system-ui,sans-serif;
+  --jps:"Noto Serif JP",serif;
+  --col:400px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg)}
+body{background:var(--bg);color:var(--ink);font-family:var(--mono);font-feature-settings:"tnum";-webkit-font-smoothing:antialiased}
+#grid{position:fixed;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;pointer-events:none}
+#cv{position:fixed;inset:0;width:100vw;height:100vh;display:block;pointer-events:none}
+
+.hud{position:fixed;left:0;right:0;top:0;height:46px;display:flex;align-items:center;gap:16px;padding:0 16px;border-bottom:1px solid var(--line);background:rgba(7,7,7,.92);z-index:5}
+.brand{display:flex;align-items:baseline;gap:8px;white-space:nowrap}
+.mark{font-family:var(--orn);font-style:italic;font-weight:700;font-size:20px;color:var(--ice)}
+.tag{font-size:10px;color:var(--mute);letter-spacing:.2em}
+.chl{flex:1;font-size:11px;color:var(--ink-2);letter-spacing:.18em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chl b{color:var(--acc);font-weight:400}
+.rd{display:flex;align-items:baseline;gap:6px;white-space:nowrap}
+.rd .n{font-family:var(--disp);font-weight:700;font-size:22px;letter-spacing:.04em;min-width:56px;text-align:right}
+.rd .u{font-size:10px;color:var(--mute)}
+.zone{font-family:var(--disp);font-weight:700;font-size:12px;letter-spacing:.18em;padding:3px 8px;border:1px solid var(--line);white-space:nowrap;min-width:86px;text-align:center}
+.zone.EMPTY{color:var(--mute);border-color:var(--mute-2)}
+.zone.FILLING{color:var(--ice);border-color:var(--ice)}
+.zone.CRITICAL{color:var(--acc-ink);background:var(--sand);border-color:var(--sand)}
+.zone.AVALANCHE{color:var(--acc-ink);background:var(--rouge);border-color:var(--rouge)}
+.zone.TOPPLE,.zone.MANDALA,.zone.IDENTITY,.zone.POWER{color:var(--acc);border-color:var(--acc)}
+.seg{display:flex;gap:3px}
+.seg button,.lnk{font-family:var(--mono);font-size:10px;letter-spacing:.08em;background:transparent;color:var(--ink-2);border:1px solid var(--line);padding:5px 8px;cursor:pointer;text-decoration:none;white-space:nowrap}
+.seg button:hover,.lnk:hover{border-color:var(--acc);color:var(--acc)}
+.seg button.on{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.vol{width:70px;-webkit-appearance:none;appearance:none;height:2px;background:var(--mute-2);outline:none;cursor:pointer}
+.vol::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;background:var(--acc);border:1px solid var(--acc-ink);border-radius:0}
+.vol::-moz-range-thumb{width:11px;height:11px;background:var(--acc);border:1px solid var(--acc-ink);border-radius:0}
+.prog{position:fixed;left:0;top:46px;height:2px;width:0;background:linear-gradient(90deg,var(--acc),var(--rouge));z-index:5}
+.ticks{position:fixed;left:0;right:0;top:46px;height:6px;z-index:4;pointer-events:none}
+.ticks i{position:absolute;top:0;width:1px;height:6px;background:var(--mute-2)}
+#calc{position:fixed;right:16px;top:56px;z-index:4;font-size:10px;color:var(--mute);letter-spacing:.12em;pointer-events:none;transition:opacity .6s}
+
+main{position:relative;z-index:2}
+.ch{position:relative}
+.card{position:sticky;top:76px;width:var(--col);margin-left:40px;padding:20px 22px 22px;background:rgba(7,7,7,.88);border:1px solid var(--line);border-left:2px solid var(--acc)}
+.card .no{font-size:10px;color:var(--acc);letter-spacing:.2em;margin-bottom:8px}
+.card h2{font-family:var(--disp);font-weight:700;font-size:26px;letter-spacing:.08em;line-height:1.1;margin-bottom:4px}
+.card .jh{font-family:var(--jps);font-size:15px;color:var(--ink);margin-bottom:12px;line-height:1.5}
+.card p{font-family:var(--jp);font-size:13px;line-height:1.85;color:var(--ink-2);margin-bottom:10px}
+.card p b{color:var(--acc);font-weight:500}
+.card p em{font-style:normal;color:var(--rouge)}
+.card p i{font-style:normal;color:var(--sand)}
+.card .note{font-size:10px;color:var(--mute);letter-spacing:.04em;line-height:1.65;border-top:1px solid var(--line);padding-top:8px;margin-top:4px}
+.card .live{color:var(--acc)}
+.hero h1{font-family:var(--orn);font-style:italic;font-weight:700;font-size:76px;line-height:.95;margin:2px 0 6px;color:var(--ice);filter:drop-shadow(0 0 16px rgba(90,233,255,.3))}
+.hero .jh{font-size:18px}
+.rules{margin:4px 0 12px;border-top:1px solid var(--line)}
+.rules div{display:flex;gap:10px;font-family:var(--jp);font-size:12.5px;color:var(--ink);padding:6px 0;border-bottom:1px solid var(--line)}
+.rules div span{font-family:var(--mono);font-size:10px;color:var(--acc);padding-top:2px}
+.btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.btn{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;background:transparent;color:var(--ink-2);border:1px solid var(--line);padding:8px 10px;cursor:pointer;text-decoration:none}
+.btn:hover{border-color:var(--acc);color:var(--acc)}
+.btn.pri{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.scrollcue{font-size:10px;color:var(--mute);letter-spacing:.22em;margin-top:14px}
+
+#rail{position:fixed;left:40px;bottom:18px;width:var(--col);z-index:3;background:rgba(7,7,7,.9);border:1px solid var(--line);padding:9px 12px 8px;pointer-events:none}
+#rail .rh{font-size:9px;color:var(--mute);letter-spacing:.18em;margin-bottom:5px;display:flex;justify-content:space-between}
+.fr{display:flex;justify-content:space-between;gap:10px;font-size:10.5px;line-height:1.75;color:var(--mute-2);transition:color .25s}
+.fr.on{color:var(--mute)}
+.fr .fv{color:inherit;text-align:right;white-space:nowrap}
+.fr.on .fv{color:var(--ink-2)}
+.fr .fx{white-space:nowrap}
+.t{transition:color .25s,background .25s;padding:0 1px}
+.t.on{color:var(--acc-ink);background:var(--acc)}
+
+@media (max-width:880px){
+  :root{--col:auto}
+  .hud{gap:8px;padding:0 10px}
+  .brand,.chl,.vol,.lnk.app{display:none}
+  .rd .n{font-size:17px;min-width:44px}
+  .rd .u{display:none}
+  .zone{min-width:0;padding:3px 6px}
+  .seg button,.lnk{padding:5px 6px}
+  .card{margin:0 12px;width:auto;top:calc(36vh + 62px);padding:14px 16px 14px}
+  .card p{font-size:12px;line-height:1.75;margin-bottom:8px}
+  .card .jh{margin-bottom:8px}
+  .hero h1{font-size:52px}
+  .scrollcue{display:none}
+  #calc{top:auto;bottom:6px;right:12px}
+  #rail{left:12px;right:12px;width:auto;top:calc(36vh + 2px);bottom:auto;padding:6px 10px}
+  #rail .rh{display:none}
+  .fr:not(.lit){display:none}
+  .fr .fv{display:none}
+}
+@media (prefers-reduced-motion:reduce){.t,.fr{transition:none}}
+</style>
+</head>
+<body>
+<div id="grid"></div>
+<canvas id="cv"></canvas>
+
+<div class="hud">
+  <div class="brand"><span class="mark">07</span><span class="tag">EMERGENCE ENGINE ⁄ SANDPILE SCROLL</span></div>
+  <div class="chl" id="chl">00 ⁄ 10 <b>SANDPILE</b></div>
+  <div class="rd"><span class="n" id="hV">—</span><span class="u" id="hVu">z̄ 平均の高さ</span></div>
+  <div class="zone CRITICAL" id="hZone">CRITICAL</div>
+  <div class="seg" id="segSnd" title="S キーでも切り替え"><button data-v="off" class="on">OFF</button><button data-v="bow">BOW</button><button data-v="on">♪ ON</button></div>
+  <input class="vol" id="vol" type="range" min="0" max="100" value="45" title="MASTER">
+  <a class="lnk app" href="../07_sandpile.html">APP →</a>
+  <a class="lnk" href="../index.html">INDEX</a>
+</div>
+<div class="prog" id="prog"></div>
+<div class="ticks" id="ticks"></div>
+<div id="calc"></div>
+
+<main id="main">
+  <section class="ch" data-ch="0" style="height:150vh">
+    <div class="card hero">
+      <div class="no">EMERGENCE ENGINE ⁄ 07 ⁄ SCROLL EXPLAINER</div>
+      <h1>Sandpile</h1>
+      <div class="jh">同じ一粒なのに、何も起きないことも、世界が崩れることもある。なぜ？</div>
+      <p><b>これは何か</b>：マス目に砂を一粒ずつ落としていく世界。守っているルールは、この 3 行だけ。</p>
+      <div class="rules">
+        <div><span>01</span>どこかのマスに一粒落とす</div>
+        <div><span>02</span>4 つたまったマスは崩れて、上下左右のとなりに 1 粒ずつ配る</div>
+        <div><span>03</span>端からはみ出した粒は消える</div>
+      </div>
+      <p>このページでは<b>スクロールが時間</b>。下へ進むと砂が降り、戻ると巻き戻る。色が明るいマスほど高い。いちばん明るい<i>砂色</i>は「あと一粒で崩れる」マス、<em>赤</em>は崩れたばかりのマス。音は <b>BOW</b>：スクロールしている間だけ、崩れる音が鳴る。</p>
+      <div class="btns"><button class="btn pri" id="bStart">♪ 音を出して読む（BOW）</button><a class="btn" href="../07_sandpile.html">アプリで触る →</a></div>
+      <div class="scrollcue">↓ SCROLL</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="1" style="height:230vh">
+    <div class="card">
+      <div class="no">01 ⁄ 10</div>
+      <h2>TOPPLE</h2>
+      <div class="jh">一粒が、連鎖を起こす</div>
+      <p>7×7 の小さな世界。数字がそのマスの粒の数。真ん中に一粒落とすと 4 になり、<em>崩れて</em>上下左右に 1 粒ずつ配る。</p>
+      <p>配られたとなりが 4 になれば、それも崩れる。いま<b>世代 <span class="live" data-live="wave">0</span></b>・崩れ <span class="live" data-live="top">0</span> 回・端から落ちた粒 <span class="live" data-live="lost">0</span>。</p>
+      <p>一粒が起こした崩れの回数を、その<b>雪崩の大きさ</b>と呼ぶ。</p>
+      <div class="note">同じ世代で 4 以上のマスはいっせいに崩れる（アプリと同じ relax の 1 世代）。崩れる順番を変えても最後の形は同じ（アーベル性）。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="2" style="height:250vh">
+    <div class="card">
+      <div class="no">02 ⁄ 10</div>
+      <h2>FILL</h2>
+      <div class="jh">空の世界に砂が降る</div>
+      <p>128×80 マスの空の世界に、1 秒に 1,200 粒の速い雨。いま t ＝ <span class="live" data-live="t">0</span> 秒、平均の高さ <b>z̄ ＝ <span class="live" data-live="mean">0</span></b>。</p>
+      <p>最初は崩れない。2 を越えるころから崩れが増え、端から砂がこぼれ始める。そして <b>z̄ は 2.10 あたりで止まる</b>。</p>
+      <p><b>誰もそこを目標にしていない</b>。降らせても降らせても、増えた分だけ端からこぼれる。</p>
+      <div class="note">下の帯：黄＝平均の高さ z̄、赤＝端からこぼれた粒の累計。スクロールを止めると時間も止まる。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="3" style="height:290vh">
+    <div class="card">
+      <div class="no">03 ⁄ 10</div>
+      <h2>BRINK</h2>
+      <div class="jh">世界は「崩れる寸前」に落ち着く</div>
+      <p>満ちた世界に、今度は<b>一粒ずつ</b>。雪崩は前線として広がる（1 コマに 3 世代）。いま t ＝ <span class="live" data-live="t">0</span> 秒。</p>
+      <p><i>あと一粒で崩れる</i>マスが世界の <b><span class="live" data-live="brink">44</span>%</b>。でも、それがつながっているかどうかで、次の一粒の運命が決まる。</p>
+      <p>下の帯がその証拠。<b>何も起きない粒・数回で終わる粒・世界中を走る粒</b>が、同じルールから出てくる。</p>
+      <div class="note">下の帯＝いま進んでいる雪崩の大きさ（縦は対数）。右の棒＝高さ 0〜3 のマスの割合。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="4" style="height:280vh">
+    <div class="card">
+      <div class="no">04 ⁄ 10</div>
+      <h2>AVALANCHE</h2>
+      <div class="jh">たった一粒の、大雪崩</div>
+      <p>03 の 40 秒でいちばん大きかった雪崩を、<b>1 コマ＝1 世代</b>でゆっくり再生する。きっかけは、ほかと同じ<b>たった一粒</b>。</p>
+      <p>世代 <span class="live" data-live="wave">0</span>・崩れ <b><span class="live" data-live="av">0</span> 回</b>（世界のマス数 10,240 とほぼ同じ）。前線が「崩れる寸前」の道をつたって走り、通ったあとは低くなる。</p>
+      <div class="note">白＝いま崩れているマス、赤い尾＝崩れたばかり。アプリで画面がふるえて AVALANCHE と出るのがこの大きさ。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="5" style="height:280vh">
+    <div class="card">
+      <div class="no">05 ⁄ 10</div>
+      <h2>POWER LAW</h2>
+      <div class="jh">「ふつうの大きさ」がない</div>
+      <p>臨界の世界に、さらに 10 万粒を一粒ずつ落として、雪崩の大きさを数える。いま <span class="live" data-live="nAv">0</span> 個の雪崩。</p>
+      <p>横＝雪崩の大きさ、縦＝その大きさの起きやすさ。両方を対数にすると、点が<b>まっすぐ並ぶ</b>（傾き <b><span class="live" data-live="tau">—</span></b>）。</p>
+      <p>小さい雪崩ほど多いが、どこまで行っても「この大きさが普通」という山がない。これが<b>べき乗則</b>。地震の大きさや山火事の広さも、同じ形になる。</p>
+      <div class="note">数え方はアプリの PROOF と同じ（静かな世界に落ちた一粒の雪崩だけ・log2 の箱・10 個以上の箱で直線を引く）。何も起きなかった粒は数えない。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="6" style="height:230vh">
+    <div class="card">
+      <div class="no">06 ⁄ 10</div>
+      <h2>ONLY AT THE BRINK</h2>
+      <div class="jh">べき乗則は、満ちてからだけ</div>
+      <p>同じ数え方で、<b>空から満ちていく途中</b>（02 の雨を一粒ずつにしたもの）の雪崩も並べる。</p>
+      <p>満ちる途中は大きな雪崩が起きないので、線が<em>急に落ちる</em>（傾き <span class="live" data-live="tauFill">—</span>）。臨界になってからの <b><span class="live" data-live="tau">—</span></b> とは別物。</p>
+      <p>アプリでも、満ちる前の雪崩まで数えると傾きがずれた。だからアプリは<b>満ちてから数え直す</b>。べき乗則は砂山の性質ではなく、<b>崩れる寸前の世界</b>の性質。</p>
+      <div class="note">点線＝満ちる途中（空から 20,480 粒）、黄＝臨界（10 万粒）。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="7" style="height:270vh">
+    <div class="card">
+      <div class="no">07 ⁄ 10</div>
+      <h2>TOWER</h2>
+      <div class="jh">一か所に注ぐと、曼荼羅が育つ</div>
+      <p>今度は真ん中の一マスにだけ注ぐ。いま <b><span class="live" data-live="grains">0</span> 粒</b>。</p>
+      <p>同じ 3 行のルールなのに、雨のときの<b>ざらざら</b>ではなく、<b>入れ子の模様</b>が育つ。誰も模様を描いていない。</p>
+      <p>崩れる順番を変えても最後の形は同じ（アーベル性）。だからこの模様は「その粒数の砂山」に<b>一つだけ</b>決まる。</p>
+      <div class="note">アプリの 2 TOWER。粒が端に届く前に止める（アプリと同じ pourCap ＝ 42,748 粒・こぼれた粒 0）。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="8" style="height:250vh">
+    <div class="card">
+      <div class="no">08 ⁄ 10</div>
+      <h2>LATTICE</h2>
+      <div class="jh">となりの数を変えると、別の曼荼羅</div>
+      <p>ルールの「4」は、となりの数。<b>六角（6 つ）</b>なら 6 たまると崩れ、<b>八方（8 つ）</b>なら 8 で崩れる。</p>
+      <p>同じ「注ぐ」でも、<b>四角い曼荼羅・六角の曼荼羅・八角の曼荼羅</b>が育つ。形を決めているのは、となりの並び方だけ。</p>
+      <div class="note">アプリの 2 TOWER・4 HEX・5 EIGHT。それぞれ端に届く手前まで（42,748 ／ 69,586 ／ 86,571 粒）。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="9" style="height:270vh">
+    <div class="card">
+      <div class="no">09 ⁄ 10</div>
+      <h2>IDENTITY</h2>
+      <div class="jh">足しても何も変わらない砂山</div>
+      <p>全マスを 6 にして崩し、残りを 6 から引いた砂山を、もう一度崩す。できあがるのは<b>どんな安定な砂山に足しても、崩したあと元に戻る砂山</b>（足し算の 0 にあたる）。</p>
+      <p>いま<span class="live" data-live="phase">1 回目</span>・世代 <span class="live" data-live="wave">0</span> ⁄ 5,605。この四角い世界の「0」は、こんな模様をしている。</p>
+      <div class="note">アプリの 6 IDENTITY（20〜30 秒待つ）。e ＝ (2·max − (2·max)°)°（max＝全マス 3、° ＝崩して落ち着かせる）。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="10" style="height:230vh">
+    <div class="card">
+      <div class="no">10 ⁄ 10</div>
+      <h2>BLUEPRINT</h2>
+      <div class="jh">見てきた雪崩は、この直線の上にいた</div>
+      <p>05 の直線に、このページで見た雪崩を置く。03 の小さな雪崩も、04 の大雪崩も、<b>同じ一本の直線</b>の上。</p>
+      <p>誰も崩れ方を決めていない。世界は勝手に崩れる寸前に落ち着き、そこから先は<b>一粒ごとに、どの大きさにもなりうる</b>。</p>
+      <div class="btns"><button class="btn" id="bRewind">◀◀ REWIND</button><a class="btn pri" href="../07_sandpile.html">アプリで一粒落とす →</a><a class="btn" href="SCROLL_TURING_LP.html">06 TURING の解説 →</a><a class="btn" href="SCROLL_SYNC_LP.html">08 SYNC の解説 →</a><a class="btn" href="../index.html">SERIES INDEX</a></div>
+      <div class="note">アプリでは：押すと一粒・押し続けると注ぐ／Shift＋押すで周りを崩れる寸前にそろえる／G で PROOF（この直線）。REWIND はスクロールを巻き戻すだけ。</div>
+    </div>
+  </section>
+</main>
+
+<div id="rail">
+  <div class="rh"><span>FORMULA RAIL</span><span>いま動いている項が光る</span></div>
+  <div class="fr" data-row="a"><span class="fx">zᵢ ≥ <span class="t" data-t="thr">4</span> ⇒ zᵢ − 4・<span class="t" data-t="nb">となり 4 つ</span>に ＋1</span><span class="fv" id="fvA">—</span></div>
+  <div class="fr" data-row="b"><span class="fx"><span class="t" data-t="edge">端の外</span>へ出た粒は消える</span><span class="fv" id="fvB">—</span></div>
+  <div class="fr" data-row="c"><span class="fx"><span class="t" data-t="mean">z̄</span> ＝ 粒の数 ⁄ マスの数 → 2.10</span><span class="fv" id="fvC">—</span></div>
+  <div class="fr" data-row="d"><span class="fx"><span class="t" data-t="s">s</span> ＝ 一粒が起こした崩れの回数</span><span class="fv" id="fvD">—</span></div>
+  <div class="fr" data-row="e"><span class="fx">P(s) ∝ s<sup><span class="t" data-t="tau">−τ</span></sup></span><span class="fv" id="fvE">—</span></div>
+  <div class="fr" data-row="f"><span class="fx"><span class="t" data-t="e">e</span> ＝ (2·max − (2·max)°)°</span><span class="fv" id="fvF">—</span></div>
+</div>
+
+<script src="../_law/ee07_sandpile.js"></script>
+<script>
+(() => {
+'use strict';
+// 法則（makePile・addGrains・relax・sizeHistogram…）は ../_law/ee07_sandpile.js＝アプリと同じファイル。LP 側に式は持たない
+const $ = id => document.getElementById(id);
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+const seg = (u, a, b) => clamp((u - a) / (b - a));
+const sm = t => t * t * (3 - 2 * t);
+const lerp = (a, b, t) => a + (b - a) * t;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let C = {};
+const readColors = () => { C = { ink: css('--ink'), ink2: css('--ink-2'), mute: css('--mute'), mute2: css('--mute-2'), line: css('--line'), acc: css('--acc'), ice: css('--ice'), rouge: css('--rouge'), sand: css('--sand'), bg: css('--bg'), mono: css('--mono'), disp: css('--disp'), jp: css('--jp') }; };
+
+// ── 時間の扱い：砂山の状態はスクロールの純関数。重い計算は Worker で起動直後に全部記録し、スクロールで引き出す
+// 砂山は止まっていれば本当に何も動かない。だからスクロールを止めると画面も音も止まる（BOW も ON も、進んだコマのぶんだけ鳴る）
+const FS = 30, CELLS = 128 * 80, HEXH = Math.sqrt(3) / 2;
+const RUNS = {
+  fill: { kind: 'drip', w: 128, h: 80, seed: 7, frames: 451, rate: 40, instant: true, ticksPerFrame: 2 },        // 02：空から速い雨（1 粒ずつ落ち着かせる）
+  crit: { kind: 'drip', w: 128, h: 80, seed: 11, frames: 1201, waves: 3, ticksPerFrame: 2, after: 'fill' },     // 03：臨界から一粒ずつ・前線は 1 コマ 3 世代
+  big: { kind: 'big', w: 128, h: 80, after: 'crit' },                                                           // 04：03 でいちばん大きな雪崩を 1 世代ずつ
+  stats: { kind: 'stats', w: 128, h: 80, seed: 13, grains: 100000, snaps: 200, after: 'crit' },                 // 05：さらに 10 万粒
+  sq: { kind: 'pour', lat: 'sq', w: 161, h: 161, frames: 240 },                                                 // 07
+  hex: { kind: 'pour', lat: 'hex', w: 161, h: 186, frames: 240 },                                               // 08
+  moore: { kind: 'pour', lat: 'moore', w: 161, h: 161, frames: 240 },
+  ident: { kind: 'identity', w: 128, h: 80, maxFrames: 600 },                                                   // 09
+};
+const LANES = [['fill', 'crit', 'big', 'stats'], ['sq', 'ident'], ['hex', 'moore']];
+
+// 記録係：法則（makePile・addGrains・relax・busy・endAvalanche・identityStart/Flip・pourCap）だけを使う。Worker でも本体でも同じこれを回す
+function* runner(id, spec, chunk) {
+  const T0 = Date.now();
+  const enc = (p, out, o) => { const h = p.hgt, g = p.glow; for (let i = 0; i < h.length; i++) { const v = h[i] > 15 ? 15 : h[i]; out[o + i] = v | (Math.min(15, Math.round(g[i] / 1.2 * 15)) << 4); } };
+  const meanOf = p => (p.added - p.lost) / p.hgt.length;
+  const brinkOf = p => { let c = 0; const t = p.thr - 1, h = p.hgt; for (let i = 0; i < h.length; i++) if (h[i] === t) c++; return c / h.length; };
+  const decay = (p, f) => { const g = p.glow; for (let i = 0; i < g.length; i++) if (g[i] !== 0) { g[i] *= f; if (g[i] < .004) g[i] = 0; } };
+  const KEYS = ['mean', 'brink', 'top', 'av', 'lost', 'grains'];
+  // 記録の器：frames（1 マス 1 バイト＝高さ 4bit＋光 4bit）と、コマごとの数値
+  function* emit(p, F, stepFn, extra) {
+    const n = p.hgt.length;
+    yield { type: 'meta', id, w: p.w, h: p.h, lat: p.lat, thr: p.thr, F, ...(extra || {}) };
+    const buf = new Uint8Array(n * chunk), sc = {}; KEYS.forEach(k => { sc[k] = new Float32Array(chunk); });
+    let c = 0, f0 = 0;
+    for (let f = 0; f < F; f++) {
+      const r = f ? stepFn(f) : { top: 0, av: 0 };
+      enc(p, buf, c * n); sc.mean[c] = meanOf(p); sc.brink[c] = brinkOf(p); sc.top[c] = r.top; sc.av[c] = r.av || 0; sc.lost[c] = p.lost; sc.grains[c] = p.added; c++;
+      if (c === chunk || f === F - 1) { const o = { type: 'chunk', id, f0, cnt: c, q: buf.slice(0, c * n) }; KEYS.forEach(k => { o[k] = sc[k].slice(0, c); }); yield o; f0 += c; c = 0; }
+    }
+  }
+  function* emitList(frames, p, extra) {
+    const n = p.hgt.length, F = frames.length;
+    yield { type: 'meta', id, w: p.w, h: p.h, lat: p.lat, thr: p.thr, F, ...(extra || {}) };
+    for (let f0 = 0; f0 < F; f0 += chunk) {
+      const cnt = Math.min(chunk, F - f0), o = { type: 'chunk', id, f0, cnt, q: new Uint8Array(n * cnt) };
+      KEYS.forEach(k => { o[k] = new Float32Array(cnt); });
+      for (let j = 0; j < cnt; j++) { const fr = frames[f0 + j]; o.q.set(fr.q, j * n); KEYS.forEach(k => { o[k][j] = fr[k]; }); }
+      yield o;
+    }
+  }
+  const snapper = (p, frames, state) => () => { const o = new Uint8Array(p.hgt.length); enc(p, o, 0); frames.push({ q: o, top: p.topples - state.lastTop, av: state.av(), mean: meanOf(p), brink: brinkOf(p), lost: p.lost, grains: p.added }); state.lastTop = p.topples; };
+  const load = p => { p.hgt.set(spec.from); let s = 0; for (let i = 0; i < p.hgt.length; i++) s += p.hgt[i]; p.added = s; }; // 前のランの終わりの砂山から始める
+  const rng = makeRng(spec.seed || 1);
+  const GF = Math.exp(-1 / 60 / .5); // 光の残り（アプリの TRAIL 既定 0.5 s）
+
+  if (spec.kind === 'drip') {
+    // instant：1 粒ずつ落とし、毎回すぐ落ち着かせる（1 粒ごとの雪崩を数える）。そうでなければ雪崩は前線として 1 コマ waves 歩ずつ
+    const p = makePile(spec.w, spec.h, 'sq');
+    if (spec.from) load(p);
+    const sizes = [];
+    let best = -1, bestFrom = null, bestCell = -1, before = null, beforeCell = -1;
+    const close = () => { const a = endAvalanche(p); sizes.push(a ? a.size : 0); if (a && a.size > best) { best = a.size; bestFrom = before; bestCell = beforeCell; } };
+    const tick = () => {
+      const top0 = p.topples;
+      if (spec.instant) {
+        for (let k = 0; k < spec.rate; k++) { addGrains(p, (rng() * p.hgt.length) | 0, 1); while (busy(p)) relax(p, 1 << 24); const a = endAvalanche(p); sizes.push(a ? a.size : 0); }
+      } else {
+        if (!busy(p)) { if (p.av.on) close(); before = p.hgt.slice(); beforeCell = (rng() * p.hgt.length) | 0; addGrains(p, beforeCell, 1); }
+        relax(p, 1 << 24, spec.waves);
+        if (!busy(p) && p.av.on) close();
+      }
+      decay(p, GF);
+      return p.topples - top0;
+    };
+    const per = spec.ticksPerFrame || 2;
+    yield* emit(p, spec.frames, () => { let t = 0; for (let k = 0; k < per; k++) t += tick(); return { top: t, av: p.av.on ? p.av.size : 0 }; });
+    yield { type: 'sizes', id, sizes: Int32Array.from(sizes), end: p.hgt.slice(), best, bestFrom, bestCell, ms: Date.now() - T0 };
+    return;
+  }
+  if (spec.kind === 'big') {
+    // いちばん大きな雪崩を、1 コマ＝崩れの 1 世代で記録しなおす
+    const p = makePile(spec.w, spec.h, 'sq'); load(p);
+    addGrains(p, spec.cell, 1);
+    const frames = [], st = { lastTop: p.topples, av: () => p.av.size }, snap = snapper(p, frames, st), f = Math.exp(-1 / 30 / .5);
+    snap(); while (busy(p)) { relax(p, 1 << 24, 1); decay(p, f); snap(); }
+    for (let k = 0; k < 30; k++) { decay(p, f); snap(); }
+    yield* emitList(frames, p, { size: p.av.size });
+    return;
+  }
+  if (spec.kind === 'stats') {
+    // 臨界からさらに grains 粒。雪崩の大きさを log2 の箱に数え（法則の endAvalanche がやる）、途中の箱を snaps 回とっておく
+    const p = makePile(spec.w, spec.h, 'sq'); load(p);
+    const snaps = new Float32Array(spec.snaps * 48), nAv = new Float32Array(spec.snaps), every = Math.ceil(spec.grains / spec.snaps);
+    let s = 0;
+    for (let g = 1; g <= spec.grains; g++) { addGrains(p, (rng() * p.hgt.length) | 0, 1); while (busy(p)) relax(p, 1 << 24); endAvalanche(p); if (g % every === 0 && s < spec.snaps) { snaps.set(p.bins, s * 48); nAv[s] = p.nAv; s++; } }
+    yield { type: 'stats', id, snaps, nAv, every, S: s, ms: Date.now() - T0 };
+    return;
+  }
+  if (spec.kind === 'pour') {
+    // 真ん中に注ぐ。コマ k までに N·(k/(F−1))² 粒（半径が一定の速さで育つ）。毎コマ落ち着かせてから記録（順番によらず同じ形＝アーベル性）
+    const p = makePile(spec.w, spec.h, spec.lat), c = (spec.h >> 1) * spec.w + (spec.w >> 1), N = pourCap(spec.lat, spec.w, spec.h);
+    let done = 0;
+    yield* emit(p, spec.frames, f => { const want = Math.round(N * (f / (spec.frames - 1)) ** 2), t0 = p.topples; decay(p, .6); if (want > done) { addGrains(p, c, want - done); done = want; } while (busy(p)) relax(p, 1 << 24); endAvalanche(p); return { top: p.topples - t0, av: 0 }; }, { N });
+    return;
+  }
+  if (spec.kind === 'identity') {
+    // 何も足さない砂山 e ＝ (2·max − (2·max)°)°。崩れの 1 世代ずつ記録し、多すぎる分は間引く
+    const p = makePile(spec.w, spec.h, 'sq'), frames = [], st = { lastTop: 0, phase: 1, av: () => st.phase }, snap = snapper(p, frames, st);
+    identityStart(p); snap();
+    while (busy(p)) { relax(p, 1 << 24, 1); decay(p, .9); snap(); }
+    const flipAt = frames.length; identityFlip(p); st.phase = 2; snap();
+    while (busy(p)) { relax(p, 1 << 24, 1); decay(p, .9); snap(); }
+    for (let k = 0; k < 30; k++) { decay(p, .9); snap(); }
+    const keep = Math.ceil(frames.length / spec.maxFrames), sel = frames.filter((_, i) => i % keep === 0 || i === flipAt || i === frames.length - 1);
+    yield* emitList(sel, p, { flipAt: sel.findIndex(fr => fr.av === 2), waves: frames.length });
+    return;
+  }
+}
+
+// ランの順番：後のランは前のランの終わり（from）から始める。Worker でも本体でも同じこれを回す
+function* lane(ids, specs, chunk) {
+  const got = {};
+  for (const id of ids) {
+    const s = { ...specs[id] };
+    if (s.after) { const g = got[s.after]; if (s.kind === 'big') { s.from = g.bestFrom; s.cell = g.bestCell; } else s.from = g.end; }
+    for (const m of runner(id, s, chunk)) { if (m.type === 'sizes') got[id] = m; yield m; }
+  }
+}
+
+const DATA = {};
+function onMsg(m) {
+  if (m.type === 'meta') { const n = m.w * m.h, d = { ...m, q: new Uint8Array(n * m.F), ready: 0, done: false }; for (const k of ['mean', 'brink', 'top', 'av', 'lost', 'grains']) d[k] = new Float32Array(m.F); DATA[m.id] = d; return; }
+  if (m.type === 'sizes') { DATA[m.id].sizes = m.sizes; DATA[m.id].best = m.best; DATA[m.id].done = true; return; }
+  if (m.type === 'stats') { DATA[m.id] = { ...m, done: true, ready: m.S, F: m.S }; return; }
+  const d = DATA[m.id]; if (!d) return;
+  const n = d.w * d.h; d.q.set(m.q, m.f0 * n);
+  for (const k of ['mean', 'brink', 'top', 'av', 'lost', 'grains']) d[k].set(m[k], m.f0);
+  d.ready = m.f0 + m.cnt; if (d.ready >= d.F && RUNS[m.id].kind !== 'drip') d.done = true;
+}
+let workerMode = 'worker';
+function startCompute() {
+  const src = ['"use strict";', 'const THR=' + JSON.stringify(THR) + ';', 'const SPAN=' + JSON.stringify(SPAN) + ';',
+    pourCap, makeRng, makePile, mark, addGrains, setHeight, busy, endAvalanche, neighbours, relax, identityStart, identityFlip, runner, lane].map(String).join('\n') +
+    '\nonmessage=e=>{const a=e.data;for(const m of lane(a.ids,a.specs,30)){const tr=[];if(m.type==="chunk")tr.push(m.q.buffer);postMessage(m,tr);}};';
+  try {
+    const url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
+    LANES.forEach(ids => { const w = new Worker(url); w.onmessage = e => onMsg(e.data); w.onerror = () => fallback(); w.postMessage({ ids, specs: RUNS }); });
+  } catch (e) { fallback(); }
+}
+function fallback() {
+  if (workerMode === 'main') return; workerMode = 'main';
+  for (const k in DATA) delete DATA[k];
+  const gens = LANES.map(ids => lane(ids, RUNS, 30));
+  const pump = () => { const t0 = performance.now(); while (gens.length && performance.now() - t0 < 10) { const r = gens[0].next(); if (r.done) gens.shift(); else onMsg(r.value); } if (gens.length) setTimeout(pump, 0); };
+  pump();
+}
+
+// ── 01 TOPPLE：7×7 の小さな世界。毎回 0 から 1 世代ずつ回す（軽いのでスクロールの純関数のまま）
+const SMALL0 = [2, 3, 1, 3, 2, 1, 2, 3, 2, 3, 3, 3, 2, 1, 1, 3, 3, 3, 2, 3, 3, 2, 3, 3, 3, 3, 3, 1, 3, 2, 3, 3, 3, 2, 2, 1, 3, 2, 3, 3, 3, 1, 2, 1, 3, 1, 2, 3, 2];
+function smallAt(w) {
+  const p = makePile(7, 7, 'sq'); SMALL0.forEach((v, i) => { p.hgt[i] = v; }); p.added = SMALL0.reduce((a, b) => a + b, 0);
+  if (w >= 1) addGrains(p, 24, 1);
+  for (let k = 1; k < w && busy(p); k++) { p.glow.fill(0); relax(p, 1 << 24, 1); } // glow＞0＝この世代で崩れたマス
+  return { p, wave: Math.max(0, w), done: !busy(p) };
+}
+const SMALL_WAVES = (() => { let w = 1; while (!smallAt(w).done && w < 200) w++; return w; })();
+
+// ── 章：状態は章の進み u の純関数
+const tFrame = (id, t) => Math.round(t * FS);
+const idxOf = (id, u) => DATA[id] ? Math.round(u * (DATA[id].F - 1)) : 0;
+const CH = [
+  { id: 'SANDPILE', at: () => ({ run: 'crit', f: 0 }), P: { FIELD: [0, 0, 1, 1] }, lit: ['thr'], rows: 'ab' },
+  { id: 'TOPPLE', at: u => ({ small: Math.round(lerp(0, SMALL_WAVES, seg(u, .06, .9))) }), P: { SMALL: [0, 0, 1, 1] }, lit: ['thr', 'nb', 's'], rows: 'abd' },
+  { id: 'FILL', at: u => ({ run: 'fill', f: tFrame('fill', 15 * seg(u, .04, .94)), t: 15 * seg(u, .04, .94), tmax: 15 }), P: { FIELD: [0, 0, 1, .66], MEAN: [0, .7, 1, .3] }, lit: ['mean', 'edge'], rows: 'bc' },
+  { id: 'BRINK', at: u => ({ run: 'crit', f: tFrame('crit', 40 * seg(u, .04, .94)), t: 40 * seg(u, .04, .94), tmax: 40 }), P: { FIELD: [0, 0, .7, .66], HEIGHTS: [.73, 0, .27, .66], AVLOG: [0, .7, 1, .3] }, lit: ['s'], rows: 'acd' },
+  { id: 'AVALANCHE', at: u => ({ run: 'big', f: idxOf('big', seg(u, .04, .94)) }), P: { FIELD: [0, 0, 1, .7], GROW: [0, .74, 1, .26] }, lit: ['s', 'nb'], rows: 'ad' },
+  { id: 'POWER LAW', at: u => ({ hist: Math.round(199 * seg(u, .04, .9) ** 2) }), P: { HIST: [0, 0, 1, 1] }, lit: ['tau', 's'], rows: 'de' },
+  { id: 'ONLY AT THE BRINK', at: u => ({ hist: 199, fill: true, rev: sm(seg(u, .05, .5)) }), P: { HIST: [0, 0, 1, 1] }, lit: ['tau'], rows: 'ce' },
+  { id: 'TOWER', at: u => ({ run: 'sq', f: idxOf('sq', seg(u, .04, .92)) }), P: { FIELD: [0, 0, 1, 1] }, lit: ['thr', 'nb'], rows: 'a' },
+  { id: 'LATTICE', at: u => ({ trio: ['sq', 'hex', 'moore'], f: idxOf('sq', seg(u, .04, .9)) }), P: { TRIO: [0, 0, 1, 1] }, lit: ['thr', 'nb'], rows: 'a' },
+  { id: 'IDENTITY', at: u => ({ run: 'ident', f: idxOf('ident', seg(u, .04, .94)) }), P: { FIELD: [0, 0, 1, 1] }, lit: ['e'], rows: 'af' },
+  { id: 'BLUEPRINT', at: u => ({ hist: 199, bp: sm(seg(u, 0, .7)) }), P: { HIST: [0, 0, 1, 1] }, lit: ['tau', 's'], rows: 'acdef' },
+];
+const PM = [{ FIELD: [0, 0, 1, 1] }, { SMALL: [0, 0, 1, 1] }, { FIELD: [0, 0, .62, 1], MEAN: [.64, 0, .36, 1] }, { FIELD: [0, 0, .66, 1], AVLOG: [.68, 0, .32, 1] }, { FIELD: [0, 0, 1, 1] },
+  { HIST: [0, 0, 1, 1] }, { HIST: [0, 0, 1, 1] }, { FIELD: [0, 0, 1, 1] }, { TRIO: [0, 0, 1, 1] }, { FIELD: [0, 0, 1, 1] }, { HIST: [0, 0, 1, 1] }];
+CH.forEach((c, i) => { c.PM = PM[i]; });
+
+// ── スクロールの採寸（SCROLL_BEATS_LP と同じ型）
+const chEls = [...document.querySelectorAll('.ch')];
+let M = [], VH = innerHeight, MAXY = 1;
+function measure() {
+  VH = innerHeight; M = chEls.map(el => ({ top: el.offsetTop, h: el.offsetHeight }));
+  MAXY = Math.max(1, document.documentElement.scrollHeight - VH);
+  $('ticks').innerHTML = M.slice(1).map(m => `<i style="left:${(m.top / MAXY * 100).toFixed(2)}%"></i>`).join('');
+}
+function locate(y) {
+  let i = 0; while (i < M.length - 1 && y >= M[i + 1].top) i++;
+  const m = M[i], dwell = Math.max(1, m.h - VH);
+  const u = clamp((y - m.top) / dwell), k = i < M.length - 1 ? sm(clamp((y - m.top - dwell) / VH)) : 0;
+  return { i, u, k };
+}
+function frameOf(id, f) {
+  const d = DATA[id]; if (!d || !d.ready || !d.q) return null;
+  const ff = clamp(f, 0, d.F - 1) | 0, g = Math.min(ff, d.ready - 1);
+  return { d, f: g, lag: ff - g };
+}
+// 05/06/10 の分布：法則の sizeHistogram をそのまま使う
+function histAt(s) {
+  const d = DATA.stats; if (!d) return null; const k = Math.min(s, d.S - 1);
+  return sizeHistogram({ bins: Float64Array.from(d.snaps.subarray(k * 48, k * 48 + 48)), nAv: d.nAv[k] });
+}
+let FILLH = null;
+function fillHist() {
+  if (FILLH) return FILLH; const d = DATA.fill; if (!d || !d.sizes) return null;
+  const p = { bins: new Float64Array(48), nAv: 0 }; for (let i = 0; i < 2 * CELLS && i < d.sizes.length; i++) { const s = d.sizes[i]; if (s > 0) { p.bins[Math.floor(Math.log2(s))]++; p.nAv++; } }
+  return (FILLH = { ...sizeHistogram(p), nAv: p.nAv });
+}
+
+// ── 描画
+const cv = $('cv'); let g = null, W = 0, H = 0;
+function fitAll() {
+  const d = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight;
+  if (cv.width !== Math.round(W * d) || cv.height !== Math.round(H * d)) { cv.width = Math.round(W * d); cv.height = Math.round(H * d); }
+  g = cv.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, W, H);
+}
+const MOBILE = () => W < 880;
+function stageRect() {
+  if (MOBILE()) return { x: 12, y: 54, w: W - 24, h: H * .36 - 58 };
+  const x = Math.min(40 + 400 + 36, W * .44); return { x, y: 68, w: W - x - 24, h: H - 68 - 22 };
+}
+function frameBox(x, y, w, h, cap, right) {
+  g.strokeStyle = C.line; g.lineWidth = 1; g.strokeRect(Math.round(x) + .5, Math.round(y) + .5, Math.round(w) - 1, Math.round(h) - 1);
+  g.fillStyle = 'rgba(7,7,7,.6)'; g.fillRect(x + 1, y + 1, w - 2, h - 2);
+  g.font = `10px ${C.mono}`; g.textAlign = 'left';
+  const rw = right ? g.measureText(right).width + 16 : 0;
+  if (g.measureText(cap).width + 20 + rw < w) { g.fillStyle = C.mute; g.fillText(cap, x + 10, y + 16); } // 狭い枠では見出しを省き、値だけ残す
+  if (right) { g.textAlign = 'right'; g.fillStyle = C.acc; g.fillText(right, x + w - 10, y + 16); }
+}
+function computing(x, y, w, h) { g.font = `10px ${C.mono}`; g.fillStyle = C.mute; g.textAlign = 'center'; g.fillText('計算中…', x + w / 2, y + h / 2); }
+
+// 高さの色はアプリの LOOK DESERT と同じ（いちばん明るい＝あと一粒で崩れる）。崩れている最中は白。
+// 崩れた跡の光だけは EE の「いま」の色 rouge に寄せる（アプリの白い光だと、あと一粒の砂色に埋もれて前線が読めない）
+const LV = [[20, 14, 8], [92, 60, 30], [168, 120, 66], [246, 214, 150]], HOT = [255, 252, 238], GLOW = [255, 79, 168], BG = [7, 6, 5];
+const PAL = {};
+function palOf(thr, gm = 1) {
+  const pk = thr + '|' + gm; if (PAL[pk]) return PAL[pk];
+  const p = new Uint32Array(256);
+  for (let b = 0; b < 256; b++) {
+    const h = b & 15, gq = (b >> 4) / 15; let c;
+    if (h >= thr) c = HOT; else { const t = h / (thr - 1) * 3, k = Math.min(2, Math.floor(t)), f = t - k; c = LV[k].map((v, j) => v + (LV[k + 1][j] - v) * f); }
+    const a = Math.min(1, gq * .9 * gm), r = c[0] + (GLOW[0] - c[0]) * a, gg = c[1] + (GLOW[1] - c[1]) * a, bl = c[2] + (GLOW[2] - c[2]) * a;
+    p[b] = (255 << 24) | (Math.round(bl) << 16) | (Math.round(gg) << 8) | Math.round(r);
+  }
+  return (PAL[pk] = p);
+}
+// 光の強さはランごとに変える：速い雨・注ぐ間は世界じゅうが毎コマ崩れて光で埋まるので弱める（アプリも注ぐ間は .18）
+const GLOW_MUL = { fill: .25, crit: 1, big: 1, sq: 0, hex: 0, moore: 0, ident: .5 }; // 注ぐ曼荼羅は高さだけ（中が毎コマ崩れて全体が赤くなる）
+// 1 マス＝K px のランプ（K−1 px 点灯＋1 px のすき間）をオフスクリーンに描き、ぼかさずに拡大する（アプリの LIGHT DOT と同じ考え）
+const OFF = {};
+function lampImage(d, f, K) {
+  const hex = d.lat === 'hex', key = d.id + '|' + K, iw = d.w * K + (hex ? K / 2 : 0), ih = d.h * K;
+  let o = OFF[key]; if (!o) { const c = document.createElement('canvas'); c.width = iw; c.height = ih; const x = c.getContext('2d'); o = OFF[key] = { c, x, img: x.createImageData(iw, ih) }; o.u32 = new Uint32Array(o.img.data.buffer); }
+  const P = palOf(d.thr, GLOW_MUL[d.id] ?? 1), U = o.u32, n = d.w * d.h, base = f * n, bg = (255 << 24) | (BG[2] << 16) | (BG[1] << 8) | BG[0];
+  U.fill(bg);
+  for (let y = 0; y < d.h; y++) { const sx = hex && (y & 1) ? K / 2 : 0; for (let x = 0; x < d.w; x++) { const col = P[d.q[base + y * d.w + x]], px = x * K + sx, py = y * K;
+    const L = K > 2 ? K - 1 : K; for (let j = 0; j < L; j++) { const r = (py + j) * iw + px; for (let i = 0; i < L; i++) U[r + i] = col; } } }
+  o.x.putImageData(o.img, 0, 0); return o.c;
+}
+function drawField(x, y, w, h, id, f, cap) {
+  const fr = frameOf(id, f), d = DATA[id];
+  frameBox(x, y, w, h, cap(fr), fr ? `z̄ ${fr.d.mean[fr.f].toFixed(2)}` : '');
+  if (!fr) { computing(x, y, w, h); return; }
+  const ax = w - 16, ay = h - 32, cellPx = Math.min(ax / d.w, ay / (d.h * (d.lat === 'hex' ? HEXH : 1))), img = lampImage(fr.d, fr.f, cellPx >= 3.5 ? 4 : d.lat === 'hex' ? 2 : 1), // 六角は半マスずらすので最低 2 px // 1 マスが小さいときはすき間なしの 1 px（ランプのすき間が模様をつぶす）
+    asp = img.width / (img.height * (d.lat === 'hex' ? HEXH : 1)), sc = Math.min(ax / img.width, ay / (img.width / asp));
+  const dw = img.width * sc, dh = dw / asp;
+  g.imageSmoothingEnabled = false; g.drawImage(img, x + (w - dw) / 2, y + 24 + (ay - dh) / 2, dw, dh); g.imageSmoothingEnabled = true;
+  if (fr.lag > 2) { g.fillStyle = 'rgba(7,7,7,.6)'; g.fillRect(x + w / 2 - 60, y + h / 2 - 12, 120, 20); computing(x, y, w, h); }
+}
+// 時間の帯（MEAN・AVLOG・GROW 共通の軸）
+function strip(x, y, w, h, cap, right, n, tmax, xlab, series) {
+  frameBox(x, y, w, h, cap, right);
+  const pl = x + 40, pr = x + w - 14, pt = y + 24, pb = y + h - 18;
+  g.font = `10px ${C.mono}`; g.fillStyle = C.mute; g.textAlign = 'center';
+  const steps = pr - pl < 240 ? [0, 1] : [0, .25, .5, .75, 1];
+  steps.forEach(k => g.fillText(xlab(k * tmax), pl + (pr - pl) * k, pb + 13));
+  series.forEach(s => s(pl, pr, pt, pb));
+}
+
+const PANELS = {
+  FIELD(x, y, w, h, st) {
+    const d = DATA[st.run], name = { crit: '臨界・一粒ずつ', fill: '空から雨', big: 'いちばん大きな雪崩', sq: 'TOWER 四角', ident: 'IDENTITY' }[st.run];
+    drawField(x, y, w, h, st.run, st.f, fr => `${name} ⁄ ${d ? d.w + '×' + d.h : ''}${st.t != null ? ' · t ' + st.t.toFixed(1) + ' s' : ''}${st.run === 'sq' && fr ? ' · ' + Math.round(fr.d.grains[fr.f]).toLocaleString('en-US') + ' 粒' : ''}`);
+  },
+  TRIO(x, y, w, h, st) {
+    const gap = 8, horiz = Math.min(w / 3, h) >= Math.min(w, h / 3), cw = horiz ? (w - gap * 2) / 3 : w, chh = horiz ? h : (h - gap * 2) / 3; // 正方形が大きく取れる向きに並べる
+    st.trio.forEach((id, j) => { const lab = ['四角・4', '六角・6', '八方・8'][j]; drawField(horiz ? x + j * (cw + gap) : x, horiz ? y : y + j * (chh + gap), cw, chh, id, Math.round(st.f / 239 * ((DATA[id] ? DATA[id].F : 240) - 1)), fr => `${lab}${fr ? ' · ' + Math.round(fr.d.grains[fr.f]).toLocaleString('en-US') + ' 粒' : ''}`); });
+  },
+  MEAN(x, y, w, h, st) {
+    const d = DATA.fill;
+    strip(x, y, w, h, 'z̄ ⁄ 平均の高さ・こぼれた粒', d ? `z̄ ${d.mean[Math.min(st.f, d.ready - 1)].toFixed(3)}` : '', 0, st.tmax, t => t.toFixed(0) + 's', [(pl, pr, pt, pb) => {
+      if (!d || !d.ready) return; const fe = Math.min(st.f, d.ready - 1), X = f => pl + (pr - pl) * f / (d.F - 1), Y = v => pb - (pb - pt) * v / 2.5, LM = Math.max(1, d.lost[d.F - 1] || d.lost[d.ready - 1]);
+      g.strokeStyle = C.line; [0, 1, 2].forEach(v => { g.beginPath(); g.moveTo(pl, Y(v)); g.lineTo(pr, Y(v)); g.stroke(); g.fillStyle = C.mute; g.textAlign = 'right'; g.fillText(String(v), pl - 6, Y(v) + 3); });
+      g.setLineDash([3, 4]); g.strokeStyle = 'rgba(246,214,150,.5)'; g.beginPath(); g.moveTo(pl, Y(2.1)); g.lineTo(pr, Y(2.1)); g.stroke(); g.setLineDash([]); g.fillStyle = C.sand; g.textAlign = 'left'; g.fillText('2.10', pr - 30, Y(2.1) - 4);
+      g.strokeStyle = C.rouge; g.lineWidth = 1.2; g.beginPath(); for (let f = 0; f <= fe; f++) { const xx = X(f), yy = pb - (pb - pt) * .9 * d.lost[f] / LM; f ? g.lineTo(xx, yy) : g.moveTo(xx, yy); } g.stroke();
+      g.strokeStyle = C.acc; g.lineWidth = 1.8; g.beginPath(); for (let f = 0; f <= fe; f++) { const xx = X(f), yy = Y(d.mean[f]); f ? g.lineTo(xx, yy) : g.moveTo(xx, yy); } g.stroke();
+      g.fillStyle = C.acc; g.fillRect(X(fe) - 3, Y(d.mean[fe]) - 3, 6, 6); g.lineWidth = 1;
+    }]);
+  },
+  AVLOG(x, y, w, h, st) {
+    const d = DATA[st.run];
+    strip(x, y, w, h, 's ⁄ いま進んでいる雪崩の大きさ（対数）', d && d.ready ? `s ${Math.round(d.av[Math.min(st.f, d.ready - 1)]).toLocaleString('en-US')}` : '', 0, st.tmax, t => t.toFixed(0) + 's', [(pl, pr, pt, pb) => {
+      if (!d || !d.ready) return; const fe = Math.min(st.f, d.ready - 1), X = f => pl + (pr - pl) * f / (d.F - 1), LMAX = Math.log10(CELLS * 1.2), Y = v => pb - (pb - pt) * Math.log10(1 + v) / LMAX;
+      g.fillStyle = C.mute; g.textAlign = 'right'; [1, 100, 10000].forEach(v => { g.fillText(v >= 10000 ? '1万' : String(v), pl - 6, Y(v) + 3); g.fillStyle = C.line; g.fillRect(pl, Y(v), pr - pl, 1); g.fillStyle = C.mute; });
+      for (let f = 0; f <= fe; f++) { const v = d.av[f]; if (v <= 0) continue; const xx = X(f), yy = Y(v); g.fillStyle = v > CELLS * .02 ? C.rouge : 'rgba(246,214,150,.75)'; g.fillRect(xx, yy, Math.max(1, (pr - pl) / d.F), pb - yy); }
+      g.fillStyle = C.acc; g.fillRect(X(fe) - 1, pt, 2, pb - pt);
+    }]);
+  },
+  GROW(x, y, w, h, st) {
+    const d = DATA.big;
+    strip(x, y, w, h, 's ⁄ 崩れの回数（世代ごと）', d && d.ready ? `世代 ${Math.min(st.f, d.ready - 1)} · s ${Math.round(d.av[Math.min(st.f, d.ready - 1)]).toLocaleString('en-US')}` : '', 0, d ? d.F - 1 : 1, v => String(Math.round(v)), [(pl, pr, pt, pb) => {
+      if (!d || !d.ready) return; const fe = Math.min(st.f, d.ready - 1), X = f => pl + (pr - pl) * f / (d.F - 1), S = d.size || d.av[d.F - 1] || 1, Y = v => pb - (pb - pt) * v / S;
+      g.strokeStyle = C.line; g.beginPath(); g.moveTo(pl, Y(S)); g.lineTo(pr, Y(S)); g.stroke();
+      g.strokeStyle = C.rouge; g.lineWidth = 1.8; g.beginPath(); for (let f = 0; f <= fe; f++) { const xx = X(f), yy = Y(d.av[f]); f ? g.lineTo(xx, yy) : g.moveTo(xx, yy); } g.stroke(); g.lineWidth = 1;
+      g.fillStyle = C.mute; g.textAlign = 'right'; g.fillText(Math.round(S).toLocaleString('en-US'), pl - 6, Y(S) + 3); g.fillText('0', pl - 6, pb + 3);
+    }]);
+  },
+  HEIGHTS(x, y, w, h, st) {
+    const fr = frameOf(st.run, st.f);
+    frameBox(x, y, w, h, '高さの割合', fr ? `${Math.round(fr.d.brink[fr.f] * 100)}%` : '');
+    if (!fr) return; const { d, f } = fr, n = d.w * d.h, base = f * n, cnt = [0, 0, 0, 0, 0];
+    for (let i = 0; i < n; i++) cnt[Math.min(4, d.q[base + i] & 15)]++;
+    const pl = x + 14, pr = x + w - 14, pt = y + 30, pb = y + h - 36, bw = (pr - pl) / 4, P = palOf(4);
+    for (let k = 0; k < 4; k++) { const fr2 = cnt[k] / n, bh = (pb - pt) * fr2 / .5, c = P[k]; g.fillStyle = `rgb(${c & 255},${(c >> 8) & 255},${(c >> 16) & 255})`; g.fillRect(pl + k * bw + 4, pb - bh, bw - 8, bh);
+      g.fillStyle = k === 3 ? C.sand : C.mute; g.font = `10px ${C.mono}`; g.textAlign = 'center'; g.fillText(String(k), pl + k * bw + bw / 2, pb + 14); g.fillText(`${Math.round(fr2 * 100)}%`, pl + k * bw + bw / 2, pb - bh - 5); }
+    g.fillStyle = C.sand; g.textAlign = 'center'; g.fillText('3 ＝ あと一粒', x + w / 2, y + h - 8);
+  },
+  SMALL(x, y, w, h, st) {
+    const s = smallAt(st.small), p = s.p;
+    frameBox(x, y, w, h, 'TOPPLE ⁄ 7×7 · 数字＝粒の数', `世代 ${Math.max(0, st.small - 1)} · 崩れ ${p.topples} · 落ちた ${p.lost}`);
+    const cs = Math.max(10, Math.min((w - 60) / 8.4, (h - 110) / 8.4)), ox = x + (w - cs * 7) / 2, oy = y + 50 + (h - 84 - cs * 7) / 2, P = palOf(4);
+    g.strokeStyle = 'rgba(255,79,168,.35)'; g.setLineDash([3, 3]); g.strokeRect(ox - cs * .5, oy - cs * .5, cs * 8, cs * 8); g.setLineDash([]);
+    g.font = `10px ${C.mono}`; g.fillStyle = C.rouge; g.textAlign = 'left'; g.fillText('端の外＝消える', ox - cs * .5, oy - cs * .5 - 6);
+    for (let i = 0; i < 49; i++) {
+      const v = p.hgt[i], gx = ox + (i % 7) * cs, gy = oy + Math.floor(i / 7) * cs, hot = v >= 4, c = P[Math.min(v, 4)];
+      g.fillStyle = hot ? `rgb(${HOT})` : `rgb(${c & 255},${(c >> 8) & 255},${(c >> 16) & 255})`; g.fillRect(gx + 2, gy + 2, cs - 4, cs - 4);
+      if (p.glow[i] > 0 && st.small > 1) { g.strokeStyle = C.rouge; g.lineWidth = 2; g.strokeRect(gx + 3, gy + 3, cs - 6, cs - 6); g.lineWidth = 1; }
+      g.fillStyle = hot || v >= 2 ? '#111' : '#ddd'; g.font = `600 ${Math.round(cs * .42)}px ${C.disp}`; g.textAlign = 'center'; g.fillText(String(v), gx + cs / 2, gy + cs / 2 + cs * .15);
+    }
+    if (st.small === 1) { g.fillStyle = C.acc; g.font = `11px ${C.mono}`; g.textAlign = 'center'; g.fillText('↓ 一粒', ox + 3.5 * cs, oy - 4); }
+    g.font = `10px ${C.mono}`; g.fillStyle = C.mute; g.textAlign = 'center';
+    g.fillText(st.small === 0 ? 'これから真ん中に一粒' : s.done ? `落ち着いた ⁄ この一粒の雪崩の大きさ s ＝ ${p.topples}` : '白＝4 以上（崩れる）・赤枠＝崩れたばかり', x + w / 2, y + h - 12);
+  },
+  HIST(x, y, w, h, st) {
+    const hs = histAt(st.hist), fh = st.fill || st.bp != null ? fillHist() : null, d = DATA.stats;
+    frameBox(x, y, w, h, 'P(s) ⁄ 雪崩の大きさの分布（両対数）', hs && isFinite(hs.slope) ? `傾き ${hs.slope.toFixed(2)}` : '');
+    if (!hs) { computing(x, y, w, h); return; }
+    const pl = x + 50, pr = x + w - 18, pt = y + 30, pb = y + h - 30, XL = [0, 5], YL = [-10, 0], X = v => pl + (pr - pl) * (v - XL[0]) / (XL[1] - XL[0]), Y = v => pb - (pb - pt) * (v - YL[0]) / (YL[1] - YL[0]);
+    g.font = `10px ${C.mono}`;
+    for (let e = 0; e <= 5; e++) { g.strokeStyle = C.line; g.beginPath(); g.moveTo(X(e), pt); g.lineTo(X(e), pb); g.stroke(); g.fillStyle = C.mute; g.textAlign = 'center'; g.fillText(['1', '10', '100', '1000', '1万', '10万'][e], X(e), pb + 14); }
+    for (let e = -10; e <= 0; e += 2) { g.strokeStyle = C.line; g.beginPath(); g.moveTo(pl, Y(e)); g.lineTo(pr, Y(e)); g.stroke(); g.fillStyle = C.mute; g.textAlign = 'right'; g.fillText(`10^${e}`, pl - 6, Y(e) + 3); }
+    g.textAlign = 'right'; g.fillText('雪崩の大きさ s →', pr, pb - 6);
+    const dots = (H2, col, dash, alpha) => {
+      g.globalAlpha = alpha; H2.pts.forEach(q => { g.fillStyle = q.count >= 10 ? col : 'rgba(181,142,255,.4)'; g.fillRect(X(q.x) - 3, Y(q.y) - 3, 6, 6); });
+      if (isFinite(H2.slope)) { g.strokeStyle = col; g.setLineDash(dash); g.lineWidth = 1.4; g.beginPath(); g.moveTo(X(0), Y(H2.icpt)); g.lineTo(X(4.8), Y(H2.icpt + H2.slope * 4.8)); g.stroke(); g.setLineDash([]); g.lineWidth = 1; }
+      g.globalAlpha = 1;
+    };
+    if (fh && st.fill) dots(fh, C.ice, [4, 4], st.rev);
+    dots(hs, C.acc, [], 1);
+    g.textAlign = 'left'; g.fillStyle = C.acc; g.font = `11px ${C.mono}`;
+    g.fillText(`臨界 · 雪崩 ${Math.round(d.nAv[Math.min(st.hist, d.S - 1)]).toLocaleString('en-US')} 個 · 傾き ${isFinite(hs.slope) ? hs.slope.toFixed(2) : '—'}`, pl + 10, pt + 12);
+    if (fh && st.fill) { g.globalAlpha = st.rev; g.fillStyle = C.ice; g.fillText(`満ちる途中 · 雪崩 ${fh.nAv.toLocaleString('en-US')} 個 · 傾き ${fh.slope.toFixed(2)}`, pl + 10, pt + 28); g.globalAlpha = 1; }
+    if (st.bp != null) { // このページで見た雪崩を直線の上に置く
+      const at = s => { const lx = Math.log10(s); return [X(lx), Y(hs.icpt + hs.slope * lx)]; };
+      const marks = [];
+      const c = DATA.crit; if (c && c.sizes) { const ss = [...c.sizes].filter(v => v > 0).sort((a, b) => a - b); if (ss.length) marks.push([ss[Math.floor(ss.length * .5)], '03 ふつうの一粒', C.sand], [ss[Math.floor(ss.length * .9)], '03 上位 1 割', C.sand]); }
+      if (DATA.big && DATA.big.size) marks.push([DATA.big.size, '04 大雪崩', C.rouge]);
+      marks.push([Math.max(1, (() => { const s = smallAt(SMALL_WAVES).p.topples; return s; })()), '01 小さな世界', C.ice]);
+      const n = Math.ceil(marks.length * st.bp);
+      g.font = `600 12px ${C.disp}`;
+      marks.slice(0, n).forEach(([s, lab, col]) => { const [xx, yy] = at(s); g.fillStyle = col; g.beginPath(); g.arc(xx, yy, 6, 0, Math.PI * 2); g.fill(); g.strokeStyle = C.bg; g.stroke();
+        const tw = g.measureText(`${lab} s=${s.toLocaleString('en-US')}`).width + 8, lx = clamp(xx + 10, x + 4, x + w - tw - 4); g.fillStyle = C.bg; g.fillRect(lx, yy - 20, tw, 14); g.fillStyle = col; g.textAlign = 'left'; g.fillText(`${lab} s=${s.toLocaleString('en-US')}`, lx + 4, yy - 9); });
+    }
+  },
+};
+
+function draw(loc) {
+  fitAll();
+  const st0 = stageRect(), key = MOBILE() ? 'PM' : 'P', A = CH[loc.i][key], B = loc.k > 0 ? CH[loc.i + 1][key] : {};
+  const sA = CH[loc.i].at(loc.u), sB = loc.k > 0 ? CH[loc.i + 1].at(0) : null;
+  const names = new Set([...Object.keys(A), ...Object.keys(B)]);
+  for (const n of names) {
+    let r, al, s;
+    if (A[n] && B[n]) { r = A[n].map((v, j) => lerp(v, B[n][j], loc.k)); al = 1; s = loc.k < .5 ? sA : sB; }
+    else if (A[n]) { r = A[n]; al = 1 - loc.k; s = sA; } else { r = B[n]; al = loc.k; s = sB; }
+    if (al < .01) continue;
+    const px = st0.x + r[0] * st0.w, py = st0.y + r[1] * st0.h, pw = r[2] * st0.w, ph = r[3] * st0.h;
+    if (pw < 40 || ph < 40) continue;
+    g.save(); g.globalAlpha = al; g.beginPath(); g.rect(px, py, pw, ph); g.clip();
+    PANELS[n](px, py, pw, ph, s); g.restore();
+  }
+}
+
+// ── HUD と FORMULA RAIL
+const fmt = v => Math.round(v).toLocaleString('en-US');
+let lastHud = '';
+function hud(loc, y) {
+  const ci = loc.k > .5 ? loc.i + 1 : loc.i, st = CH[ci].at(ci === loc.i ? loc.u : 0);
+  $('prog').style.width = (clamp(y / MAXY) * 100).toFixed(2) + '%';
+  const fr = st.run ? frameOf(st.run, st.f) : st.trio ? frameOf('sq', st.f) : null, hs = st.hist != null ? histAt(st.hist) : null, sm7 = st.small != null ? smallAt(st.small) : null;
+  let val = '—', unit = 'z̄ 平均の高さ', zone = 'CRITICAL';
+  if (sm7) { val = String(sm7.p.topples); unit = 's 崩れの回数'; zone = 'TOPPLE'; }
+  else if (hs) { val = isFinite(hs.slope) ? hs.slope.toFixed(2) : '—'; unit = '傾き −τ'; zone = 'POWER'; }
+  else if (fr) { const m = fr.d.mean[fr.f], av = fr.d.av[fr.f]; val = m.toFixed(2);
+    zone = st.run === 'sq' || st.trio ? 'MANDALA' : st.run === 'ident' ? 'IDENTITY' : av > CELLS * .02 ? 'AVALANCHE' : m < 1 ? 'EMPTY' : m < 2.05 ? 'FILLING' : 'CRITICAL'; }
+  const key = [ci, val, zone, fr ? fr.f : '', st.hist, st.small].join('|');
+  if (key === lastHud) return; lastHud = key;
+  $('chl').innerHTML = `${String(ci).padStart(2, '0')} ⁄ 10 <b>${CH[ci].id}</b>`;
+  $('hV').textContent = val; $('hVu').textContent = unit;
+  const zl = $('hZone'); zl.className = 'zone ' + zone; zl.textContent = zone;
+  const lit = new Set(CH[ci].lit), rows = CH[ci].rows;
+  document.querySelectorAll('#rail .t').forEach(e => e.classList.toggle('on', lit.has(e.dataset.t)));
+  document.querySelectorAll('#rail .fr').forEach(e => { e.classList.toggle('on', rows.includes(e.dataset.row)); e.classList.toggle('lit', !!e.querySelector('.t.on')); });
+  const p7 = sm7 && sm7.p;
+  $('fvA').textContent = st.trio ? '閾値 4 · 6 · 8' : '閾値 4';
+  $('fvB').textContent = p7 ? `落ちた ${p7.lost}` : fr ? `こぼれた ${fmt(fr.d.lost[fr.f])}` : '—';
+  $('fvC').textContent = fr ? `z̄ ${fr.d.mean[fr.f].toFixed(3)}` : '—';
+  $('fvD').textContent = p7 ? `s ${p7.topples}` : fr && fr.d.av[fr.f] > 0 && st.run !== 'ident' ? `s ${fmt(fr.d.av[fr.f])}` : '—';
+  $('fvE').textContent = hs && isFinite(hs.slope) ? `τ ≈ ${(-hs.slope).toFixed(2)}` : '—';
+  $('fvF').textContent = st.run === 'ident' && fr ? (fr.d.av[fr.f] === 2 ? '2 回目の崩し' : '1 回目の崩し') : '—';
+  const fh = fillHist(), dS = DATA.stats;
+  document.querySelectorAll('[data-live]').forEach(e => { const k = e.dataset.live, sec = e.closest('.ch'); if (!sec || +sec.dataset.ch !== ci) return;
+    e.textContent = k === 't' ? (st.t || 0).toFixed(1) : k === 'mean' ? (fr ? fr.d.mean[fr.f].toFixed(2) : '—') : k === 'brink' ? (fr ? Math.round(fr.d.brink[fr.f] * 100) : '—')
+      : k === 'wave' ? (p7 ? Math.max(0, st.small - 1) : fr ? String(Math.round(st.run === 'ident' ? fr.f / Math.max(1, fr.d.F - 1) * (fr.d.waves || 0) : fr.f)) : '0')
+      : k === 'top' ? (p7 ? p7.topples : '0') : k === 'lost' ? (p7 ? p7.lost : '0') : k === 'av' ? (fr ? fmt(fr.d.av[fr.f]) : '0')
+      : k === 'nAv' ? (dS ? fmt(dS.nAv[Math.min(st.hist, dS.S - 1)]) : '0') : k === 'tau' ? (hs && isFinite(hs.slope) ? hs.slope.toFixed(2) : '—') : k === 'tauFill' ? (fh ? fh.slope.toFixed(2) : '—')
+      : k === 'grains' ? (fr ? fmt(fr.d.grains[fr.f]) : '0') : k === 'phase' ? (fr && fr.d.av[fr.f] === 2 ? '2 回目の崩し' : '1 回目の崩し') : ''; });
+}
+function calcLabel() {
+  const ids = Object.keys(RUNS), done = ids.filter(id => DATA[id] && DATA[id].done).length, el = $('calc');
+  if (done === ids.length) { el.style.opacity = 0; return; }
+  el.style.opacity = 1; el.textContent = `砂山を計算中 ${done} ⁄ ${ids.length}`;
+}
+
+// ── 音：コマが進んだぶんの「崩れの回数」でザラッと鳴る（帯域ノイズ）。大きな雪崩では低いうなりが混ざる
+// ON＝スクロールの速さによらず鳴る／BOW＝スクロールの速さで鳴る（SCROLL_BEATS_LP と同じ弓）。止まれば砂山も止まるので、どちらも無音になる
+let AC = null, master = null, gN = null, gL = null;
+function ensureAudio() {
+  if (!AC) {
+    AC = new AudioContext(); master = AC.createGain(); master.gain.value = 0;
+    const lim = AC.createDynamicsCompressor(); lim.threshold.value = -10; lim.ratio.value = 20; lim.attack.value = .003; lim.release.value = .15;
+    master.connect(lim).connect(AC.destination);
+    const buf = AC.createBuffer(1, AC.sampleRate * 2, AC.sampleRate), ch = buf.getChannelData(0); for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1;
+    const ns = AC.createBufferSource(); ns.buffer = buf; ns.loop = true;
+    const bp = AC.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2200; bp.Q.value = .7; gN = AC.createGain(); gN.gain.value = 0; ns.connect(bp).connect(gN).connect(master);
+    const lp = AC.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 160; gL = AC.createGain(); gL.gain.value = 0; ns.connect(lp).connect(gL).connect(master); ns.start();
+  }
+  if (AC.state === 'suspended') AC.resume();
+}
+const S = { mode: 'off', vol: .45 };
+let vel = 0, TOPS = 0;
+function updateAudio() {
+  if (!AC) return;
+  const t = AC.currentTime, lvl = clamp(Math.log10(1 + TOPS) / 3.2);
+  gN.gain.setTargetAtTime(.6 * lvl, t, lvl > gN.gain.value ? .01 : .08); gL.gain.setTargetAtTime(1.6 * clamp((lvl - .55) / .45), t, .06);
+  let target = 0, tc = .12;
+  if (S.mode === 'on') target = S.vol;
+  else if (S.mode === 'bow') { const b = clamp(vel / 900); target = S.vol * b; tc = target > master.gain.value ? .06 : .55; }
+  master.gain.setTargetAtTime(target, t, tc);
+}
+function setMode(m) {
+  S.mode = m; autoArm = false; if (m !== 'off') ensureAudio();
+  document.querySelectorAll('#segSnd button').forEach(b => b.classList.toggle('on', b.dataset.v === m));
+  updateAudio();
+}
+// 前のコマからいまのコマまでに起きた崩れの回数（逆走でも同じ量が鳴る）
+let lastKey = '', lastF = -1;
+function toppleSound(st) {
+  let id = st.run || (st.trio ? 'sq' : null), f = st.f;
+  if (st.small != null) { id = 'small'; f = st.small; }
+  const key = id + '';
+  if (id == null) { TOPS = 0; lastKey = ''; return; }
+  if (key !== lastKey) { lastKey = key; lastF = f; TOPS = 0; return; }
+  if (f === lastF) { TOPS *= .5; return; }
+  let s = 0;
+  if (id === 'small') s = Math.abs(smallAt(f).p.topples - smallAt(lastF).p.topples) * 40;
+  else { const d = DATA[id]; if (d && d.ready) { const a = Math.min(lastF, f), b = Math.min(Math.max(lastF, f), d.ready - 1); for (let k = a + 1; k <= b; k++) s += d.top[k]; } }
+  lastF = f; TOPS = s;
+}
+
+// ── なめらかな慣性（SCROLL_BEATS_LP と同じ）
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let tY = scrollY, cY = scrollY, smoothing = false, rewind = null;
+addEventListener('wheel', e => {
+  if (e.ctrlKey || REDUCED) return;
+  e.preventDefault(); rewind = null;
+  if (!smoothing) { tY = cY = scrollY; }
+  const d = e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? VH : 1);
+  tY = clamp(tY + d, 0, MAXY); smoothing = true;
+}, { passive: false });
+const stopRewind = () => { rewind = null; };
+addEventListener('keydown', stopRewind); addEventListener('touchstart', stopRewind, { passive: true }); addEventListener('mousedown', e => { if (e.target.id !== 'bRewind') stopRewind(); });
+function scrollStep(dt) {
+  if (rewind) {
+    const k = clamp((NOW - rewind.t0) / rewind.d), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    window.scrollTo(0, rewind.y0 * (1 - e)); if (k >= 1) rewind = null; return;
+  }
+  if (!smoothing) return;
+  cY += (tY - cY) * (1 - Math.exp(-dt * 6));
+  if (Math.abs(tY - cY) < .5) { cY = tY; smoothing = false; }
+  window.scrollTo(0, cY);
+}
+function startRewind() { smoothing = false; rewind = { y0: scrollY, t0: NOW, d: clamp(scrollY / 2400, 3, 9) * 1000 }; }
+
+// ── ループ
+let NOW = performance.now(), lastY = scrollY, LOC = { i: 0, u: 0, k: 0 }, calcT = 0;
+function tick(now, dt) {
+  NOW = now;
+  scrollStep(dt);
+  const y = scrollY;
+  vel = lerp(vel, Math.abs(y - lastY) / Math.max(dt, 1e-3), .25); lastY = y;
+  LOC = locate(y);
+  const ci = LOC.k > .5 ? LOC.i + 1 : LOC.i;
+  toppleSound(CH[ci].at(ci === LOC.i ? LOC.u : 0));
+  updateAudio(); draw(LOC); hud(LOC, y);
+  if ((calcT += dt) > .25) { calcT = 0; calcLabel(); }
+}
+let manual = false, lastT = 0;
+function frame(now) {
+  if (!manual) { const t = now / 1000, dt = Math.min(.05, t - (lastT || t)); lastT = t; tick(now, dt); }
+  requestAnimationFrame(frame);
+}
+
+// ── 入力
+document.querySelectorAll('#segSnd button').forEach(b => b.onclick = () => setMode(b.dataset.v));
+$('bStart').onclick = () => { setMode('bow'); };
+let autoArm = true;
+addEventListener('pointerdown', e => { if (!autoArm) return; autoArm = false; if (S.mode === 'off' && !e.target.closest('#segSnd')) setMode('bow'); }, true);
+$('bRewind').onclick = startRewind;
+$('vol').oninput = e => { S.vol = e.target.value / 100; updateAudio(); };
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === 's' || e.key === 'S') { const order = ['off', 'bow', 'on']; setMode(order[(order.indexOf(S.mode) + 1) % 3]); }
+});
+addEventListener('resize', () => { measure(); lastHud = ''; });
+readColors(); measure(); startCompute();
+document.fonts && document.fonts.ready.then(() => { readColors(); measure(); lastHud = ''; });
+requestAnimationFrame(frame);
+(() => { const q = new URLSearchParams(location.search), ch = q.get('ch'); if (ch == null) return;
+  const go = () => { measure(); const i = clamp(+ch | 0, 0, M.length - 1), m = M[i]; window.scrollTo(0, m.top + clamp(+(q.get('u') || 0)) * Math.max(1, m.h - VH)); tY = cY = scrollY; };
+  go(); document.fonts && document.fonts.ready.then(go); })();
+
+// ── 検証フック（Claude 側）
+window.__LP = {
+  CH, RUNS, DATA, locate, measure, frameOf, histAt, fillHist, smallAt, SMALL_WAVES,
+  loc: () => LOC, maxY: () => MAXY, metrics: () => M, tops: () => TOPS, workerMode: () => workerMode,
+  ready: () => Object.fromEntries(Object.keys(RUNS).map(id => [id, DATA[id] ? `${DATA[id].ready}/${DATA[id].F}${DATA[id].done ? ' ✓' : ''}` : '-'])),
+  goto: (i, u = 0) => { smoothing = false; rewind = null; const m = M[i], y = m.top + u * Math.max(1, m.h - VH); window.scrollTo(0, y); tY = cY = scrollY; return scrollY; },
+  setMode, rewind: startRewind, rewinding: () => !!rewind,
+  audio: () => AC && { state: AC.state, master: +master.gain.value.toFixed(3), sand: +gN.gain.value.toFixed(3), low: +gL.gain.value.toFixed(3) },
+  vel: () => vel,
+  manual: on => { manual = on; },
+  step: (sec = 1 / 60, fps = 60) => { for (let i = 0, n = Math.max(1, Math.round(sec * fps)); i < n; i++) tick(NOW + 1000 / fps, 1 / fps); },
+  wheel: (dy) => { if (!smoothing) tY = cY = scrollY; tY = clamp(tY + dy, 0, MAXY); smoothing = true; },
+};
+})();
+</script>
+</body>
+</html>

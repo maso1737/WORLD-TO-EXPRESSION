@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SYNC — スクロール解説 (EE-08)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Cormorant+Garamond:ital,wght@1,700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500&family=Noto+Serif+JP:wght@400&display=swap" rel="stylesheet">
+<style>
+/* EE の見た目（KINETIC STAGE NOIR）：ice＝データ・gold＝ラベルと式・rouge＝いま／引く力・黄緑＝ホタルの光 */
+:root{
+  --bg:#070707;--ink:#F8EFFF;--ink-2:rgba(248,239,255,.80);--mute:rgba(181,142,255,.62);--mute-2:rgba(181,142,255,.30);
+  --line:rgba(255,210,122,.16);--acc:#FFD27A;--acc-ink:#070707;--ice:#5AE9FF;--rouge:#FF4FA8;--fly:#C2FF69;
+  --grid:rgba(90,233,255,.028);
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --disp:"Barlow Condensed","Helvetica Neue",sans-serif;
+  --orn:"Cormorant Garamond",serif;
+  --jp:"Noto Sans JP",system-ui,sans-serif;
+  --jps:"Noto Serif JP",serif;
+  --col:400px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg)}
+body{background:var(--bg);color:var(--ink);font-family:var(--mono);font-feature-settings:"tnum";-webkit-font-smoothing:antialiased}
+#grid{position:fixed;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;pointer-events:none}
+#cv{position:fixed;inset:0;width:100vw;height:100vh;display:block;pointer-events:none}
+
+.hud{position:fixed;left:0;right:0;top:0;height:46px;display:flex;align-items:center;gap:16px;padding:0 16px;border-bottom:1px solid var(--line);background:rgba(7,7,7,.92);z-index:5}
+.brand{display:flex;align-items:baseline;gap:8px;white-space:nowrap}
+.mark{font-family:var(--orn);font-style:italic;font-weight:700;font-size:20px;color:var(--ice)}
+.tag{font-size:10px;color:var(--mute);letter-spacing:.2em}
+.chl{flex:1;font-size:11px;color:var(--ink-2);letter-spacing:.18em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chl b{color:var(--acc);font-weight:400}
+.rd{display:flex;align-items:baseline;gap:6px;white-space:nowrap}
+.rd .n{font-family:var(--disp);font-weight:700;font-size:22px;letter-spacing:.04em;min-width:56px;text-align:right}
+.rd .u{font-size:10px;color:var(--mute)}
+.zone{font-family:var(--disp);font-weight:700;font-size:12px;letter-spacing:.18em;padding:3px 8px;border:1px solid var(--line);white-space:nowrap;min-width:78px;text-align:center}
+.zone.SCATTER{color:var(--mute);border-color:var(--mute-2)}
+.zone.GATHER{color:var(--ice);border-color:var(--ice)}
+.zone.SYNC{color:var(--acc-ink);background:var(--fly);border-color:var(--fly)}
+.zone.LOCK{color:var(--acc-ink);background:var(--acc);border-color:var(--acc)}
+.zone.SLIP{color:var(--rouge);border-color:var(--rouge)}
+.seg{display:flex;gap:3px}
+.seg button,.lnk{font-family:var(--mono);font-size:10px;letter-spacing:.08em;background:transparent;color:var(--ink-2);border:1px solid var(--line);padding:5px 8px;cursor:pointer;text-decoration:none;white-space:nowrap}
+.seg button:hover,.lnk:hover{border-color:var(--acc);color:var(--acc)}
+.seg button.on{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.vol{width:70px;-webkit-appearance:none;appearance:none;height:2px;background:var(--mute-2);outline:none;cursor:pointer}
+.vol::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;background:var(--acc);border:1px solid var(--acc-ink);border-radius:0}
+.vol::-moz-range-thumb{width:11px;height:11px;background:var(--acc);border:1px solid var(--acc-ink);border-radius:0}
+.prog{position:fixed;left:0;top:46px;height:2px;width:0;background:linear-gradient(90deg,var(--acc),var(--rouge));z-index:5}
+.ticks{position:fixed;left:0;right:0;top:46px;height:6px;z-index:4;pointer-events:none}
+.ticks i{position:absolute;top:0;width:1px;height:6px;background:var(--mute-2)}
+#calc{position:fixed;right:16px;top:56px;z-index:4;font-size:10px;color:var(--mute);letter-spacing:.12em;pointer-events:none;transition:opacity .6s}
+
+main{position:relative;z-index:2}
+.ch{position:relative}
+.card{position:sticky;top:76px;width:var(--col);margin-left:40px;padding:20px 22px 22px;background:rgba(7,7,7,.88);border:1px solid var(--line);border-left:2px solid var(--acc)}
+.card .no{font-size:10px;color:var(--acc);letter-spacing:.2em;margin-bottom:8px}
+.card h2{font-family:var(--disp);font-weight:700;font-size:26px;letter-spacing:.08em;line-height:1.1;margin-bottom:4px}
+.card .jh{font-family:var(--jps);font-size:15px;color:var(--ink);margin-bottom:12px;line-height:1.5}
+.card p{font-family:var(--jp);font-size:13px;line-height:1.85;color:var(--ink-2);margin-bottom:10px}
+.card p b{color:var(--acc);font-weight:500}
+.card p em{font-style:normal;color:var(--rouge)}
+.card p i{font-style:normal;color:var(--fly)}
+.card .note{font-size:10px;color:var(--mute);letter-spacing:.04em;line-height:1.65;border-top:1px solid var(--line);padding-top:8px;margin-top:4px}
+.card .live{color:var(--acc)}
+.hero h1{font-family:var(--orn);font-style:italic;font-weight:700;font-size:76px;line-height:.95;margin:2px 0 6px;color:var(--ice);filter:drop-shadow(0 0 16px rgba(90,233,255,.3))}
+.hero .jh{font-size:18px}
+.rules{margin:4px 0 12px;border-top:1px solid var(--line)}
+.rules div{display:flex;gap:10px;font-family:var(--jp);font-size:12.5px;color:var(--ink);padding:6px 0;border-bottom:1px solid var(--line)}
+.rules div span{font-family:var(--mono);font-size:10px;color:var(--acc);padding-top:2px}
+.btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.btn{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;background:transparent;color:var(--ink-2);border:1px solid var(--line);padding:8px 10px;cursor:pointer;text-decoration:none}
+.btn:hover{border-color:var(--acc);color:var(--acc)}
+.btn.pri{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.scrollcue{font-size:10px;color:var(--mute);letter-spacing:.22em;margin-top:14px}
+
+#rail{position:fixed;left:40px;bottom:18px;width:var(--col);z-index:3;background:rgba(7,7,7,.9);border:1px solid var(--line);padding:9px 12px 8px;pointer-events:none}
+#rail .rh{font-size:9px;color:var(--mute);letter-spacing:.18em;margin-bottom:5px;display:flex;justify-content:space-between}
+.fr{display:flex;justify-content:space-between;gap:10px;font-size:10.5px;line-height:1.75;color:var(--mute-2);transition:color .25s}
+.fr.on{color:var(--mute)}
+.fr .fv{color:inherit;text-align:right;white-space:nowrap}
+.fr.on .fv{color:var(--ink-2)}
+.fr .fx{white-space:nowrap}
+.t{transition:color .25s,background .25s;padding:0 1px}
+.t.on{color:var(--acc-ink);background:var(--acc)}
+
+@media (max-width:880px){
+  :root{--col:auto}
+  .hud{gap:8px;padding:0 10px}
+  .brand,.chl,.vol,.lnk.app{display:none}
+  .rd .n{font-size:17px;min-width:44px}
+  .rd .u{display:none}
+  .zone{min-width:0;padding:3px 6px}
+  .seg button,.lnk{padding:5px 6px}
+  .card{margin:0 12px;width:auto;top:calc(36vh + 62px);padding:14px 16px 14px}
+  .card p{font-size:12px;line-height:1.75;margin-bottom:8px}
+  .card .jh{margin-bottom:8px}
+  .hero h1{font-size:52px}
+  .scrollcue{display:none}
+  #calc{top:auto;bottom:6px;right:12px}
+  #rail{left:12px;right:12px;width:auto;top:calc(36vh + 2px);bottom:auto;padding:6px 10px}
+  #rail .rh{display:none}
+  .fr:not(.lit){display:none}
+  .fr .fv{display:none}
+}
+@media (prefers-reduced-motion:reduce){.t,.fr{transition:none}}
+</style>
+</head>
+<body>
+<div id="grid"></div>
+<canvas id="cv"></canvas>
+
+<div class="hud">
+  <div class="brand"><span class="mark">08</span><span class="tag">EMERGENCE ENGINE ⁄ SYNC SCROLL</span></div>
+  <div class="chl" id="chl">00 ⁄ 09 <b>SYNC</b></div>
+  <div class="rd"><span class="n" id="hR">0.00</span><span class="u" id="hRu">r そろい</span></div>
+  <div class="zone SCATTER" id="hZone">SCATTER</div>
+  <div class="seg" id="segSnd" title="S キーでも切り替え"><button data-v="off" class="on">OFF</button><button data-v="bow">BOW</button><button data-v="on">♪ ON</button></div>
+  <input class="vol" id="vol" type="range" min="0" max="100" value="40" title="MASTER">
+  <a class="lnk app" href="../08_sync.html">APP →</a>
+  <a class="lnk" href="../index.html">INDEX</a>
+</div>
+<div class="prog" id="prog"></div>
+<div class="ticks" id="ticks"></div>
+<div id="calc"></div>
+
+<main id="main">
+  <section class="ch" data-ch="0" style="height:150vh">
+    <div class="card hero">
+      <div class="no">EMERGENCE ENGINE ⁄ 08 ⁄ SCROLL EXPLAINER</div>
+      <h1>Sync</h1>
+      <div class="jh">誰も合図していないのに、なぜ一斉に光る？</div>
+      <p><b>これは何か</b>：闇に 2400 匹のホタル。1 匹ずつが守っているルールは、この 3 行だけ。</p>
+      <div class="rules">
+        <div><span>01</span>自分の時計で進む</div>
+        <div><span>02</span>一周したら光る</div>
+        <div><span>03</span>見える距離の仲間が進んでいれば急ぎ、遅れていれば少し待つ</div>
+      </div>
+      <p>このページでは<b>スクロールが時間</b>。下へ進むと時間が進み、戻ると巻き戻る。音は <b>BOW</b>：スクロールしている間だけ光が鳴る。ばらばらの間は<i>さざめき</i>、そろうと <b>1 秒に 2 回の拍</b>になる。</p>
+      <div class="btns"><button class="btn pri" id="bStart">♪ 音を出して読む（BOW）</button><a class="btn" href="../08_sync.html">アプリで触る →</a></div>
+      <div class="scrollcue">↓ SCROLL</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="1" style="height:190vh">
+    <div class="card">
+      <div class="no">01 ⁄ 09</div>
+      <h2>CLOCK</h2>
+      <div class="jh">1 匹は、ただの時計</div>
+      <p>左の円が 1 匹のホタル（右の画面で丸で囲んだ 1 匹）。針が 1 周するたびに、真上で <i>光る</i>。1 周は 0.5 秒＝<b>1 秒に 2 回</b>。</p>
+      <p>ただし速さは 1 匹ずつ少しだけ違う。この 1 匹は <span class="live" data-live="w0">2.000</span> Hz。</p>
+      <p>右の円は、<b>2 Hz で一緒に回りながら</b>同じ針を見たもの。2 Hz ちょうどの針は止まって見え、代わりに光る位置の線が回る。ここから先の円は、ぜんぶこの見方。</p>
+      <div class="note">ルール 01・02 ＝ dθ⁄dt ＝ ω（一周 2π で光る）</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="2" style="height:250vh">
+    <div class="card">
+      <div class="no">02 ⁄ 09</div>
+      <h2>SPREAD</h2>
+      <div class="jh">そろえて置いても、ばらける</div>
+      <p>ルール 03 を切り（<b>K ＝ 0</b>）、2400 匹を<b>同じ瞬間に光る</b>ように置いた。最初は一斉に光る。</p>
+      <p>でも速さの違い（個体差 σ）が少しずつ積もって、円の上の点が広がっていく。いま t ＝ <span class="live" data-live="t">0</span> 秒、そろい <span class="live" data-live="r">1.00</span>。</p>
+      <p>そろい <b>r</b> は、全員の針を矢印にして平均した長さ（円の中の黄の矢印）。1＝全員同じ向き、0＝ばらばら。</p>
+      <div class="note">スクロールを止めると時間も止まる。そのあいだは全員に同じ角度を足して回し続けるだけ（r は変わらない）。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="3" style="height:290vh">
+    <div class="card">
+      <div class="no">03 ⁄ 09</div>
+      <h2>PULL</h2>
+      <div class="jh">2 匹なら、引っぱり合う</div>
+      <p>ルール 03 は「相手が進んでいれば急ぎ、遅れていれば少し待つ」。式にすると <b>K · sin(相手 − 自分)</b>。2 匹の速さの差は 1 秒に 1.5 rad（約 0.24 Hz）。</p>
+      <p>いま K ＝ <span class="live" data-live="K">0</span>。<b>0</b>：抜きつ抜かれつ。<b>0.6</b>：引っぱられるのに<em>追いつけない</em>（2K が速さの差より小さい）。<b>1.5</b>：差 30° で<b>ロック</b>し、同じ速さで光り続ける。</p>
+      <p>そろうかどうかは、<b>引く力が個体差に勝つか</b>で決まる。</p>
+      <div class="note">ロックする差 Δ* は sin Δ* ＝ Δω ⁄ 2K（K 1.5 → 30°）。下の帯＝2 匹の差 Δ の時間変化。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="4" style="height:290vh">
+    <div class="card">
+      <div class="no">04 ⁄ 09</div>
+      <h2>IGNITION</h2>
+      <div class="jh">2400 匹では、しばらく何も起きない</div>
+      <p>全員にルール 03 を戻す（K ＝ 0.6・見える距離は画面の 0.28）。最初の位相はでたらめ。</p>
+      <p>t ＝ <span class="live" data-live="t">0</span> 秒、そろい <span class="live" data-live="r">0.02</span>。最初の 10 秒は 0.3 にも届かない。でもよく見ると、あちこちに<b>同じ瞬間に光る小さな島</b>ができている。</p>
+      <div class="note">アプリの 1 FIREFLIES と同じ世界（同じ式・同じ乱数 seed 1）。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="5" style="height:310vh">
+    <div class="card">
+      <div class="no">05 ⁄ 09</div>
+      <h2>FEEDBACK</h2>
+      <div class="jh">そろうほど、引く力が強くなる</div>
+      <p>ルール 03 を全員ぶん足し合わせると、<b>「みんなの平均の向きへ、K·r の強さで引かれる」</b>と書き直せる（式の帯）。</p>
+      <p>そろうほど r が大きくなる → 引く力 K·r が強くなる → もっとそろう。<em>赤い矢印</em>＝1 匹ずつにかかる引く力。いま K·r ＝ <span class="live" data-live="Kr">0</span>。</p>
+      <p>だから一度そろい始めると、<b>なだれのように</b>一気に進む。r 0.5 を越えるのが 12.4 秒、0.9 は 21 秒。</p>
+      <div class="note">アプリは「見える距離の中の平均」で引く（全体の平均ではない）。そのぶん、そろう島があちこちから育つ。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="6" style="height:330vh">
+    <div class="card">
+      <div class="no">06 ⁄ 09</div>
+      <h2>THRESHOLD</h2>
+      <div class="jh">弱い結びつきでは、永遠にそろわない</div>
+      <p>同じ 2400 匹（同じ位置・同じ個体差）で、引く力 K だけを変えた 3 つの世界を同時に走らせる。いま t ＝ <span class="live" data-live="t">0</span> 秒。</p>
+      <p><b>K 0.08</b> はいつまでもばらばら（60 秒で 0.02）。<b>K 0.18</b> は境目のきわ：60 秒かけても 0.16 までしか上がらない。<b>K 0.6</b> は 20 秒でそろう。</p>
+      <p>右のグラフは K ごとの「60 秒後のそろい」。<b>K 0.2〜0.3 のあいだで急に立ち上がる</b>。水が凍る温度と同じ<b>相転移</b>（04 の群れが溶ける温度と同じ型）。</p>
+      <div class="note">赤の点線 Kc ≈ √(8⁄π)·σ ≈ 0.16 は「全員が全員を見る」場合の理論の目安。ここでは見える距離が限られ、60 秒で区切っているので、実測の立ち上がりはそれより右。曲線はアプリの式で実測（seed 1〜3、50〜60 秒の平均。縦の帯＝3 回のばらつき）。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="7" style="height:300vh">
+    <div class="card">
+      <div class="no">07 ⁄ 09</div>
+      <h2>NEIGHBORS</h2>
+      <div class="jh">見える相手を変えると、別の秩序</div>
+      <p>ルールは同じまま、<b>誰を見るか</b>だけを変える。いま t ＝ <span class="live" data-live="t">0</span> 秒。</p>
+      <p><b>左 WAVES</b>：格子の上下左右 4 匹だけを見る。全体は一度にそろわず、<b>位相の波とらせん</b>になる。ねじれ（らせんの芯）は 1024 → <span class="live" data-live="def">—</span> 個。</p>
+      <p><b>右 CHIMERA</b>：輪に並んだ<b>まったく同じ 256 匹</b>。近いほど強く引き合う。すると<i>そろう側</i>と<em>ほどける側</em>に分かれる。同じ仲間・同じルールなのに。</p>
+      <div class="note">アプリの 3 WAVES・4 CHIMERA。左の色＝位相、光の帯が回るのがらせんの回転。右の外側の黄の弧＝そろっている区間。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="8" style="height:290vh">
+    <div class="card">
+      <div class="no">08 ⁄ 09</div>
+      <h2>ENTRAIN</h2>
+      <div class="jh">外の拍に、引き込まれる</div>
+      <p>今度は外から拍を打つ（120 BPM＝ホタルと同じ 2 Hz）。拍のたびに全員の針を<b>ほんの少し</b>だけ真上へ寄せる（強さ 0.06。そろえ直すリセットではない）。</p>
+      <p>拍 <span class="live" data-live="beat">0</span> ⁄ 16・そろい <span class="live" data-live="r">0.02</span>。4 拍で 0.47、8 拍で 0.87。<b>自力では 20 秒かかったのが、4 秒</b>。</p>
+      <p>アプリの VJ パネルの <b>ENTRAIN</b> がこれ。曲のキックで拍を打つと、群れが曲に乗る。</p>
+      <div class="note">下の帯：黄＝拍あり、点線＝拍なし（04 と同じ世界）。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="9" style="height:230vh">
+    <div class="card">
+      <div class="no">09 ⁄ 09</div>
+      <h2>BLUEPRINT</h2>
+      <div class="jh">このページは、この曲線の上を歩いていた</div>
+      <p>横＝引く力 K、縦＝そろい r。白い曲線は境目（相転移）。黄の点は、各章で立ち寄った世界（章番号つき）。</p>
+      <p>誰も合図していない。どのホタルも全体を見ていない。あるのは <b>3 行のルール</b>と、<b>引く力が個体差に勝つかどうか</b>だけ。</p>
+      <div class="btns"><button class="btn" id="bRewind">◀◀ REWIND</button><a class="btn pri" href="../08_sync.html">アプリで自分で光らせる →</a><a class="btn" href="SCROLL_SANDPILE_LP.html">07 SANDPILE の解説 →</a><a class="btn" href="../index.html">SERIES INDEX</a></div>
+      <div class="note">アプリでは：1 FIREFLIES で 20 秒待つ／押すと光らせる・Shift で乱す／VJ の BEAT FROM を MP3 KICK にして ENTRAIN。REWIND はスクロールを巻き戻すだけ（時間も逆にたどる）。</div>
+    </div>
+  </section>
+</main>
+
+<div id="rail">
+  <div class="rh"><span>FORMULA RAIL</span><span>いま動いている項が光る</span></div>
+  <div class="fr" data-row="a"><span class="fx">dθᵢ⁄dt ＝ <span class="t" data-t="w">ωᵢ</span> ＋ <span class="t" data-t="K">K</span>·<span class="t" data-t="nb">avg<sub>見える j</sub></span> sin(θⱼ − θᵢ)</span><span class="fv" id="fvA">—</span></div>
+  <div class="fr" data-row="b"><span class="fx"><span class="t" data-t="w2">ωᵢ</span> ＝ 2π·2 Hz ＋ <span class="t" data-t="sig">σ</span>·ξᵢ</span><span class="fv" id="fvB">—</span></div>
+  <div class="fr" data-row="c"><span class="fx"><span class="t" data-t="r">r</span>·e<sup>iψ</sup> ＝ (1⁄N) Σ e<sup>iθⱼ</sup></span><span class="fv" id="fvC">—</span></div>
+  <div class="fr" data-row="d"><span class="fx">⇒ dθᵢ⁄dt ＝ ωᵢ ＋ <span class="t" data-t="Kr">K·r</span>·sin(ψ − θᵢ)</span><span class="fv" id="fvD">—</span></div>
+  <div class="fr" data-row="e"><span class="fx"><span class="t" data-t="Kc">Kc</span> ≈ √(8⁄π)·σ</span><span class="fv" id="fvE">—</span></div>
+  <div class="fr" data-row="f"><span class="fx">拍ごと θᵢ ← θᵢ − <span class="t" data-t="ent">0.06</span>·sin θᵢ</span><span class="fv" id="fvF">—</span></div>
+</div>
+
+<script src="../_law/ee08_sync.js"></script>
+<script>
+(() => {
+'use strict';
+// 法則（makeSync・stepSync・order・entrain…）は ../_law/ee08_sync.js＝アプリと同じファイル。LP 側に式は持たない
+const $ = id => document.getElementById(id);
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+const seg = (u, a, b) => clamp((u - a) / (b - a));
+const sm = t => t * t * (3 - 2 * t);
+const lerp = (a, b, t) => a + (b - a) * t;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let C = {};
+const readColors = () => { C = { ink: css('--ink'), ink2: css('--ink-2'), mute: css('--mute'), mute2: css('--mute-2'), line: css('--line'), acc: css('--acc'), ice: css('--ice'), rouge: css('--rouge'), fly: css('--fly'), bg: css('--bg'), mono: css('--mono'), disp: css('--disp'), jp: css('--jp') }; };
+
+// ── 時間の扱い
+// ホタルの状態（位相の並び）はスクロールの純関数：シミュレーション時間 t を章の進み u から決め、その時刻の記録を引く。
+// 実時間で動くのは「全員に同じ角度 ωT を足す」共通の針だけ（r は全員の回転では変わらない）。だから止まっていても光り、逆走・REWIND もそのまま成立する。
+const OMEGA = TAU * 2;            // stepSync の基準 2 Hz（アプリと同じ）
+const TRAIL = .075;               // 光の残り（アプリの TRAIL 既定）
+const STORE = 2, FS = 60 / STORE; // 2 歩に 1 コマ記録＝30 コマ/秒
+const LUT = Float32Array.from({ length: 256 }, (_, k) => Math.exp(-(k / 256 / 2) / TRAIL)); // 光ってからの経過 k/256 周 → 明るさ
+
+// 記録するラン（すべてアプリの makeSync・stepSync で計算する）
+const RUNS = {
+  ign: { mode: 0, seed: 1, sec: 60 },                          // 04・05・06（K .6）
+  k18: { mode: 1, seed: 1, sec: 60 },                          // 06 THRESHOLD（K .18）
+  k08: { mode: 0, seed: 1, sec: 60, opt: { k: .08 } },         // 06（K .08＝Kc の半分）
+  dephase: { mode: 0, seed: 1, sec: 30, opt: { k: 0 }, init: 'zero' }, // 02：全員そろえて置き、K 0
+  ent: { mode: 0, seed: 1, sec: 8, beat: 30 },                 // 08：120 BPM＝30 歩ごとに entrain
+  waves: { mode: 2, seed: 1, sec: 40 },
+  chim: { mode: 3, seed: 1, sec: 40 },
+};
+const LANES = [['ign'], ['ent', 'dephase', 'k18'], ['waves', 'chim', 'k08']]; // 軽いランを先に
+
+// 記録の作り手。Worker でも、Worker が使えないときの本体でも同じこれを回す（法則の関数だけを使う）
+function* runner(id, spec, store, omega, chunk) {
+  const p = makeSync(spec.mode, spec.seed, spec.opt || {});
+  if (spec.init === 'zero') p.theta.fill(0);
+  const n = p.n, steps = Math.round(spec.sec * 60), F = Math.floor(steps / store) + 1;
+  yield { type: 'meta', id, n, F, x: Float32Array.from(p.x), y: Float32Array.from(p.y), cx: Float32Array.from(p.cx), sx: Float32Array.from(p.sx), noise: Float32Array.from(p.noise), cols: p.cols || 0, rows: p.rows || 0, k: p.k, spread: p.spread };
+  let q = new Uint8Array(n * chunk), r = new Float32Array(chunk), ps = new Float32Array(chunk), ex = new Float32Array(chunk), lo = spec.mode === 3 ? new Uint8Array(n * chunk) : null, c = 0, f0 = 0;
+  for (let s = 0; ; s++) {
+    if (spec.beat && s % spec.beat === 0 && s < steps) entrain(p);
+    if (s % store === 0) {
+      const ph = omega * p.time, o = order(p), base = c * n;
+      for (let i = 0; i < n; i++) q[base + i] = Math.round(wrap(p.theta[i] - ph) / TAU * 256) & 255;
+      r[c] = o.r; ps[c] = wrap(o.psi - ph); ex[c] = spec.mode === 2 ? defects(p) : 0;
+      if (lo) { const L = localOrder(p); for (let i = 0; i < n; i++) lo[base + i] = Math.round(L[i] * 255); }
+      c++;
+      if (c === chunk || s >= steps) {
+        yield { type: 'chunk', id, f0, cnt: c, q: q.slice(0, c * n), r: r.slice(0, c), psi: ps.slice(0, c), ex: ex.slice(0, c), lo: lo ? lo.slice(0, c * n) : null };
+        f0 += c; c = 0;
+      }
+    }
+    if (s >= steps) break;
+    stepSync(p, 1 / 60);
+  }
+  yield { type: 'done', id };
+}
+
+const DATA = {};
+function onMsg(m) {
+  if (m.type === 'meta') { DATA[m.id] = { ...m, q: new Uint8Array(m.n * m.F), r: new Float32Array(m.F), psi: new Float32Array(m.F), ex: new Float32Array(m.F), lo: m.lo || (RUNS[m.id].mode === 3 ? new Uint8Array(m.n * m.F) : null), ready: 0, done: false }; return; }
+  const d = DATA[m.id]; if (!d) return;
+  if (m.type === 'done') { d.done = true; return; }
+  d.q.set(m.q, m.f0 * d.n); d.r.set(m.r, m.f0); d.psi.set(m.psi, m.f0); d.ex.set(m.ex, m.f0);
+  if (m.lo) d.lo.set(m.lo, m.f0 * d.n);
+  d.ready = m.f0 + m.cnt;
+}
+let workerMode = 'worker';
+function startCompute() {
+  const src = ['"use strict";', 'const TAU=Math.PI*2;', 'const MODES=' + JSON.stringify(MODES) + ';', 'const wrap=' + String(wrap) + ';', 'const angle=' + String(angle) + ';',
+    makeRng, makeSync, buildNeighbours, order, entrain, stepSync, defects, localOrder, runner].map(String).join('\n') +
+    '\nonmessage=e=>{const a=e.data;for(const id of a.ids){for(const m of runner(id,a.specs[id],a.store,a.omega,30)){const tr=[];for(const k of ["q","r","psi","ex","lo","x","y","cx","sx","noise"])if(m[k]&&m[k].buffer)tr.push(m[k].buffer);postMessage(m,tr);}}};';
+  try {
+    const url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
+    LANES.forEach(ids => { const w = new Worker(url); w.onmessage = e => onMsg(e.data); w.onerror = () => fallback(); w.postMessage({ ids, specs: RUNS, store: STORE, omega: OMEGA }); });
+  } catch (e) { fallback(); }
+}
+// Worker が使えない環境：同じ runner を本体で少しずつ回す（1 コマ 10 ms まで）
+function fallback() {
+  if (workerMode === 'main') return; workerMode = 'main';
+  for (const k in DATA) delete DATA[k];
+  const gens = LANES.flat().map(id => runner(id, RUNS[id], STORE, OMEGA, 30));
+  const pump = () => { const t0 = performance.now(); while (gens.length && performance.now() - t0 < 10) { const r = gens[0].next(); if (r.done) gens.shift(); else onMsg(r.value); } if (gens.length) setTimeout(pump, 0); };
+  pump();
+}
+
+// 06・09 の曲線：60 秒後のそろい r（アプリの式・FIREFLIES の位置・seed 1〜3・50〜60 秒の平均）。Node で実測して焼き込んだ値
+const RK = /*RK-BEGIN*/[{"k":0,"r":[0.006,0.029,0.017]},{"k":0.04,"r":[0.006,0.033,0.019]},{"k":0.08,"r":[0.009,0.041,0.024]},{"k":0.1,"r":[0.013,0.048,0.031]},{"k":0.12,"r":[0.021,0.059,0.047]},{"k":0.14,"r":[0.039,0.078,0.079]},{"k":0.16,"r":[0.076,0.108,0.136]},{"k":0.18,"r":[0.144,0.154,0.227]},{"k":0.2,"r":[0.256,0.223,0.345]},{"k":0.22,"r":[0.417,0.321,0.484]},{"k":0.25,"r":[0.685,0.502,0.647]},{"k":0.3,"r":[0.863,0.809,0.775]},{"k":0.35,"r":[0.918,0.929,0.877]},{"k":0.4,"r":[0.949,0.956,0.936]},{"k":0.5,"r":[0.974,0.974,0.971]},{"k":0.6,"r":[0.984,0.983,0.983]}]/*RK-END*/;
+
+// ── 2 匹（03 PULL）：アプリと同じ 1 対 1 の引く力 K·sin(θj−θi)。軽いので毎コマ 0 から積分する（＝スクロールの純関数）
+const PAIR_DW = 1.5, PAIR_T = 22;
+const pairK = t => t < 6 ? 0 : t < 14 ? .6 : 1.5;
+function pairAt(t) {
+  let a = 0, b = Math.PI; const dt = 1 / 60, n = Math.round(t * 60), D = [];
+  for (let s = 0; s < n; s++) { const K = pairK(s * dt), va = OMEGA - PAIR_DW / 2 + K * Math.sin(b - a), vb = OMEGA + PAIR_DW / 2 + K * Math.sin(a - b); a += va * dt; b += vb * dt; if (s % 4 === 0) D.push(angle(b - a)); }
+  D.push(angle(b - a));
+  return { a: wrap(a - OMEGA * t), b: wrap(b - OMEGA * t), D, K: pairK(t), delta: angle(b - a) };
+}
+
+// ── 章：状態は章の進み u の純関数。P＝その章で出す図と置き場所（ステージ内 0..1）
+const CH = [
+  { id: 'SYNC', at: () => ({ run: 'ign', t: 0, K: .6 }), P: { FIELD: [0, 0, 1, 1] }, lit: ['w'], rows: 'a' },
+  { id: 'CLOCK', at: () => ({ run: 'ign', t: 0, K: .6, one: true }), P: { CLOCK: [0, 0, .5, 1], FIELD: [.53, 0, .47, 1] }, lit: ['w'], rows: 'ab' },
+  { id: 'SPREAD', at: u => ({ run: 'dephase', t: 30 * seg(u, .04, .94), K: 0, tmax: 30 }), P: { FIELD: [0, 0, .6, .64], RING: [.63, 0, .37, .64], RTRACE: [0, .68, 1, .32] }, lit: ['w2', 'sig'], rows: 'abc' },
+  { id: 'PULL', at: u => ({ pair: true, t: PAIR_T * seg(u, .04, .94) }), P: { PAIR: [0, 0, 1, 1] }, lit: ['K'], rows: 'a' },
+  { id: 'IGNITION', at: u => ({ run: 'ign', t: 12 * seg(u, .04, .96), K: .6, tmax: 30 }), P: { FIELD: [0, 0, .6, .64], RING: [.63, 0, .37, .64], RTRACE: [0, .68, 1, .32] }, lit: ['K', 'nb', 'r'], rows: 'ac' },
+  { id: 'FEEDBACK', at: u => ({ run: 'ign', t: lerp(12, 30, seg(u, .04, .94)), K: .6, tmax: 30, pull: true }), P: { FIELD: [0, 0, .42, .64], RING: [.45, 0, .55, .64], RTRACE: [0, .68, 1, .32] }, lit: ['r', 'Kr'], rows: 'cd' },
+  { id: 'THRESHOLD', at: u => ({ trio: ['k08', 'k18', 'ign'], run: 'k18', t: 60 * seg(u, .04, .9), K: .18, tmax: 60 }), P: { TRIO: [0, 0, 1, .46], RTRACE: [0, .5, .56, .5], CURVE: [.59, .5, .41, .5] }, lit: ['K', 'Kc', 'sig'], rows: 'abe' },
+  { id: 'NEIGHBORS', at: u => ({ run: 'waves', t: 40 * seg(u, .04, .92), K: 5 }), P: { WAVES: [0, 0, 1, .6], CHIM: [0, .63, 1, .37] }, lit: ['nb'], rows: 'a' },
+  { id: 'ENTRAIN', at: u => ({ run: 'ent', t: 8 * seg(u, .04, .92), K: .6, tmax: 8, beat: true }), P: { FIELD: [0, 0, .6, .64], RING: [.63, 0, .37, .64], RTRACE: [0, .68, 1, .32] }, lit: ['ent'], rows: 'af' },
+  { id: 'BLUEPRINT', at: u => ({ run: 'ent', t: 8, K: .6, bp: sm(seg(u, 0, .7)) }), P: { CURVE: [0, 0, 1, 1] }, lit: ['r', 'K', 'Kc'], rows: 'acdef' },
+];
+// スマホ：図は 1〜2 枚
+const PM = [{ FIELD: [0, 0, 1, 1] }, { CLOCK: [0, 0, 1, 1] }, { FIELD: [0, 0, .56, 1], RING: [.58, 0, .42, 1] }, { PAIR: [0, 0, 1, 1] }, { FIELD: [0, 0, .56, 1], RING: [.58, 0, .42, 1] },
+  { RING: [0, 0, .5, 1], RTRACE: [.52, 0, .48, 1] }, { TRIO: [0, 0, .64, 1], CURVE: [.66, 0, .34, 1] }, { WAVES: [0, 0, .56, 1], CHIM: [.58, 0, .42, 1] }, { FIELD: [0, 0, .56, 1], RING: [.58, 0, .42, 1] }, { CURVE: [0, 0, 1, 1] }];
+CH.forEach((c, i) => { c.PM = PM[i]; });
+
+// ── スクロールの採寸（SCROLL_BEATS_LP と同じ型）
+const chEls = [...document.querySelectorAll('.ch')];
+let M = [], VH = innerHeight, MAXY = 1;
+function measure() {
+  VH = innerHeight; M = chEls.map(el => ({ top: el.offsetTop, h: el.offsetHeight }));
+  MAXY = Math.max(1, document.documentElement.scrollHeight - VH);
+  $('ticks').innerHTML = M.slice(1).map(m => `<i style="left:${(m.top / MAXY * 100).toFixed(2)}%"></i>`).join('');
+}
+function locate(y) {
+  let i = 0; while (i < M.length - 1 && y >= M[i + 1].top) i++;
+  const m = M[i], dwell = Math.max(1, m.h - VH);
+  const u = clamp((y - m.top) / dwell), k = i < M.length - 1 ? sm(clamp((y - m.top - dwell) / VH)) : 0;
+  return { i, u, k };
+}
+
+// ── 記録の引き出し
+function frameOf(id, t) {
+  const d = DATA[id]; if (!d || !d.ready) return null;
+  const want = Math.round(t * FS), f = Math.min(want, d.ready - 1);
+  return { d, f, lag: want - f };
+}
+let OFF = 0, T = 0; // OFF＝共通の針（ωT）を 1/256 周で表したもの
+const rOf = st => {
+  if (st.pair) { const p = pairAt(st.t); return Math.abs(Math.cos(p.delta / 2)); }
+  const fr = frameOf(st.run, st.t); return fr ? fr.d.r[fr.f] : null;
+};
+const zoneOf = (st, r) => st.pair ? (pairK(st.t) >= 1.5 && st.t > 16 ? 'LOCK' : 'SLIP') : r == null ? 'SCATTER' : r < .3 ? 'SCATTER' : r < .85 ? 'GATHER' : 'SYNC';
+
+// ── 描画
+const cv = $('cv'); let g = null, W = 0, H = 0;
+function fitAll() {
+  const d = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight;
+  if (cv.width !== Math.round(W * d) || cv.height !== Math.round(H * d)) { cv.width = Math.round(W * d); cv.height = Math.round(H * d); }
+  g = cv.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, W, H);
+}
+const MOBILE = () => W < 880;
+function stageRect() {
+  if (MOBILE()) return { x: 12, y: 54, w: W - 24, h: H * .36 - 58 };
+  const x = Math.min(40 + 400 + 36, W * .44); return { x, y: 68, w: W - x - 24, h: H - 68 - 22 };
+}
+function frameBox(x, y, w, h, cap, right) {
+  g.strokeStyle = C.line; g.lineWidth = 1; g.strokeRect(Math.round(x) + .5, Math.round(y) + .5, Math.round(w) - 1, Math.round(h) - 1);
+  g.fillStyle = 'rgba(7,7,7,.6)'; g.fillRect(x + 1, y + 1, w - 2, h - 2);
+  g.font = `10px ${C.mono}`; g.textAlign = 'left';
+  const rw = right ? g.measureText(right).width + 16 : 0;
+  if (g.measureText(cap).width + 20 + rw < w) { g.fillStyle = C.mute; g.fillText(cap, x + 10, y + 16); } // 狭い枠では見出しを省き、値だけ残す
+  if (right) { g.textAlign = 'right'; g.fillStyle = C.acc; g.fillText(right, x + w - 10, y + 16); }
+}
+function computing(x, y, w, h, fr) {
+  g.font = `10px ${C.mono}`; g.fillStyle = C.mute; g.textAlign = 'center';
+  g.fillText(fr ? `計算中… t ${(fr.f / FS).toFixed(1)} s まで` : '計算中…', x + w / 2, y + h / 2);
+}
+function arrow(x0, y0, x1, y1, col, lw, head = 7) {
+  g.strokeStyle = col; g.fillStyle = col; g.lineWidth = lw; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
+  const a = Math.atan2(y1 - y0, x1 - x0), l = Math.hypot(x1 - x0, y1 - y0); if (l < 3) return;
+  g.beginPath(); g.moveTo(x1, y1); g.lineTo(x1 - head * Math.cos(a - .45), y1 - head * Math.sin(a - .45)); g.lineTo(x1 - head * Math.cos(a + .45), y1 - head * Math.sin(a + .45)); g.closePath(); g.fill();
+}
+// 光の色（アプリの FIREFLY＝黄緑）を 33 段で作り置き
+const FLY = [194, 255, 105], LV = 32;
+const DOT = Array.from({ length: LV + 1 }, (_, l) => { const a = l / LV, b = .16; /* 光っていない時も居場所が見える明るさ（アプリは .045。解説では読みやすさを優先） */ return `rgb(${FLY.map(v => Math.round(Math.min(255, v * b + v * a * .85))).join(',')})`; });
+const CORE = Array.from({ length: LV + 1 }, (_, l) => `rgba(255,255,239,${(l / LV).toFixed(3)})`);
+const PHASE_PAL = Array.from({ length: 256 }, (_, i) => { const h = i / 256 * 6, x = 1 - Math.abs(h % 2 - 1), q = h < 1 ? [1, x, 0] : h < 2 ? [x, 1, 0] : h < 3 ? [0, 1, x] : h < 4 ? [0, x, 1] : h < 5 ? [x, 0, 1] : [1, 0, x]; return q.map(v => 75 + 180 * v); });
+
+// ホタルの野原：位置はアプリと同じ単位正方形をそのまま枠に伸ばす
+function drawField(x, y, w, h, id, t, cap, opt = {}) {
+  const fr = frameOf(id, t);
+  frameBox(x, y, w, h, cap, fr ? `r ${fr.d.r[fr.f].toFixed(2)}` : '');
+  if (!fr) { computing(x, y, w, h); return; }
+  const { d, f } = fr, n = d.n, base = f * n, X0 = x + 8, Y0 = y + 24, WW = w - 16, HH = h - 32;
+  const dot = Math.max(1.3, Math.min(WW, HH) / 330);
+  for (let i = 0; i < n; i++) {
+    const a = LUT[(d.q[base + i] + OFF) & 255], l = Math.round(a * LV), px = X0 + d.x[i] * WW, py = Y0 + d.y[i] * HH, z = dot * (1 + Math.sqrt(a) * 1.4);
+    g.fillStyle = DOT[l]; g.fillRect(px - z / 2, py - z / 2, z, z);
+    if (a > .12) { const z2 = Math.max(1, dot * .72); g.fillStyle = CORE[l]; g.fillRect(px - z2 / 2, py - z2 / 2, z2, z2); }
+  }
+  if (opt.one) { g.strokeStyle = C.rouge; g.lineWidth = 1.4; g.beginPath(); g.arc(X0 + d.x[0] * WW, Y0 + d.y[0] * HH, 11, 0, TAU); g.stroke(); }
+  if (fr.lag > 2) computing(x, y + h * .4, w, h * .2, fr);
+}
+// 位相の円（2 Hz で一緒に回って見る）：点は止まり、光る位置の線が回る
+function drawRing(cx, cy, R, d, f, opt = {}) {
+  const n = d.n, base = f * n, sweep = -OFF / 256 * TAU - Math.PI / 2;
+  g.strokeStyle = 'rgba(255,210,122,.35)'; g.lineWidth = 1; g.beginPath(); g.arc(cx, cy, R, 0, TAU); g.stroke();
+  g.strokeStyle = 'rgba(194,255,105,.55)'; g.lineWidth = 1.2; g.beginPath(); g.moveTo(cx + R * .2 * Math.cos(sweep), cy + R * .2 * Math.sin(sweep)); g.lineTo(cx + (R + 12) * Math.cos(sweep), cy + (R + 12) * Math.sin(sweep)); g.stroke();
+  for (let i = 0; i < n; i++) {
+    const q = d.q[base + i], a = LUT[(q + OFF) & 255], ang = q / 256 * TAU - Math.PI / 2, rr = R + ((i * 7919) % 9 - 4);
+    g.fillStyle = a > .12 ? DOT[Math.round(a * LV)] : 'rgba(90,233,255,.28)'; g.fillRect(cx + rr * Math.cos(ang) - 1, cy + rr * Math.sin(ang) - 1, 2, 2);
+  }
+  const r = d.r[f], ps = d.psi[f] - Math.PI / 2;
+  if (opt.pull) {
+    const Kr = opt.K * r;
+    for (let j = 0; j < 48; j++) {
+      const i = Math.floor(j * n / 48), th = d.q[base + i] / 256 * TAU, ang = th - Math.PI / 2, s = Math.sin(d.psi[f] - th), L = 46 * Kr * s;
+      const px = cx + R * Math.cos(ang), py = cy + R * Math.sin(ang);
+      if (Math.abs(L) > 2) arrow(px, py, px - L * Math.sin(ang), py + L * Math.cos(ang), C.rouge, 1.2, 5);
+    }
+  }
+  arrow(cx, cy, cx + R * r * Math.cos(ps), cy + R * r * Math.sin(ps), C.acc, 2);
+}
+
+const PANELS = {
+  FIELD(x, y, w, h, st) { drawField(x, y, w, h, st.run, st.t, `FIELD ⁄ ${DATA[st.run] ? DATA[st.run].n : ''} 匹 · t ${st.t.toFixed(1)} s`, { one: st.one }); },
+  RING(x, y, w, h, st) {
+    const fr = frameOf(st.run, st.t);
+    frameBox(x, y, w, h, 'PHASE ⁄ 2 Hz で回って見る', fr ? `r ${fr.d.r[fr.f].toFixed(2)}` : '');
+    if (!fr) { computing(x, y, w, h); return; }
+    const R = Math.max(10, Math.min(w - 40, h - 70) / 2), cx = x + w / 2, cy = y + 26 + (h - 50) / 2;
+    drawRing(cx, cy, R, fr.d, fr.f, { pull: st.pull, K: st.K });
+    g.font = `10px ${C.mono}`; g.textAlign = 'center'; g.fillStyle = C.mute;
+    g.fillText(st.pull ? `赤＝引く力 · K·r ${(st.K * fr.d.r[fr.f]).toFixed(2)}` : '点＝1 匹の位相 · 黄の矢印＝平均（長さ r）', cx, y + h - 10);
+  },
+  RTRACE(x, y, w, h, st) {
+    const ent = st.beat, runs = st.trio ? st.trio : ent ? ['ent'] : [st.run], tmax = st.tmax || 30;
+    frameBox(x, y, w, h, ent ? 'r ⁄ そろいの時間変化（横＝拍）' : 'r ⁄ そろいの時間変化', ent ? `拍 ${Math.min(16, Math.floor(st.t * 2 + 1e-6))} ⁄ 16` : `t ${st.t.toFixed(1)} ⁄ ${tmax} s`);
+    const pl = x + 34, pr = x + w - 70, pt = y + 26, pb = y + h - 20, X = t => pl + (pr - pl) * t / tmax, Y = r => pb - (pb - pt) * r;
+    g.font = `10px ${C.mono}`;
+    for (const r of [0, .5, .9, 1]) { g.strokeStyle = r === .5 || r === .9 ? 'rgba(255,210,122,.14)' : C.line; g.setLineDash(r === .5 || r === .9 ? [3, 4] : []); g.beginPath(); g.moveTo(pl, Y(r)); g.lineTo(pr, Y(r)); g.stroke(); g.setLineDash([]); g.fillStyle = C.mute; g.textAlign = 'right'; g.fillText(String(r), pl - 6, Y(r) + 3); }
+    g.textAlign = 'center';
+    if (ent) for (let b = 0; b <= 16; b += pr - pl < 220 ? 8 : 4) { g.fillStyle = C.mute; g.fillText(String(b), X(b / 2), pb + 14); }
+    else for (let t = 0; t <= tmax; t += pr - pl < 220 ? tmax : tmax > 30 ? 10 : 5) { g.fillStyle = C.mute; g.fillText(t + 's', X(t), pb + 14); }
+    const COLS = st.trio ? [C.mute, C.ice, C.fly] : [ent ? C.acc : C.ice];
+    const line = (id, col, dash, upto, label) => {
+      const d = DATA[id]; if (!d || !d.ready) return; const fe = Math.min(d.ready - 1, Math.round(upto * FS));
+      g.strokeStyle = col; g.lineWidth = 1.6; g.setLineDash(dash || []); g.beginPath();
+      for (let f = 0; f <= fe; f++) { const xx = X(f / FS), yy = Y(d.r[f]); f ? g.lineTo(xx, yy) : g.moveTo(xx, yy); } g.stroke(); g.setLineDash([]);
+      const xx = X(fe / FS), yy = Y(d.r[fe]); g.fillStyle = col; g.fillRect(xx - 3, yy - 3, 6, 6);
+      if (label) { g.textAlign = 'left'; g.fillText(label, Math.min(xx + 8, pr + 6), yy + 3); }
+    };
+    if (ent) line('ign', C.mute, [3, 3], st.t, '拍なし');
+    runs.forEach((id, j) => line(id, COLS[j], null, st.t, st.trio ? `K ${[.08, .18, .6][j]}` : ent ? '拍あり' : ''));
+    // 実測の目印（04/05：r 0.5 と 0.9 を越えた時刻）
+    if (!st.trio && !ent && st.run === 'ign') {
+      const d = DATA.ign; if (d && d.ready) { for (const th of [.5, .9]) { let f = 0; while (f < d.ready && d.r[f] < th) f++; if (f < d.ready && f / FS <= st.t) { g.fillStyle = C.acc; g.textAlign = 'center'; g.fillText(`${(f / FS).toFixed(1)}s`, X(f / FS), Y(th) - 6); } } }
+    }
+    if (ent) { // 拍のランプ（共通の針が真上＝実時間の拍）
+      const a = LUT[OFF & 255], lx = pr + 46, ly = pt + 2;
+      g.strokeStyle = C.acc; g.strokeRect(lx + .5, ly + .5, 16, 16); g.fillStyle = `rgba(255,210,122,${a.toFixed(3)})`; g.fillRect(lx + 2, ly + 2, 13, 13);
+      g.fillStyle = C.mute; g.textAlign = 'center'; g.fillText('BEAT', lx + 8, ly + 30);
+    }
+  },
+  CLOCK(x, y, w, h, st) {
+    frameBox(x, y, w, h, 'CLOCK ⁄ 1 匹のホタル');
+    const d = DATA.ign; if (!d || !d.ready) { computing(x, y, w, h); return; }
+    const q = d.q[0], R = Math.max(14, Math.min((w - 60) / 4.6, (h - 90) / 2.4)), cy = y + 30 + (h - 70) / 2, c1 = x + w * .27, c2 = x + w * .73;
+    const a = LUT[(q + OFF) & 255], phi = (q + OFF) / 256 * TAU, lamp = (cx) => { g.fillStyle = DOT[Math.round(a * LV)]; g.beginPath(); g.arc(cx, cy - R - 18, 8, 0, TAU); g.fill(); if (a > .12) { g.fillStyle = CORE[Math.round(a * LV)]; g.beginPath(); g.arc(cx, cy - R - 18, 4, 0, TAU); g.fill(); } };
+    // 左：ふつうに見る（針が 1 秒に 2 回まわる）
+    g.strokeStyle = 'rgba(255,210,122,.35)'; g.lineWidth = 1; g.beginPath(); g.arc(c1, cy, R, 0, TAU); g.stroke();
+    arrow(c1, cy, c1 + R * .92 * Math.cos(phi - Math.PI / 2), cy + R * .92 * Math.sin(phi - Math.PI / 2), C.ice, 2.4, 9); lamp(c1);
+    // 右：2 Hz で回りながら見る（針は止まり、光る位置の線が回る）
+    const sweep = -OFF / 256 * TAU - Math.PI / 2;
+    g.strokeStyle = 'rgba(255,210,122,.35)'; g.beginPath(); g.arc(c2, cy, R, 0, TAU); g.stroke();
+    g.strokeStyle = 'rgba(194,255,105,.6)'; g.lineWidth = 1.2; g.beginPath(); g.moveTo(c2, cy); g.lineTo(c2 + (R + 10) * Math.cos(sweep), cy + (R + 10) * Math.sin(sweep)); g.stroke();
+    arrow(c2, cy, c2 + R * .92 * Math.cos(q / 256 * TAU - Math.PI / 2), cy + R * .92 * Math.sin(q / 256 * TAU - Math.PI / 2), C.ice, 2.4, 9); lamp(c2);
+    g.font = `10px ${C.mono}`; g.fillStyle = C.mute; g.textAlign = 'center';
+    g.fillText('ふつうに見る', c1, cy + R + 22); g.fillText('2 Hz で一緒に回って見る', c2, cy + R + 22);
+    g.fillStyle = C.acc; g.fillText(`この 1 匹 ω ＝ ${(2 + d.spread * d.noise[0] / TAU).toFixed(4)} Hz · 光る ＝ 針が真上`, x + w / 2, y + h - 12);
+  },
+  PAIR(x, y, w, h, st) {
+    const p = pairAt(st.t), locked = p.K >= 1.5 && st.t > 16;
+    frameBox(x, y, w, h, 'PULL ⁄ 2 匹 · 2 Hz で回って見る', `K ${p.K.toFixed(1)}  ${p.K === 0 ? '引かない' : p.K < 1 ? '追いつけない' : locked ? 'ロック' : 'ロックへ'}`);
+    const top = y + 24, ah = (h - 24) * .58, R = Math.max(14, Math.min(w * .3, ah - 60) / 2), cx = x + w / 2, cy = top + ah / 2 + 6, sweep = -OFF / 256 * TAU - Math.PI / 2;
+    g.strokeStyle = 'rgba(255,210,122,.35)'; g.lineWidth = 1; g.beginPath(); g.arc(cx, cy, R, 0, TAU); g.stroke();
+    g.strokeStyle = 'rgba(194,255,105,.6)'; g.lineWidth = 1.2; g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + (R + 10) * Math.cos(sweep), cy + (R + 10) * Math.sin(sweep)); g.stroke();
+    const hand = (ps, col, lx) => { const ang = ps - Math.PI / 2; arrow(cx, cy, cx + R * .92 * Math.cos(ang), cy + R * .92 * Math.sin(ang), col, 2.4, 9);
+      const a = LUT[(Math.round(ps / TAU * 256) + OFF) & 255]; g.fillStyle = DOT[Math.round(a * LV)]; g.beginPath(); g.arc(lx, cy, 10, 0, TAU); g.fill(); if (a > .12) { g.fillStyle = CORE[Math.round(a * LV)]; g.beginPath(); g.arc(lx, cy, 5, 0, TAU); g.fill(); } };
+    hand(p.a, C.ice, cx - R - 46); hand(p.b, C.acc, cx + R + 46);
+    g.font = `10px ${C.mono}`; g.textAlign = 'center'; g.fillStyle = C.ice; g.fillText('A おそい', cx - R - 46, cy + 26); g.fillStyle = C.acc; g.fillText('B はやい', cx + R + 46, cy + 26);
+    g.fillStyle = C.mute; g.fillText(`差 Δ ${(p.delta * 180 / Math.PI).toFixed(0)}°`, cx, cy + R + 20);
+    // 下の帯：差 Δ の時間変化（−180°〜180°）
+    const bt = top + ah + 8, bb = y + h - 22, pl = x + 44, pr = x + w - 16, X = t => pl + (pr - pl) * t / PAIR_T, Y = v => (bt + bb) / 2 - (bb - bt) / 2 * v / Math.PI;
+    [[0, 6, 'K 0'], [6, 14, 'K 0.6'], [14, PAIR_T, 'K 1.5']].forEach(([a, b, l], j) => { g.fillStyle = j === 2 ? 'rgba(255,210,122,.06)' : j === 1 ? 'rgba(255,79,168,.05)' : 'rgba(181,142,255,.04)'; g.fillRect(X(a), bt, X(b) - X(a), bb - bt); g.fillStyle = C.mute; g.textAlign = 'left'; g.fillText(l, X(a) + 4, bt + 11); });
+    g.strokeStyle = C.line; g.beginPath(); g.moveTo(pl, Y(0)); g.lineTo(pr, Y(0)); g.stroke();
+    g.fillStyle = C.mute; g.textAlign = 'right'; g.fillText('180°', pl - 6, Y(Math.PI) + 8); g.fillText('0°', pl - 6, Y(0) + 3); g.fillText('−180°', pl - 6, Y(-Math.PI));
+    const lockY = Y(Math.asin(PAIR_DW / 3)); g.setLineDash([2, 3]); g.strokeStyle = 'rgba(255,210,122,.5)'; g.beginPath(); g.moveTo(X(14), lockY); g.lineTo(pr, lockY); g.stroke(); g.setLineDash([]);
+    g.fillStyle = C.rouge; let prev = null;
+    p.D.forEach((v, j) => { const t = Math.min(st.t, j * 4 / 60), xx = X(t), yy = Y(v); g.fillRect(xx - .75, yy - .75, 1.5, 1.5); prev = [xx, yy]; });
+    if (prev) { g.fillRect(prev[0] - 3, prev[1] - 3, 6, 6); }
+  },
+  TRIO(x, y, w, h, st) {
+    const gap = 8, cw = (w - gap * 2) / 3;
+    st.trio.forEach((id, j) => drawField(x + j * (cw + gap), y, cw, h, id, st.t, `K ${[.08, .18, .6][j]}`));
+  },
+  CURVE(x, y, w, h, st) {
+    frameBox(x, y, w, h, st.bp != null ? 'BLUEPRINT ⁄ 横＝引く力 K・縦＝60 秒後のそろい r' : 'r(K) ⁄ 60 秒後のそろい（実測）');
+    const pl = x + 40, pr = x + w - 18, pt = y + 30, pb = y + h - 26, KM = .6, X = k => pl + (pr - pl) * k / KM, Y = r => pb - (pb - pt) * r;
+    g.font = `10px ${C.mono}`;
+    for (const r of [0, .5, 1]) { g.strokeStyle = C.line; g.beginPath(); g.moveTo(pl, Y(r)); g.lineTo(pr, Y(r)); g.stroke(); g.fillStyle = C.mute; g.textAlign = 'right'; g.fillText(String(r), pl - 6, Y(r) + 3); }
+    g.textAlign = 'center'; for (const k of [0, .1, .2, .3, .4, .5, .6]) { g.fillStyle = C.mute; g.fillText(k.toFixed(1), X(k), pb + 15); }
+    g.textAlign = 'right'; g.fillText('K →', pr, pb - 6);
+    const kc = Math.sqrt(8 / Math.PI) * .1; g.setLineDash([4, 4]); g.strokeStyle = 'rgba(255,79,168,.6)'; g.beginPath(); g.moveTo(X(kc), pt); g.lineTo(X(kc), pb); g.stroke(); g.setLineDash([]);
+    g.fillStyle = C.rouge; g.textAlign = 'left'; g.fillText(`Kc 推定 ${kc.toFixed(2)}`, X(kc) + 4, pt + 10);
+    if (RK.length) {
+      g.fillStyle = 'rgba(248,239,255,.10)'; RK.forEach(p => { const lo = Math.min(...p.r), hi = Math.max(...p.r); g.fillRect(X(p.k) - 2, Y(hi), 4, Math.max(1, Y(lo) - Y(hi))); });
+      g.strokeStyle = C.ink2; g.lineWidth = 1.5; g.beginPath(); RK.forEach((p, j) => { const m = p.r.reduce((a, b) => a + b, 0) / p.r.length; j ? g.lineTo(X(p.k), Y(m)) : g.moveTo(X(p.k), Y(m)); }); g.stroke();
+    }
+    const mark = (k, r, col, lab, sz = 10) => { if (r == null) return; const xx = X(k), yy = Y(r); g.fillStyle = col; g.fillRect(xx - sz / 2, yy - sz / 2, sz, sz); g.strokeStyle = C.bg; g.strokeRect(xx - sz / 2, yy - sz / 2, sz, sz); if (lab) { g.font = `600 12px ${C.disp}`; g.textAlign = 'center'; const tw = g.measureText(lab).width + 8, lx = clamp(xx, x + tw / 2 + 4, x + w - tw / 2 - 4); g.fillStyle = C.bg; g.fillRect(lx - tw / 2, yy - 22, tw, 13); g.fillStyle = col; g.fillText(lab, lx, yy - 12); g.font = `10px ${C.mono}`; } };
+    const rAt = (id, t) => { const fr = frameOf(id, t); return fr ? fr.d.r[fr.f] : null; };
+    if (st.bp == null) {
+      [['k08', .08], ['k18', .18], ['ign', .6]].forEach(([id, k], j) => mark(k, rAt(id, st.t), [C.mute, C.ice, C.fly][j], `${st.t.toFixed(0)}s`));
+    } else {
+      const stops = [[0, rAt('dephase', 30), '02'], [.08, rAt('k08', 60), '06'], [.18, rAt('k18', 60), '06'], [.6, rAt('ign', 30), '04·05'], [.6, rAt('ent', 8), '08 ＋拍']];
+      const n = Math.ceil(stops.length * st.bp);
+      stops.slice(0, n).forEach(([k, r, l], j) => mark(j === 4 ? k - .025 : k, r, j === 4 ? C.acc : C.fly, l));
+    }
+  },
+  WAVES(x, y, w, h, st) {
+    const fr = frameOf('waves', st.t);
+    frameBox(x, y, w, h, 'WAVES ⁄ 上下左右の 4 匹だけを見る', fr ? `ねじれ ${fr.d.ex[fr.f]}` : '');
+    if (!fr) { computing(x, y, w, h); return; }
+    const { d, f } = fr, cols = d.cols, rows = d.rows, base = f * d.n, cs = Math.min((w - 16) / cols, (h - 32) / rows), cw = cs, chh = cs, X0 = x + (w - cs * cols) / 2, Y0 = y + 24 + (h - 32 - cs * rows) / 2; // マスは正方形のまま
+    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+      const k = j * cols + i, q = d.q[base + k], a = LUT[(q + OFF) & 255], pc = PHASE_PAL[q];
+      g.fillStyle = `rgb(${Math.round(Math.min(255, pc[0] * .2 + FLY[0] * a * .85))},${Math.round(Math.min(255, pc[1] * .2 + FLY[1] * a * .85))},${Math.round(Math.min(255, pc[2] * .2 + FLY[2] * a * .85))})`;
+      g.fillRect(X0 + i * cw, Y0 + j * chh, Math.ceil(cw * .82), Math.ceil(chh * .82));
+    }
+    if (fr.lag > 2) computing(x, y + h * .4, w, h * .2, fr);
+  },
+  CHIM(x, y, w, h, st) {
+    const fr = frameOf('chim', st.t);
+    frameBox(x, y, w, h, 'CHIMERA ⁄ 輪の 256 匹');
+    if (!fr) { computing(x, y, w, h); return; }
+    const { d, f } = fr, n = d.n, base = f * n, R = Math.max(10, Math.min(w - 50, h - 80) / 2 * .86), cx = x + w / 2, cy = y + 26 + (h - 56) / 2;
+    g.strokeStyle = 'rgba(255,210,122,.13)'; g.lineWidth = 1; g.beginPath(); g.arc(cx, cy, R, 0, TAU); g.stroke();
+    let mn = 1, mx = 0;
+    for (let i = 0; i < n; i++) {
+      const q = d.q[base + i], k = (q + OFF) & 255, phi = k / 256 * TAU, a = LUT[k], lean = 1 + .075 * Math.cos(phi), px = cx + R * lean * d.cx[i], py = cy + R * lean * d.sx[i];
+      const b = .1 + .22 * (1 + Math.cos(phi)) / 2, col = FLY.map(v => Math.round(Math.min(255, v * b + v * a * .85)));
+      g.fillStyle = `rgb(${col})`; const z = 3 + Math.sqrt(a) * 3; g.fillRect(px - z / 2, py - z / 2, z, z);
+      const lo = d.lo[base + i] / 255; mn = Math.min(mn, lo); mx = Math.max(mx, lo);
+      if (lo > .9) { const ang = Math.atan2(d.sx[i], d.cx[i]); g.fillStyle = 'rgba(255,210,122,.75)'; g.fillRect(cx + (R * 1.18) * Math.cos(ang) - 1.5, cy + (R * 1.18) * Math.sin(ang) - 1.5, 3, 3); }
+    }
+    g.font = `10px ${C.mono}`; g.fillStyle = C.mute; g.textAlign = 'center'; g.fillText(`局所のそろい ${mn.toFixed(2)} 〜 ${mx.toFixed(2)}`, cx, y + h - 12);
+  },
+};
+
+function draw(loc) {
+  fitAll();
+  const st0 = stageRect(), key = MOBILE() ? 'PM' : 'P', A = CH[loc.i][key], B = loc.k > 0 ? CH[loc.i + 1][key] : {};
+  const sA = CH[loc.i].at(loc.u), sB = loc.k > 0 ? CH[loc.i + 1].at(0) : null;
+  const names = new Set([...Object.keys(A), ...Object.keys(B)]);
+  for (const n of names) {
+    let r, al, s;
+    if (A[n] && B[n]) { r = A[n].map((v, j) => lerp(v, B[n][j], loc.k)); al = 1; s = loc.k < .5 ? sA : sB; }
+    else if (A[n]) { r = A[n]; al = 1 - loc.k; s = sA; } else { r = B[n]; al = loc.k; s = sB; }
+    if (al < .01) continue;
+    const px = st0.x + r[0] * st0.w, py = st0.y + r[1] * st0.h, pw = r[2] * st0.w, ph = r[3] * st0.h;
+    if (pw < 40 || ph < 40) continue;
+    g.save(); g.globalAlpha = al; g.beginPath(); g.rect(px, py, pw, ph); g.clip();
+    PANELS[n](px, py, pw, ph, s); g.restore();
+  }
+}
+
+// ── HUD と FORMULA RAIL
+let lastHud = '';
+function hud(loc, y) {
+  const ci = loc.k > .5 ? loc.i + 1 : loc.i, st = CH[ci].at(ci === loc.i ? loc.u : 0), r = rOf(st), z = zoneOf(st, r);
+  $('prog').style.width = (clamp(y / MAXY) * 100).toFixed(2) + '%';
+  const key = [ci, r == null ? '-' : r.toFixed(2), st.t.toFixed(1), z].join('|');
+  if (key === lastHud) return; lastHud = key;
+  $('chl').innerHTML = `${String(ci).padStart(2, '0')} ⁄ 09 <b>${CH[ci].id}</b>`;
+  $('hR').textContent = r == null ? '—' : r.toFixed(2);
+  $('hRu').textContent = st.pair ? 'r 2 匹' : st.trio ? 'r · K 0.18' : st.run === 'waves' ? 'r 格子' : 'r そろい';
+  const zl = $('hZone'); zl.className = 'zone ' + z; zl.textContent = z;
+  const lit = new Set(CH[ci].lit), rows = CH[ci].rows;
+  document.querySelectorAll('#rail .t').forEach(e => e.classList.toggle('on', lit.has(e.dataset.t)));
+  document.querySelectorAll('#rail .fr').forEach(e => { e.classList.toggle('on', rows.includes(e.dataset.row)); e.classList.toggle('lit', !!e.querySelector('.t.on')); });
+  const K = st.pair ? pairK(st.t) : st.K;
+  $('fvA').textContent = st.trio ? 'K 0.08 · 0.18 · 0.6' : st.run === 'waves' ? '4 匹 · 輪' : `K ${K}`;
+  $('fvB').textContent = st.pair ? `Δω 1.5 rad/s` : 'σ 0.10 rad/s';
+  $('fvC').textContent = r == null ? '—' : `r ${r.toFixed(3)}`;
+  $('fvD').textContent = r == null || st.pair ? '—' : `K·r ${(K * r).toFixed(3)}`;
+  $('fvE').textContent = `≈ ${(Math.sqrt(8 / Math.PI) * .1).toFixed(3)}（推定）`;
+  $('fvF').textContent = st.beat ? `拍 ${Math.min(16, Math.floor(st.t * 2 + 1e-6))} ⁄ 16` : '—';
+  document.querySelectorAll('[data-live]').forEach(e => { const k = e.dataset.live, sec = e.closest('.ch'); if (!sec || +sec.dataset.ch !== ci) return;
+    const fr = st.run ? frameOf(st.run, st.t) : null;
+    e.textContent = k === 't' ? st.t.toFixed(1) : k === 'r' ? (r == null ? '—' : r.toFixed(2)) : k === 'K' ? String(K) : k === 'Kr' ? (r == null ? '—' : (K * r).toFixed(2))
+      : k === 'beat' ? String(Math.min(16, Math.floor(st.t * 2 + 1e-6))) : k === 'def' ? (fr ? String(fr.d.ex[fr.f]) : '—')
+      : k === 'w0' ? (DATA.ign ? (2 + DATA.ign.spread * DATA.ign.noise[0] / TAU).toFixed(4) : '—') : ''; });
+}
+function calcLabel() {
+  const ids = Object.keys(RUNS), done = ids.filter(id => DATA[id] && DATA[id].done).length;
+  const el = $('calc'); if (done === ids.length) { el.style.opacity = 0; return; }
+  let a = 0, b = 0; ids.forEach(id => { const d = DATA[id]; b += Math.floor(RUNS[id].sec * 60 / STORE) + 1; a += d ? d.ready : 0; });
+  el.style.opacity = 1; el.textContent = `ホタルを計算中 ${Math.floor(a / b * 100)}%`;
+}
+
+// ── 音：光の明るさの平均＝さざめき（帯域ノイズ）＋ そろった時の鈴（サイン）。ENTRAIN では実時間の拍にキック
+// ON＝鳴りっぱなし／BOW＝スクロールの速さで鳴る（SCROLL_BEATS_LP と同じ弓）
+let AC = null, master = null, gN = null, gS = null;
+function ensureAudio() {
+  if (!AC) {
+    AC = new AudioContext(); master = AC.createGain(); master.gain.value = 0;
+    const lim = AC.createDynamicsCompressor(); lim.threshold.value = -10; lim.ratio.value = 20; lim.attack.value = .003; lim.release.value = .15;
+    master.connect(lim).connect(AC.destination);
+    const buf = AC.createBuffer(1, AC.sampleRate * 2, AC.sampleRate), ch = buf.getChannelData(0); for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1;
+    const ns = AC.createBufferSource(); ns.buffer = buf; ns.loop = true; const bp = AC.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 3200; bp.Q.value = .9;
+    gN = AC.createGain(); gN.gain.value = 0; ns.connect(bp).connect(gN).connect(master); ns.start();
+    const o = AC.createOscillator(); o.frequency.value = 988; gS = AC.createGain(); gS.gain.value = 0; o.connect(gS).connect(master); o.start();
+  }
+  if (AC.state === 'suspended') AC.resume();
+}
+function kick() {
+  if (!AC) return; const t = AC.currentTime, o = AC.createOscillator(), gg = AC.createGain();
+  o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(45, t + .12);
+  gg.gain.setValueAtTime(.0001, t); gg.gain.linearRampToValueAtTime(.9, t + .004); gg.gain.exponentialRampToValueAtTime(.0001, t + .3);
+  o.connect(gg).connect(master); o.start(t); o.stop(t + .32);
+}
+const S = { mode: 'off', vol: .4 };
+let vel = 0, LIGHT = 0;
+function updateAudio() {
+  if (!AC) return;
+  const t = AC.currentTime;
+  gN.gain.setTargetAtTime(.55 * LIGHT, t, .008); gS.gain.setTargetAtTime(.32 * clamp((LIGHT - .25) / .75), t, .008);
+  let target = 0, tc = .12;
+  if (S.mode === 'on') target = S.vol;
+  else if (S.mode === 'bow') { const b = clamp(vel / 900); target = S.vol * b; tc = target > master.gain.value ? .06 : .55; }
+  master.gain.setTargetAtTime(target, t, tc);
+}
+function setMode(m) {
+  S.mode = m; autoArm = false; if (m !== 'off') ensureAudio();
+  document.querySelectorAll('#segSnd button').forEach(b => b.classList.toggle('on', b.dataset.v === m));
+  updateAudio();
+}
+// いま主役の世界の「光の平均」（0..1）。ばらばら ≈ 0.15 で一定、そろうと 1 秒に 2 回 1 近くまで跳ねる
+function lightOf(st) {
+  if (st.pair) { const p = pairAt(st.t); return (LUT[(Math.round(p.a / TAU * 256) + OFF) & 255] + LUT[(Math.round(p.b / TAU * 256) + OFF) & 255]) / 2; }
+  const fr = frameOf(st.one ? 'ign' : st.run, st.t); if (!fr) return 0;
+  const { d, f } = fr, base = f * d.n;
+  if (st.one) return LUT[(d.q[base] + OFF) & 255];
+  let s = 0; for (let i = 0; i < d.n; i++) s += LUT[(d.q[base + i] + OFF) & 255]; return s / d.n;
+}
+
+// ── なめらかな慣性（SCROLL_BEATS_LP と同じ）
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let tY = scrollY, cY = scrollY, smoothing = false, rewind = null;
+addEventListener('wheel', e => {
+  if (e.ctrlKey || REDUCED) return;
+  e.preventDefault(); rewind = null;
+  if (!smoothing) { tY = cY = scrollY; }
+  const d = e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? VH : 1);
+  tY = clamp(tY + d, 0, MAXY); smoothing = true;
+}, { passive: false });
+const stopRewind = () => { rewind = null; };
+addEventListener('keydown', stopRewind); addEventListener('touchstart', stopRewind, { passive: true }); addEventListener('mousedown', e => { if (e.target.id !== 'bRewind') stopRewind(); });
+function scrollStep(dt) {
+  if (rewind) {
+    const k = clamp((NOW - rewind.t0) / rewind.d), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    window.scrollTo(0, rewind.y0 * (1 - e)); if (k >= 1) rewind = null; return;
+  }
+  if (!smoothing) return;
+  cY += (tY - cY) * (1 - Math.exp(-dt * 6));
+  if (Math.abs(tY - cY) < .5) { cY = tY; smoothing = false; }
+  window.scrollTo(0, cY);
+}
+function startRewind() { smoothing = false; rewind = { y0: scrollY, t0: NOW, d: clamp(scrollY / 2400, 3, 9) * 1000 }; }
+
+// ── ループ
+let NOW = performance.now(), lastY = scrollY, LOC = { i: 0, u: 0, k: 0 }, lastBeat = -1, calcT = 0;
+function tick(now, dt) {
+  NOW = now; T += dt; OFF = Math.floor(((T * 2) % 1) * 256);
+  scrollStep(dt);
+  const y = scrollY;
+  vel = lerp(vel, Math.abs(y - lastY) / Math.max(dt, 1e-3), .25); lastY = y;
+  LOC = locate(y);
+  const ci = LOC.k > .5 ? LOC.i + 1 : LOC.i, st = CH[ci].at(ci === LOC.i ? LOC.u : 0);
+  LIGHT = lightOf(st);
+  const beat = Math.floor(T * 2); if (beat !== lastBeat) { lastBeat = beat; if (st.beat && S.mode !== 'off') kick(); }
+  updateAudio(); draw(LOC); hud(LOC, y);
+  if ((calcT += dt) > .25) { calcT = 0; calcLabel(); }
+}
+let manual = false, lastT = 0;
+function frame(now) {
+  if (!manual) { const t = now / 1000, dt = Math.min(.05, t - (lastT || t)); lastT = t; tick(now, dt); }
+  requestAnimationFrame(frame);
+}
+
+// ── 入力
+document.querySelectorAll('#segSnd button').forEach(b => b.onclick = () => setMode(b.dataset.v));
+$('bStart').onclick = () => { setMode('bow'); };
+let autoArm = true;
+addEventListener('pointerdown', e => { if (!autoArm) return; autoArm = false; if (S.mode === 'off' && !e.target.closest('#segSnd')) setMode('bow'); }, true);
+$('bRewind').onclick = startRewind;
+$('vol').oninput = e => { S.vol = e.target.value / 100; updateAudio(); };
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === 's' || e.key === 'S') { const order = ['off', 'bow', 'on']; setMode(order[(order.indexOf(S.mode) + 1) % 3]); }
+});
+addEventListener('resize', () => { measure(); lastHud = ''; });
+readColors(); measure(); startCompute();
+document.fonts && document.fonts.ready.then(() => { readColors(); measure(); lastHud = ''; });
+requestAnimationFrame(frame);
+(() => { const q = new URLSearchParams(location.search), ch = q.get('ch'); if (ch == null) return;
+  const go = () => { measure(); const i = clamp(+ch | 0, 0, M.length - 1), m = M[i]; window.scrollTo(0, m.top + clamp(+(q.get('u') || 0)) * Math.max(1, m.h - VH)); tY = cY = scrollY; };
+  go(); document.fonts && document.fonts.ready.then(go); })();
+
+// ── 検証フック（Claude 側）
+window.__LP = {
+  CH, RUNS, DATA, RK, locate, measure, pairAt, frameOf, rOf, lightOf,
+  loc: () => LOC, maxY: () => MAXY, metrics: () => M, light: () => LIGHT, workerMode: () => workerMode,
+  ready: () => Object.fromEntries(Object.keys(RUNS).map(id => [id, DATA[id] ? `${DATA[id].ready}/${DATA[id].F}${DATA[id].done ? ' ✓' : ''}` : '-'])),
+  goto: (i, u = 0) => { smoothing = false; rewind = null; const m = M[i], y = m.top + u * Math.max(1, m.h - VH); window.scrollTo(0, y); tY = cY = scrollY; return scrollY; },
+  setMode, rewind: startRewind, rewinding: () => !!rewind,
+  audio: () => AC && { state: AC.state, master: +master.gain.value.toFixed(3), noise: +gN.gain.value.toFixed(3), bell: +gS.gain.value.toFixed(3) },
+  vel: () => vel, T: () => T,
+  manual: on => { manual = on; },
+  step: (sec = 1 / 60, fps = 60) => { for (let i = 0, n = Math.max(1, Math.round(sec * fps)); i < n; i++) tick(NOW + 1000 / fps, 1 / fps); },
+  wheel: (dy) => { if (!smoothing) tY = cY = scrollY; tY = clamp(tY + dy, 0, MAXY); smoothing = true; },
+};
+})();
+</script>
+</body>
+</html>

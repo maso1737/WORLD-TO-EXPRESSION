@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LENIA — スクロール解説 (EE-05)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Cormorant+Garamond:ital,wght@1,700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500&family=Noto+Serif+JP:wght@400&display=swap" rel="stylesheet">
+<style>
+/* SANDPILE の正本を複製。EE NOIR：ice＝U・gold＝V と式・rouge＝いま。 */
+:root{
+  --bg:#070707;--ink:#F8EFFF;--ink-2:rgba(248,239,255,.80);--mute:rgba(181,142,255,.62);--mute-2:rgba(181,142,255,.30);
+  --line:rgba(255,210,122,.16);--acc:#FFD27A;--acc-ink:#070707;--ice:#5AE9FF;--rouge:#FF4FA8;--sand:#F6D696;
+  --grid:rgba(90,233,255,.028);
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --disp:"Barlow Condensed","Helvetica Neue",sans-serif;
+  --orn:"Cormorant Garamond",serif;
+  --jp:"Noto Sans JP",system-ui,sans-serif;
+  --jps:"Noto Serif JP",serif;
+  --col:400px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg)}
+body{background:var(--bg);color:var(--ink);font-family:var(--mono);font-feature-settings:"tnum";-webkit-font-smoothing:antialiased}
+#grid{position:fixed;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;pointer-events:none}
+#cv{position:fixed;inset:0;width:100vw;height:100vh;display:block;pointer-events:none}
+
+.hud{position:fixed;left:0;right:0;top:0;height:46px;display:flex;align-items:center;gap:16px;padding:0 16px;border-bottom:1px solid var(--line);background:rgba(7,7,7,.92);z-index:5}
+.brand{display:flex;align-items:baseline;gap:8px;white-space:nowrap}
+.mark{font-family:var(--orn);font-style:italic;font-weight:700;font-size:20px;color:var(--ice)}
+.tag{font-size:10px;color:var(--mute);letter-spacing:.2em}
+.chl{flex:1;font-size:11px;color:var(--ink-2);letter-spacing:.18em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chl b{color:var(--acc);font-weight:400}
+.rd{display:flex;align-items:baseline;gap:6px;white-space:nowrap}
+.rd .n{font-family:var(--disp);font-weight:700;font-size:22px;letter-spacing:.04em;min-width:56px;text-align:right}
+.rd .u{font-size:10px;color:var(--mute)}
+.zone{font-family:var(--disp);font-weight:700;font-size:12px;letter-spacing:.18em;padding:3px 8px;border:1px solid var(--line);white-space:nowrap;min-width:86px;text-align:center}
+.zone.EMPTY{color:var(--mute);border-color:var(--mute-2)}
+.zone.FILLING{color:var(--ice);border-color:var(--ice)}
+.zone.PATTERN{color:var(--acc-ink);background:var(--sand);border-color:var(--sand)}
+.zone.AVALANCHE{color:var(--acc-ink);background:var(--rouge);border-color:var(--rouge)}
+.zone.TOPPLE,.zone.MANDALA,.zone.IDENTITY,.zone.POWER{color:var(--acc);border-color:var(--acc)}
+.seg{display:flex;gap:3px}
+.seg button,.lnk{font-family:var(--mono);font-size:10px;letter-spacing:.08em;background:transparent;color:var(--ink-2);border:1px solid var(--line);padding:5px 8px;cursor:pointer;text-decoration:none;white-space:nowrap}
+.seg button:hover,.lnk:hover{border-color:var(--acc);color:var(--acc)}
+.seg button.on{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.vol{width:70px;-webkit-appearance:none;appearance:none;height:2px;background:var(--mute-2);outline:none;cursor:pointer}
+.vol::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;background:var(--acc);border:1px solid var(--acc-ink);border-radius:0}
+.vol::-moz-range-thumb{width:11px;height:11px;background:var(--acc);border:1px solid var(--acc-ink);border-radius:0}
+.prog{position:fixed;left:0;top:46px;height:2px;width:0;background:linear-gradient(90deg,var(--acc),var(--rouge));z-index:5}
+.ticks{position:fixed;left:0;right:0;top:46px;height:6px;z-index:4;pointer-events:none}
+.ticks i{position:absolute;top:0;width:1px;height:6px;background:var(--mute-2)}
+#calc{position:fixed;right:16px;top:56px;z-index:4;font-size:10px;color:var(--mute);letter-spacing:.12em;pointer-events:none;transition:opacity .6s}
+
+main{position:relative;z-index:2}
+.ch{position:relative}
+.card{position:sticky;top:76px;width:var(--col);margin-left:40px;padding:20px 22px 22px;background:rgba(7,7,7,.88);border:1px solid var(--line);border-left:2px solid var(--acc)}
+.card .no{font-size:10px;color:var(--acc);letter-spacing:.2em;margin-bottom:8px}
+.card h2{font-family:var(--disp);font-weight:700;font-size:26px;letter-spacing:.08em;line-height:1.1;margin-bottom:4px}
+.card .jh{font-family:var(--jps);font-size:15px;color:var(--ink);margin-bottom:12px;line-height:1.5}
+.card p{font-family:var(--jp);font-size:13px;line-height:1.85;color:var(--ink-2);margin-bottom:10px}
+.card p b{color:var(--acc);font-weight:500}
+.card p em{font-style:normal;color:var(--rouge)}
+.card p i{font-style:normal;color:var(--sand)}
+.card .note{font-size:10px;color:var(--mute);letter-spacing:.04em;line-height:1.65;border-top:1px solid var(--line);padding-top:8px;margin-top:4px}
+.card .live{color:var(--acc)}
+.hero h1{font-family:var(--orn);font-style:italic;font-weight:700;font-size:76px;line-height:.95;margin:2px 0 6px;color:var(--ice);filter:drop-shadow(0 0 16px rgba(90,233,255,.3))}
+.hero .jh{font-size:18px}
+.rules{margin:4px 0 12px;border-top:1px solid var(--line)}
+.rules div{display:flex;gap:10px;font-family:var(--jp);font-size:12.5px;color:var(--ink);padding:6px 0;border-bottom:1px solid var(--line)}
+.rules div span{font-family:var(--mono);font-size:10px;color:var(--acc);padding-top:2px}
+.btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.btn{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;background:transparent;color:var(--ink-2);border:1px solid var(--line);padding:8px 10px;cursor:pointer;text-decoration:none}
+.btn:hover{border-color:var(--acc);color:var(--acc)}
+.btn.pri{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.scrollcue{font-size:10px;color:var(--mute);letter-spacing:.22em;margin-top:14px}
+
+#rail{position:fixed;left:40px;bottom:18px;width:var(--col);z-index:3;background:rgba(7,7,7,.9);border:1px solid var(--line);padding:9px 12px 8px;pointer-events:none}
+#rail .rh{font-size:9px;color:var(--mute);letter-spacing:.18em;margin-bottom:5px;display:flex;justify-content:space-between}
+.fr{display:flex;justify-content:space-between;gap:10px;font-size:10.5px;line-height:1.75;color:var(--mute-2);transition:color .25s}
+.fr.on{color:var(--mute)}
+.fr .fv{color:inherit;text-align:right;white-space:nowrap}
+.fr.on .fv{color:var(--ink-2)}
+.fr .fx{white-space:nowrap}
+.t{transition:color .25s,background .25s;padding:0 1px}
+.t.on{color:var(--acc-ink);background:var(--acc)}
+
+@media (max-width:880px){
+  :root{--col:auto}
+  .hud{gap:8px;padding:0 10px}
+  .brand,.chl,.vol,.lnk.app{display:none}
+  .rd .n{font-size:17px;min-width:44px}
+  .rd .u{display:none}
+  .zone{min-width:0;padding:3px 6px}
+  .seg button,.lnk{padding:5px 6px}
+  .card{margin:0 12px;width:auto;top:calc(36vh + 62px);padding:14px 16px 14px}
+  .card p{font-size:12px;line-height:1.75;margin-bottom:8px}
+  .card .jh{margin-bottom:8px}
+  .hero h1{font-size:52px}
+  .scrollcue{display:none}
+  #calc{top:auto;bottom:6px;right:12px}
+  #rail{left:12px;right:12px;width:auto;top:calc(36vh + 2px);bottom:auto;padding:6px 10px}
+  #rail .rh{display:none}
+  .fr:not(.lit){display:none}
+  .fr .fv{display:none}
+}
+@media (prefers-reduced-motion:reduce){.t,.fr{transition:none}}
+.zone.SEED{color:var(--ice);border-color:var(--ice)}
+.zone.SPLIT,.zone.HEAL{color:var(--rouge);border-color:var(--rouge)}
+.zone.PATTERN,.zone.MAP{color:var(--acc);background:transparent;border-color:var(--acc)}
+.fr .fx{min-width:0}
+.recipe-list{font-size:11px!important;line-height:1.7!important}
+.card{overflow-wrap:anywhere}
+@media(max-width:880px){.fr{font-size:10px;line-height:1.5}#rail{padding:5px 10px}.hero .jh{font-size:16px}.rules div{font-size:11.5px}}
+.zone{color:var(--acc)}
+@media(max-width:880px){.hero .rules div{padding:4px 0}.hero p{font-size:11.5px}.card .note{font-size:9px}}
+</style>
+</head>
+<body>
+<div id="grid"></div>
+<canvas id="cv"></canvas>
+
+<div class="hud">
+  <div class="brand"><span class="mark">05</span><span class="tag">EMERGENCE ENGINE ⁄ LENIA SCROLL</span></div>
+  <div class="chl" id="chl">00 ⁄ 07 <b>LENIA</b></div>
+  <div class="rd"><span class="n" id="hV">—</span><span class="u" id="hVu">粒の数</span></div>
+  <div class="zone PATTERN" id="hZone">PATTERN</div>
+  <div class="seg" id="segSnd" title="S キーでも切り替え"><button data-v="off">OFF</button><button data-v="bow" class="on">BOW</button><button data-v="on">♪ ON</button></div>
+  <input class="vol" id="vol" type="range" min="0" max="100" value="45" title="MASTER">
+  <a class="lnk app" href="../05_lenia.html">APP →</a>
+  <a class="lnk" href="../index.html">INDEX</a>
+</div>
+<div class="prog" id="prog"></div>
+<div class="ticks" id="ticks"></div>
+<div id="calc"></div>
+
+<main id="main">
+<section class="ch" data-ch="0" style="height:170vh"><div class="card hero"><div class="no">00 ⁄ 10 · EE-05</div><h1>Lenia</h1><div class="jh">誰も形を描いていないのに、なぜ泳ぐ生きものがいるの？</div><p>これは、ライフゲームを<b>なめらかにした世界</b>。マスの中身が「いる・いない」の間を少しずつ変わると、泳ぐ形や、穴を埋める組織が現れます。</p><div class="rules"><div><span>LOOK</span>まわりを輪で見て、平均する</div><div><span>GROW</span>混み具合がちょうどよければ育ち、外れたら痩せる</div><div><span>STEP</span>一度に少しずつ変わる</div></div><p><b>スクロールが時間</b>。進めば育ち、戻れば巻き戻る。止まれば、形も音も止まります。</p><div class="btns"><button class="btn pri" id="bStart">♪ 音を出して読む（BOW）</button><a class="btn" href="../05_lenia.html">アプリで触る →</a></div><div class="note">LENIA · Chan 2019 ／ 水色から白へ、濃いほど中身が多い。端どうしはつながっています。</div></div></section>
+<section class="ch" data-ch="1" style="height:290vh"><div class="card"><div class="no">01 ⁄ 10 · EE-05</div><h2>LOOK</h2><div class="jh">「となり」を、輪で見る</div><p>ひとつのマスが見るのは、半径 R のまわり。輪の明るい部分を強く数え、全部を平均します。これが<b>混み具合 u</b>。</p><p>赤い点を体の真ん中から外へ動かすと、同じ輪でも、入ってくる中身が変わる。いまの混み具合は <span class="live" data-live="lookU">—</span>。</p><p>8 マスを数えるライフゲームの「となり」を、広く、なめらかにしたものです。</p><div class="note">時間は 0 歩で固定。PROFILE は輪の重み K(r) の断面。輪の中心だけがスクロールで動きます。</div></div></section>
+<section class="ch" data-ch="2" style="height:290vh"><div class="card"><div class="no">02 ⁄ 10 · EE-05</div><h2>GROW</h2><div class="jh">ちょうどいい混み具合で、生きる</div><p>混み具合 u が、好み μ＝<span class="live" data-live="mu">—</span> にぴったりなら、育ちたさは +1。そこから離れるほど −1 に近づきます。σ＝<span class="live" data-live="sigma">—</span> は、どのくらいの幅を許すか。</p><p><b>金の山が育つ条件</b>。白い棒は、いま体のある場所が感じている混み具合。棒が山のどこに集まるか、見てください。</p><p>育ちたさを dt＝<span class="live" data-live="dt">—</span> ずつ体に足す。この小さな更新を <span class="live" data-live="step">—</span> 歩、重ねています。</p><div class="note">白い棒は A > 0.05 のマスを A で重みづけした 48 箱の分布。山と棒は同じ u の目盛り。</div></div></section>
+<section class="ch" data-ch="3" style="height:290vh"><div class="card"><div class="no">03 ⁄ 10 · EE-05</div><h2>ROUND</h2><div class="jh">丸い種では、生きつづけられない</div><p>大きさの違う丸い種と、Orbium を同じルールで育てます。丸い種の消えた時点は <span class="live" data-live="deaths">—</span>。</p><p>比較用 Orbium の最後の質量は <span class="live" data-live="orb96Last">—</span>。<b>生きものには、特定の形が要る</b>ことが見えてきます。</p><p>Orbium は、育ちつづける形を探して見つかったもの。その記録された形を、ここでも最初の種にしています。</p><div class="note">丸い種はガウス型。幅 s は 3・5・8 マス。質量は全マスの中身を足した量。消滅は質量が 0 になった記録コマで判定。</div></div></section>
+<section class="ch" data-ch="4" style="height:290vh"><div class="card"><div class="no">04 ⁄ 10 · EE-05</div><h2>SWIM</h2><div class="jh">前で育ち、後ろで消える</div><p>いま <span class="live" data-live="step">—</span> 歩、質量は <span class="live" data-live="mass">—</span>。この記録の質量の幅は <span class="live" data-live="orbRange">—</span>。<b>形を保ったまま泳ぐ</b>様子を、重心の軌跡でたどります。</p><p>後半では、育ちたさの地図へ。<b>金は育ちたい場所</b>、<em>赤は痩せたい場所</em>。</p><p>前が金、後ろが赤。前に体が増え、後ろが消える。この繰り返しが「進む」動きになります。</p><div class="note">同じ 1 匹を 3,000 歩記録。中ほどで GROWTH MAP に切り替わります。軌跡は端をまたぐところで線を切っています。</div></div></section>
+<section class="ch" data-ch="5" style="height:290vh"><div class="card"><div class="no">05 ⁄ 10 · EE-05</div><h2>JUST RIGHT</h2><div class="jh">許す幅が、世界を分ける</div><p>同じスープから、σ だけを少しずつ変えます。狭すぎると消え、幅が広がると迷路の海が育つ。その境目は細い帯の中にあります。</p><p>いま <span class="live" data-live="step">—</span> 歩。世界に対する平均の濃さは <span class="live" data-live="sigMeans">—</span>。</p><p>最後の質量は <span class="live" data-live="sigFinal">—</span>。<b>同じ始まりでも、許す幅で行き先が変わる</b>。</p><div class="note">4 枚とも同じ乱数 seed 1。σ 以外は TISSUE の数。割合は ΣA ÷ 全マス数で、二値化した面積率とは区別します。</div></div></section>
+<section class="ch" data-ch="6" style="height:290vh"><div class="card"><div class="no">06 ⁄ 10 · EE-05</div><h2>COLLIDE</h2><div class="jh">ぶつかると消える。ときどき、組織が生まれる</div><p>7 匹を、十分に離れた場所から泳がせます。ぶつかると形が崩れ、たいてい両方とも消えます。数はいちど <b><span class="live" data-live="collideMin">—</span></b> まで減りました。</p><p>ところが <span class="live" data-live="collideBoom">—</span> ごろ、ぶつかった所から<b>迷路の組織</b>が生まれ、世界を食べはじめます。最後は世界の <span class="live" data-live="collideCover">—</span> を覆い、かたまりは <span class="live" data-live="collideLast">—</span> 個。いまは <span class="live" data-live="count">—</span>。</p><p>同じ式・同じ数のままです。生きものと組織は、別のルールではなく、同じルールの別の落ち着き先。</p><div class="note">位置と 8 通りの向きは seed 7（選び直していません）。数は A ≥ 0.1 のつながった領域のうち、一定以上の大きさのもの。「組織が生まれた」＝質量が最初の 2 倍を超えた記録。CPU で同じランを回しても、同じ時期に同じことが起きます。</div></div></section>
+<section class="ch" data-ch="7" style="height:290vh"><div class="card"><div class="no">07 ⁄ 10 · EE-05</div><h2>HEAL</h2><div class="jh">かじられても、穴を埋める</div><p>育った組織のいちばん大きいかたまりを、一度だけかじります。赤い輪の中の質量は、直前 <span class="live" data-live="baseline">—</span> → 直後 <span class="live" data-live="afterBite">—</span>。いまは <span class="live" data-live="hole">—</span>。</p><p>穴の中へ、まわりから組織が育ってきます。同じ大きさの円を世界のふつうの混み具合で満たすと <span class="live" data-live="avgHole">—</span>。その 90% に戻るまで <b><span class="live" data-live="recovery">—</span></b>。かじった所はもともと平均より濃い場所だったので、戻る先は「元どおり」ではなく「まわりと同じ」です。</p><p>06 TURING の迷路にも見られる性質。どちらも、小さな場所のルールから修復が生まれます。</p><div class="note">最初の 8% はかじる前。半径 13 の円を、アプリと同じやわらかい縁で一度だけ削ります。回復は円内の量で測ります。</div></div></section>
+<section class="ch" data-ch="8" style="height:290vh"><div class="card"><div class="no">08 ⁄ 10 · EE-05</div><h2>COLLAPSE</h2><div class="jh">許す幅を狭めると、いつ崩れる？</div><p>同じ育った組織から始め、σ をゆっくり狭めます。いま σ＝<span class="live" data-live="sigma">—</span>、質量 <span class="live" data-live="mass">—</span>。</p><p>最初の質量の 1% を切った記録は <b><span class="live" data-live="collapseAt">—</span></b>。少しずつ痩せるだけで済むのか、あるところで一斉に崩れるのか。下の帯を見てください。</p><div class="note">σ は 0.017 → 0.006 を 1,500 歩で直線的に変える。水色は質量、金は σ。それぞれ最初の値を 100% とする帯です。</div></div></section>
+<section class="ch" data-ch="9" style="height:290vh"><div class="card"><div class="no">09 ⁄ 10 · EE-05</div><h2>SPECIES</h2><div class="jh">同じ 3 行から、5 つの世界</div><p>泳ぐ生きもの、迷路の組織、沸く細胞、並ぶ泡、珊瑚。<b>輪の形と好みの数</b>を変えると、こんなに違う世界が育ちます。</p><p>6 枚目は祖先の<b>ライフゲーム</b>。8 マスを数える、0 か 1、一斉に更新する。この「となり・中身・変わり方」をなめらかにしたのが Lenia です。</p><p>各図は、記録の初めから終わりまで同じ割合で進みます。</p><div class="note">Lenia は 2,000 歩、Conway は 300 世代。種族名・μ・σ・R は law の SPECIES から表示。Conway の濃さは 0 / 1。</div></div></section>
+<section class="ch" data-ch="10" style="height:270vh"><div class="card"><div class="no">10 ⁄ 10 · EE-05</div><h2>BLUEPRINT</h2><div class="jh">輪で見て、少しずつ育つ</div><p>輪で見る。ちょうどよければ育つ。少しずつ変わる。この 3 行から、泳ぐ形も、海も、修復も生まれました。</p><p>小さな図は、各章で見た記録の終わり。章番号をたどって、<b>ルールと形のつながり</b>をもう一度見てください。</p><div class="btns"><button class="btn pri" id="bRewind">◀◀ REWIND</button><a class="btn" href="../05_lenia.html">アプリで触る →</a><a class="btn" href="SCROLL_TURING_LP.html">06 TURING の解説 →</a><a class="btn" href="../index.html">SERIES INDEX →</a></div><div class="note">LENIA ／ Chan 2019 · EE-05。記録した状態をスクロール位置で読み出しています。</div></div></section>
+</main><aside id="rail"><div class="rh"><span>FORMULA RAIL</span><span id="railRun">ORBIUM</span></div>
+<div class="fr" data-row="a"><span class="fx">u ＝ <span class="t" data-t="K">K</span> ∗ A</span><span class="fv" id="fvA">輪で平均</span></div>
+<div class="fr" data-row="b"><span class="fx">G(u) ＝ 2·exp(−(<span class="t" data-t="u">u</span>−<span class="t" data-t="mu">μ</span>)²/2<span class="t" data-t="sigma">σ</span>²) − 1</span><span class="fv" id="fvB"></span></div>
+<div class="fr" data-row="c"><span class="fx">A ← clamp(A ＋ <span class="t" data-t="dt">dt</span>·G(u), 0, 1)</span><span class="fv" id="fvC"></span></div>
+<div class="fr" data-row="d"><span class="fx t" data-t="params" id="params">μ · σ · R</span><span class="fv" id="fvD"></span></div></aside>
+<script src="../_law/ee05_lenia.js"></script>
+<script>
+(function(){
+'use strict';
+const $ = id => document.getElementById(id);
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+const seg = (u, a, b) => clamp((u - a) / (b - a));
+const sm = t => t * t * (3 - 2 * t);
+const lerp = (a, b, t) => a + (b - a) * t;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let C = {};
+const readColors = () => { C = { ink: css('--ink'), ink2: css('--ink-2'), mute: css('--mute'), mute2: css('--mute-2'), line: css('--line'), acc: css('--acc'), ice: css('--ice'), rouge: css('--rouge'), sand: css('--sand'), bg: css('--bg'), mono: css('--mono'), disp: css('--disp'), jp: css('--jp') }; };
+// MODEL-BEGIN ? shared by the GPU recorder and the Node CPU check.
+const RUNS = {
+  orb: {species:0,w:128,h:128,steps:3000,every:10,seed:1,kind:'orb'},
+  ...Object.fromEntries([3,5,8].map((s,i)=>['round'+i,{species:0,w:96,h:96,steps:300,every:5,kind:'round',s}])),
+  orb96: {species:0,w:96,h:96,steps:300,every:5,kind:'orb'},
+  ...Object.fromEntries([.012,.014,.016,.020].map((sigma,i)=>['sig'+i,{species:1,w:160,h:160,steps:2000,every:20,seed:1,kind:'soup',sigma}])),
+  collide: {species:0,w:192,h:192,steps:1500,every:10,seed:7,kind:'seven'},
+  tissue: {species:1,w:160,h:160,steps:1500,every:1500,seed:3,kind:'soup',prepOnly:true},
+  heal: {species:1,w:160,h:160,steps:600,every:5,after:'tissue',kind:'heal'},
+  collapse: {species:1,w:160,h:160,steps:1500,every:10,after:'tissue',kind:'collapse'},
+  ...Object.fromEntries(SPECIES.slice(0,5).map((s,i)=>['sp'+i,{species:i,w:128,h:128,steps:2000,every:20,seed:i===0?7:1,kind:i===0?'seven':'soup'}])),
+  conway: {species:5,w:128,h:128,steps:300,every:1,seed:1,kind:'conway'}
+};
+function paramsOf(r){ return {...SPECIES[r.species].p, ...(r.sigma==null?{}:{sigma:r.sigma})}; }
+function seedRun(r){
+  const {w,h}=r, P=paramsOf(r), A=new Float32Array(w*h), rng=makeRng(r.seed||1);
+  if(r.kind==='orb') stamp(A,w,h,ORBIUM,w/2,h/2,0,P.R);
+  if(r.kind==='round') for(let y=0;y<h;y++) for(let x=0;x<w;x++) A[y*w+x]=Math.exp(-((x-w/2)**2+(y-h/2)**2)/(2*r.s*r.s));
+  if(r.kind==='soup'){
+    const size=Math.round(P.R*3.2), patches=Math.max(3,Math.round(w*h/(size*size*10)));
+    soup(A,w,h,rng,patches,size,.9);
+  }
+  if(r.kind==='seven'){
+    const placed=[];
+    while(placed.length<7){
+      const x=Math.floor(rng()*w), y=Math.floor(rng()*h);
+      if(placed.some(b=>Math.hypot(Math.min(Math.abs(x-b.x),w-Math.abs(x-b.x)),Math.min(Math.abs(y-b.y),h-Math.abs(y-b.y)))<2.4*P.R)) continue;
+      const o=Math.floor(rng()*8); placed.push({x,y,o}); stamp(A,w,h,ORBIUM,x,y,o,P.R);
+    }
+  }
+  if(r.kind==='conway') for(let i=0;i<A.length;i++) A[i]=rng()<.3?1:0;
+  return A;
+}
+function circleMass(A,w,h,center){
+  if(!center) return 0;
+  let mass=0;
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++){
+    const dx=Math.min(Math.abs(x-center.x),w-Math.abs(x-center.x)),dy=Math.min(Math.abs(y-center.y),h-Math.abs(y-center.y));
+    if(dx*dx+dy*dy<=169) mass+=A[y*w+x];
+  }
+  return mass;
+}
+function measureA(A,w,h,P,center){
+  let mass=0;
+  for(const a of A){if(!Number.isFinite(a)) throw Error('Non-finite density'); mass+=a;}
+  const blobs=findBlobs(A,w,h,P.conway?4:Math.max(12,P.R*P.R*.25));
+  return {mass,mean:mass/(w*h),count:blobs.length,blobs,hole:circleMass(A,w,h,center)};
+}
+// MODEL-END
+
+const DATA = {};
+let gl=null, progStep=null, computeError="", computeMode="pending";
+const gpuCanvas=document.createElement("canvas");
+const computeTiming={lastMs:0,maxMs:0,slices:0,active:"",start:0,totalMs:null};
+function compile(fs) {
+  const p = gl.createProgram();
+  for (const [type, src] of [[gl.VERTEX_SHADER, VS], [gl.FRAGMENT_SHADER, fs]]) {
+    const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw Error(gl.getShaderInfoLog(s));
+    gl.attachShader(p, s); gl.deleteShader(s);
+  }
+  gl.bindAttribLocation(p, 0, 'p'); gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw Error(gl.getProgramInfoLog(p));
+  p.u = {};
+  for (let i = 0; i < gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS); i++) {
+    const n = gl.getActiveUniform(p, i).name; p.u[n] = gl.getUniformLocation(p, n);
+  }
+  return p;
+}
+function makeTarget(w, h) {
+  const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, w, h, 0, gl.RGBA, gl.FLOAT, null);
+  for (const k of [gl.TEXTURE_MIN_FILTER, gl.TEXTURE_MAG_FILTER]) gl.texParameteri(gl.TEXTURE_2D, k, gl.NEAREST);
+  for (const k of [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T]) gl.texParameteri(gl.TEXTURE_2D, k, gl.CLAMP_TO_EDGE);
+  const fb = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+  if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) throw Error('RGBA32F framebuffer incomplete');
+  return { w, h, tex, fb };
+}
+// One immutable kernel texture per R/beta; uploaded exactly like the app.
+const KERNELS = new Map();
+function kernelFor(P){
+  const key=P.R+'|'+P.beta.join(',');
+  if(KERNELS.has(key)) return KERNELS.get(key);
+  const taps=buildKernel(P.R,P.beta), rows=Math.ceil(taps.length/256), raw=new Float32Array(256*rows*4);
+  taps.forEach((t,i)=>{raw[i*4]=t[0];raw[i*4+1]=t[1];raw[i*4+2]=t[2];});
+  const target=makeTarget(256,rows);
+  gl.bindTexture(gl.TEXTURE_2D,target.tex); gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,256,rows,gl.RGBA,gl.FLOAT,raw);
+  gl.deleteFramebuffer(target.fb);
+  const k={tex:target.tex,n:taps.length,taps}; KERNELS.set(key,k); return k;
+}
+function writeA(s,A){
+  const raw=new Float32Array(s.w*s.h*4);
+  for(let i=0;i<A.length;i++){raw[i*4]=A[i];raw[i*4+3]=1;}
+  gl.bindTexture(gl.TEXTURE_2D,s.targets[s.cur].tex);
+  gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,s.w,s.h,gl.RGBA,gl.FLOAT,raw);
+}
+function gpuStep(s,P,brush=[0,0,0,0]){
+  gl.useProgram(progStep); gl.bindFramebuffer(gl.FRAMEBUFFER,s.targets[1-s.cur].fb); gl.viewport(0,0,s.w,s.h);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,s.targets[s.cur].tex);
+  gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D,s.kernel.tex);
+  const u=progStep.u;
+  gl.uniform1i(u.uA,0);gl.uniform1i(u.uK,1);gl.uniform1i(u.uN,s.kernel.n);gl.uniform1i(u.uMode,P.conway?1:0);
+  gl.uniform2i(u.uSize,s.w,s.h);gl.uniform1f(u.uMu,P.mu);gl.uniform1f(u.uSig,P.sigma);gl.uniform1f(u.uDt,P.dt);
+  s.seedT=(s.seedT+.618)%97;gl.uniform1f(u.uSeed,s.seedT);gl.uniform4fv(u.uBrush,brush);
+  gl.drawArrays(gl.TRIANGLE_STRIP,0,4);s.cur=1-s.cur;
+}
+function readA(d){
+  gl.bindFramebuffer(gl.FRAMEBUFFER,d.world.targets[d.world.cur].fb);
+  gl.readPixels(0,0,d.w,d.h,gl.RGBA,gl.FLOAT,d.raw);
+  if(gl.getError()!==gl.NO_ERROR) throw Error('Float readPixels failed');
+  for(let i=0;i<d.currentA.length;i++) d.currentA[i]=d.raw[i*4];
+  return d.currentA;
+}
+function record(d,step,sigma){
+  const A=readA(d), f=d.ready,n=A.length,base=f*n,P=paramsOf(d),m=measureA(A,d.w,d.h,P,d.center);
+  let delta=0;
+  for(let i=0;i<n;i++){
+    d.a[base+i]=Math.round(clamp(A[i])*255);
+    if(f) delta+=Math.abs(A[i]-d.previousA[i]);
+    if(d.g){
+      if(f===0) d.initialU[i]=d.raw[i*4+2];
+      const growthValue=d.raw[i*4+1],u=d.raw[i*4+2];
+      if(!Number.isFinite(growthValue)||!Number.isFinite(u)) throw Error('Non-finite neighbourhood');
+      d.g[base+i]=Math.round(clamp((growthValue+1)/2)*255);
+      // FS_DRAW's gold mask includes nearby empty cells, too.
+      d.near[base+i]=Math.round(clamp(sm(clamp((u-.004)/.036))+sm(clamp(A[i]/.05)))*255);
+      if(A[i]>.05) d.hist[f*48+Math.min(47,Math.max(0,Math.floor(u/d.uMax*48)))]+=A[i];
+    }
+  }
+  d.previousA.set(A);
+  for(const key of ['mass','mean','count','hole']) d[key][f]=m[key];
+  d.blobs[f]=m.blobs;d.sigmaAt[f]=sigma;d.step[f]=step;
+  d.delta[f]=delta;d.travel[f]=(f?d.travel[f-1]:0)+delta;
+  d.minMass=Math.min(d.minMass,m.mass);d.maxMass=Math.max(d.maxMass,m.mass);
+  if(m.mass===0&&d.death==null) d.death=step;
+  if(d.id==='heal'&&f>0&&d.avgHole>0&&d.recovery==null&&m.hole>=.9*d.avgHole) d.recovery=step;
+  if(d.id==='collapse'&&f>0&&d.mass[0]>0&&d.collapseAt==null&&m.mass<.01*d.mass[0]) d.collapseAt={step,sigma};
+  d.ready++;
+  if(d.ready===d.F){
+    d.done=true;
+    if(d.prepOnly) d.snapshot=A.slice();
+    for(const t of d.world.targets){gl.deleteTexture(t.tex);gl.deleteFramebuffer(t.fb);}
+    d.world=null;d.raw=null;d.currentA=null;d.previousA=null;
+  }
+}
+function initRun(id){
+  const r=RUNS[id],P=paramsOf(r),n=r.w*r.h,F=r.prepOnly?1:r.steps/r.every+1+(id==='heal'?1:0);
+  const d=DATA[id]={...r,id,F,ready:0,done:false,elapsed:0,minMass:Infinity,maxMass:0,death:null,recovery:null,collapseAt:null,
+    a:new Uint8Array(n*F),g:id==='orb'?new Uint8Array(n*F):null,near:id==='orb'?new Uint8Array(n*F):null,
+    initialU:id==='orb'?new Float32Array(n):null,
+    hist:id==='orb'?new Float64Array(F*48):null,uMax:Math.max(.3,Math.min(1,P.mu+P.sigma*6)),
+    mass:new Float64Array(F),mean:new Float64Array(F),count:new Uint32Array(F),hole:new Float64Array(F),sigmaAt:new Float64Array(F),step:new Int32Array(F),
+    delta:new Float64Array(F),travel:new Float64Array(F),blobs:[],raw:new Float32Array(n*4),currentA:new Float32Array(n),previousA:new Float32Array(n)};
+  d.world={w:r.w,h:r.h,cur:0,seedT:0,kernel:kernelFor(P),targets:[makeTarget(r.w,r.h),makeTarget(r.w,r.h)]};
+  const A=r.after?DATA[r.after].snapshot:seedRun(r);
+  writeA(d.world,A);
+  if(id==='heal'){
+    d.center=DATA.tissue.blobs[0].slice().sort((a,b)=>b.n-a.n)[0]||null;
+    d.baseline=circleMass(A,r.w,r.h,d.center);
+    // yardstick for "healed": the same circle filled at the world's average density (the bitten spot may be denser than average)
+    let worldMass=0;for(const a of A)worldMass+=a;
+    d.avgHole=d.center?circleMass(new Float32Array(r.w*r.h).fill(1),r.w,r.h,d.center)*worldMass/(r.w*r.h):0;
+    record(d,-1,P.sigma); // before the bite is a distinct frame
+    gpuStep(d.world,P,d.center?[d.center.x,d.center.y,13,-1]:[0,0,0,0]);
+    record(d,0,P.sigma);
+  }else if(!r.prepOnly){
+    // Populate g/u at step zero using the unchanged law, without advancing A.
+    if(id==='orb') gpuStep(d.world,{...P,dt:0});
+    record(d,0,P.sigma);
+  }
+  return d;
+}
+function computeFail(e){computeMode='unavailable';computeError=e&&e.message||String(e);calcLabel();}
+function startCompute(){
+  try{
+    gl=gpuCanvas.getContext('webgl2',{antialias:false,depth:false,stencil:false,preserveDrawingBuffer:false});
+    if(!gl||!gl.getExtension('EXT_color_buffer_float')) throw Error('WebGL2 / EXT_color_buffer_float unavailable');
+    progStep=compile(FS_STEP);
+    const quad=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,quad);
+    gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
+    computeMode='gpu';computeTiming.start=performance.now();
+  }catch(e){computeFail(e);}
+}
+gpuCanvas.addEventListener('webglcontextlost',e=>{e.preventDefault();computeFail(Error('WebGL context lost; reload to retry'));});
+function needs(st){return st.items||[{id:st.run,f:st.f}];}
+function priority(loc){
+  const ci=loc.k>.5?loc.i+1:loc.i,wants=needs(CH[ci].at(ci===loc.i?loc.u:0));
+  if(loc.k>0) wants.push(...needs(CH[ci===loc.i?loc.i+1:loc.i].at(ci===loc.i?0:loc.u)));
+  const outstanding=wants.filter(q=>!DATA[q.id]||DATA[q.id].ready<=q.f);
+  outstanding.sort((a,b)=>(DATA[a.id]?.elapsed||0)/RUNS[a.id].steps-(DATA[b.id]?.elapsed||0)/RUNS[b.id].steps);
+  const ordered=[...new Set([...outstanding.map(q=>q.id),...wants.map(q=>q.id),...Object.keys(RUNS)])];
+  for(const id of ordered){
+    if(DATA[id]?.done) continue;
+    const after=RUNS[id].after;
+    return after&&!DATA[after]?.done?after:id;
+  }
+  return null;
+}
+function computeSlice(loc){
+  if(computeMode!=='gpu'||computeTiming.totalMs!=null) return;
+  const begin=performance.now(),deadline=begin+8;
+  try{
+    while(performance.now()<deadline){
+      const id=priority(loc);
+      if(!id){computeTiming.totalMs=performance.now()-computeTiming.start;break;}
+      computeTiming.active=id;
+      const d=DATA[id]||initRun(id),P=paramsOf(d);
+      // One step may be expensive. readPixels and initialisation cannot be preempted.
+      for(let k=0;k<8&&!d.done&&performance.now()<deadline;k++){
+        const sigma=id==='collapse'?lerp(.017,.006,(d.elapsed+1)/d.steps):P.sigma;
+        gpuStep(d.world,{...P,sigma});d.elapsed++;
+        if(d.elapsed%d.every===0) record(d,d.elapsed,sigma);
+      }
+    }
+  }catch(e){computeFail(e);}
+  computeTiming.lastMs=performance.now()-begin;computeTiming.maxMs=Math.max(computeTiming.maxMs,computeTiming.lastMs);computeTiming.slices++;
+}
+// Chapter state is solely a function of scroll u; f always means a recorded frame index.
+const atStep=(run,step,extra={})=>({run,f:Math.round(step/RUNS[run].every),...extra});
+const progress=u=>seg(u,.04,.94);
+const groupAt=(ids,v)=>({run:ids[0],f:Math.round(RUNS[ids[0]].steps*v/RUNS[ids[0]].every),items:ids.map(id=>({id,f:Math.round(RUNS[id].steps*v/RUNS[id].every)}))});
+const ROUND=['round0','round1','round2','orb96'],SIG=['sig0','sig1','sig2','sig3'],SPECIES_RUNS=['sp0','sp1','sp2','sp3','sp4','conway'];
+const CH=[
+  {id:'LENIA',at:()=>atStep('orb',800),P:{FIELD:[0,0,1,1]},lit:['K','mu','sigma','dt'],rows:'abcd'},
+  {id:'LOOK',at:u=>atStep('orb',0,{look:true,probeX:64+Math.round(26*progress(u)),probeY:64}),P:{FIELD:[0,0,1,.68],PROFILE:[0,.71,1,.29]},lit:['K'],rows:'ad'},
+  {id:'GROW',at:u=>atStep('orb',300*progress(u)),P:{GROW:[0,0,1,1]},lit:['u','mu','sigma','dt'],rows:'bcd'},
+  {id:'ROUND',at:u=>groupAt(ROUND,progress(u)),P:{GRID:[0,0,1,1]},lit:['dt','params'],rows:'cd'},
+  {id:'SWIM',at:u=>atStep('orb',3000*progress(u),{trail:true,gmap:sm(seg(u,.45,.55))}),P:{FIELD:[0,0,1,1]},lit:['dt','u'],rows:'bcd'},
+  {id:'JUST RIGHT',at:u=>groupAt(SIG,progress(u)),P:{GRID:[0,0,1,1]},lit:['sigma','params'],rows:'bd'},
+  {id:'COLLIDE',at:u=>atStep('collide',1500*progress(u)),P:{FIELD:[0,0,1,.7],COUNT:[0,.73,1,.27]},lit:['dt','params'],rows:'cd'},
+  {id:'HEAL',at:u=>({run:'heal',f:u<.08?0:1+Math.round(120*seg(u,.08,.94))}),P:{FIELD:[0,0,1,.68],HEAL:[0,.71,1,.29]},lit:['K','dt'],rows:'acd'},
+  {id:'COLLAPSE',at:u=>atStep('collapse',1500*progress(u)),P:{FIELD:[0,0,1,.68],COLLAPSE:[0,.71,1,.29]},lit:['sigma','params'],rows:'bd'},
+  {id:'SPECIES',at:u=>groupAt(SPECIES_RUNS,progress(u)),P:{GRID:[0,0,1,1]},lit:['K','mu','sigma','dt','params'],rows:'abcd'},
+  {id:'BLUEPRINT',at:u=>({run:'orb',f:80,bp:true,items:CH.slice(0,10).slice(0,Math.floor(10*seg(u,0,.8))).flatMap((c,ch)=>needs(c.at(1)).map(q=>({...q,ch})))}),P:{BLUEPRINT:[0,0,1,1]},lit:['K','mu','sigma','dt'],rows:'abcd'}
+];
+CH.forEach(c=>{c.PM=c.P;});
+for(const i of [1,6,7,8]){
+  const secondary=Object.keys(CH[i].P)[1];CH[i].PM={FIELD:[0,0,.51,1],[secondary]:[.53,0,.47,1]};
+}
+const chEls = [...document.querySelectorAll('.ch')];
+let M = [], VH = innerHeight, MAXY = 1;
+function measure() {
+  VH = innerHeight; M = chEls.map(el => ({ top: el.offsetTop, h: el.offsetHeight }));
+  MAXY = Math.max(1, document.documentElement.scrollHeight - VH);
+  $('ticks').innerHTML = M.slice(1).map(m => `<i style="left:${(m.top / MAXY * 100).toFixed(2)}%"></i>`).join('');
+}
+function locate(y) {
+  let i = 0; while (i < M.length - 1 && y >= M[i + 1].top) i++;
+  const m = M[i], dwell = Math.max(1, m.h - VH);
+  const u = clamp((y - m.top) / dwell), k = i < M.length - 1 ? sm(clamp((y - m.top - dwell) / VH)) : 0;
+  return { i, u, k };
+}
+
+// 未計算のコマを途中のコマで代用しない：停止中に模様が勝手に育つのを防ぐ。
+function frameOf(id, f) {
+  const d = DATA[id]; if (!d) return null;
+  const want = clamp(Math.round(f), 0, d.F - 1);
+  return d.ready > want ? { d, f: want, lag: 0 } : null;
+}
+function framesOf(st) {
+  const frames = needs(st).map(q => frameOf(q.id, q.f));
+  return frames.every(Boolean) ? frames : null;
+}
+const cv = $('cv'); let g = null, W = 0, H = 0;
+function fitAll() {
+  const d = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight;
+  if (cv.width !== Math.round(W * d) || cv.height !== Math.round(H * d)) { cv.width = Math.round(W * d); cv.height = Math.round(H * d); }
+  g = cv.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, W, H);
+}
+const MOBILE = () => W < 880;
+function stageRect() {
+  if (MOBILE()) return { x: 12, y: 54, w: W - 24, h: H * .36 - 58 };
+  const x = Math.min(40 + 400 + 36, W * .44); return { x, y: 68, w: W - x - 24, h: H - 68 - 22 };
+}
+function frameBox(x, y, w, h, cap, right) {
+  g.strokeStyle = C.line; g.lineWidth = 1; g.strokeRect(Math.round(x) + .5, Math.round(y) + .5, Math.round(w) - 1, Math.round(h) - 1);
+  g.fillStyle = 'rgba(7,7,7,.6)'; g.fillRect(x + 1, y + 1, w - 2, h - 2);
+  g.font = `10px ${C.mono}`; g.textAlign = 'left';
+  const rw = right ? g.measureText(right).width + 16 : 0;
+  if (g.measureText(cap).width + 20 + rw < w) { g.fillStyle = C.mute; g.fillText(cap, x + 10, y + 16); } // 狭い枠では見出しを省き、値だけ残す
+  if (right) { g.textAlign = 'right'; g.fillStyle = C.acc; g.fillText(right, x + w - 10, y + 16); }
+}
+function computing(x, y, w, h) {
+  g.font = `10px ${C.mono}`; g.fillStyle = C.mute; g.textAlign = 'center';
+  g.fillText(computeError ? '計算できません' : '計算中…', x + w / 2, y + h / 2);
+}
+
+function strip(x, y, w, h, cap, right, n, tmax, xlab, series) {
+  frameBox(x, y, w, h, cap, right);
+  const pl = x + 40, pr = x + w - 14, pt = y + 24, pb = y + h - 18;
+  g.font = `10px ${C.mono}`; g.fillStyle = C.mute; g.textAlign = 'center';
+  const steps = pr - pl < 240 ? [0, 1] : [0, .25, .5, .75, 1];
+  steps.forEach(k => g.fillText(xlab(k * tmax), pl + (pr - pl) * k, pb + 13));
+  series.forEach(s => s(pl, pr, pt, pb));
+}
+
+
+// FS_DRAW colour ramps and growth-map masks; the app's optional rim glow is zero here.
+const PALETTE=Array.from({length:256},(_,q)=>{
+  const a=q/255,noir=[.027,.027,.027],deep=[.02,.16,.22],ice=[.353,.914,1],white=[.973,.937,1];
+  return noir.map((v,k)=>{
+    let c=lerp(v,deep[k],sm(clamp(a/.18)));
+    c=lerp(c,ice[k],sm(clamp((a-.18)/.44)));
+    return lerp(c,white[k],sm(clamp((a-.72)/.28)));
+  });
+});
+const IMAGES={};
+function leniaImage(d,f,gmap=0){
+  let o=IMAGES[d.id];
+  if(!o){const c=document.createElement('canvas');c.width=d.w;c.height=d.h;const ctx=c.getContext('2d');o=IMAGES[d.id]={c,ctx,image:ctx.createImageData(d.w,d.h),f:-1,gmap:-1};}
+  if(o.f!==f||o.gmap!==gmap){
+    const n=d.w*d.h,base=f*n,out=o.image.data;
+    for(let i=0;i<n;i++){
+      const q=d.a[base+i],col=PALETTE[q],a=q/255;
+      const wish=d.g?d.g[base+i]/255*2-1:0,near=d.near?d.near[base+i]/255:0;
+      const gold=Math.max(wish,0)*near*1.1,red=Math.max(-wish,0)*sm(clamp(a/.06))*.9;
+      for(let k=0;k<3;k++) out[i*4+k]=Math.round(255*clamp(lerp(col[k],col[k]*.3+[1,.824,.478][k]*gold+[1,.31,.66][k]*red,gmap)));
+      out[i*4+3]=255;
+    }
+    o.ctx.putImageData(o.image,0,0);o.f=f;o.gmap=gmap;
+  }
+  return o.c;
+}
+function imageRect(x,y,w,h,fr,gmap=0){
+  const side=Math.max(1,Math.min(w,h)),r={x:x+(w-side)/2,y:y+(h-side)/2,w:side,h:side};
+  g.imageSmoothingEnabled=fr.d.kind!=='conway';g.drawImage(leniaImage(fr.d,fr.f,gmap),r.x,r.y,r.w,r.h);return r;
+}
+function trace(fr,r){
+  // only the recent path (the creature wraps the torus many times), fading with age
+  const TAIL=60;g.strokeStyle=C.ice;g.lineWidth=1.2;let previous=null;
+  for(let f=Math.max(0,fr.f-TAIL);f<=fr.f;f++){
+    const b=fr.d.blobs[f][0];if(!b){previous=null;continue;}
+    const x=r.x+(b.x+.5)/fr.d.w*r.w,y=r.y+(b.y+.5)/fr.d.h*r.h;
+    if(previous&&Math.abs(b.x-previous.x)<=fr.d.w/2&&Math.abs(b.y-previous.y)<=fr.d.h/2){
+      g.globalAlpha=.9*(1-(fr.f-f)/TAIL);g.beginPath();g.moveTo(previous.px,previous.py);g.lineTo(x,y);g.stroke();
+    }
+    previous={x:b.x,y:b.y,px:x,py:y};
+  }
+  g.globalAlpha=1;
+}
+function drawField(x,y,w,h,st){
+  const fr=frameOf(st.run,st.f),rdef=RUNS[st.run],P=paramsOf(rdef),species=SPECIES[rdef.species];
+  let label=species.name;
+  if(rdef.kind==='round') label='ROUND · s '+rdef.s;
+  if(st.run.startsWith('sig')) label='σ '+P.sigma.toFixed(3);
+  const right=fr?(st.small?'Σ '+fr.d.mass[fr.f].toFixed(1):fr.d.step[fr.f]<0?'かじる前':fmt(fr.d.step[fr.f])+' 歩'):'';
+  frameBox(x,y,w,h,st.small?'':label,right);
+  let pad=26;
+  if(st.small){
+    g.font=`${w<130?8:10}px ${C.mono}`;g.textAlign='left';g.fillStyle=C.acc;g.fillText(label,x+6,y+14);
+    if(st.species){
+      g.font=`${w<130?7:9}px ${C.jp}`;g.fillStyle=C.ink2;g.fillText(species.jp,x+6,y+27);
+      g.font=`${w<130?7:9}px ${C.mono}`;g.fillStyle=C.mute;
+      g.fillText(P.conway?'8 neighbors · 0 / 1':`μ ${P.mu.toFixed(2)} σ ${P.sigma.toFixed(3)} R${P.R}`,x+6,y+39);pad=45;
+    }else{pad=32;}
+  }
+  if(!fr){computing(x,y+pad,w,h-pad);return;}
+  const r=imageRect(x+5,y+pad,w-10,h-pad-5,fr,st.gmap||0);
+  if(st.trail) trace(fr,r);
+  if(st.look){
+    const cx=r.x+(st.probeX+.5)/fr.d.w*r.w,cy=r.y+(st.probeY+.5)/fr.d.h*r.h,scale=r.w/fr.d.w;
+    for(let j=1;j<=36;j++){
+      const radius=j/36,weight=kernelProfile(radius,P.beta);
+      g.strokeStyle=`rgba(255,210,122,${weight*.75})`;g.lineWidth=Math.max(.5,P.R*scale/36);
+      g.beginPath();g.arc(cx,cy,radius*P.R*scale,0,Math.PI*2);g.stroke();
+    }
+    g.fillStyle=C.rouge;g.fillRect(cx-2,cy-2,4,4);
+  }
+  if(st.run==='heal'&&fr.d.center){
+    // Draw every toroidal copy that intersects the field.
+    g.save();g.beginPath();g.rect(r.x,r.y,r.w,r.h);g.clip();g.strokeStyle=C.rouge;g.lineWidth=1;g.setLineDash([3,3]);
+    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+      g.beginPath();g.arc(r.x+(fr.d.center.x+.5+dx*fr.d.w)/fr.d.w*r.w,r.y+(fr.d.center.y+.5+dy*fr.d.h)/fr.d.h*r.h,13/fr.d.w*r.w,0,Math.PI*2);g.stroke();
+    }
+    g.restore();
+  }
+}
+function profile(x,y,w,h,st){
+  frameBox(x,y,w,h,'PROFILE ⁄ K(r)','輪の重み');
+  const P=paramsOf(RUNS.orb),pl=x+22,pr=x+w-12,pt=y+27,pb=y+h-20;
+  g.strokeStyle=C.line;g.beginPath();g.moveTo(pl,pb);g.lineTo(pr,pb);g.stroke();
+  g.strokeStyle=C.acc;g.lineWidth=1.5;g.beginPath();
+  for(let j=0;j<=150;j++){const xx=lerp(pl,pr,j/150),yy=lerp(pb,pt,kernelProfile(j/150,P.beta));j?g.lineTo(xx,yy):g.moveTo(xx,yy);}g.stroke();
+  g.fillStyle=C.mute;g.font=`9px ${C.mono}`;g.textAlign='left';g.fillText('0',pl,pb+13);g.textAlign='right';g.fillText('R '+P.R,pr,pb+13);
+}
+function growPlot(x,y,w,h,st){
+  const fr=frameOf('orb',st.f),P=paramsOf(RUNS.orb);
+  frameBox(x,y,w,h,'GROW ⁄ 育ちたさと混み具合',fr?fmt(fr.d.step[fr.f])+' 歩':'');
+  if(!fr){computing(x,y,w,h);return;}
+  const pl=x+32,pr=x+w-14,pt=y+34,pb=y+h-27,d=fr.d,max=Math.max(1,...d.hist.subarray(fr.f*48,(fr.f+1)*48));
+  g.font=`9px ${C.mono}`;
+  for(const v of [-1,0,1]){
+    const yy=lerp(pb,pt,(v+1)/2);g.strokeStyle=C.line;g.beginPath();g.moveTo(pl,yy);g.lineTo(pr,yy);g.stroke();g.fillStyle=C.mute;g.textAlign='right';g.fillText((v>0?'+':'')+v,pl-5,yy+3);
+  }
+  g.fillStyle='rgba(248,239,255,.48)';
+  for(let i=0;i<48;i++){
+    const bh=d.hist[fr.f*48+i]/max*(pb-pt)*.78;
+    g.fillRect(lerp(pl,pr,i/48),pb-bh,Math.max(1,(pr-pl)/48-1),bh);
+  }
+  g.strokeStyle=C.acc;g.lineWidth=2;g.beginPath();
+  for(let i=0;i<=300;i++){
+    const u=i/300*d.uMax,xx=lerp(pl,pr,i/300),yy=lerp(pb,pt,(growth(u,P.mu,P.sigma)+1)/2);
+    i?g.lineTo(xx,yy):g.moveTo(xx,yy);
+  }
+  g.stroke();g.strokeStyle=C.rouge;g.lineWidth=1;const muX=lerp(pl,pr,P.mu/d.uMax);
+  g.setLineDash([3,3]);g.beginPath();g.moveTo(muX,pt);g.lineTo(muX,pb);g.stroke();g.setLineDash([]);
+  for(const u of [0,P.mu,d.uMax]){g.fillStyle=C.mute;g.textAlign='center';g.fillText(u.toFixed(2),lerp(pl,pr,u/d.uMax),pb+14);}
+  g.fillStyle=C.acc;g.fillText('μ',muX,pt-8);g.textAlign='right';g.fillText('u',pr,pb+25);
+}
+function plotHistory(x,y,w,h,st,key){
+  const fr=frameOf(st.run,st.f),label=key==='count'?'生きもの数':key==='hole'?'穴の中の質量':'質量 ／ σ';
+  frameBox(x,y,w,h,label,fr?(key==='mass'?fr.d.sigmaAt[fr.f].toFixed(4):fr.d[key][fr.f].toFixed(key==='count'?0:1)):'');
+  if(!fr){computing(x,y,w,h);return;}
+  const d=fr.d,pl=x+30,pr=x+w-12,pt=y+28,pb=y+h-20;
+  const max=key==='mass'?d.mass[0]:Math.max(1,...d[key].subarray(0,fr.f+1),key==='hole'?d.baseline:0);
+  const X=f=>lerp(pl,pr,Math.max(0,d.step[f])/d.steps),Y=value=>lerp(pb,pt,clamp(value/max));
+  g.font=`9px ${C.mono}`;g.fillStyle=C.mute;g.textAlign='right';g.fillText(key==='mass'?'100%':max.toFixed(key==='count'?0:1),pl-3,pt+3);g.fillText('0',pl-3,pb+3);
+  g.strokeStyle=C.line;g.beginPath();g.moveTo(pl,pb);g.lineTo(pr,pb);g.stroke();
+  if(key==='hole'){
+    g.strokeStyle=C.mute;g.setLineDash([3,3]);g.beginPath();g.moveTo(pl,Y(d.avgHole*.9));g.lineTo(pr,Y(d.avgHole*.9));g.stroke();g.setLineDash([]);
+  }
+  g.strokeStyle=C.ice;g.lineWidth=1.5;g.beginPath();
+  for(let f=0;f<=fr.f;f++)f?g.lineTo(X(f),Y(d[key][f])):g.moveTo(X(f),Y(d[key][f]));g.stroke();
+  if(key==='mass'){
+    g.strokeStyle=C.acc;g.beginPath();for(let f=0;f<=fr.f;f++){const yy=lerp(pb,pt,d.sigmaAt[f]/d.sigmaAt[0]);f?g.lineTo(X(f),yy):g.moveTo(X(f),yy);}g.stroke();
+  }
+  g.lineWidth=1;g.fillStyle=C.rouge;g.fillRect(X(fr.f)-1,pt,2,pb-pt);
+  g.fillStyle=C.mute;g.textAlign='left';g.fillText('0',pl,pb+13);g.textAlign='right';g.fillText(fmt(d.steps)+' 歩',pr,pb+13);
+}
+function drawGrid(x,y,w,h,st){
+  const items=st.items,cols=items.length===6?3:2,rows=Math.ceil(items.length/cols),gap=6,tw=(w-gap*(cols-1))/cols,th=(h-gap*(rows-1))/rows;
+  // No species is shown at an earlier time while a peer is still computing.
+  const ready=framesOf(st);
+  for(let i=0;i<items.length;i++){
+    const q=items[i],xx=x+(i%cols)*(tw+gap),yy=y+Math.floor(i/cols)*(th+gap);
+    if(ready)drawField(xx,yy,tw,th,{run:q.id,f:q.f,small:true,species:items.length===6});
+    else{frameBox(xx,yy,tw,th,q.id.toUpperCase(),'');computing(xx,yy,tw,th);}
+  }
+}
+function blueprint(x,y,w,h,st){
+  const cols=MOBILE()?5:5,rows=2,gap=6,tw=(w-gap*(cols-1))/cols,th=(h-gap)/rows;
+  for(let ch=0;ch<10;ch++){
+    const items=st.items.filter(q=>q.ch===ch);if(!items.length)continue;
+    const xx=x+(ch%cols)*(tw+gap),yy=y+Math.floor(ch/cols)*(th+gap);
+    frameBox(xx,yy,tw,th,'',String(ch).padStart(2,'0'));
+    const subcols=items.length===1?1:2,subrows=Math.ceil(items.length/subcols),iw=(tw-8)/subcols,ih=(th-26)/subrows;
+    for(let j=0;j<items.length;j++){
+      const q=items[j],fr=frameOf(q.id,q.f),sx=xx+4+(j%subcols)*iw,sy=yy+23+Math.floor(j/subcols)*ih;
+      if(fr)imageRect(sx,sy,iw-2,ih-2,fr,ch===4?1:0);else computing(sx,sy,iw,ih);
+    }
+  }
+}
+const PANELS={FIELD:drawField,PROFILE:profile,GROW:growPlot,GRID:drawGrid,BLUEPRINT:blueprint,
+  COUNT:(x,y,w,h,st)=>plotHistory(x,y,w,h,st,'count'),
+  HEAL:(x,y,w,h,st)=>plotHistory(x,y,w,h,st,'hole'),
+  COLLAPSE:(x,y,w,h,st)=>plotHistory(x,y,w,h,st,'mass')};
+function draw(loc) {
+  fitAll();
+  const st0 = stageRect(), key = MOBILE() ? 'PM' : 'P', A = CH[loc.i][key], B = loc.k > 0 ? CH[loc.i + 1][key] : {};
+  const sA = CH[loc.i].at(loc.u), sB = loc.k > 0 ? CH[loc.i + 1].at(0) : null;
+  const names = new Set([...Object.keys(A), ...Object.keys(B)]);
+  for (const n of names) {
+    let r, al, s;
+    if (A[n] && B[n]) { r = A[n].map((v, j) => lerp(v, B[n][j], loc.k)); al = 1; s = loc.k < .5 ? sA : sB; }
+    else if (A[n]) { r = A[n]; al = 1 - loc.k; s = sA; } else { r = B[n]; al = loc.k; s = sB; }
+    if (al < .01) continue;
+    const px = st0.x + r[0] * st0.w, py = st0.y + r[1] * st0.h, pw = r[2] * st0.w, ph = r[3] * st0.h;
+    if (pw < 40 || ph < 40) continue;
+    g.save(); g.globalAlpha = al; g.beginPath(); g.rect(px, py, pw, ph); g.clip();
+    PANELS[n](px, py, pw, ph, s); g.restore();
+  }
+}
+
+
+const fmt=v=>Math.round(v).toLocaleString('en-US'),pct=v=>(v*100).toFixed(1);
+let lastHud='';
+/* COLLIDE, read off the record: fewest creatures before the mass first doubles (= tissue starts eating the world) */
+function collideStory(d){
+  if(!d?.done) return {collideMin:'計算中',collideBoom:'計算中',collideCover:'計算中'};
+  let boom=d.F,min=d.count[0],minF=0;
+  for(let f=0;f<d.F;f++){if(d.mass[f]>2*d.mass[0]){boom=f;break;}if(d.count[f]<min){min=d.count[f];minF=f;}}
+  return {collideMin:fmt(min)+' 匹（'+fmt(d.step[minF])+' 歩）',collideBoom:boom<d.F?fmt(d.step[boom])+' 歩':'記録内では起きず',collideCover:pct(d.mean[d.F-1])+'%'};
+}
+function liveValues(st){
+  const frames=framesOf(st),fr=frames&&frames[0],d=fr&&fr.d,f=fr&&fr.f,P=paramsOf(RUNS[st.run]);
+  const orb=DATA.orb,heal=DATA.heal,collapse=DATA.collapse,collide=DATA.collide,orb96=DATA.orb96;
+  if(computeError) return new Proxy({},{get:()=> '計算できません'});
+  return {
+    step:fr?(d.step[f]<0?'かじる前':fmt(d.step[f])):'—',mass:fr?d.mass[f].toFixed(1):'—',count:fr?fmt(d.count[f]):'—',mean:fr?pct(d.mean[f]):'—',
+    mu:P.mu.toFixed(3),sigma:fr?d.sigmaAt[f].toFixed(st.run==='collapse'?4:3):P.sigma.toFixed(3),dt:String(P.dt),
+    lookU:st.look&&fr?d.initialU[st.probeY*d.w+st.probeX].toFixed(4):'—',
+    deaths:ROUND.slice(0,3).map(id=>{const q=DATA[id];return '幅 '+RUNS[id].s+' は '+(q?.death!=null?fmt(q.death)+' 歩':q?.done?'記録内では消滅せず':'計算中');}).join(' ／ '),
+    orb96Last:orb96?.done?orb96.mass[orb96.F-1].toFixed(1):'計算中',
+    orbRange:orb?.done?orb.minMass.toFixed(1)+'〜'+orb.maxMass.toFixed(1):'計算中',
+    sigMeans:st.items&&st.run==='sig0'&&frames?frames.map(q=>'σ '+paramsOf(q.d).sigma.toFixed(3)+' で '+pct(q.d.mean[q.f])+'%').join(' ／ '):'—',
+    sigFinal:SIG.map(id=>{const q=DATA[id];return paramsOf(RUNS[id]).sigma.toFixed(3)+' で '+(q?.done?q.mass[q.F-1].toFixed(1):'計算中');}).join(' ／ '),
+    collideLast:collide?.done?fmt(collide.count[collide.F-1]):'計算中',
+    ...collideStory(collide),
+    avgHole:heal?.avgHole!=null?heal.avgHole.toFixed(1):'—',
+    baseline:heal?.baseline!=null?heal.baseline.toFixed(1):'—',afterBite:heal?.ready>1?heal.hole[1].toFixed(1):'—',hole:fr?d.hole[f].toFixed(1):'—',
+    recovery:heal?.baseline===0?'対象となる組織なし':heal?.recovery!=null?fmt(heal.recovery)+' 歩':heal?.done?'この記録内では未回復':'計算中',
+    collapseAt:collapse?.collapseAt?'σ '+collapse.collapseAt.sigma.toFixed(4)+'（'+fmt(collapse.collapseAt.step)+' 歩）':collapse?.done?'この記録内では 1% 未満にならず':'計算中'
+  };
+}
+function hud(loc,y){
+  const ci=loc.k>.5?loc.i+1:loc.i,st=CH[ci].at(ci===loc.i?loc.u:0),frames=framesOf(st),fr=frames&&frames[0],P=paramsOf(RUNS[st.run]);
+  $('prog').style.width=(clamp(y/MAXY)*100).toFixed(2)+'%';
+  $('chl').innerHTML=`${String(ci).padStart(2,'0')} ⁄ 10 <b>${CH[ci].id}</b>`;
+  let val=fr?fr.d.mass[fr.f].toFixed(1):'—',unit='質量';
+  if(ci===6){val=fr?fmt(fr.d.count[fr.f]):'—';unit='生きもの数';}
+  if(ci===7){val=fr?fr.d.hole[fr.f].toFixed(1):'—';unit='穴の中の質量';}
+  if(ci===8){val=fr?fr.d.sigmaAt[fr.f].toFixed(4):'—';unit='σ 許す幅';}
+  if(ci===5||ci===9){val=fr?fmt(fr.d.step[fr.f]):'—';unit='歩';}
+  const zone=['SWIM','RING','GROW','DIES','SWIM','SEA','COLLIDE','HEAL','COLLAPSE','SPECIES','BLUEPRINT'][ci];
+  $('hV').textContent=val;$('hVu').textContent=unit;$('hZone').className='zone '+zone;$('hZone').textContent=zone;
+  const lit=new Set(CH[ci].lit);
+  document.querySelectorAll('#rail .t').forEach(e=>e.classList.toggle('on',lit.has(e.dataset.t)));
+  document.querySelectorAll('#rail .fr').forEach(e=>{e.classList.toggle('on',CH[ci].rows.includes(e.dataset.row));e.classList.toggle('lit',!!e.querySelector('.t.on'));});
+  $('railRun').textContent=st.items?'COMPARISON':st.run.toUpperCase();
+  $('fvA').textContent='輪で平均';$('fvB').textContent='ちょうどよければ育つ';$('fvC').textContent='dt '+P.dt;
+  $('params').textContent=ci===9?'μ · σ · R は各図へ':`μ ${P.mu.toFixed(3)} σ ${(fr?fr.d.sigmaAt[fr.f]:P.sigma).toFixed(ci===8?4:3)} R ${P.R}`;
+  $('fvD').textContent=fr?`Σ ${fr.d.mass[fr.f].toFixed(1)} · ${fr.d.count[fr.f]} 匹 · ${Math.max(0,fr.d.step[fr.f])} 歩`:'計算中';
+  const vals=liveValues(st);
+  document.querySelectorAll('[data-live]').forEach(e=>{if(+e.closest('.ch').dataset.ch===ci)e.textContent=vals[e.dataset.live]??'—';});
+}
+function calcLabel(){
+  const el=$('calc');
+  if(computeError){el.style.opacity=1;el.textContent='この環境では計算できません';el.title=computeError;return;}
+  const ids=Object.keys(RUNS),done=ids.filter(id=>DATA[id]?.done).length;
+  if(done===ids.length){el.style.opacity=0;return;}
+  const d=DATA[computeTiming.active];el.style.opacity=1;
+  el.textContent=`世界を計算中 ${done} / ${ids.length}${d?' · '+d.id.toUpperCase()+' '+Math.floor(100*d.elapsed/d.steps)+'%':''}`;
+}
+// Audio-only randomness is independent of every simulation seed.
+let AC=null,master=null,gN=null,audioError='';
+const voices=[],S={mode:'bow',vol:.45};
+let vel=0,CHANGE=0,toneCount=0,soundCells=1;
+function ensureAudio(){
+  try{
+    if(!AC){
+      AC=new(window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.gain.value=0;
+      const lim=AC.createDynamicsCompressor();lim.threshold.value=-10;lim.ratio.value=20;lim.attack.value=.003;lim.release.value=.15;master.connect(lim).connect(AC.destination);
+      const buf=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate),ch=buf.getChannelData(0);
+      for(let i=0;i<ch.length;i++)ch[i]=Math.random()*2-1;
+      const ns=AC.createBufferSource();ns.buffer=buf;ns.loop=true;
+      const bp=AC.createBiquadFilter();bp.type='bandpass';bp.frequency.value=650;bp.Q.value=.65;
+      gN=AC.createGain();gN.gain.value=0;ns.connect(bp).connect(gN).connect(master);ns.start();
+    }
+    if(AC.state==='suspended') AC.resume().catch(e=>{audioError=e.message;});
+  }catch(e){audioError=e.message;}
+}
+function updateAudio(){
+  if(!AC||!gN)return;
+  const t=AC.currentTime,level=clamp(Math.log1p(CHANGE/soundCells*600)/4);
+  gN.gain.setTargetAtTime(.45*level,t,.035);
+  while(voices.length<toneCount){
+    const tone=AC.createOscillator(),gain=AC.createGain(),index=voices.length;
+    tone.type='sine';tone.frequency.value=110*Math.pow(2,index*3/12);gain.gain.value=0;tone.connect(gain).connect(master);tone.start();voices.push({tone,gain});
+  }
+  voices.forEach((v,i)=>v.gain.gain.setTargetAtTime(i<toneCount?.12*level/Math.sqrt(Math.max(1,toneCount)):0,t,.04));
+  const target=S.mode==='off'?0:S.vol*(S.mode==='bow'?clamp(vel/900):1);
+  master.gain.setTargetAtTime(target,t,target>master.gain.value?.06:.12);
+}
+function setMode(m){
+  if(!['off','bow','on'].includes(m))return;
+  S.mode=m;autoArm=false;if(m!=='off')ensureAudio();
+  document.querySelectorAll('#segSnd button').forEach(b=>b.classList.toggle('on',b.dataset.v===m));updateAudio();
+}
+let lastSoundKey='',lastSoundFrames=[];
+function chemistrySound(st){
+  const frs=framesOf(st),key=st.bp?'blueprint':needs(st).map(q=>q.id).join('|');
+  if(!frs||!frs.length||st.bp){CHANGE=0;lastSoundKey='';toneCount=0;return;}
+  soundCells=frs.reduce((n,q)=>n+q.d.w*q.d.h,0);
+  // one soft tone per creature, at most 12 (when tissue takes over, the "creatures" are maze pieces, not swimmers)
+  toneCount=st.trail||st.run==='collide'?Math.min(12,frs[0].d.count[frs[0].f]):0;
+  const current=frs.map(q=>q.f);
+  if(key!==lastSoundKey){lastSoundKey=key;lastSoundFrames=current;CHANGE=0;return;}
+  if(current.every((f,i)=>f===lastSoundFrames[i])){CHANGE=CHANGE<.0001?0:CHANGE*.55;return;}
+  CHANGE=frs.reduce((sum,q,i)=>sum+Math.abs(q.d.travel[q.f]-q.d.travel[lastSoundFrames[i]]),0);
+  lastSoundFrames=current;
+}
+// ── なめらかな慣性（SCROLL_BEATS_LP と同じ）
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let tY = scrollY, cY = scrollY, smoothing = false, rewind = null;
+addEventListener('wheel', e => {
+  if (e.ctrlKey || REDUCED) return;
+  e.preventDefault(); rewind = null;
+  if (!smoothing) { tY = cY = scrollY; }
+  const d = e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? VH : 1);
+  tY = clamp(tY + d, 0, MAXY); smoothing = true;
+}, { passive: false });
+const stopRewind = () => { rewind = null; };
+addEventListener('keydown', stopRewind); addEventListener('touchstart', stopRewind, { passive: true }); addEventListener('mousedown', e => { if (e.target.id !== 'bRewind') stopRewind(); });
+function scrollStep(dt) {
+  if (rewind) {
+    const k = clamp((NOW - rewind.t0) / rewind.d), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    window.scrollTo(0, rewind.y0 * (1 - e)); if (k >= 1) rewind = null; return;
+  }
+  if (!smoothing) return;
+  cY += (tY - cY) * (1 - Math.exp(-dt * 6));
+  if (Math.abs(tY - cY) < .5) { cY = tY; smoothing = false; }
+  window.scrollTo(0, cY);
+}
+function startRewind() { smoothing = false; rewind = { y0: scrollY, t0: NOW, d: clamp(scrollY / 2400, 3, 9) * 1000 }; }
+
+// ── ループ
+let NOW = performance.now(), lastY = scrollY, LOC = { i: 0, u: 0, k: 0 }, calcT = 0;
+function tick(now, dt) {
+  NOW = now;
+  scrollStep(dt);
+  const y = scrollY;
+  vel = lerp(vel, Math.abs(y - lastY) / Math.max(dt, 1e-3), .25); lastY = y;
+  LOC = locate(y);
+  computeSlice(LOC);
+  const ci = LOC.k > .5 ? LOC.i + 1 : LOC.i;
+  chemistrySound(CH[ci].at(ci === LOC.i ? LOC.u : 0));
+  updateAudio(); draw(LOC); hud(LOC, y);
+  if ((calcT += dt) > .25) { calcT = 0; calcLabel(); }
+}
+let manual = false, lastT = 0;
+function frame(now) {
+  if (!manual) { const t = now / 1000, dt = Math.min(.05, t - (lastT || t)); lastT = t; tick(now, dt); }
+  if (manual) computeSlice(locate(scrollY));
+  requestAnimationFrame(frame);
+}
+
+// ── 入力
+document.querySelectorAll('#segSnd button').forEach(b => b.onclick = () => setMode(b.dataset.v));
+$('bStart').onclick = () => { setMode('bow'); };
+let autoArm = true;
+addEventListener('pointerdown', e => { if (!autoArm) return; autoArm = false; if (S.mode === 'bow' && !e.target.closest('#segSnd')) ensureAudio(); }, true);
+$('bRewind').onclick = startRewind;
+$('vol').oninput = e => { S.vol = e.target.value / 100; updateAudio(); };
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === 's' || e.key === 'S') { const order = ['off', 'bow', 'on']; setMode(order[(order.indexOf(S.mode) + 1) % 3]); }
+});
+addEventListener('resize', () => { measure(); lastHud = ''; });
+readColors(); measure(); startCompute();
+document.fonts && document.fonts.ready.then(() => { readColors(); measure(); lastHud = ''; });
+requestAnimationFrame(frame);
+(() => { const q = new URLSearchParams(location.search), ch = q.get('ch'); if (ch == null) return;
+  const go = () => { measure(); const i = clamp(+ch | 0, 0, M.length - 1), m = M[i]; window.scrollTo(0, m.top + clamp(+(q.get('u') || 0)) * Math.max(1, m.h - VH)); tY = cY = scrollY; };
+  go(); document.fonts && document.fonts.ready.then(go); })();
+// Verification hooks. frameOf takes a frame index, not a simulation step.
+window.__LP={
+  CH,RUNS,DATA,locate,measure,frameOf,framesOf,measureA,seedRun,paramsOf,liveValues,
+  loc:()=>LOC,maxY:()=>MAXY,metrics:()=>M,
+  computeMode:()=>computeMode,computeError:()=>computeError,computeTiming:()=>({...computeTiming}),
+  priority:()=>priority(locate(scrollY)),changes:()=>CHANGE,
+  ready:()=>Object.fromEntries(Object.keys(RUNS).map(id=>[id,computeError?'unavailable':DATA[id]?`${DATA[id].ready}/${DATA[id].F}${DATA[id].done?' ✓':''}`:'-'])),
+  summary:()=>Object.fromEntries(Object.entries(DATA).map(([id,d])=>[id,{ready:d.ready,done:d.done,death:d.death,minMass:d.minMass,maxMass:d.maxMass,
+    finalMass:d.done?d.mass[d.F-1]:null,finalMean:d.done?d.mean[d.F-1]:null,finalCount:d.done?d.count[d.F-1]:null,baseline:d.baseline,
+    afterBite:id==='heal'&&d.ready>1?d.hole[1]:null,recovery:d.recovery,collapseAt:d.collapseAt}])),
+  goto:(i,u=0)=>{smoothing=false;rewind=null;const m=M[clamp(i|0,0,M.length-1)],y=m.top+clamp(u)*Math.max(1,m.h-VH);window.scrollTo(0,y);tY=cY=scrollY;return scrollY;},
+  setMode,rewind:startRewind,rewinding:()=>!!rewind,
+  audio:()=>AC&&{state:AC.state,mode:S.mode,master:master?.gain.value,noise:gN?.gain.value,voices:voices.map(v=>({gain:v.gain.gain.value,frequency:v.tone.frequency.value})),count:toneCount,error:audioError},
+  vel:()=>vel,
+  manual:on=>{manual=!!on;lastT=0;if(manual){CHANGE=0;updateAudio();}},
+  step:(sec=1/60,fps=60)=>{for(let i=0,n=Math.max(1,Math.round(sec*fps));i<n;i++)tick(NOW+1000/fps,1/fps);},
+  wheel:dy=>{if(!smoothing)tY=cY=scrollY;tY=clamp(tY+dy,0,MAXY);smoothing=true;}
+};
+})();
+</script>
+</body>
+</html>

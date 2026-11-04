@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>EE_07 // SANDPILE</title>
+<style>
+/* ══════════════════════════════════════════════════════════════
+   EMERGENCE ENGINE // EE_07 — SANDPILE (Bak–Tang–Wiesenfeld, self-organized criticality)
+   KINETIC STAGE design system + EE overrides (SPEC EE-01 §2)
+   NOIR base · ice=data · gold=labels & the world's edge · rouge=here&now (your hand)
+   ══════════════════════════════════════════════════════════════ */
+:root{
+  --rouge:#FF4FA8; --ice:#5AE9FF; --gold:#FFD27A; --lavender:#B58EFF;
+  --white:#F8EFFF; --noir:#070707;
+  --mono:'IBM Plex Mono',monospace;
+  --disp:'Barlow Condensed',sans-serif;
+  --orn:'Cormorant Garamond',serif;
+  --jp:'Noto Sans JP',sans-serif;
+  --jp-serif:'Noto Serif JP',serif;
+  --mute:rgba(181,142,255,0.62);      /* 二次テキスト下限（既存規約） */
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;background:var(--noir);color:var(--white);
+  font-family:var(--mono);overflow:hidden;-webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;}
+
+#app{display:grid;height:100vh;width:100vw;}
+body.naked #app{grid-template-rows:1fr;grid-template-columns:1fr;}
+body.naked #topbar,body.naked #side,body.naked #graphwrap,body.naked #bottombar{display:none;}
+body.naked #stage{grid-column:1/-1;grid-row:1/-1;}
+body.naked .stage-deco{opacity:0;}
+body.revealed #app{grid-template-rows:44px 1fr 130px 44px;grid-template-columns:1fr 300px;}
+body.revealed #topbar{grid-area:1/1/2/-1;}
+body.revealed #stage {grid-area:2/1/3/2;}
+body.revealed #graphwrap{grid-area:3/1/4/2;}
+body.revealed #side  {grid-area:2/2/4/3;}
+body.revealed #bottombar{grid-area:4/1/5/-1;}
+
+#stage{position:relative;overflow:hidden;background:var(--noir);touch-action:none;cursor:crosshair;}
+#world{display:block;width:100%;height:100%;}
+#over{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+
+.stage-deco{position:absolute;inset:0;pointer-events:none;transition:opacity .4s ease;z-index:3;}
+.corner{position:absolute;width:14px;height:14px;}
+.corner::before,.corner::after{content:'';position:absolute;background:linear-gradient(90deg,var(--gold),var(--rouge));box-shadow:0 0 6px rgba(255,79,168,.4);}
+.corner::before{width:100%;height:1px;} .corner::after{width:1px;height:100%;}
+.corner.tl{top:10px;left:10px;} .corner.tr{top:10px;right:10px;transform:scaleX(-1);}
+.corner.bl{bottom:10px;left:10px;transform:scaleY(-1);} .corner.br{bottom:10px;right:10px;transform:scale(-1);}
+.po{position:absolute;top:12px;right:16px;text-align:right;}
+.po-num{font-family:var(--orn);font-style:italic;font-weight:700;font-size:clamp(40px,6vw,72px);line-height:1;letter-spacing:-.03em;
+  color:var(--ice);filter:drop-shadow(0 0 16px rgba(90,233,255,.35));}
+.po-en{font-family:var(--orn);font-style:italic;font-weight:700;font-size:clamp(14px,2vw,22px);color:var(--gold);line-height:1;}
+.po-jp{font-family:var(--jp-serif);font-size:11px;color:var(--mute);margin-top:5px;letter-spacing:.22em;}
+.stage-bignum{position:absolute;bottom:-38px;left:-8px;font-family:var(--orn);font-style:italic;font-weight:700;
+  font-size:clamp(160px,26vw,340px);color:transparent;-webkit-text-stroke:1.5px rgba(90,233,255,.10);line-height:1;}
+
+#topbar{border-bottom:1px solid rgba(255,210,122,.12);display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;font-size:10px;color:rgba(248,239,255,.5);letter-spacing:.22em;background:rgba(255,255,255,.012);}
+#topbar a{border:1px solid rgba(255,210,122,.3);color:var(--gold);text-decoration:none;padding:2px 8px;letter-spacing:.2em;}
+#topbar a:hover{background:rgba(255,210,122,.1);}
+#bottombar{border-top:1px solid rgba(255,210,122,.12);display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;font-size:9px;color:var(--mute);letter-spacing:.18em;}
+#bottombar #status.hot{color:var(--rouge);text-shadow:0 0 6px rgba(255,79,168,.4);}
+.kbd{background:rgba(255,79,168,.08);border:1px solid rgba(255,79,168,.35);color:var(--rouge);
+  font-family:var(--mono);font-size:8px;padding:1px 5px;border-radius:2px;letter-spacing:.1em;}
+#sc-open-btn{cursor:pointer;color:var(--mute);font-size:9px;letter-spacing:.25em;padding:2px 8px;
+  border:1px solid rgba(255,210,122,.25);border-radius:2px;transition:all .15s;}
+#sc-open-btn:hover{color:var(--gold);border-color:var(--gold);background:rgba(255,210,122,.06);}
+
+#graphwrap{position:relative;border-top:1px solid rgba(255,210,122,.1);background:var(--noir);overflow:hidden;}
+#graph{position:absolute;inset:0;width:100%;height:100%;display:block;}
+#graph-lbl{position:absolute;top:4px;left:8px;font-size:8px;letter-spacing:.32em;color:var(--mute);pointer-events:none;}
+
+#side{display:flex;flex-direction:column;overflow-y:auto;background:rgba(255,255,255,.015);border-left:1px solid rgba(255,210,122,.08);}
+#side::-webkit-scrollbar{width:2px;} #side::-webkit-scrollbar-thumb{background:var(--rouge);}
+.sp{border-bottom:1px solid rgba(181,142,255,.08);padding:13px 15px;flex-shrink:0;}
+.spl{font-size:9px;letter-spacing:.4em;color:var(--mute);margin-bottom:10px;}
+.tr{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;font-size:10px;color:rgba(248,239,255,.72);letter-spacing:.05em;gap:8px;}
+.tr:last-child{margin-bottom:0;}
+.tr > span:first-child{min-width:62px;}
+.sl{font-size:9px;color:var(--mute);letter-spacing:.12em;white-space:nowrap;min-width:44px;text-align:right;}
+input[type=range]{-webkit-appearance:none;flex:1;height:2px;background:rgba(255,255,255,.12);outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),var(--rouge));box-shadow:0 0 8px rgba(255,79,168,.5);cursor:pointer;}
+input[type=range]:disabled{opacity:.3;}
+.data-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(181,142,255,.08);font-size:10px;}
+.data-row:last-child{border-bottom:none;}
+.dk{color:var(--mute);letter-spacing:.05em;}
+.dv{color:var(--gold);font-weight:600;font-variant-numeric:tabular-nums;}
+.dv.neon{color:var(--ice);text-shadow:0 0 6px rgba(90,233,255,.45);}
+#badge{font-size:9px;letter-spacing:.2em;padding:2px 8px;border-radius:2px;border:1px solid;}
+#badge.gas{color:var(--gold);border-color:rgba(255,210,122,.4);}
+#badge.edge{color:var(--rouge);border-color:rgba(255,79,168,.45);}
+#badge.mill{color:var(--gold);border-color:rgba(255,210,122,.6);box-shadow:0 0 10px rgba(255,210,122,.3);}
+#badge.flock{color:var(--ice);border-color:rgba(90,233,255,.5);box-shadow:0 0 10px rgba(90,233,255,.3);}
+/* the three rules */
+.rule{border:1px solid rgba(181,142,255,.14);border-radius:2px;padding:8px 9px 7px;margin-bottom:7px;}
+.rule:last-of-type{margin-bottom:0;}
+.rule.off{opacity:.45;}
+.rule-h{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.rule-h .n{font-family:var(--orn);font-style:italic;font-weight:700;font-size:18px;line-height:1;width:12px;}
+.rule-h .nm{font-size:10px;letter-spacing:.2em;flex:1;}
+.rule-h .jp{display:block;font-family:var(--jp);font-size:9px;letter-spacing:.06em;color:var(--mute);margin-top:2px;}
+.rule .tr{margin:0;}
+.rule.sep .n,.rule.sep .nm{color:var(--gold);}
+.rule.ali .n,.rule.ali .nm{color:var(--ice);}
+.rule.coh .n,.rule.coh .nm{color:var(--lavender);}
+.rule-cap{font-family:var(--jp);font-size:9px;color:var(--mute);letter-spacing:.08em;line-height:1.7;margin-top:9px;}
+.rule-cap b{color:var(--gold);font-family:var(--mono);font-weight:600;}
+/* presets */
+.walkgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.wb{font-size:8.5px;letter-spacing:.12em;padding:7px 4px;border:1px solid rgba(90,233,255,.25);color:var(--ice);
+  background:rgba(90,233,255,.04);cursor:pointer;border-radius:2px;transition:all .15s;text-align:center;}
+.wb:hover{background:rgba(90,233,255,.14);box-shadow:0 0 8px rgba(90,233,255,.25);}
+.wb i{display:block;font-style:normal;font-family:var(--jp);color:var(--mute);font-size:8px;margin-top:3px;letter-spacing:.04em;}
+.wb.on{border-color:var(--rouge);box-shadow:0 0 8px rgba(255,79,168,.3);}
+.tg{width:34px;height:17px;background:rgba(255,255,255,.07);border-radius:9px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;}
+.tg.on{background:linear-gradient(90deg,var(--rouge),#B850FF);box-shadow:0 0 10px rgba(255,79,168,.45);}
+.tg::after{content:'';position:absolute;width:13px;height:13px;border-radius:50%;background:#fff;top:2px;left:2px;transition:left .2s;}
+.tg.on::after{left:19px;}
+.hand-cap{font-family:var(--jp);font-size:9px;color:var(--mute);letter-spacing:.08em;line-height:1.7;}
+.hand-cap b{color:var(--rouge);font-weight:500;} .hand-cap em{color:var(--gold);font-style:normal;}
+.cpg{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.ed-btn{background:rgba(255,79,168,.05);border:1px solid rgba(255,79,168,.3);color:var(--rouge);font-family:var(--mono);
+  font-size:9px;letter-spacing:.15em;padding:8px;cursor:pointer;border-radius:2px;transition:all .15s;text-align:center;}
+.ed-btn:hover{background:rgba(255,79,168,.14);box-shadow:0 0 8px rgba(255,79,168,.25);}
+.ed-btn.ok{background:rgba(90,233,255,.18);border-color:var(--ice);color:var(--ice);}
+.ed-btn.err{background:rgba(255,79,168,.22);border-color:var(--rouge);color:#fff;}
+
+#naked-hint{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);font-size:8px;letter-spacing:.5em;
+  color:rgba(90,233,255,.9);opacity:0;transition:opacity 1.2s ease;pointer-events:none;z-index:20;}
+#naked-hint.show{opacity:.25;}
+
+#shortcut-modal{display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.85);align-items:center;justify-content:center;}
+#shortcut-modal.open{display:flex;}
+#shortcut-box{background:linear-gradient(180deg,#0d0d0d,#050505);border:1px solid rgba(255,210,122,.4);border-radius:6px;
+  width:min(520px,92vw);max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.7),0 0 60px rgba(90,233,255,.1);}
+.sc-header{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid rgba(255,210,122,.18);
+  font-size:10px;letter-spacing:.4em;color:var(--gold);}
+.sc-header span{cursor:pointer;color:var(--mute);} .sc-header span:hover{color:var(--rouge);}
+.sc-body{padding:14px 18px;}
+.sc-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(181,142,255,.06);font-size:10px;}
+.sc-row:last-child{border-bottom:none;}
+.sc-key{background:#141414;border:1px solid rgba(181,142,255,.3);color:var(--white);font-family:var(--mono);font-size:9px;
+  padding:2px 8px;min-width:30px;text-align:center;border-radius:3px;letter-spacing:.05em;}
+.sc-desc{color:rgba(248,239,255,.7);letter-spacing:.04em;}
+.sc-desc .jp{display:block;font-family:var(--jp);font-size:9px;color:var(--mute);margin-top:1px;letter-spacing:.1em;}
+
+/* ── VJ panel (vj-audio-export-kit) ── */
+.vj-row{display:flex;gap:6px;margin-bottom:8px;align-items:center;}
+.vj-btn{flex:1;background:rgba(90,233,255,.05);border:1px solid rgba(90,233,255,.3);color:var(--ice);font-family:var(--mono);
+  font-size:9px;letter-spacing:.14em;padding:7px 6px;cursor:pointer;border-radius:2px;transition:all .15s;text-align:center;user-select:none;}
+.vj-btn:hover{background:rgba(90,233,255,.14);box-shadow:0 0 8px rgba(90,233,255,.25);}
+.vj-btn.off{opacity:.35;pointer-events:none;}
+.vj-btn.sm{flex:0 0 auto;padding:4px 10px;}
+.vj-btn.rec{border-color:rgba(255,79,168,.4);color:var(--rouge);background:rgba(255,79,168,.05);}
+.vj-btn.rec.on{background:rgba(255,79,168,.25);color:#fff;border-color:var(--rouge);animation:vjblink 1s steps(2) infinite;}
+@keyframes vjblink{50%{box-shadow:0 0 14px rgba(255,79,168,.6);}}
+#vj-file-name{font-size:8px;color:var(--mute);letter-spacing:.08em;margin:-3px 0 6px;min-height:10px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.meters{display:flex;gap:4px;height:6px;margin:2px 0 3px;}
+.meter{flex:1;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;}
+.meter i{display:block;height:100%;width:0;}
+#vj-mLow i{background:var(--rouge);} #vj-mMid i{background:var(--gold);} #vj-mHigh i{background:var(--ice);}
+.meter.hit i{background:#fff !important;}
+.meter-lbl{display:flex;justify-content:space-between;font-size:7.5px;letter-spacing:.2em;color:var(--mute);margin-bottom:10px;}
+#side select,#side input[type=number]{background:#101010;border:1px solid rgba(181,142,255,.3);color:var(--white);font-family:var(--mono);
+  font-size:9px;padding:3px 4px;border-radius:2px;flex:1;min-width:0;outline:none;}
+#side input[type=number]{flex:0 0 52px;text-align:center;}
+#vj-led{color:var(--rouge);font-size:11px;opacity:.15;display:inline-block;margin-left:3px;}
+.tr.dim{opacity:.32;}
+.tr small{font-size:7.5px;color:var(--mute);letter-spacing:.04em;display:block;font-family:var(--jp);}
+.vj-cap{font-family:var(--jp);font-size:9px;color:var(--mute);line-height:1.7;letter-spacing:.06em;margin:4px 0 0;}
+.vj-cap b{color:var(--gold);font-weight:500;}
+
+@media(max-width:720px){
+  body.revealed #app{grid-template-columns:1fr;grid-template-rows:44px 1fr 110px 44px;}
+  body.revealed #side{position:fixed;right:0;top:44px;bottom:44px;width:min(300px,84vw);z-index:40;
+    background:#0b0b0b;box-shadow:-10px 0 40px rgba(0,0,0,.6);}   /* opaque: it sits over the stage here */
+  body.revealed #stage{grid-area:2/1/3/-1;} body.revealed #graphwrap{grid-area:3/1/4/-1;}
+}
+/* EE-07: the rule's three little pictures (drop · topple · edge) */
+.rule .mini{display:block;width:100%;height:46px;margin:6px 0 2px;background:rgba(255,255,255,.02);border-radius:2px;}
+.rule.look .n,.rule.look .nm{color:var(--ice);}
+.rule.grow .n,.rule.grow .nm{color:var(--gold);}
+.rule.step .n,.rule.step .nm{color:var(--lavender);}
+#badge.empty{color:var(--mute);border-color:rgba(181,142,255,.35);}
+#badge.life{color:var(--ice);border-color:rgba(90,233,255,.5);box-shadow:0 0 10px rgba(90,233,255,.3);}
+#badge.sea{color:var(--gold);border-color:rgba(255,210,122,.6);box-shadow:0 0 10px rgba(255,210,122,.3);}
+#badge.few{color:var(--rouge);border-color:rgba(255,79,168,.45);}
+/* 07 uses the same HUD skeleton as 06, with RULE at the left of the stage. */
+body.revealed #app{grid-template-columns:280px 1fr 300px;}
+body.revealed #stage{grid-area:2/2/3/3;} body.revealed #graphwrap{grid-area:3/2/4/3;}
+body.revealed #side{grid-area:2/3/4/4;}
+body.naked #rules{display:none;}
+body.revealed #rules{grid-area:2/1/4/2;overflow-y:auto;border-right:1px solid rgba(255,210,122,.12);padding:13px 12px;}
+.truth{font-size:8px;color:var(--gold);letter-spacing:.13em;line-height:1.8;margin-top:12px;}
+.truth span{font-family:var(--jp);color:var(--mute);letter-spacing:.03em;}
+#caption{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);width:94%;text-align:center;font-family:var(--jp);font-size:12px;color:rgba(248,239,255,.8);pointer-events:none;text-shadow:0 2px 8px #000;z-index:4;}
+#aval{position:absolute;bottom:48px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:13px;letter-spacing:.32em;color:var(--gold);
+  text-shadow:0 0 10px rgba(255,210,122,.55),0 2px 8px #000;pointer-events:none;z-index:4;opacity:0;transition:opacity .5s ease;white-space:nowrap;}
+#aval.on{opacity:1;transition:none;}
+.stage-deco.quake{animation:quake .32s linear;}
+@keyframes quake{0%{transform:translate(0,0);}20%{transform:translate(2px,-1px);}40%{transform:translate(-2px,1px);}60%{transform:translate(1px,2px);}80%{transform:translate(-1px,-2px);}100%{transform:translate(0,0);}}
+.vj-btn.on{border-color:var(--rouge);color:var(--rouge);box-shadow:0 0 8px rgba(255,79,168,.3);}
+.vj-btn.dis{opacity:.32;pointer-events:none;}
+@media(max-width:1000px){body.revealed #app{grid-template-columns:245px 1fr 260px;} }
+@media(max-width:720px){body.revealed #app{grid-template-columns:1fr;grid-template-rows:44px 1fr 110px 44px;} body.revealed #stage{grid-area:2/1/3/2;} body.revealed #graphwrap{grid-area:3/1/4/2;} body.revealed #rules{display:none;} body.revealed #side #rules{display:block;overflow:visible;border:0;padding:13px 15px;} }
+</style>
+</head>
+<body class="naked">
+<div id="app">
+
+  <div id="topbar">
+    <span>EMERGENCE_ENGINE // EE_07</span>
+    <a href="#" id="esc-link">[ESC] INDEX</a>
+  </div>
+
+  <div id="stage">
+    <canvas id="world"></canvas>
+    <canvas id="over"></canvas>
+    <div id="aval"></div>
+    <div id="caption"></div>
+    <div class="stage-deco">
+      <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+      <div class="stage-bignum">07</div>
+      <div class="po">
+        <div class="po-num">07</div>
+        <div class="po-en">Sandpile</div>
+        <div class="po-jp">誰も崩れ方を決めていない</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="graphwrap">
+    <canvas id="graph"></canvas>
+    <div id="graph-lbl">MEAN HEIGHT — シアン＝平均の高さ · 金＝最大の雪崩（対数）<span id="graph-lbl-proof"></span></div>
+  </div>
+
+  <div id="side">
+    <div class="sp">
+      <div class="spl">READOUT</div>
+      <div class="data-row"><span class="dk">GRAINS</span><span class="dv neon" id="ro-grains">0</span></div>
+      <div class="data-row"><span class="dk">STATE</span><span id="badge" class="empty">EMPTY</span></div>
+      <div class="data-row"><span class="dk">MEAN HEIGHT</span><span class="dv" id="ro-mean">0.000</span></div>
+      <div class="data-row"><span class="dk">LAST AVALANCHE</span><span class="dv" id="ro-last">—</span></div>
+      <div class="data-row"><span class="dk">LARGEST</span><span class="dv" id="ro-largest">—</span></div>
+      <div class="data-row"><span class="dk">AVALANCHES</span><span class="dv" id="ro-count">0</span></div>
+      <div class="data-row"><span class="dk">TOPPLES / s</span><span class="dv" id="ro-tps">0</span></div>
+      <div class="data-row"><span class="dk">SLOPE (log–log)</span><span class="dv" id="ro-slope">—</span></div>
+      <div class="data-row"><span class="dk">GRID</span><span class="dv" id="ro-grid">—</span></div>
+    </div>
+    <div class="sp" id="rules">
+      <div class="spl">RULE — THE PROTAGONIST</div>
+      <div class="rule look"><div class="rule-h"><span class="n">1</span><span class="nm">DROP<span class="jp">落とす — どこか1マスに砂を1粒</span></span></div>
+        <canvas class="mini" id="mini-d"></canvas><div class="rule-cap">1回の雪崩が終わるまで、次の粒は落とさない（遅い駆動）。</div></div>
+      <div class="rule grow"><div class="rule-h"><span class="n">2</span><span class="nm">TOPPLE<span class="jp" id="rule-topple-jp">崩れる — 4粒以上で、上下左右に1粒ずつ配る</span></span></div>
+        <canvas class="mini" id="mini-t"></canvas><div class="rule-cap" id="rule-topple-cap">配られた先がまた <b>4</b> 以上なら、また崩れる。止まるまでが1回の「雪崩」。</div></div>
+      <div class="rule step"><div class="rule-h"><span class="n">3</span><span class="nm">EDGE<span class="jp">こぼれる — 世界の端から出た粒は消える</span></span></div>
+        <canvas class="mini" id="mini-e"></canvas><div class="rule-cap">開いた境界。これがないと、砂は増える一方で臨界にならない。</div></div>
+      <div class="rule-cap" id="rule-formula">h ≥ 4 → h −= 4、となり4マスに +1<br>端の外へ出た粒は消える · 雪崩の大きさ＝崩れた回数の合計</div>
+      <div class="truth">WAS ACTUALLY<br><span>砂山モデル — 自己組織化臨界<br>（Bak–Tang–Wiesenfeld 1987）</span></div>
+    </div>
+    <div class="sp"><div class="spl">SPECIES — 同じルール、違う落とし方／違う数</div><div class="walkgrid" id="presets"></div></div>
+    <div class="sp"><div class="spl">HAND — 指は何になるか</div><div class="hand-cap">押す＝<em>そこに1粒</em>（押し続けると注ぐ）。<br>Shift＋押す＝<b>まわりを「崩れる寸前」にそろえる</b>（高さ＝閾値−1）。次の一粒で大きな雪崩。</div></div>
+    <div class="sp"><div class="spl">PARAMS</div>
+      <div class="tr" id="r-rate"><span>RATE<small id="rate-note">1コマに落とす粒</small></span><input type="range" id="c-rate" min="1" max="200" step="1"><span class="sl" id="v-rate"></span></div>
+      <div class="tr"><span>SIZE<small>変えると世界が<br>作り直される</small></span><input type="range" id="c-size" min="2" max="8" step="1"><span class="sl" id="v-size"></span></div>
+      <div class="tr"><span>SPEED<small>1コマで崩す回数の上限<br>（雪崩の再生の速さ）</small></span><input type="range" id="c-speed" min="1" max="10" step="1"><span class="sl" id="v-speed"></span></div>
+      <div class="tr"><span>GLOW<small>崩れたマスの光</small></span><input type="range" id="c-glow" min="0" max="2" step="0.05"><span class="sl" id="v-glow"></span></div>
+      <div class="tr"><span>TRAIL<small>光の残り時間</small></span><input type="range" id="c-trail" min="0.05" max="2" step="0.05"><span class="sl" id="v-trail"></span></div>
+      <div class="tr"><span>LOOK</span><select id="c-look"><option value="desert">DESERT — 砂色の濃淡</option><option value="ice">ICE — 群青〜白</option><option value="ember">EMBER — 黒〜橙</option></select></div>
+      <div class="tr"><span>LIGHT<small>光り方</small></span><select id="c-light"><option value="dot">DOT — 点で光る（ランプの粒）</option><option value="soft">SOFT — 色ごと光る</option></select></div>
+      <div class="vj-row"><div class="vj-btn" id="btn-seed">✣ SEED<br><small>この種族を最初から</small></div><div class="vj-btn" id="btn-clear">○ CLEAR<br><small>盤を空に（統計は残す）</small></div></div>
+      <div class="vj-row"><div class="vj-btn" id="btn-ontop">⇣ DRIP ON TOP<br><small id="ontop-note">落ち着いた砂山に一粒ずつ</small></div></div>
+    </div>
+    <div class="sp"><div class="spl">PROOF</div><div class="tr"><span>SIZE DISTRIBUTION <small>G · 雪崩の大きさを両対数で。<br>点が直線に並ぶ＝「ふつうの大きさ」がない。<br>数えるのは静かな盤に1粒落とした雪崩だけ。</small></span><div class="tg" id="tg-proof"></div></div></div>
+    <div class="sp" id="vj-sp">
+      <div class="spl">VJ — 音で動かす・素材にする</div>
+      <div class="vj-row">
+        <label class="vj-btn">♪ LOAD AUDIO<input type="file" id="vj-file" accept="audio/*" hidden></label>
+        <div class="vj-btn off" id="vj-play">▶ PLAY</div>
+      </div>
+      <div id="vj-file-name"></div>
+      <div class="meters"><div class="meter" id="vj-mLow"><i></i></div><div class="meter" id="vj-mMid"><i></i></div><div class="meter" id="vj-mHigh"><i></i></div></div>
+      <div class="meter-lbl"><span>LOW · KICK</span><span>MID</span><span>HIGH</span></div>
+      <div class="tr" id="vj-r-sens"><span>SENS<small>MP3 再生中のみ</small></span><input type="range" id="vj-sens" min="0" max="100" step="1" value="55"><span class="sl" id="vj-v-sens">55</span></div>
+      <div class="tr"><span>BPM<b id="vj-led">●</b></span><input type="number" id="vj-bpm" min="40" max="240" step="1" value="120"><div class="vj-btn sm" id="vj-tap">TAP</div></div>
+      <div class="tr"><span>BEAT FROM</span><select id="vj-src"><option value="off">OFF — 手で遊ぶ</option><option value="kick">MP3 KICK — 曲のキック</option><option value="clock">BPM CLOCK — 拍の時計</option></select></div>
+      <div class="tr" id="vj-r-act"><span>ON BEAT</span><select id="vj-act"></select></div>
+      <div class="tr" id="vj-r-every"><span id="vj-every-lbl">EVERY</span><select id="vj-every"><option value="0">なし</option><option value="2">2 拍ごと</option><option value="4">4 拍ごと</option><option value="8">8 拍ごと</option><option value="16" selected>16 拍ごと</option><option value="32">32 拍ごと</option></select></div>
+      <div class="tr" id="vj-r-mid"><span>MID →<small id="vj-mid-lbl"></small></span><input type="range" id="vj-mid" min="0" max="1" step="0.05" value="0.5"><span class="sl" id="vj-v-mid">0.50</span></div>
+      <div class="tr" id="vj-r-high"><span>HIGH →<small id="vj-high-lbl"></small></span><input type="range" id="vj-high" min="0" max="1" step="0.05" value="0.5"><span class="sl" id="vj-v-high">0.50</span></div>
+      <div class="vj-cap">TAP（<b>T</b> キー）を曲に合わせて叩くと BPM が決まり、● が拍で点滅。BEAT FROM で「拍の出どころ」を選ぶ。MID / HIGH は MP3 再生中だけ効く。</div>
+      <div class="spl" style="margin-top:14px">EXPORT</div>
+      <div class="vj-row"><div class="vj-btn rec" id="vj-rec">● REC WebM</div></div>
+      <div class="tr"><span>PNG SEQ</span><select id="vj-bars"><option value="4">4 小節</option><option value="8" selected>8 小節</option><option value="16">16 小節</option><option value="32">32 小節</option></select><select id="vj-fps"><option value="30">30 fps</option><option value="60">60 fps</option></select></div>
+      <div class="tr"><span>SIZE</span><select id="vj-res"><option value="1920x1080">1920×1080</option><option value="3840x2160">3840×2160 (4K)</option></select></div>
+      <div class="vj-row"><div class="vj-btn" id="vj-seq">⇩ 連番PNG を書き出す</div></div>
+      <div class="vj-cap">REC＝いまの画面を<b>音つき</b>で録画（曲のキックに合った素材）。連番PNG＝BPM の拍ぴったりにオフラインで描く（コマ落ちなし・4K 可・Chrome / Edge）。画面の中央を 16:9 で切り抜くので、横長のウィンドウで。</div>
+    </div>
+    <div class="sp">
+      <div class="spl">PARAMS</div>
+      <div class="cpg">
+        <div class="ed-btn" id="btn-copy">⧉ COPY</div>
+        <div class="ed-btn" id="btn-paste">▣ PASTE</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="bottombar">
+    <span id="status">EE_07 // SANDPILE</span>
+    <span><span id="sc-open-btn">⌨ SHORTCUTS</span> <span class="kbd">?</span></span>
+  </div>
+</div>
+
+<div id="naked-hint">TAB — REVEAL</div>
+
+<div id="shortcut-modal">
+  <div id="shortcut-box">
+    <div class="sc-header">⌨ KEYBOARD SHORTCUTS <span id="sc-close">✕</span></div>
+    <div class="sc-body">
+      <div class="sc-row"><span class="sc-key">HOLD</span><span class="sc-desc">Drop — そこに1粒（押し続けると注ぐ）</span></div>
+      <div class="sc-row"><span class="sc-key">⇧ HOLD</span><span class="sc-desc">Brink — まわりを「崩れる寸前」にそろえる</span></div>
+      <div class="sc-row"><span class="sc-key">1–6</span><span class="sc-desc">Species — 落とし方／数を選んで最初から</span></div>
+      <div class="sc-row"><span class="sc-key">← →</span><span class="sc-desc">Speed — 雪崩の再生を遅く / 速く</span></div>
+      <div class="sc-row"><span class="sc-key">↑ ↓</span><span class="sc-desc">Rate — 落とす粒を増やす / 減らす<span class="jp">DRIP と、注いでいる間だけ効く</span></span></div>
+      <div class="sc-row"><span class="sc-key">D</span><span class="sc-desc">Drip on top — 落ち着いた砂山に一粒ずつ</span></div>
+      <div class="sc-row"><span class="sc-key">R</span><span class="sc-desc">Seed — この種族を最初から（統計もリセット）</span></div>
+      <div class="sc-row"><span class="sc-key">C</span><span class="sc-desc">Clear — 盤を空にする（統計は残す）</span></div>
+      <div class="sc-row"><span class="sc-key">G</span><span class="sc-desc">Proof — 雪崩の大きさの分布（両対数）</span></div>
+      <div class="sc-row"><span class="sc-key">Space</span><span class="sc-desc">Pause / Resume — 時間停止（押した粒は崩れずに積もる）</span></div>
+      <div class="sc-row"><span class="sc-key">Tab</span><span class="sc-desc">Reveal — HUD と証明ストリップの表示切替</span></div>
+      <div class="sc-row"><span class="sc-key">T</span><span class="sc-desc">Tap tempo — 曲に合わせて叩くと BPM<span class="jp">BEAT FROM が OFF なら BPM CLOCK に切り替わる</span></span></div>
+      <div class="sc-row"><span class="sc-key">?</span><span class="sc-desc">This panel</span></div>
+      <div class="sc-row"><span class="sc-key">Esc</span><span class="sc-desc">Modal → NAKED → Index</span></div>
+    </div>
+  </div>
+</div>
+
+<script src="_law/ee07_sandpile.js"></script>
+<script>
+"use strict";
+/* SIM (makePile, addGrains, relax, …) lives in _law/ee07_sandpile.js — shared with scroll/SCROLL_SANDPILE_LP.html */
+
+const $=id=>document.getElementById(id);
+const clamp=(v,lo=0,hi=1)=>Math.max(lo,Math.min(hi,v));
+const reduceMotion=matchMedia('(prefers-reduced-motion:reduce)').matches;
+const HEXH=Math.sqrt(3)/2;                       // hex rows sit √3/2 of a cell apart
+/* SPEED → how many cells may topple per frame. Each drive has its own base (one grain vs a pour vs the whole board settling). 10 = 一瞬 */
+const SPEED_BASE={drip:60000,tower:40000,twin:40000,identity:400000,none:3000},INSTANT=4000000;
+const LOOKS={ // height 0 … thr−1 (brightest = one grain from toppling), then: unstable, glow
+  desert:{lv:[[20,14,8],[92,60,30],[168,120,66],[246,214,150]],hot:[255,252,238],glow:[255,246,214],bg:'#070605'},
+  ice:{lv:[[4,8,30],[22,44,128],[70,128,214],[226,242,255]],hot:[255,255,255],glow:[150,236,255],bg:'#03040c'},
+  ember:{lv:[[6,4,4],[78,16,8],[196,72,14],[255,170,52]],hot:[255,250,214],glow:[255,226,150],bg:'#050303'}
+};
+const state={mode:0,size:clamp(Math.round(Math.sqrt(innerWidth*innerHeight/57600)),2,8),rate:8,speed:6,glow:.8,trail:.5,look:'desert',light:'dot',proof:false,revealed:false,paused:reduceMotion,idle:!reduceMotion};
+let rnd=makeRng((Math.random()*2**32)>>>0);
+const stage=$('stage'),worldC=$('world'),overC=$('over'),wctx=worldC.getContext('2d'),octx=overC.getContext('2d');
+let W=0,H=0,DPR=Math.min(devicePixelRatio||1,2),GW=0,GH=0;
+let filling=false,pile=null,drive='drip',sources=[],pourLeft=0,ident=0,lut=null,img=null,imgC=document.createElement('canvas'),imgX=imgC.getContext('2d');
+function resizeWorld(){const r=stage.getBoundingClientRect();W=Math.max(1,r.width|0);H=Math.max(1,r.height|0);worldC.width=overC.width=Math.round(W*DPR);worldC.height=overC.height=Math.round(H*DPR);octx.setTransform(DPR,0,0,DPR,0,0);}
+const isHex=()=>pile&&pile.lat==='hex';
+function fit(){const DWc=GW+(isHex()?.5:0),DHc=GH*(isHex()?HEXH:1),cw=worldC.width,ch=worldC.height,sc=VJ.exporting?Math.max(cw/DWc,ch/DHc):Math.min(cw/DWc,ch/DHc);return{sc,ox:(cw-DWc*sc)/2,oy:(ch-DHc*sc)/2,dw:DWc*sc,dh:DHc*sc};}
+function dims(lat){return[Math.max(32,Math.round(innerWidth/state.size)),Math.max(32,Math.round(innerHeight/(state.size*(lat==='hex'?HEXH:1))))];}
+const idx=(x,y)=>y*GW+x;
+
+/* ── modes ── */
+function startMode(i){
+  state.mode=i;const M=MODES[i];[GW,GH]=dims(M.lat);pile=makePile(GW,GH,M.lat);drive=M.drive;sources=[];pourLeft=0;ident=0;
+  if(drive==='tower'){sources=[idx(GW>>1,GH>>1)];pourLeft=pourCap(M.lat,GW,GH);}
+  if(drive==='twin'){const dx=Math.round(GH*.3);sources=[idx((GW>>1)-dx,GH>>1),idx((GW>>1)+dx,GH>>1)];pourLeft=Math.floor(pourCap('sq',GW,GH)*1.5);}
+  if(drive==='identity'){identityStart(pile);ident=1;}
+  allocImg();
+  buildLut();hist.length=0;tickAcc=0;bigShown=false;toppleMark=pile.topples;filling=drive==='drip';
+  syncControls();drawRules();
+}
+/* DOT: every cell is a little lamp K px wide (K−1 lit + 1 px gap); SOFT: one pixel per cell, glow blended */
+const dotK=()=>state.light==='dot'?(state.size>=4?4:2):1;
+function allocImg(){const K=dotK(),hx=isHex();imgC.width=K===1?(hx?GW*2+1:GW):GW*K+(hx?K/2:0);imgC.height=GH*K;img=imgX.createImageData(imgC.width,imgC.height);img.data.fill(255);img32=new Uint32Array(img.data.buffer);}
+let img32=null;
+function rebuildWorld(){startMode(state.mode);}
+function seedMode(){rnd=makeRng((rnd()*2**32)>>>0);startMode(state.mode);}
+function clearWorld(){clearPile(pile);bigShown=false;if(drive==='tower'||drive==='twin')pourLeft=MODES[state.mode].drive===drive?(drive==='twin'?Math.floor(pourCap('sq',GW,GH)*1.5):pourCap(pile.lat,GW,GH)):0;if(drive==='identity'){drive='none';ident=0;}filling=drive==='drip';syncControls();}
+const pouring=()=>(drive==='tower'||drive==='twin')&&pourLeft>0&&pile.lost===0;
+const settled=()=>!busy(pile)&&!pouring()&&drive!=='identity';
+function dripOnTop(force=false){if(drive==='drip')return;if(!force&&!settled())return;pourLeft=0;if(drive==='identity')ident=0;drive='drip';syncControls();}
+
+/* ── one fixed tick = 1/60 s of the world. Nothing in here reads the wall clock. ── */
+/* DRIP plays an avalanche as a spreading front: a few waves per frame, so a big one takes seconds and a small one blinks */
+function wavesNow(){if(state.speed>=10)return Infinity;return Math.max(1,Math.round(3*2**(state.speed-6)*(1+vjAmt('vj-mid')*VJ.mid*3)));}
+function budgetNow(){if(state.speed>=10)return INSTANT;return Math.max(1,Math.round(SPEED_BASE[drive]*2**(state.speed-6)*(1+vjAmt('vj-mid')*VJ.mid*3)));}
+let tickAcc=0,simTime=0,ivMax=0,bigShown=false,avalShowT=0,avalText='',toppleMark=0;
+function dropRandom(){addGrains(pile,(rnd()*GW*GH)|0,1);}
+function tick(){
+  handFeed();
+  if(state.paused)return;
+  const budget=budgetNow();let used=0;
+  if(drive==='drip'){
+    /* an empty world takes minutes to fill at a slow RATE: rain fast until the mean height reaches 2,
+       then start the avalanche statistics afresh — the size law is a property of the critical state, not of the filling */
+    let credit=filling?Math.max(state.rate,idleRain()):state.rate,waves=filling?Infinity:wavesNow();
+    while(used<budget){
+      if(busy(pile)){used+=relax(pile,budget-used,waves);waves-=pile.wv;watchAvalanche();if(!busy(pile))avalancheDone();else if(waves<=0)break;}
+      else{if(pile.av.on)avalancheDone();if(credit<=0)break;dropRandom();credit--;used++;}
+    }
+    if(filling&&pileGrains(pile)>=2*GW*GH){filling=false;pile.bins.fill(0);pile.nAv=0;pile.maxAv=0;pile.lastAv=0;ivMax=0;syncControls();}
+  }else{
+    const was=pouring()+2*busy(pile);
+    if(pouring()){const per=Math.max(1,Math.floor(state.rate*8/sources.length));for(const s of sources){const k=Math.min(per,pourLeft);if(k<=0)break;addGrains(pile,s,k);pourLeft-=k;}}
+    relax(pile,budget);watchAvalanche();
+    if(!busy(pile)){
+      if(drive==='identity'&&ident===1){identityFlip(pile);ident=2;}
+      else if(drive==='identity'&&ident===2){ident=3;drive='none';avalancheDone();syncControls();}
+      else avalancheDone();
+    }
+    if(was!==pouring()+2*busy(pile))syncControls();   // pour finished / settled → RATE and DRIP ON TOP change state
+  }
+  const f=Math.exp(-1/60/state.trail),g=pile.glow;for(let i=0;i<g.length;i++)if(g[i]!==0){g[i]*=f;if(g[i]<.004)g[i]=0;}
+  avalShowT=Math.max(0,avalShowT-1/60);beatFlash*=Math.exp(-1/60/.12);if(beatFlash<.02)beatFlash=0;frameNo++;
+}
+function avalancheDone(){const n=pile.nAv,a=endAvalanche(pile);if(a&&pile.nAv>n){ivMax=Math.max(ivMax,a.size);if(bigShown){avalText='AVALANCHE '+a.size.toLocaleString('en-US');avalShowT=1.2;}}bigShown=false;}
+/* a "large" avalanche: one dropped grain that has already made ≥ 2 % of the world topple */
+function watchAvalanche(){if(pile.av.on&&pile.av.single&&pile.av.size>=.02*GW*GH){avalText='AVALANCHE '+pile.av.size.toLocaleString('en-US');avalShowT=1.2;if(!bigShown){bigShown=true;quake();}}}
+function quake(){if(VJ.exporting)return;const d=document.querySelector('.stage-deco');d.classList.remove('quake');void d.offsetWidth;d.classList.add('quake');quakeT=.35;}
+let quakeT=0;
+
+/* ── hand ── */
+const hand={on:false,x:0,y:0,brink:false,held:0},ghosts=[];
+function cellAt(e){const b=stage.getBoundingClientRect(),{sc,ox,oy}=fit(),py=((e.clientY-b.top)*DPR-oy)/(sc*(isHex()?HEXH:1)),y=clamp(Math.floor(py),0,GH-1),px=((e.clientX-b.left)*DPR-ox)/sc-(isHex()&&(y&1)?.5:0);return{x:clamp(Math.floor(px),0,GW-1),y};}
+function brink(cx,cy,r=5){const v=pile.thr-1;for(let y=Math.max(0,cy-r);y<=Math.min(GH-1,cy+r);y++)for(let x=Math.max(0,cx-r);x<=Math.min(GW-1,cx+r);x++)if((x-cx)**2+(y-cy)**2<=r*r)setHeight(pile,idx(x,y),v);if(pile.av.on===false&&busy(pile)){pile.av.on=true;pile.av.single=false;pile.av.size=0;}}
+function handFeed(){if(!hand.on)return;hand.held+=1/60;if(hand.brink)brink(hand.x,hand.y);else if(hand.held>.25)addGrains(pile,idx(hand.x,hand.y),2);}
+function placeHand(e){const c=cellAt(e);hand.x=c.x;hand.y=c.y;hand.brink=e.shiftKey;}
+stage.addEventListener('pointerdown',e=>{stopIdle();hand.on=true;hand.held=0;placeHand(e);stage.setPointerCapture(e.pointerId);if(hand.brink)brink(hand.x,hand.y);else addGrains(pile,idx(hand.x,hand.y),1);ghosts.push({x:hand.x,y:hand.y,brink:hand.brink,t:1});if(ghosts.length>12)ghosts.shift();});
+stage.addEventListener('pointermove',e=>{if(hand.on)placeHand(e);});for(const type of['pointerup','pointercancel'])stage.addEventListener(type,()=>hand.on=false);
+
+/* ── auto performance (≈75 s) ── */
+const IDLE_LEN=75;let idleT=0,idleNext=0,quietFor=0;
+const idleRain=()=>clamp(Math.round(GW*GH*2/(60*12)),8,200);
+const IDLE_SCRIPT=[
+  [0,()=>{state.speed=7;startMode(0);state.rate=idleRain();}],
+  [14,()=>{state.rate=8;state.speed=6;}],
+  [48,()=>{state.speed=8;state.rate=12;startMode(1);}],
+  [64,()=>{state.rate=1;state.speed=6;dripOnTop(true);}]
+];
+let idleSaved=null;
+function startIdle(){idleSaved={rate:state.rate,speed:state.speed};state.idle=true;idleT=0;idleNext=0;stepIdle(0);}
+function stopIdle(){quietFor=0;if(state.idle){state.idle=false;if(idleSaved)Object.assign(state,idleSaved);idleSaved=null;$('caption').textContent='';syncControls();}}
+function stepIdle(dt){
+  if(!state.idle)return;idleT+=dt;if(idleT>=IDLE_LEN){idleT%=IDLE_LEN;idleNext=0;}
+  while(idleNext<IDLE_SCRIPT.length&&idleT>=IDLE_SCRIPT[idleNext][0])IDLE_SCRIPT[idleNext++][1]();
+  $('caption').textContent=idleT<6?'空の世界に、砂が一粒ずつ降る。まだ何も崩れない。':idleT<14?'4つたまると崩れる。明るい色＝あと一粒で崩れるマスが増えていく。':idleT<24?'小さな雪崩がちらほら。やがて大きな雪崩が世界を走る。':idleT<36?'平均の高さは、ある値で止まって動かない。誰もそこを目標にしていない。':idleT<48?'同じ一粒なのに、何も起きないことも、世界が崩れることもある。':idleT<64?'まっさらにして、真ん中の一か所にだけ注ぐ。':'育った模様に、また一粒ずつ。模様が雪崩で崩れていく。';
+  if(state.revealed&&Math.floor(idleT*2)!==Math.floor((idleT-dt)*2))syncControls();
+}
+function advance(dt){tickAcc+=dt*60;const ticks=Math.floor(tickAcc+1e-8);tickAcc-=ticks;for(let i=0;i<ticks;i++){simTime+=1/60;if(!state.paused)stepIdle(1/60);tick();}}
+
+/* ── drawing: one pixel per cell (hex: two, odd rows shifted by one), scaled up with smoothing off ── */
+function buildLut(){
+  const L=LOOKS[state.look],thr=pile.thr,a=new Uint8ClampedArray((thr+1)*3);
+  for(let h=0;h<thr;h++){const t=h/(thr-1)*3,k=Math.min(2,Math.floor(t)),f=t-k;for(let c=0;c<3;c++)a[h*3+c]=L.lv[k][c]+(L.lv[k+1][c]-L.lv[k][c])*f;}
+  for(let c=0;c<3;c++)a[thr*3+c]=L.hot[c];lut={a,glow:L.glow,hot:L.hot,bg:L.bg,bgc:[parseInt(L.bg.slice(1,3),16),parseInt(L.bg.slice(3,5),16),parseInt(L.bg.slice(5,7),16)]};
+}
+/* while a tower is poured or settling its whole interior topples every frame — full glow would bury the mandala */
+const BAYER=[0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5].map(v=>(v+.5)/16);
+const DOT_ORDER={4:[[1,1],[0,1],[2,1],[1,0],[1,2],[0,0],[2,0],[0,2],[2,2]],2:[[0,0],[1,1],[1,0],[0,1]]},DOT_N={4:[0,1,5,9],2:[0,1,2,4]};
+let beatFlash=0,frameNo=0;
+/* extra light on the cells one grain from toppling: a beat flashes them, HIGH makes them twinkle (display only — the pile is untouched) */
+function brinkLight(i){let t=beatFlash*.75;const hi=vjAmt('vj-high')*VJ.high;if(hi>0){let k=Math.imul(i^frameNo*0x9E3779B1,0x85EBCA6B);k^=k>>>13;if(((k>>>0)%1000)<hi*140)t=Math.max(t,.9);}return t;}
+function paint(){if(dotK()>1)return paintDots();
+  const {hgt,glow,thr}=pile,d=img.data,A=lut.a,gc=lut.glow,G=(state.glow+vjAmt('vj-high')*VJ.high*1.6)*(drive!=='drip'&&(pouring()||busy(pile))?.18:1),hex=isHex(),iw=imgC.width;
+  for(let y=0;y<GH;y++){
+    const row=y*iw*4,o=hex?(y&1):0;
+    if(hex){const e=row+(o?0:(iw-1)*4);d[e]=d[e+1]=d[e+2]=0;}
+    for(let x=0;x<GW;x++){
+      const i=y*GW+x,h=hgt[i],li=(h>=thr?thr:h)*3;let r=A[li],g=A[li+1],b=A[li+2];
+      const gv=glow[i];let t=gv>0&&G>0?Math.min(1,(1-Math.exp(-gv*.7))*G):0;if(h===thr-1&&(beatFlash>0||VJ.high>0))t=Math.max(t,brinkLight(i));
+      if(t>0){r+=(gc[0]-r)*t;g+=(gc[1]-g)*t;b+=(gc[2]-b)*t;}
+      if(hex){const p=row+(2*x+o)*4;d[p]=d[p+4]=r;d[p+1]=d[p+5]=g;d[p+2]=d[p+6]=b;}
+      else{const p=row+x*4;d[p]=r;d[p+1]=g;d[p+2]=b;}
+    }
+  }
+  imgX.putImageData(img,0,0);
+}
+function paintDots(){
+  const {hgt,glow,thr}=pile,A=lut.a,gc=lut.glow,hc=lut.hot,bg=lut.bgc,K=dotK(),G=(state.glow+vjAmt('vj-high')*VJ.high*1.6)*(drive!=='drip'&&(pouring()||busy(pile))?.18:1),hex=isHex(),iw=imgC.width,P=img32;
+  const rgb=(r,g,b)=>(255<<24|b<<16|g<<8|r)>>>0,mix=(c,d,f)=>c+(d-c)*f;
+  const gapF=K===4?.62:0,ORD=DOT_ORDER[K],NN=DOT_N[K],dw=K===4?3:2;
+  const HOT=rgb(hc[0],hc[1],hc[2]),GLO=rgb(gc[0],gc[1],gc[2]),GAPG=rgb(mix(bg[0],gc[0],.35)|0,mix(bg[1],gc[1],.35)|0,mix(bg[2],gc[2],.35)|0);
+  const base=new Uint32Array(thr+1),gap=new Uint32Array(thr+1);
+  // unlit lamps sit at about half brightness so a lit dot reads as light, not as one more shade of sand
+  const DIM=.66;for(let h=0;h<=thr;h++){const li=h*3,r=mix(bg[0],A[li],DIM),g=mix(bg[1],A[li+1],DIM),b=mix(bg[2],A[li+2],DIM);base[h]=rgb(r|0,g|0,b|0);gap[h]=rgb(mix(r,bg[0],gapF)|0,mix(g,bg[1],gapF)|0,mix(b,bg[2],gapF)|0);}
+  if(hex)for(let y=0;y<GH*K;y++){const o=((y/K|0)&1)?0:iw-K/2;for(let x=0;x<K/2;x++)P[y*iw+o+x]=rgb(bg[0],bg[1],bg[2]);}
+  for(let y=0;y<GH;y++){
+    const oy=y*K,ox0=hex&&(y&1)?K/2:0;
+    for(let x=0;x<GW;x++){
+      const i=y*GW+x,h=hgt[i]>=thr?thr:hgt[i],gv=glow[i];
+      let t=gv>0&&G>0?Math.min(1,gv*G*1.3):0;if(h===thr-1&&(beatFlash>0||VJ.high>0))t=Math.max(t,brinkLight(i));
+      // quantise the light to 0–3 lit steps, ordered-dithered so a fading avalanche dissolves dot by dot
+      const lv=t>0?Math.min(3,Math.floor(t*3+BAYER[(y&3)*4+(x&3)])):0;
+      const ox=ox0+x*K,bc=base[h],gc2=gap[h];
+      for(let yy=0;yy<K;yy++){const row=(oy+yy)*iw+ox;for(let xx=0;xx<K;xx++)P[row+xx]=(xx<dw&&yy<dw)?bc:gc2;}
+      if(lv>0){const n=NN[lv];for(let k=0;k<n;k++){const q=ORD[k];P[(oy+q[1])*iw+ox+q[0]]=lv===3||k===0?HOT:GLO;}
+        if(lv===3&&K===4){for(let k=0;k<4;k++){P[(oy+k)*iw+ox+3]=GAPG;P[(oy+3)*iw+ox+k]=GAPG;}}}
+    }
+  }
+  imgX.putImageData(img,0,0);
+}
+function draw(){
+  paint();
+  const {ox,oy,dw,dh}=fit();
+  wctx.setTransform(1,0,0,1,0,0);wctx.fillStyle=lut.bg;wctx.fillRect(0,0,worldC.width,worldC.height);
+  wctx.imageSmoothingEnabled=false;wctx.drawImage(imgC,ox,oy,dw,dh);
+  if(VJ.exporting)return;
+  octx.clearRect(0,0,W,H);
+  const {sc}=fit(),cell=(x,y)=>[(ox+(x+.5+(isHex()&&(y&1)?.5:0))*sc)/DPR,(oy+(y+.5)*sc*(isHex()?HEXH:1))/DPR];
+  { // the world's edge: grains that cross it are gone. It shivers when a large avalanche runs.
+    const j=quakeT>0?2*quakeT/.35:0,jx=(Math.sin(simTime*91)*j),jy=(Math.cos(simTime*77)*j);
+    octx.strokeStyle=`rgba(255,210,122,${.16+.5*Math.min(1,quakeT*3)})`;octx.lineWidth=1;octx.strokeRect(ox/DPR+.5+jx,oy/DPR+.5+jy,dw/DPR-1,dh/DPR-1);
+  }
+  if(hand.on){const[x,y]=cell(hand.x,hand.y),r=(hand.brink?5:.9)*sc/DPR+3;octx.strokeStyle=hand.brink?'rgba(255,79,168,0.85)':'rgba(90,233,255,0.7)';octx.lineWidth=1.3;octx.setLineDash(hand.brink?[]:[3,4]);octx.beginPath();octx.arc(x,y,r,0,6.2832);octx.stroke();octx.setLineDash([]);octx.fillStyle=hand.brink?'#FF4FA8':'#5AE9FF';octx.beginPath();octx.arc(x,y,2.5,0,6.2832);octx.fill();}
+  for(const g of ghosts){const[x,y]=cell(g.x,g.y),r=((g.brink?5:.9)*sc/DPR+3)*(1.25-.25*g.t);octx.strokeStyle=g.brink?`rgba(255,79,168,${.85*g.t})`:`rgba(90,233,255,${.6*g.t})`;octx.lineWidth=1.2;octx.beginPath();octx.arc(x,y,r,0,6.2832);octx.stroke();}
+  if(state.proof&&!state.revealed){const w=Math.min(300,W*.42),h=Math.min(170,H*.32);octx.fillStyle='rgba(5,5,5,.78)';octx.fillRect(14,H-h-60,w,h);drawHist(octx,14,H-h-60,w,h);}
+  const av=$('aval');if(avalShowT>0){av.textContent=avalText;av.classList.add('on');}else av.classList.remove('on');
+  if(!state.idle){const c=$('caption');c.textContent=drive==='identity'?`SETTLING… ${ident}/2 — 崩れ切るまで計算中`:'';}
+}
+
+/* ── proof: avalanche sizes, log–log ── */
+function drawHist(g,x0,y0,w,h){
+  const H2=sizeHistogram(pile),L=x0+34,R=x0+w-10,T=y0+20,B=y0+h-20;
+  g.save();g.font='8px IBM Plex Mono, monospace';g.fillStyle='rgba(181,142,255,.8)';g.textBaseline='top';g.fillText('P(size) — 雪崩の大きさ（両対数）',x0+8,y0+5);
+  g.strokeStyle='rgba(255,210,122,.25)';g.lineWidth=1;g.strokeRect(L+.5,T+.5,R-L,B-T);
+  if(H2.pts.length<2){g.fillStyle='rgba(248,239,255,.55)';g.fillText('雪崩を待っている…',L+8,T+10);g.restore();return;}
+  const xmax=Math.max(1,Math.ceil(H2.pts[H2.pts.length-1].x)),ys=H2.pts.map(p=>p.y),ymin=Math.floor(Math.min(...ys)),ymax=Math.max(0,Math.ceil(Math.max(...ys)));
+  const X=v=>L+v/xmax*(R-L),Y=v=>T+(ymax-v)/(ymax-ymin||1)*(B-T);
+  g.fillStyle='rgba(255,210,122,.6)';g.textBaseline='top';for(let k=0;k<=xmax;k++)g.fillText(k?'1e'+k:'1',X(k)-4,B+4);
+  g.textAlign='right';g.textBaseline='middle';for(let k=ymin;k<=ymax;k+=Math.max(1,Math.ceil((ymax-ymin)/4)))g.fillText('1e'+k,L-4,Y(k));g.textAlign='left';
+  if(Number.isFinite(H2.slope)){const f=H2.pts.filter(p=>p.count>=10),a=f[0].x,b=f[f.length-1].x;g.strokeStyle='rgba(255,79,168,.8)';g.setLineDash([4,3]);g.beginPath();g.moveTo(X(a),Y(H2.icpt+H2.slope*a));g.lineTo(X(b),Y(H2.icpt+H2.slope*b));g.stroke();g.setLineDash([]);}
+  for(const p of H2.pts){g.fillStyle=p.count>=10?'#5AE9FF':'rgba(90,233,255,.35)';g.beginPath();g.arc(X(p.x),Y(p.y),2.4,0,6.2832);g.fill();}
+  g.fillStyle='#F8EFFF';g.textAlign='right';g.textBaseline='top';g.fillText(Number.isFinite(H2.slope)?`SLOPE ${H2.slope.toFixed(2).replace('-','−')} · ${pile.nAv.toLocaleString('en-US')} 回`:`${pile.nAv} 回 — まだ少ない`,R-4,T+4);
+  g.restore();
+}
+
+/* ── graph band ── */
+const graphC=$('graph'),gctx=graphC.getContext('2d');let GWp=0,GHp=0;
+const hist=[];
+function resizeGraph(){const r=$('graphwrap').getBoundingClientRect();GWp=Math.max(1,Math.floor(r.width));GHp=Math.max(1,Math.floor(r.height));graphC.width=GWp*DPR;graphC.height=GHp*DPR;gctx.setTransform(DPR,0,0,DPR,0,0);}
+function drawGraph(){
+  if(!GWp)return;
+  const g=gctx,split=state.proof?Math.round(GWp*.56):GWp,L=10,R=split-12,T=20,B=GHp-16;
+  g.clearRect(0,0,GWp,GHp);
+  const top=pile.thr-1,sx=i=>R-(hist.length-1-i)/119*(R-L),sy=v=>B-v/top*(B-T);
+  let lmax=3;for(const h of hist)lmax=Math.max(lmax,Math.log10(1+h.big));const sb=v=>B-Math.log10(1+v)/lmax*(B-T);
+  for(let i=0;i<hist.length;i++){if(hist[i].hand){g.fillStyle='rgba(90,233,255,0.08)';g.fillRect(sx(i)-1,T,2,B-T);}if(hist[i].beat){g.fillStyle='rgba(255,79,168,0.35)';g.fillRect(sx(i)-.5,B-6,1,6);}}
+  g.strokeStyle='rgba(255,210,122,0.18)';g.lineWidth=1;g.fillStyle='rgba(255,210,122,0.5)';g.font='8px IBM Plex Mono';g.textBaseline='middle';
+  for(let v=0;v<=top;v+=top>4?2:1){g.beginPath();g.moveTo(L,sy(v)+.5);g.lineTo(R,sy(v)+.5);g.stroke();g.fillText(String(v),R+3,sy(v));}
+  g.fillStyle='rgba(255,210,122,0.85)';hist.forEach((h,i)=>{if(h.big)g.fillRect(sx(i)-1,sb(h.big)-1,2,2);});
+  g.strokeStyle='rgba(90,233,255,0.95)';g.lineWidth=1.5;g.shadowColor='rgba(90,233,255,0.6)';g.shadowBlur=6;
+  g.beginPath();hist.forEach((h,i)=>{const X=sx(i),Y=sy(h.mean);i?g.lineTo(X,Y):g.moveTo(X,Y);});g.stroke();g.shadowBlur=0;
+  g.fillStyle='rgba(255,210,122,0.6)';g.font='9px IBM Plex Mono';g.textBaseline='bottom';g.fillText('−60 s',L,GHp-3);g.textAlign='right';g.fillText('NOW',R,GHp-3);g.textAlign='left';
+  if(hist.length){g.fillStyle='#5AE9FF';g.fillText('MEAN '+hist[hist.length-1].mean.toFixed(3),L+50,GHp-3);}
+  if(state.proof)drawHist(g,split,0,GWp-split,GHp);
+}
+
+/* ── readout ── */
+let roAcc=0,tpsAcc=0,tps=0;
+function measure(){
+  const mean=pileGrains(pile)/(GW*GH);
+  hist.push({mean,big:ivMax,hand:hand.on,beat:VJ.flash>.6});ivMax=0;if(hist.length>120)hist.shift();
+  if(state.revealed){updateReadout();drawGraph();}
+}
+const fmt=n=>n.toLocaleString('en-US');
+function updateReadout(){
+  const n=pileGrains(pile),hs=sizeHistogram(pile);
+  $('ro-grains').textContent=fmt(n);$('ro-mean').textContent=(n/(GW*GH)).toFixed(3);$('ro-last').textContent=pile.nAv?fmt(pile.lastAv):'—';$('ro-largest').textContent=pile.nAv?fmt(pile.maxAv):'—';
+  $('ro-count').textContent=fmt(pile.nAv);$('ro-tps').textContent=fmt(tps);$('ro-slope').textContent=Number.isFinite(hs.slope)?hs.slope.toFixed(2).replace('-','−'):'—';$('ro-grid').textContent=GW+'×'+GH+(isHex()?' hex':'');
+  const b=$('badge');const st=drive==='identity'?['sea','SETTLING…']:pouring()?['sea','POURING']:busy(pile)?['few','AVALANCHE']:n===0?['empty','EMPTY']:['life','QUIET'];b.className=st[0];b.textContent=st[1];
+  $('status').textContent=(state.paused?'PAUSED':state.idle?'AUTO PERFORMANCE':'EE_07 // SANDPILE')+' · '+MODES[state.mode].name+(drive==='drip'&&state.mode!==0?' + DRIP':'')+' · 閾値 '+pile.thr;
+}
+
+/* ── the rule's pictures ── */
+function miniCtx(id){const c=$(id),r=c.getBoundingClientRect(),w=Math.max(1,r.width|0),h=Math.max(1,r.height|0);c.width=w*DPR;c.height=h*DPR;const g=c.getContext('2d');g.setTransform(DPR,0,0,DPR,0,0);return{g,w,h};}
+const rgb=c=>`rgb(${c[0]},${c[1]},${c[2]})`;
+function drawRules(){
+  if(!state.revealed||!pile)return;
+  const thr=pile.thr,lat=pile.lat,A=lut.a,col=h=>rgb([A[h*3],A[h*3+1],A[h*3+2]]);
+  {const{g,w}=miniCtx('mini-d');const hs=[1,0,2,3,1].map(v=>Math.min(v,thr-1));hs.forEach((v,k)=>{const X=w/2-70+k*28;g.fillStyle=col(v);g.fillRect(X,22,26,20);g.fillStyle=v>=2?'#111':'#ddd';g.font='10px monospace';g.textAlign='center';g.fillText(String(v),X+13,36);});
+    g.fillStyle='#5ae9ff';g.beginPath();g.arc(w/2,8,3.5,0,6.2832);g.fill();g.strokeStyle='#5ae9ff';g.beginPath();g.moveTo(w/2,12);g.lineTo(w/2,19);g.stroke();}
+  {const{g,w,h}=miniCtx('mini-t');g.font='11px monospace';g.textAlign='center';g.textBaseline='middle';
+    const cell=(x,y,v,hot)=>{g.fillStyle=hot?rgb(LOOKS[state.look].hot):col(Math.min(v,thr-1));g.fillRect(x-9,y-9,18,18);g.fillStyle=hot||v>=2?'#111':'#ddd';g.fillText(String(v),x,y+1);};
+    cell(30,h/2,thr,true);g.fillStyle='#ffd27a';g.fillText('→',62,h/2);
+    const cx=w/2+40,cy=h/2,dirs=lat==='hex'?[0,60,120,180,240,300].map(a=>a*Math.PI/180):lat==='moore'?[0,45,90,135,180,225,270,315].map(a=>a*Math.PI/180):[0,90,180,270].map(a=>a*Math.PI/180);
+    g.strokeStyle='#ffd27a';g.lineWidth=1;for(const a of dirs){const x1=cx+Math.cos(a)*10,y1=cy+Math.sin(a)*10*.95,x2=cx+Math.cos(a)*20,y2=cy+Math.sin(a)*19;g.beginPath();g.moveTo(x1,y1);g.lineTo(x2,y2);g.stroke();g.fillStyle='#ffd27a';g.beginPath();g.arc(x2,y2,1.8,0,6.2832);g.fill();}
+    cell(cx,cy,0,false);g.fillStyle='#b58eff';g.textAlign='left';g.font='9px monospace';g.fillText('+1 ×'+thr,cx+28,cy);}
+  {const{g,w,h}=miniCtx('mini-e');g.strokeStyle='#ffd27a';g.setLineDash([2,3]);g.beginPath();g.moveTo(w-46,4);g.lineTo(w-46,h-4);g.stroke();g.setLineDash([]);
+    for(let k=0;k<4;k++){g.fillStyle=col(Math.min(k%2?1:2,thr-1));g.fillRect(w-46-(4-k)*22,h/2-9,20,18);}
+    g.strokeStyle='#ff4fa8';g.beginPath();g.moveTo(w-52,h/2);g.lineTo(w-28,h/2);g.stroke();g.fillStyle='#ff4fa8';g.beginPath();g.arc(w-24,h/2,2.5,0,6.2832);g.fill();g.font='11px monospace';g.textBaseline='middle';g.fillText('∅',w-16,h/2+1);}
+  const nbTxt=lat==='hex'?'6方向（六角）':lat==='moore'?'斜めを含む8方向':'上下左右';
+  $('rule-topple-jp').textContent=`崩れる — ${thr}粒以上で、${nbTxt}に1粒ずつ配る`;
+  $('rule-topple-cap').innerHTML=`配られた先がまた <b>${thr}</b> 以上なら、また崩れる。止まるまでが1回の「雪崩」。`;
+  $('rule-formula').innerHTML=`h ≥ ${thr} → h −= ${thr}、となり${thr}マスに +1<br>端の外へ出た粒は消える · 雪崩の大きさ＝崩れた回数の合計`;
+}
+
+/* ── controls ── */
+const CTRL=[['rate',v=>String(v)],['size',v=>v+' px'],['speed',v=>v>=10?'一瞬':'×'+(2**(v-6)>=1?2**(v-6):'1/'+2**(6-v))],['glow',v=>v.toFixed(2)],['trail',v=>v.toFixed(2)+' s']];
+function markModes(){document.querySelectorAll('#presets .wb').forEach(b=>b.classList.toggle('on',+b.dataset.i===state.mode));}
+function syncControls(){
+  for(const[k,lab]of CTRL){$('c-'+k).value=state[k];$('v-'+k).textContent=lab(state[k]);}
+  if(pile)$('v-speed').title=fmt(budgetNow())+' / コマ';
+  const rateOn=drive==='drip'||pouring();$('c-rate').disabled=!rateOn;$('r-rate').classList.toggle('dim',!rateOn);
+  $('rate-note').textContent=drive==='drip'?(filling?'満ちるまでは自動で速い雨':'1コマに落とす粒（DRIP）'):pouring()?'注ぐ量 ×8 粒/コマ':drive==='identity'?'IDENTITY では使わない':'注ぎ終わり — R でもう一度';
+  const ot=$('btn-ontop'),can=drive!=='drip'&&pile&&settled();ot.classList.toggle('dis',!can&&drive!=='drip');ot.classList.toggle('on',drive==='drip'&&state.mode!==0);
+  $('ontop-note').textContent=drive==='drip'?(state.mode===0?'いまは DRIP そのもの':'一粒ずつ落としている'):can?'落ち着いた砂山に一粒ずつ':'落ち着いてから（注ぎ・計算が終わったら）';
+  $('c-look').value=state.look;$('c-light').value=state.light;$('tg-proof').classList.toggle('on',state.proof);$('graph-lbl-proof').textContent=state.proof?' · 右＝大きさの分布':'';markModes();if(pile)updateReadout();
+}
+for(const[k]of CTRL)$('c-'+k).addEventListener('input',e=>{const v=+e.target.value;stopIdle();state[k]=v;if(k==='size')rebuildWorld();syncControls();});
+for(const[k]of CTRL)$('c-'+k).addEventListener('change',e=>e.target.blur());
+$('c-look').addEventListener('change',e=>{const v=e.target.value;stopIdle();state.look=v;buildLut();drawRules();e.target.blur();});
+$('c-light').addEventListener('change',e=>{const v=e.target.value;stopIdle();state.light=v;allocImg();e.target.blur();});
+$('presets').innerHTML=MODES.map((s,i)=>'<div class="wb" data-i="'+i+'">'+(i+1)+' '+s.name+'<i>'+s.jp+'</i></div>').join('');
+$('presets').addEventListener('click',e=>{const b=e.target.closest('.wb');if(b){stopIdle();startMode(+b.dataset.i);}});
+$('btn-seed').addEventListener('click',()=>{stopIdle();seedMode();});$('btn-clear').addEventListener('click',()=>{stopIdle();clearWorld();});
+$('btn-ontop').addEventListener('click',()=>{stopIdle();dripOnTop();});
+function setProof(on){state.proof=on;syncControls();if(state.revealed)drawGraph();}
+$('tg-proof').addEventListener('click',()=>{stopIdle();setProof(!state.proof);});
+function nudge(k,d,lo,hi){stopIdle();if(k==='rate'&&$('c-rate').disabled)return;state[k]=clamp(state[k]+d,lo,hi);syncControls();}
+let everRevealed=false;
+function layoutRules(){if(innerWidth<=720)$('side').prepend($('rules'));else $('app').append($('rules'));}
+function setReveal(on){state.revealed=on;document.body.classList.toggle('revealed',on);document.body.classList.toggle('naked',!on);if(on){everRevealed=true;hideHint();requestAnimationFrame(()=>{resizeGraph();resizeWorld();syncControls();drawRules();measure();});}else requestAnimationFrame(resizeWorld);}
+const hintEl=$('naked-hint');let hintTimer=setTimeout(()=>{if(!everRevealed)hintEl.classList.add('show');},45000);
+function hideHint(){hintEl.classList.remove('show');clearTimeout(hintTimer);}
+function flash(btn,cls,txt){const t=btn.textContent;btn.textContent=txt;btn.classList.add(cls);setTimeout(()=>{btn.textContent=t;btn.classList.remove(cls);},1200);}
+$('btn-copy').addEventListener('click',async e=>{
+  const btn=e.currentTarget;
+  const payload={version:'EE07_sandpile',mode:MODES[state.mode].name,size:state.size,rate:state.rate,speed:state.speed,glow:state.glow,trail:state.trail,look:state.look,light:state.light,proof:state.proof,revealed:state.revealed,paused:state.paused};
+  try{await navigator.clipboard.writeText(JSON.stringify(payload,null,2));flash(btn,'ok','✓ COPIED');}catch{flash(btn,'err','✗');}
+});
+$('btn-paste').addEventListener('click',async e=>{
+  const btn=e.currentTarget;
+  try{const j=JSON.parse(await navigator.clipboard.readText());if(!j||typeof j!=='object')throw Error('params');stopIdle();const oldSize=state.size,oldMode=state.mode;
+    for(const[k]of CTRL){const el=$('c-'+k);if(Number.isFinite(j[k]))state[k]=clamp(j[k],+el.min,+el.max);}for(const k of['rate','size','speed'])state[k]=Math.round(state[k]);
+    if(Object.keys(LOOKS).includes(j.look)){state.look=j.look;buildLut();}if(j.light==='dot'||j.light==='soft')state.light=j.light;const mi=MODES.findIndex(m=>m.name===j.mode);if(mi>=0)state.mode=mi;
+    if(typeof j.proof==='boolean')state.proof=j.proof;if(typeof j.paused==='boolean')state.paused=j.paused;
+    if(oldSize!==state.size||oldMode!==state.mode)rebuildWorld();else allocImg();if(typeof j.revealed==='boolean')setReveal(j.revealed);syncControls();drawRules();flash(btn,'ok','✓ APPLIED');
+  }catch{flash(btn,'err','✗');}
+});
+const modal=$('shortcut-modal');
+function openSC(){if(!state.revealed)setReveal(true);modal.classList.add('open');}
+function closeSC(){modal.classList.remove('open');}
+$('sc-open-btn').addEventListener('click',openSC);$('sc-close').addEventListener('click',closeSC);modal.addEventListener('click',e=>{if(e.target===modal)closeSC();});
+function escape(){if(modal.classList.contains('open'))closeSC();else if(state.revealed)setReveal(false);else location.href='index.html';}
+window.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){e.preventDefault();escape();return;}
+  if(e.key==='Tab'){e.preventDefault();setReveal(!state.revealed);return;}
+  if(e.key==='?'){e.preventDefault();modal.classList.contains('open')?closeSC():openSC();return;}
+  const tag=document.activeElement?.tagName;if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA')return;
+  if(e.key==='t'||e.key==='T'){vjTap();return;}if(e.code==='Space'){e.preventDefault();stopIdle();state.paused=!state.paused;updateReadout();return;}
+  const k=e.key.toLowerCase();
+  if(k==='r'){stopIdle();seedMode();return;}if(k==='c'){stopIdle();clearWorld();return;}if(k==='g'){stopIdle();setProof(!state.proof);return;}if(k==='d'){stopIdle();dripOnTop();return;}
+  if(e.key.startsWith('Arrow')){e.preventDefault();if(e.key==='ArrowLeft')nudge('speed',-1,1,10);if(e.key==='ArrowRight')nudge('speed',1,1,10);if(e.key==='ArrowUp')nudge('rate',e.shiftKey?20:1,1,200);if(e.key==='ArrowDown')nudge('rate',e.shiftKey?-20:-1,1,200);return;}
+  if(/^[1-6]$/.test(e.key)){stopIdle();startMode(+e.key-1);}
+});
+$('esc-link').addEventListener('click',e=>{e.preventDefault();escape();});
+// Browsing the HUD keeps the performance; changing a value or touching the world stops it.
+$('side').addEventListener('input',()=>stopIdle());$('side').addEventListener('change',()=>stopIdle());
+document.addEventListener('pointerdown',()=>{quietFor=0;});document.addEventListener('keydown',()=>{quietFor=0;});
+new ResizeObserver(()=>{if(!VJ.exporting){resizeWorld();if(state.revealed){resizeGraph();drawRules();}}}).observe(stage);
+let rebuildTimer=0;
+window.addEventListener('resize',()=>{if(VJ.exporting)return;layoutRules();resizeWorld();if(state.revealed){resizeGraph();drawRules();}
+  /* the grid follows the window: if it opened tiny (iframe / pane), rebuild once the size settles */
+  clearTimeout(rebuildTimer);rebuildTimer=setTimeout(()=>{const[nw,nh]=dims(pile.lat);if(!VJ.exporting&&(Math.abs(nw-GW)>GW*.15||Math.abs(nh-GH)>GH*.15))rebuildWorld();},300);});
+
+let last=performance.now();
+function frame(now){if(VJ.exporting)return;const dt=Math.min(.05,(now-last)/1000);last=now;quietFor+=dt;if(!state.idle&&!state.paused&&!reduceMotion&&quietFor>45&&!hand.on&&!VJ.playing&&vjSrc()==='off'&&!VJ.recOn&&!modal.classList.contains('open'))startIdle();for(let i=ghosts.length-1;i>=0;i--){ghosts[i].t-=dt*.9;if(ghosts[i].t<=0)ghosts.splice(i,1);}quakeT=Math.max(0,quakeT-dt);vjTick(now,dt);advance(dt);draw();roAcc+=dt;tpsAcc+=dt;if(tpsAcc>=1){tps=Math.round((pile.topples-toppleMark)/tpsAcc);toppleMark=pile.topples;tpsAcc=0;}if(roAcc>=.5){roAcc=0;measure();if(state.revealed)syncControls();}queueRaf();}
+/* ══════════════════════════════════════════════════════════════
+   VJ — audio / BPM / export   (vj-audio-export-kit · canon: Grid_System_Bauhaus/bauhaus.html)
+   beat sources: MP3 KICK = rise-onset on 30–150 Hz · BPM CLOCK = TAP sets tempo and the downbeat.
+   The piece supplies VJ_HOOKS { name, canvas, acts, everyLabel, midLabel, highLabel,
+                                 touch, onBeat, onEvery, advance, render, beginExport, endExport }.
+   ══════════════════════════════════════════════════════════════ */
+const VJ = { ctx:null, buf:null, src:null, analyser:null, dest:null, freq:null, playing:false,
+  low:0, mid:0, high:0, prevLow:0, lastKick:0, count:0, flash:0,
+  origin:performance.now(), lastIdx:0, taps:[],
+  rec:null, chunks:[], recOn:false, recT0:0, exporting:false };
+const vj$ = id => document.getElementById(id);
+const vjSrc = () => vj$('vj-src').value;
+const vjBpm = () => Math.max(40, Math.min(240, +vj$('vj-bpm').value || 120));
+const vjAmt = id => VJ.playing ? +vj$(id).value : 0;          // MID / HIGH act only while audio plays
+
+/* drive loop: rAF while visible, setInterval while the tab is hidden (rAF stops completely there) */
+let rafQueued = false, hiddenTimer = null;
+function queueRaf(){ if (!rafQueued){ rafQueued = true; requestAnimationFrame(t=>{ rafQueued = false; frame(t); }); } }
+function syncHiddenTimer(){
+  const want = document.hidden && !VJ.exporting;
+  if (want && !hiddenTimer) hiddenTimer = setInterval(()=>frame(performance.now()), 33);
+  if (!want && hiddenTimer){ clearInterval(hiddenTimer); hiddenTimer = null; }
+}
+document.addEventListener('visibilitychange', syncHiddenTimer);
+
+async function vjLoad(file){
+  if (!VJ.ctx) VJ.ctx = new (window.AudioContext||window.webkitAudioContext)();
+  if (VJ.playing) vjStop();
+  vj$('vj-file-name').textContent = 'decoding… ' + file.name;
+  try{ VJ.buf = await VJ.ctx.decodeAudioData(await file.arrayBuffer()); }
+  catch(e){ vj$('vj-file-name').textContent = '読み込めませんでした: ' + file.name; return; }
+  vj$('vj-file-name').textContent = file.name;
+  vjUI();
+}
+function vjPlay(){
+  if (!VJ.buf) return;
+  const c = VJ.ctx; if (c.state === 'suspended') c.resume();   // autoplay policy: resume inside the click
+  VJ.src = c.createBufferSource(); VJ.src.buffer = VJ.buf; VJ.src.loop = true;
+  VJ.analyser = c.createAnalyser(); VJ.analyser.fftSize = 2048;
+  VJ.analyser.smoothingTimeConstant = 0.3;                    // low = attacks stay sharp for kick detection
+  VJ.src.connect(VJ.analyser); VJ.analyser.connect(c.destination);
+  VJ.dest = VJ.dest || c.createMediaStreamDestination();     // tapped by REC so the WebM carries the audio
+  VJ.analyser.connect(VJ.dest);
+  VJ.freq = new Uint8Array(VJ.analyser.frequencyBinCount);
+  VJ.src.start(); VJ.playing = true;
+  if (vjSrc() === 'off') vj$('vj-src').value = 'kick';
+  vjUI();
+}
+function vjStop(){
+  if (VJ.src){ try{ VJ.src.stop(); }catch(e){} VJ.src = null; }
+  VJ.playing = false; VJ.low = VJ.mid = VJ.high = 0;
+  vjMeter('vj-mLow',0); vjMeter('vj-mMid',0); vjMeter('vj-mHigh',0);
+  vjUI();
+}
+function vjBand(lo, hi){
+  const binHz = (VJ.ctx.sampleRate/2)/VJ.freq.length;
+  const a = Math.floor(lo/binHz), b = Math.min(Math.ceil(hi/binHz), VJ.freq.length-1);
+  let s = 0; for (let i=a; i<=b; i++) s += VJ.freq[i];
+  return s/((b-a+1)*255);
+}
+function vjMeter(id, v){ vj$(id).firstElementChild.style.width = Math.round(Math.min(1, v)*100) + '%'; }
+function vjAnalyze(now){
+  VJ.analyser.getByteFrequencyData(VJ.freq);
+  const low = vjBand(30,150), mid = vjBand(400,2000), high = vjBand(4000,12000);
+  VJ.low = low; VJ.mid += (mid-VJ.mid)*0.25; VJ.high += (high-VJ.high)*0.45;
+  vjMeter('vj-mLow', low); vjMeter('vj-mMid', VJ.mid); vjMeter('vj-mHigh', VJ.high);
+  // kick = a sudden RISE in the low band (a moving-average threshold never fires on real music),
+  // and the low band must stand above the highs — a hi-hat is broadband and lifts every band at once
+  const th = 0.14 - (+vj$('vj-sens').value/100)*0.12, rise = low - VJ.prevLow;
+  if (rise > th && low > 0.10 && low - high > 0.06 && now - VJ.lastKick > 150){
+    VJ.lastKick = now;
+    const m = vj$('vj-mLow'); m.classList.add('hit'); setTimeout(()=>m.classList.remove('hit'), 90);
+    if (vjSrc() === 'kick') vjBeat();
+  }
+  VJ.prevLow = low;
+}
+function vjBeat(){
+  VJ.count++; VJ.flash = 1;
+  const act = vj$('vj-act').value;
+  if (act !== 'none') VJ_HOOKS.onBeat(act, VJ.count);
+  const ev = +vj$('vj-every').value;
+  if (ev > 0 && VJ.count % ev === 0) VJ_HOOKS.onEvery(VJ.count);
+}
+function vjTick(now, dt){
+  if (VJ.playing) vjAnalyze(now);
+  const beats = (now - VJ.origin)/1000*vjBpm()/60;
+  if (vjSrc() === 'clock'){
+    const idx = Math.floor(beats);
+    if (idx > VJ.lastIdx){ VJ.lastIdx = idx; vjBeat(); }
+  }
+  VJ.flash *= Math.pow(0.004, dt);
+  const led = vjSrc() === 'kick' ? VJ.flash : Math.pow(1 - (((beats % 1) + 1) % 1), 3);
+  vj$('vj-led').style.opacity = 0.15 + 0.85*led;
+  if (VJ.recOn){
+    const s = Math.floor((now - VJ.recT0)/1000);
+    vj$('vj-rec').textContent = `■ STOP & SAVE  ${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+  }
+}
+function vjTap(){
+  VJ_HOOKS.touch();
+  const now = performance.now();
+  VJ.taps = VJ.taps.filter(t => now - t < 2500); VJ.taps.push(now);
+  if (VJ.taps.length >= 2){
+    const iv = (VJ.taps[VJ.taps.length-1] - VJ.taps[0])/(VJ.taps.length-1);
+    vj$('vj-bpm').value = Math.round(60000/iv);
+  }
+  VJ.origin = now; VJ.lastIdx = 0;                           // the tap is the downbeat
+  if (vjSrc() === 'off') vj$('vj-src').value = 'clock';
+  if (vjSrc() === 'clock') vjBeat();
+  vjUI();
+}
+function vjRec(){
+  const b = vj$('vj-rec');
+  if (VJ.recOn){ VJ.rec.stop(); VJ.recOn = false; b.classList.remove('on'); b.textContent = '● REC WebM'; return; }
+  const stream = VJ_HOOKS.canvas.captureStream(60);
+  if (VJ.playing && VJ.dest) VJ.dest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
+  const mime = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'].find(m => MediaRecorder.isTypeSupported(m));
+  VJ.rec = new MediaRecorder(stream, { mimeType:mime, videoBitsPerSecond:16000000 });
+  VJ.chunks = [];
+  VJ.rec.ondataavailable = e => { if (e.data.size) VJ.chunks.push(e.data); };
+  VJ.rec.onstop = () => {
+    const a = document.createElement('a');
+    a.download = `${VJ_HOOKS.name}_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.webm`;
+    a.href = URL.createObjectURL(new Blob(VJ.chunks, { type:'video/webm' }));
+    a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+  };
+  VJ.rec.start(250);
+  VJ.recOn = true; VJ.recT0 = performance.now(); b.classList.add('on');
+}
+/* PNG sequence — offline and beat-exact: beats land on k·60/BPM from frame 0, the sim advances in
+   60 fps steps (2 per frame at 30 fps), and nothing reads the wall clock while it runs */
+async function vjSeq(){
+  if (!window.showDirectoryPicker){ alert('連番PNG は Chrome / Edge で開いてください（File System Access API を使います）'); return; }
+  const btn = vj$('vj-seq');
+  let dir; try{ dir = await window.showDirectoryPicker({ mode:'readwrite' }); }catch(e){ return; }
+  const fps = +vj$('vj-fps').value, bars = +vj$('vj-bars').value, bpm = vjBpm();
+  const frames = Math.round(bars*4*60/bpm*fps), sub = Math.max(1, Math.round(60/fps));
+  const [w, h] = vj$('vj-res').value.split('x').map(Number);
+  const beatsOn = vjSrc() !== 'off';
+  if (VJ.recOn) vjRec();
+  VJ_HOOKS.touch();
+  VJ.exporting = true; syncHiddenTimer();
+  VJ_HOOKS.beginExport(w, h);
+  let simT = 0, lastIdx = -1;
+  try{
+    for (let f=0; f<frames; f++){
+      for (let k=0; k<sub; k++){
+        if (beatsOn){ const idx = Math.floor(simT*bpm/60 + 1e-9); if (idx > lastIdx){ lastIdx = idx; vjBeat(); } }
+        VJ_HOOKS.advance(1/60); simT += 1/60;
+      }
+      VJ_HOOKS.render(1/fps);
+      const blob = await new Promise(r => VJ_HOOKS.canvas.toBlob(r, 'image/png'));
+      const fh = await dir.getFileHandle(`${VJ_HOOKS.name}_${String(f).padStart(4,'0')}.png`, { create:true });
+      const wr = await fh.createWritable(); await wr.write(blob); await wr.close();
+      btn.textContent = `${f+1} / ${frames}…`;
+    }
+    btn.textContent = `完了 ${frames} 枚 · ${fps}fps · ${bars} 小節 @${bpm}`;
+  }catch(e){ btn.textContent = '失敗: ' + e.message; }
+  VJ_HOOKS.endExport();
+  VJ.exporting = false; syncHiddenTimer(); queueRaf();
+  setTimeout(()=>{ btn.textContent = '⇩ 連番PNG を書き出す'; }, 5000);
+}
+/* gray out what can't act right now, so "it doesn't move" is never a mystery */
+function vjUI(){
+  vj$('vj-play').classList.toggle('off', !VJ.buf);
+  vj$('vj-play').textContent = VJ.playing ? '■ STOP' : '▶ PLAY';
+  for (const id of ['vj-r-sens', 'vj-r-mid', 'vj-r-high']) vj$(id).classList.toggle('dim', !VJ.playing);
+  const off = vjSrc() === 'off';
+  vj$('vj-r-act').classList.toggle('dim', off); vj$('vj-r-every').classList.toggle('dim', off);
+}
+function vjInit(){
+  vj$('vj-act').innerHTML = VJ_HOOKS.acts.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+  vj$('vj-every-lbl').textContent = VJ_HOOKS.everyLabel;
+  vj$('vj-mid-lbl').textContent = VJ_HOOKS.midLabel;
+  vj$('vj-high-lbl').textContent = VJ_HOOKS.highLabel;
+  vj$('vj-file').addEventListener('change', e => { const f = e.target.files[0]; if (f){ VJ_HOOKS.touch(); vjLoad(f); } });
+  vj$('vj-play').addEventListener('click', () => { VJ_HOOKS.touch(); VJ.playing ? vjStop() : vjPlay(); });
+  vj$('vj-tap').addEventListener('click', vjTap);
+  vj$('vj-src').addEventListener('change', () => { VJ_HOOKS.touch(); VJ.origin = performance.now(); VJ.lastIdx = 0; vjUI(); });
+  vj$('vj-sens').addEventListener('input', e => { vj$('vj-v-sens').textContent = e.target.value; });
+  vj$('vj-mid').addEventListener('input', e => { vj$('vj-v-mid').textContent = (+e.target.value).toFixed(2); });
+  vj$('vj-high').addEventListener('input', e => { vj$('vj-v-high').textContent = (+e.target.value).toFixed(2); });
+  vj$('vj-bpm').addEventListener('change', () => { vj$('vj-bpm').value = vjBpm(); });
+  vj$('vj-rec').addEventListener('click', vjRec);
+  vj$('vj-seq').addEventListener('click', vjSeq);
+  document.querySelectorAll('#vj-sp select').forEach(el => el.addEventListener('change', () => el.blur()));  // give the keys back
+  vjUI();
+}
+
+/* what the beat does in this piece */
+/* QUAKE: the 8×8 block holding the most cells one grain from toppling; one grain on such a cell in it */
+function quakeCell(){
+  const B=8,bw=Math.ceil(GW/B),bh=Math.ceil(GH/B),cnt=new Int32Array(bw*bh),v=pile.thr-1,h=pile.hgt;
+  for(let y=0;y<GH;y++)for(let x=0;x<GW;x++)if(h[y*GW+x]===v)cnt[((y/B)|0)*bw+((x/B)|0)]++;
+  let best=0;for(let i=1;i<cnt.length;i++)if(cnt[i]>cnt[best])best=i;
+  const bx=(best%bw)*B,by=((best/bw)|0)*B;
+  for(let y=by;y<Math.min(GH,by+B);y++)for(let x=bx;x<Math.min(GW,bx+B);x++)if(h[y*GW+x]===v)return y*GW+x;
+  return (rnd()*GW*GH)|0;
+}
+const VJ_HOOKS={
+  name:'EE07_sandpile',canvas:worldC,
+  acts:[['quake','QUAKE — 「崩れる寸前」が一番密な所に1粒'],['drop','DROP — ランダムな1マスに1粒'],['pour','POUR — ランダムな1点に 64 粒'],['none','なし']],
+  everyLabel:'NEXT MODE',midLabel:'雪崩の再生の速さ',highLabel:'崩れる寸前のマスがきらめく',touch:()=>stopIdle(),
+  onBeat(act){beatFlash=1;if(act==='drop')dropRandom();else if(act==='pour')addGrains(pile,(rnd()*GW*GH)|0,64);else if(act==='quake')addGrains(pile,quakeCell(),1);},
+  onEvery(){startMode(state.mode>=4?0:state.mode+1);},
+  advance,render:()=>draw(),
+  beginExport(w,h){worldC.width=w;worldC.height=h;tickAcc=0;VJ.mid=VJ.high=0;VJ.count=0;hand.on=false;},
+  endExport(){resizeWorld();last=performance.now();}
+};
+layoutRules();resizeWorld();
+startMode(0);if(!reduceMotion)startIdle();
+syncControls();vjInit();queueRaf();
+</script>
+</body>
+</html>

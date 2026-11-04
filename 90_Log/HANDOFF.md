@@ -1,6 +1,6 @@
 # HANDOFF — 次セッションへの申し送り
 
-最終更新: 2026-11-02 ／ 直近セッション: **EE-08 SYNC を追加（ホタルの同期・結合振動子・6 種族・位相円の PROOF・自動上演 75 秒・VJ の ENTRAIN で群れが曲のテンポに引き込まれる／Codex astra → 上限で報告だけ欠けた → Claude 検証）**（その前 **EE-07 SANDPILE を追加（砂山モデル・自己組織化臨界・6 モード・べき乗則の PROOF・自動上演 75 秒・VJ／Codex は上限で停止→サブエージェントが実装→Claude 検証）**（前回 EE-06 TURING を追加（Gray-Scott 反応拡散・F–k MAP・7 種族・自動上演 70 秒・VJ／実装は Codex astra → Claude 検証）**（同日その前に EE-05 LENIA）
+最終更新: 2026-11-04 ／ 🆕 **11-04 その6：解説 LP 8 本目 `Emergence Engine/scroll/SCROLL_BIFURCATION_LP.html`（01・10 章・Codex astra 実装→Claude 検証・法則は `_law/ee01_bifurcation.js`）＝Emergence Engine の解説 LP 01〜08 がそろった** ／ **11-04 その5：解説 LP 7 本目 `Emergence Engine/scroll/SCROLL_HIGHWAY_LP.html`（02・9 章・Codex astra 実装→Claude 検証・法則は `_law/ee02_highway.js`）／次は 01 BIFURCATION（最後の 1 本）** ／ **11-04 その4：解説 LP 6 本目 `Emergence Engine/scroll/SCROLL_SLIME_LP.html`（03・10 章・Codex astra 実装→Claude が世界を 400×250 に広げて仕上げ・法則は `_law/ee03_slime.js`）／次は 02 HIGHWAY** ／ **11-04 その3：解説 LP 5 本目 `Emergence Engine/scroll/SCROLL_FLOCK_LP.html`（04・11 章・Codex astra 実装→Claude 検証・法則は `_law/ee04_flock.js` にアプリと共有・EE の index から SCROLL リンク）／次は 03 SLIME** ／ **11-04 その2：解説 LP 4 本目 `Emergence Engine/scroll/SCROLL_LENIA_LP.html`（05・11 章・Codex は上限で途中停止→Claude が仕上げ・法則は `_law/ee05_lenia.js`）／次は 01〜04（04 FLOCK から）** ／ **11-04：解説 LP 3 本目 `Emergence Engine/scroll/SCROLL_TURING_LP.html`（06・8 章・Codex astra 実装→Claude 検証・法則は `_law/ee06_turing.js`＝CPU の式＋GPU のシェーダー）** → [[2026-11-04]] ／ **11-03 その6：解説 LP 2 本目 `Emergence Engine/scroll/SCROLL_SANDPILE_LP.html`（07・11 章・法則は `_law/ee07_sandpile.js`）** ／ **11-03 その5：Emergence Engine の解説 LP 1 本目 `Emergence Engine/scroll/SCROLL_SYNC_LP.html`（08 SYNC・スクロール＝時間・Worker で記録・法則は `_law/ee08_sync.js` にアプリと共有）＋ 01〜08 の台本の素（`Emergence Engine/scroll/CLAUDE.md`）** → [[2026-11-03]] その5 ／ それ以前の直近セッション: **EE-08 SYNC を追加（ホタルの同期・結合振動子・6 種族・位相円の PROOF・自動上演 75 秒・VJ の ENTRAIN で群れが曲のテンポに引き込まれる／Codex astra → 上限で報告だけ欠けた → Claude 検証）**（その前 **EE-07 SANDPILE を追加（砂山モデル・自己組織化臨界・6 モード・べき乗則の PROOF・自動上演 75 秒・VJ／Codex は上限で停止→サブエージェントが実装→Claude 検証）**（前回 EE-06 TURING を追加（Gray-Scott 反応拡散・F–k MAP・7 種族・自動上演 70 秒・VJ／実装は Codex astra → Claude 検証）**（同日その前に EE-05 LENIA）
 （COGNITIVE ブラッシュアップは 2026-08-31 に完走済み → 下の「COGNITIVE（前の仕事）」）
 
 ---
@@ -19,17 +19,22 @@
 ✅ 11-03 済み：**見た目は NATURAL に決定** → **SP-03 本体 `sound-patterns/03_consonance.html`**（比を連続で動かす・SOUND・→純正／→平均律・PROOF・AUTO 60s・表示 1/4 速・PARAMS）。実測と動作チェック表は [[2026-11-03]]
 ✅ 11-03 その3：**解説スクロール LP `sound-patterns/scroll/SCROLL_BEATS_LP.html`**（8 章・FORMULA RAIL・スクロールで鳴る ON／BOW・なめらかな慣性・BLUEPRINT＝歩いた道・REWIND）＋**入口 `sound-patterns/index.html`**（APP と SCROLL を横並び）＋ stage.js 登録。方針 [[PLAN_SCROLL_EXPLAINER]]＝今後の教材は解説 LP と 1 組。Emergence Engine の解説はユーザーが過去セッションの共有リンクを貼ってくれる予定
 ✅ 11-03 その4：**SP-03 の解説 LP `sound-patterns/scroll/SCROLL_CONSONANCE_LP.html`**（純音には谷がない→倍音→谷→3/2→平均律のうなり→SL-02 で揺れが消える→比の単純さ→2 本の物差しの地図）。2 本とも音の既定を **BOW**（ユーザーの好み）・`?ch=&u=` で場面から開ける
+✅ 11-03 その5：**EE の解説 LP 1 本目 `Emergence Engine/scroll/SCROLL_SYNC_LP.html`**（10 章・r(K) 実測曲線・ENTRAIN のキック）。チャットはユーザーが `Emergence Engine/chat/*.md` にコピペで入れてくれた → 01〜08 の解説を `Emergence Engine/scroll/CLAUDE.md` の「台本の素」に拾った。08 の SIM は `_law/ee08_sync.js` に切り出し、08 本体もそれを読む（Node の検証は HTML ではなくこのファイルを切り出す）
 ✅ 11-03 その2：**SP-02 本体 `sound-patterns/02_beats.html`**＋法則 `_law/sp02_law.js`（Δf × 音域の地図をドラッグ・ONE／BEAT／ROUGH／TWO・矢印の足し算・足した波の包絡線・TAP・音程ボタンで「低い 3 度が濁る」・PROOF＝和を積に・AUTO 75s）。実測は [[2026-11-03]] の「その2」
 
 ### ⚠️ 音の教材：ユーザーが決めること
 - SP-03 本体：11-03 にユーザーが聴いた（感想はまだ聞いていない）
 - SCROLL_BEATS_LP：11-03 好評（BOW がいい）→ 既定 BOW に済み
 - **SCROLL_CONSONANCE_LP を読む**（BOW）＝確認待ち
+- 🆕 **SCROLL_LENIA_LP を読む**（BOW）：生きもの 1 匹ごとの音・COLLIDE で組織が生まれる場面＝確認待ち
+- ✅ SCROLL_TURING_LP：11-04 ユーザー「問題なく確認できました」
+- 🆕 **SCROLL_SANDPILE_LP を読む**（BOW）：崩れの音の大きさ・04 の大雪崩の見え方＝確認待ち
+- 🆕 **SCROLL_SYNC_LP を読む**（BOW）：さざめき→拍に変わるか・08 のキック・計算中 % が消えるまでの時間＝確認待ち
 - **SP-02 本体を音を出して触る**：1〜8 Hz のうなりを TAP で数えられるか・24 Hz 前後で「揺れ→ざらつき」に変わって聞こえるか・臨界帯域の外で 2 音に分かれるか・110 Hz と 440 Hz の長3度の違い＝確認待ち
 - SL-02 の件を GENEX_NEXT に持ち込むか：(a) 音色の倍音を増やす (b) 結合の瞬間に「閉じる」形を見せる＝判断待ち（SP-03 を聴いた後）
 
 ### 次の候補（10-31 の方針から・上から順）
-- 解説 LP の次：Emergence Engine 08→07→…（ユーザーが過去セッションの共有リンクを貼ってくれる → 解説を拾って台本に）
+- 解説 LP の次：**05 LENIA**（08・07・06 済み）→ 01〜04。05 も WebGL なので 06 の型（LP の中の見えない WebGL2 で law のシェーダーを回し、readPixels で Uint8 に記録・見ている章のランを優先）がそのまま使える。台本の素は `Emergence Engine/scroll/CLAUDE.md`。型は SCROLL_SYNC_LP（法則を `_law/ee0x_*.js` に切り出してアプリと共有・重い計算は Worker で記録してスクロール＝時間）
 - 音の教材：次の 1 本（推し SP-05 CHLADNI。SP-02 は 11-03 済み）。見た目は NATURAL・法則の正本 `_law/` ＋本体の型は SP-03 をそのまま使う
 - Primitive カードを書き始める（P-04 Fibonacci／P-06 Voronoi／P-07 Turing から）。「核＝何が見えたら成功か」欄を足す
 - PROJECT HUB にマップを載せる（原本を読むだけ・「WTE 座標」欄）
@@ -79,7 +84,7 @@
 
 ### 🔧 この系列で効いた検証のやり方
 - Browser ペインは裏に回ると rAF が毎秒1回程度になる → `advance(1/60)` を JS から回して `draw()` → スクショ／画素で確認。
-- 絵の確認は Node：HTML の `/*SIM-BEGIN … SIM-END*/` を切り出して `vm.runInThisContext`（`eval` は15倍遅い）→ RGBA → PIL でコンタクトシート。
+- 絵の確認は Node：HTML の `/*SIM-BEGIN … SIM-END*/` を切り出して（08 は 11-03 から `_law/ee08_sync.js` の中） `vm.runInThisContext`（`eval` は15倍遅い）→ RGBA → PIL でコンタクトシート。
 - ブラウザがキャッシュした古い JS を読むことがある → URL に `?v=数字` を付ける。
 - 連番PNG は `window.showDirectoryPicker` を偽物に差し替えて `vjSeq()` を回すと枚数・拍数を検証できる。
 - 05（GPU）の数値チェックは `readState()`（readPixels）で質量や塊の数を取る。手で回すときは `VJ.exporting = true` で本来のループを止めてから `advance(1/60)` を回す（スクショの前は false に戻して1秒待つと絵が更新される）。

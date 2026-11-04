@@ -47,6 +47,8 @@ main{max-width:1280px;margin:0 auto;padding:0 clamp(16px,6vw,72px) 80px;display:
 .view iframe.on{opacity:1;}
 .view .live{position:absolute;left:10px;bottom:8px;font-size:8px;letter-spacing:.4em;color:var(--mute);z-index:2;}
 .work:hover .live{color:var(--rouge);}
+.scrolllink{align-self:flex-start;font-size:9px;letter-spacing:.2em;color:var(--gold);border:1px solid rgba(255,210,122,.4);padding:4px 9px;cursor:pointer;}
+.scrolllink:hover,.scrolllink:focus-visible{background:var(--gold);color:#070707;outline:none;}
 .new{position:absolute;top:10px;right:12px;font-size:8px;letter-spacing:.3em;color:var(--rouge);border:1px solid rgba(255,79,168,.45);padding:2px 7px;z-index:2;}
 
 footer{max-width:1280px;margin:0 auto;padding:0 clamp(16px,6vw,72px) 48px;font-size:9px;letter-spacing:.2em;color:var(--mute);line-height:2;}
@@ -78,21 +80,24 @@ footer{max-width:1280px;margin:0 auto;padding:0 clamp(16px,6vw,72px) 48px;font-s
 "use strict";
 /* WORKS — 1 block = 1 piece. The rule is shown; its identity is blurred until hover. */
 const WORKS = [
-  { n:'01', en:'Bifurcation Walk', jp:'分岐図を歩く', url:'01_bifurcation_walk.html',
+  { n:'01', en:'Bifurcation Walk', jp:'分岐図を歩く', url:'01_bifurcation_walk.html', scroll:'scroll/SCROLL_BIFURCATION_LP.html',
     rule:'いまの値 x に r を掛け、さらに (1−x) を掛ける。それを繰り返すだけ。',
     truth:'ロジスティック写像 xₙ₊₁ = r·xₙ(1−xₙ)', draw:'bif' },
-  { n:'02', en:'Highway', jp:'一万歩目の秩序', url:'02_highway.html',
+  { n:'02', en:'Highway', jp:'一万歩目の秩序', url:'02_highway.html', scroll:'scroll/SCROLL_HIGHWAY_LP.html',
     rule:'足もとの色を読み、決まった方へ曲がり、色を塗り替えて1歩。',
     truth:"ラングトンのアリ（と、その親戚のターミット）", draw:'ant' },
-  { n:'03', en:'Slime Network', jp:'脳のない設計者', url:'03_slime_network.html',
+  { n:'03', en:'Slime Network', jp:'脳のない設計者', url:'03_slime_network.html', scroll:'scroll/SCROLL_SLIME_LP.html',
     rule:'前・左・右の3点を嗅ぎ、濃い方へ曲がり、1滴落とす。何万匹で。',
     truth:'粘菌の輸送ネットワークモデル（Jones 2010）', draw:'slime' },
-  { n:'04', en:'Flock', jp:'誰もリーダーじゃない', url:'04_flock.html',
+  { n:'04', en:'Flock', jp:'誰もリーダーじゃない', url:'04_flock.html', scroll:'scroll/SCROLL_FLOCK_LP.html',
     rule:'近すぎたら離れ、隣と向きをそろえ、隣たちの真ん中へ寄る。見えるのは隣だけ。',
     truth:'ボイド（Reynolds 1987）', draw:'flock' },
-  { n:'05', en:'Lenia', jp:'誰も形を知らない', url:'05_lenia.html', isNew:true,
+  { n:'05', en:'Lenia', jp:'誰も形を知らない', url:'05_lenia.html', scroll:'scroll/SCROLL_LENIA_LP.html',
     rule:'まわりを輪で見て、混み具合がちょうどよければ少し育ち、外れたら少し痩せる。',
     truth:'Lenia — なめらかなライフゲーム（Chan 2019）', draw:'lenia' },
+  { n:'06', en:'Turing', jp:'誰も模様を描いていない', url:'06_turing.html', scroll:'scroll/SCROLL_TURING_LP.html', rule:'二つの薬品がにじみ、片方がもう片方を食べて増える。片方は注がれ、片方は取り除かれる。', truth:'反応拡散 — Gray-Scott モデル（Pearson 1993）', draw:'turing' },
+  { n:'07', en:'Sandpile', jp:'誰も崩れ方を決めていない', url:'07_sandpile.html', scroll:'scroll/SCROLL_SANDPILE_LP.html', rule:'一粒ずつ落とす。4つたまったら崩れて、となりに1粒ずつ配る。端から落ちた粒は消える。', truth:'砂山モデル — 自己組織化臨界（Bak–Tang–Wiesenfeld 1987）', draw:'sandpile' },
+  { n:'08', en:'Sync', jp:'誰も合図していない', url:'08_sync.html', scroll:'scroll/SCROLL_SYNC_LP.html', isNew:true, rule:'自分の時計で光る。見える距離の仲間が進めば急ぎ、遅れていれば少し待つ。', truth:'同期 — 結合振動子（Kuramoto 1975）', draw:'sync' },
 ];
 
 const host = document.getElementById('works');
@@ -104,6 +109,7 @@ host.innerHTML = WORKS.map((w,i)=>`
       <div class="jp">${w.jp}</div>
       <div class="rule">THE RULE<p>${w.rule}</p></div>
       <div class="truth">WAS ACTUALLY → <span>${w.truth}</span></div>
+      ${w.scroll?`<span class="scrolllink" role="link" tabindex="0" data-href="${encodeURI(w.scroll)}">SCROLL — 読む解説 →</span>`:''}
     </div>
     <div class="view"><canvas></canvas><span class="live">● HOVER — LIVE</span>${w.isNew?'<span class="new">NEW</span>':''}</div>
   </a>`).join('');
@@ -145,6 +151,48 @@ function poster(cv, kind){
         g.beginPath(); g.moveTo(x - Math.cos(a)*7, y - Math.sin(a)*7); g.lineTo(x + Math.cos(a)*2, y + Math.sin(a)*2); g.stroke();
       }
     }
+  } else if (kind === 'sync'){
+    // Actual WAVES rule: random independent phases, 4-neighbour torus, alpha=.35.
+    // Compute once; resize only redraws the resulting phase field. No planted spirals.
+    if (!poster.syncField){
+      const w=40,h=24,n=w*h,tau=2*Math.PI,dt=1/30,ca=Math.cos(.35),sa=Math.sin(.35);
+      let seed=1975;const rnd=()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};
+      const a=Float64Array.from({length:n},()=>rnd()*tau),b=new Float64Array(n),s=new Float64Array(n),c=new Float64Array(n),nb=new Int32Array(n*4);
+      for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x;nb.set([y*w+(x+w-1)%w,y*w+(x+1)%w,((y+h-1)%h)*w+x,((y+1)%h)*w+x],i*4);}
+      for(let step=0;step<480;step++){
+        for(let i=0;i<n;i++){s[i]=Math.sin(a[i]);c[i]=Math.cos(a[i]);}
+        for(let i=0;i<n;i++){let re=0,im=0;for(let k=0;k<4;k++){const j=nb[i*4+k];re+=c[j];im+=s[j];}b[i]=(a[i]+dt*(tau*2+5*((im*c[i]-re*s[i])*ca-(re*c[i]+im*s[i])*sa)/4))%tau;}
+        a.set(b);
+      }
+      poster.syncField={w,h,a};
+    }
+    const {w,h,a}=poster.syncField,dx=W/w,dy=H/h;
+    for(let i=0;i<a.length;i++){const phase=a[i]/(2*Math.PI),pulse=Math.exp(-phase/.12);g.fillStyle=`hsl(${phase*300+35} ${45+pulse*40}% ${7+pulse*58}%)`;g.fillRect((i%w)*dx,Math.floor(i/w)*dy,Math.max(1,dx-1),Math.max(1,dy-1));}
+  } else if (kind === 'turing'){
+    // Small, real Gray-Scott poster: random seeds, 900 synchronous toroidal steps.
+    const w=96,h=54,n=w*h;let a=new Float32Array(n*2),b=new Float32Array(n*2),seed=1993;
+    const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647;};
+    for(let i=0;i<n;i++)a[i*2]=1;
+    for(let p=0;p<20;p++){const cx=Math.floor(rnd()*w),cy=Math.floor(rnd()*h);for(let y=0;y<6;y++)for(let x=0;x<6;x++){const i=(((cy+y)%h)*w+(cx+x)%w)*2;a[i]=.5;a[i+1]=.25+(rnd()-.5)*.02;}}
+    for(let t=0;t<900;t++){
+      for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*2,u=a[i],v=a[i+1];let lu=-u,lv=-v;
+        for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const j=(((y+dy+h)%h)*w+(x+dx+w)%w)*2,q=dx&&dy?.05:.2;lu+=q*a[j];lv+=q*a[j+1];}
+        const r=u*v*v;b[i]=Math.max(0,Math.min(1,u+lu-r+.03*(1-u)));b[i+1]=Math.max(0,Math.min(1,v+.5*lv+r-.092*v));
+      }[a,b]=[b,a];
+    }
+    const oc=document.createElement('canvas');oc.width=w;oc.height=h;const ctx=oc.getContext('2d'),img=ctx.createImageData(w,h);
+    for(let i=0;i<n;i++){const t=Math.min(1,a[i*2+1]*3.2);img.data[i*4]=7+230*t;img.data[i*4+1]=7+240*t;img.data[i*4+2]=7+248*t;img.data[i*4+3]=255;}ctx.putImageData(img,0,0);g.drawImage(oc,0,0,W,H);
+  } else if (kind === 'sandpile'){
+    // Real sandpile poster: 2^14 grains poured on one cell, toppled in parallel waves until no cell holds ≥ 4 (~100 ms).
+    const N=16384,n=Math.ceil(Math.sqrt(N)*0.74)+9|1,c=(n*n)>>1,h=new Int32Array(n*n),inq=new Uint8Array(n*n);let q=[c],nq=[];h[c]=N;
+    while(q.length){for(const i of q){inq[i]=0;const k=h[i]>>2;if(!k)continue;h[i]-=k*4;const x=i%n;
+      for(const j of [x>0?i-1:-1,x<n-1?i+1:-1,i>=n?i-n:-1,i<n*n-n?i+n:-1])if(j>=0){h[j]+=k;if(h[j]>=4&&!inq[j]){inq[j]=1;nq.push(j);}}}
+      [q,nq]=[nq,[]];}
+    const pal=[[20,14,8],[92,60,30],[168,120,66],[246,214,150]],oc=document.createElement('canvas');oc.width=oc.height=n;
+    const ctx=oc.getContext('2d'),img=ctx.createImageData(n,n);
+    for(let i=0;i<n*n;i++){const p=pal[h[i]];img.data[i*4]=p[0];img.data[i*4+1]=p[1];img.data[i*4+2]=p[2];img.data[i*4+3]=255;}
+    ctx.putImageData(img,0,0);g.fillStyle='rgb(20,14,8)';g.fillRect(0,0,W,H);
+    const sz=Math.min(W,H)*0.96;g.imageSmoothingEnabled=false;g.drawImage(oc,(W-sz)/2,(H-sz)/2,sz,sz);
   } else if (kind === 'lenia'){
     // four Orbiums — Lenia's swimmer, the real 20×20 cells, in quarter-turn orientations
     const O = [ [0,0,0,0,0,0,0.1,0.14,0.1,0,0,0.03,0.03,0,0,0.3,0,0,0,0],[0,0,0,0,0,0.08,0.24,0.3,0.3,0.18,0.14,0.15,0.16,0.15,0.09,0.2,0,0,0,0], [0,0,0,0,0,0.15,0.34,0.44,0.46,0.38,0.18,0.14,0.11,0.13,0.19,0.18,0.45,0,0,0],[0,0,0,0,0.06,0.13,0.39,0.5,0.5,0.37,0.06,0,0,0,0.02,0.16,0.68,0,0,0], [0,0,0,0.11,0.17,0.17,0.33,0.4,0.38,0.28,0.14,0,0,0,0,0,0.18,0.42,0,0],[0,0,0.09,0.18,0.13,0.06,0.08,0.26,0.32,0.32,0.27,0,0,0,0,0,0,0.82,0,0], [0.27,0,0.16,0.12,0,0,0,0.25,0.38,0.44,0.45,0.34,0,0,0,0,0,0.22,0.17,0],[0,0.07,0.2,0.02,0,0,0,0.31,0.48,0.57,0.6,0.57,0,0,0,0,0,0,0.49,0], [0,0.59,0.19,0,0,0,0,0.2,0.57,0.69,0.76,0.76,0.49,0,0,0,0,0,0.36,0],[0,0.58,0.19,0,0,0,0,0,0.67,0.83,0.9,0.92,0.87,0.12,0,0,0,0,0.22,0.07], [0,0,0.46,0,0,0,0,0,0.7,0.93,1,1,1,0.61,0,0,0,0,0.18,0.11],[0,0,0.82,0,0,0,0,0,0.47,1,1,0.98,1,0.96,0.27,0,0,0,0.19,0.1], [0,0,0.46,0,0,0,0,0,0.25,1,1,0.84,0.92,0.97,0.54,0.14,0.04,0.1,0.21,0.05],[0,0,0,0.4,0,0,0,0,0.09,0.8,1,0.82,0.8,0.85,0.63,0.31,0.18,0.19,0.2,0.01], [0,0,0,0.36,0.1,0,0,0,0.05,0.54,0.86,0.79,0.74,0.72,0.6,0.39,0.28,0.24,0.13,0],[0,0,0,0.01,0.3,0.07,0,0,0.08,0.36,0.64,0.7,0.64,0.6,0.51,0.39,0.29,0.19,0.04,0], [0,0,0,0,0.1,0.24,0.14,0.1,0.15,0.29,0.45,0.53,0.52,0.46,0.4,0.31,0.21,0.08,0,0],[0,0,0,0,0,0.08,0.21,0.21,0.22,0.29,0.36,0.39,0.37,0.33,0.26,0.18,0.09,0,0,0], [0,0,0,0,0,0,0.03,0.13,0.19,0.22,0.24,0.24,0.23,0.18,0.13,0.05,0,0,0,0],[0,0,0,0,0,0,0,0,0.02,0.06,0.08,0.09,0.07,0.05,0.01,0,0,0,0,0]];
@@ -215,6 +263,12 @@ document.querySelectorAll('.work').forEach(a=>{
     clearTimeout(timer);
     const f = live.get(a); if (f){ f.remove(); live.delete(a); }
   });
+});
+
+/* 解説スクロール LP へのリンク（カード全体が <a> なので、中に <a> を入れず span で飛ぶ） */
+document.querySelectorAll('.scrolllink').forEach(s=>{
+  const go = e=>{ e.preventDefault(); e.stopPropagation(); location.href = s.dataset.href; };
+  s.addEventListener('click', go); s.addEventListener('keydown', e=>{ if (e.key==='Enter') go(e); });
 });
 
 addEventListener('keydown', e=>{ if (e.key==='Escape') location.href = '../index.html'; });

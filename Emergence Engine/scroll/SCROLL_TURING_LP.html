@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TURING — スクロール解説 (EE-06)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Cormorant+Garamond:ital,wght@1,700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500&family=Noto+Serif+JP:wght@400&display=swap" rel="stylesheet">
+<style>
+/* SANDPILE の正本を複製。EE NOIR：ice＝U・gold＝V と式・rouge＝いま。 */
+:root{
+  --bg:#070707;--ink:#F8EFFF;--ink-2:rgba(248,239,255,.80);--mute:rgba(181,142,255,.62);--mute-2:rgba(181,142,255,.30);
+  --line:rgba(255,210,122,.16);--acc:#FFD27A;--acc-ink:#070707;--ice:#5AE9FF;--rouge:#FF4FA8;--sand:#F6D696;
+  --grid:rgba(90,233,255,.028);
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --disp:"Barlow Condensed","Helvetica Neue",sans-serif;
+  --orn:"Cormorant Garamond",serif;
+  --jp:"Noto Sans JP",system-ui,sans-serif;
+  --jps:"Noto Serif JP",serif;
+  --col:400px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg)}
+body{background:var(--bg);color:var(--ink);font-family:var(--mono);font-feature-settings:"tnum";-webkit-font-smoothing:antialiased}
+#grid{position:fixed;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;pointer-events:none}
+#cv{position:fixed;inset:0;width:100vw;height:100vh;display:block;pointer-events:none}
+
+.hud{position:fixed;left:0;right:0;top:0;height:46px;display:flex;align-items:center;gap:16px;padding:0 16px;border-bottom:1px solid var(--line);background:rgba(7,7,7,.92);z-index:5}
+.brand{display:flex;align-items:baseline;gap:8px;white-space:nowrap}
+.mark{font-family:var(--orn);font-style:italic;font-weight:700;font-size:20px;color:var(--ice)}
+.tag{font-size:10px;color:var(--mute);letter-spacing:.2em}
+.chl{flex:1;font-size:11px;color:var(--ink-2);letter-spacing:.18em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chl b{color:var(--acc);font-weight:400}
+.rd{display:flex;align-items:baseline;gap:6px;white-space:nowrap}
+.rd .n{font-family:var(--disp);font-weight:700;font-size:22px;letter-spacing:.04em;min-width:56px;text-align:right}
+.rd .u{font-size:10px;color:var(--mute)}
+.zone{font-family:var(--disp);font-weight:700;font-size:12px;letter-spacing:.18em;padding:3px 8px;border:1px solid var(--line);white-space:nowrap;min-width:86px;text-align:center}
+.zone.EMPTY{color:var(--mute);border-color:var(--mute-2)}
+.zone.FILLING{color:var(--ice);border-color:var(--ice)}
+.zone.PATTERN{color:var(--acc-ink);background:var(--sand);border-color:var(--sand)}
+.zone.AVALANCHE{color:var(--acc-ink);background:var(--rouge);border-color:var(--rouge)}
+.zone.TOPPLE,.zone.MANDALA,.zone.IDENTITY,.zone.POWER{color:var(--acc);border-color:var(--acc)}
+.seg{display:flex;gap:3px}
+.seg button,.lnk{font-family:var(--mono);font-size:10px;letter-spacing:.08em;background:transparent;color:var(--ink-2);border:1px solid var(--line);padding:5px 8px;cursor:pointer;text-decoration:none;white-space:nowrap}
+.seg button:hover,.lnk:hover{border-color:var(--acc);color:var(--acc)}
+.seg button.on{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.vol{width:70px;-webkit-appearance:none;appearance:none;height:2px;background:var(--mute-2);outline:none;cursor:pointer}
+.vol::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;background:var(--acc);border:1px solid var(--acc-ink);border-radius:0}
+.vol::-moz-range-thumb{width:11px;height:11px;background:var(--acc);border:1px solid var(--acc-ink);border-radius:0}
+.prog{position:fixed;left:0;top:46px;height:2px;width:0;background:linear-gradient(90deg,var(--acc),var(--rouge));z-index:5}
+.ticks{position:fixed;left:0;right:0;top:46px;height:6px;z-index:4;pointer-events:none}
+.ticks i{position:absolute;top:0;width:1px;height:6px;background:var(--mute-2)}
+#calc{position:fixed;right:16px;top:56px;z-index:4;font-size:10px;color:var(--mute);letter-spacing:.12em;pointer-events:none;transition:opacity .6s}
+
+main{position:relative;z-index:2}
+.ch{position:relative}
+.card{position:sticky;top:76px;width:var(--col);margin-left:40px;padding:20px 22px 22px;background:rgba(7,7,7,.88);border:1px solid var(--line);border-left:2px solid var(--acc)}
+.card .no{font-size:10px;color:var(--acc);letter-spacing:.2em;margin-bottom:8px}
+.card h2{font-family:var(--disp);font-weight:700;font-size:26px;letter-spacing:.08em;line-height:1.1;margin-bottom:4px}
+.card .jh{font-family:var(--jps);font-size:15px;color:var(--ink);margin-bottom:12px;line-height:1.5}
+.card p{font-family:var(--jp);font-size:13px;line-height:1.85;color:var(--ink-2);margin-bottom:10px}
+.card p b{color:var(--acc);font-weight:500}
+.card p em{font-style:normal;color:var(--rouge)}
+.card p i{font-style:normal;color:var(--sand)}
+.card .note{font-size:10px;color:var(--mute);letter-spacing:.04em;line-height:1.65;border-top:1px solid var(--line);padding-top:8px;margin-top:4px}
+.card .live{color:var(--acc)}
+.hero h1{font-family:var(--orn);font-style:italic;font-weight:700;font-size:76px;line-height:.95;margin:2px 0 6px;color:var(--ice);filter:drop-shadow(0 0 16px rgba(90,233,255,.3))}
+.hero .jh{font-size:18px}
+.rules{margin:4px 0 12px;border-top:1px solid var(--line)}
+.rules div{display:flex;gap:10px;font-family:var(--jp);font-size:12.5px;color:var(--ink);padding:6px 0;border-bottom:1px solid var(--line)}
+.rules div span{font-family:var(--mono);font-size:10px;color:var(--acc);padding-top:2px}
+.btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.btn{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;background:transparent;color:var(--ink-2);border:1px solid var(--line);padding:8px 10px;cursor:pointer;text-decoration:none}
+.btn:hover{border-color:var(--acc);color:var(--acc)}
+.btn.pri{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.scrollcue{font-size:10px;color:var(--mute);letter-spacing:.22em;margin-top:14px}
+
+#rail{position:fixed;left:40px;bottom:18px;width:var(--col);z-index:3;background:rgba(7,7,7,.9);border:1px solid var(--line);padding:9px 12px 8px;pointer-events:none}
+#rail .rh{font-size:9px;color:var(--mute);letter-spacing:.18em;margin-bottom:5px;display:flex;justify-content:space-between}
+.fr{display:flex;justify-content:space-between;gap:10px;font-size:10.5px;line-height:1.75;color:var(--mute-2);transition:color .25s}
+.fr.on{color:var(--mute)}
+.fr .fv{color:inherit;text-align:right;white-space:nowrap}
+.fr.on .fv{color:var(--ink-2)}
+.fr .fx{white-space:nowrap}
+.t{transition:color .25s,background .25s;padding:0 1px}
+.t.on{color:var(--acc-ink);background:var(--acc)}
+
+@media (max-width:880px){
+  :root{--col:auto}
+  .hud{gap:8px;padding:0 10px}
+  .brand,.chl,.vol,.lnk.app{display:none}
+  .rd .n{font-size:17px;min-width:44px}
+  .rd .u{display:none}
+  .zone{min-width:0;padding:3px 6px}
+  .seg button,.lnk{padding:5px 6px}
+  .card{margin:0 12px;width:auto;top:calc(36vh + 62px);padding:14px 16px 14px}
+  .card p{font-size:12px;line-height:1.75;margin-bottom:8px}
+  .card .jh{margin-bottom:8px}
+  .hero h1{font-size:52px}
+  .scrollcue{display:none}
+  #calc{top:auto;bottom:6px;right:12px}
+  #rail{left:12px;right:12px;width:auto;top:calc(36vh + 2px);bottom:auto;padding:6px 10px}
+  #rail .rh{display:none}
+  .fr:not(.lit){display:none}
+  .fr .fv{display:none}
+}
+@media (prefers-reduced-motion:reduce){.t,.fr{transition:none}}
+.zone.SEED{color:var(--ice);border-color:var(--ice)}
+.zone.SPLIT,.zone.HEAL{color:var(--rouge);border-color:var(--rouge)}
+.zone.PATTERN,.zone.MAP{color:var(--acc);background:transparent;border-color:var(--acc)}
+.fr .fx{min-width:0}
+.recipe-list{font-size:11px!important;line-height:1.7!important}
+.card{overflow-wrap:anywhere}
+@media(max-width:880px){.fr{font-size:10px;line-height:1.5}#rail{padding:5px 10px}.hero .jh{font-size:16px}.rules div{font-size:11.5px}}
+</style>
+</head>
+<body>
+<div id="grid"></div>
+<canvas id="cv"></canvas>
+
+<div class="hud">
+  <div class="brand"><span class="mark">06</span><span class="tag">EMERGENCE ENGINE ⁄ TURING SCROLL</span></div>
+  <div class="chl" id="chl">00 ⁄ 07 <b>TURING</b></div>
+  <div class="rd"><span class="n" id="hV">—</span><span class="u" id="hVu">粒の数</span></div>
+  <div class="zone PATTERN" id="hZone">PATTERN</div>
+  <div class="seg" id="segSnd" title="S キーでも切り替え"><button data-v="off">OFF</button><button data-v="bow" class="on">BOW</button><button data-v="on">♪ ON</button></div>
+  <input class="vol" id="vol" type="range" min="0" max="100" value="45" title="MASTER">
+  <a class="lnk app" href="../06_turing.html">APP →</a>
+  <a class="lnk" href="../index.html">INDEX</a>
+</div>
+<div class="prog" id="prog"></div>
+<div class="ticks" id="ticks"></div>
+<div id="calc"></div>
+
+<main id="main">
+  <section class="ch" data-ch="0" style="height:150vh">
+    <div class="card hero">
+      <div class="no">EMERGENCE ENGINE ⁄ 06 ⁄ SCROLL EXPLAINER</div>
+      <h1>Turing</h1>
+      <div class="jh">誰も模様を描いていないのに、なぜヒョウの斑点やシマウマの縞ができる？</div>
+      <p><b>これは何か</b>：にじむ薬品どうしの反応から、模様が育つ世界。「反応拡散」の模型です。ここで守るルールは、この 3 行だけ。</p>
+      <div class="rules">
+        <div><span>01</span>薬品 U と V がにじむ。V は U の半分の速さ</div>
+        <div><span>02</span>V は U を食べて増える：U＋2V → 3V</div>
+        <div><span>03</span>U はいつも注がれ（F）、V はいつも取り除かれる（F＋k）</div>
+      </div>
+      <p>白いところほど V が多い。<b>スクロールが時間</b>です。進めば育ち、戻れば巻き戻る。止まれば模様も音も止まります。</p>
+      <div class="btns"><button class="btn pri" id="bStart">♪ 音を出して読む（BOW）</button><a class="btn" href="../06_turing.html">アプリで触る →</a></div>
+      <div class="scrollcue">↓ SCROLL · BOW＝スクロールの速さで鳴る</div>
+    </div>
+  </section>
+  <section class="ch" data-ch="1" style="height:250vh">
+    <div class="card">
+      <div class="no">01 ⁄ 07</div><h2>DROP</h2><div class="jh">一滴が、ふたつに割れる</div>
+      <p>一滴の V は、まわりの U を食べながら広がる。ところが真ん中では、<b>食べる U が足りなくなる</b>。真ん中がくぼみ、粒が分かれる。</p>
+      <p>いま <span class="live" data-live="step">—</span> 歩、<b><span class="live" data-live="count">—</span> 粒</b>。この記録で初めてふたつになったのは <span class="live" data-live="split2">—</span> 歩、よっつになったのは <span class="live" data-live="split4">—</span> 歩。</p>
+      <p>下の断面は、白い粒を横切って見た濃さ。<b>金が V</b>、水色が U。V の山の下で、U が減っている。</p>
+      <div class="note">MITOSIS・一滴から。赤い線が断面の位置。線は V がいちばん濃いマスの行を通る。「粒」は V が濃い、つながった領域として数える。</div>
+    </div>
+  </section>
+  <section class="ch" data-ch="2" style="height:290vh">
+    <div class="card">
+      <div class="no">02 ⁄ 07</div><h2>DOUBLE</h2><div class="jh">誰も「分裂しろ」と命じていない</div>
+      <p>食べて、にじむ。その続きだけで、粒はまた分かれる。初めの倍増の間隔は、およそ <b><span class="live" data-live="doubleGap">—</span> 歩</b>。下の目盛りは、上へひと区切りで倍になる。</p>
+      <p>いま <span class="live" data-live="step">—</span> 歩、<b><span class="live" data-live="count">—</span> 粒</b>。白い領域は世界の <span class="live" data-live="area">—</span>%。</p>
+      <p>空いた場所が減ると、倍々の増え方は続かない。この記録での最大は <b><span class="live" data-live="dropMax">—</span> 粒</b>、最後は <span class="live" data-live="dropLast">—</span> 粒。世界の広さが、増え方の限界になる。</p>
+      <div class="note">COUNT：縦は log₂、横は歩数。粒の数は毎コマ実測。つながった縞は、長くてもひとつと数える。</div>
+    </div>
+  </section>
+  <section class="ch" data-ch="3" style="height:250vh">
+    <div class="card">
+      <div class="no">03 ⁄ 07</div><h2>WHY</h2><div class="jh">斑点のあいだに、なぜ隙間がある？</div>
+      <p>育ち終えた斑点を、上から下へ横切ってみる。<b>V の山は狭く、U のくぼみは広い</b>。粒の外側にも、U が足りない範囲がある。</p>
+      <p>V は U の半分の速さでしかにじまない。増える場所は狭いまま、U が足りない範囲は広がる。だから<b>すぐ隣では、新しい V が育ちにくい</b>。これが、斑点どうしの間隔をつくる。</p>
+      <p>「近くで増え、遠くを抑える」。チューリングが考えた模様づくりの芯です。</p>
+      <div class="note">TURING 1952 → ここで動かすのは Gray–Scott 模型。時間は固定し、断面の行だけ動かす。U と V は同じ濃さの目盛り。</div>
+    </div>
+  </section>
+  <section class="ch" data-ch="4" style="height:280vh">
+    <div class="card">
+      <div class="no">04 ⁄ 07</div><h2>RECIPES</h2><div class="jh">同じ式から、こんなに違う世界</div>
+      <p>式は同じ。変えるのは<b>注ぐ強さ F と、取り除く強さ k</b>。分裂・斑点・珊瑚・迷路・沸く波・すべる粒、それぞれの育ち方が現れる。</p>
+      <p>全員いっしょに <b><span class="live" data-live="step">—</span> 歩</b>。各図の見出しが、その世界の F と k。白い領域の割合は：</p>
+      <p class="recipe-list"><span class="live" data-live="recipes">—</span></p>
+      <div class="note">アプリの既定の種を使う。MITOSIS・CORAL は中央、ほかは散布。種の置き方も結果に関わる。同じ歩数の記録が揃ってから並べる。</div>
+    </div>
+  </section>
+  <section class="ch" data-ch="5" style="height:270vh">
+    <div class="card">
+      <div class="no">05 ⁄ 07</div><h2>ATLAS</h2><div class="jh">世界そのものを、模様の地図にする</div>
+      <p>今度は、場所ごとに F と k を変える。上ほど U を多く注ぎ、右ほど V を強く取り除く。世界の中に、いくつもの模様が育ってくる。</p>
+      <p>アプリの <b>F–k MAP は、描いたものではなく育てたもの</b>。いま <span class="live" data-live="step">—</span> 歩。点は、さっきの世界の F と k の位置です。</p>
+      <div class="note">上＝F 0.09、下＝0。左＝k 0.045、右＝0.070。隣の場所とにじみ合うため、独立した世界を並べた見本帳とは少し違う。</div>
+    </div>
+  </section>
+  <section class="ch" data-ch="6" style="height:260vh">
+    <div class="card">
+      <div class="no">06 ⁄ 07</div><h2>HEAL</h2><div class="jh">洗い流しても、模様はまた伸びる</div>
+      <p>育った迷路の真ん中を洗い流す。V が消え、U だけの穴になる。それでも、まわりから反応が進み、<b>穴の中へ模様が戻ってくる</b>。</p>
+      <p>洗ってから <span class="live" data-live="step">—</span> 歩。穴の中の白い領域は <b><span class="live" data-live="hole">—</span>%</b>、洗う前は <span class="live" data-live="baseline">—</span>%。その割合まで戻るのは <b><span class="live" data-live="recovery">—</span></b>。</p>
+      <p>05 LENIA の組織と同じように、形を外から描き直さなくても、局所のルールが働き続ける。</p>
+      <div class="note">MAZE を育て、半径 14 の円内を一度だけ洗う。赤い円と下の帯が、その穴の範囲。「戻る」は面積の割合の回復で、元の線と完全に同じ形になる意味ではない。</div>
+    </div>
+  </section>
+  <section class="ch" data-ch="7" style="height:230vh">
+    <div class="card">
+      <div class="no">07 ⁄ 07</div><h2>BLUEPRINT</h2><div class="jh">見てきた世界は、この地図の中にいた</div>
+      <p>一滴の分裂も、間隔のある斑点も、穴を埋める迷路も。同じルールの、違う場所にある。</p>
+      <p>誰も輪郭を描いていない。<b>何が増え、どれだけにじみ、何が補われるか</b>を決めると、模様は世界の中から育ってくる。</p>
+      <div class="btns"><button class="btn" id="bRewind">◀◀ REWIND</button><a class="btn pri" href="../06_turing.html">アプリで触る →</a><a class="btn" href="SCROLL_SANDPILE_LP.html">07 SANDPILE の解説 →</a><a class="btn" href="SCROLL_LENIA_LP.html">05 LENIA の解説 →</a><a class="btn" href="../index.html">SERIES INDEX</a></div>
+      <div class="note">スクロールすると、地図に章番号が順に現れる。REWIND は記録を逆に読むだけ。アプリでは種を置き、洗い流し、F と k を動かしてみる。</div>
+    </div>
+  </section>
+</main>
+<div id="rail">
+  <div class="rh"><span>GRAY–SCOTT ⁄ FORMULA RAIL</span><span id="railRun">—</span></div>
+  <div class="fr" data-row="a"><span class="fx">∂u/∂t ＝ <span class="t" data-t="Du">Du</span>∇²u − <span class="t" data-t="uv">uv²</span> ＋ <span class="t" data-t="F">F</span>(1−u)</span><span class="fv" id="fvA">—</span></div>
+  <div class="fr" data-row="b"><span class="fx">∂v/∂t ＝ <span class="t" data-t="Dv">Dv</span>∇²v ＋ <span class="t" data-t="uv">uv²</span> − (<span class="t" data-t="F">F</span>＋<span class="t" data-t="k">k</span>)v</span><span class="fv" id="fvB">—</span></div>
+  <div class="fr" data-row="c"><span class="fx"><span class="t" data-t="ratio">Dv ＝ ½·Du</span></span><span class="fv" id="fvC">—</span></div>
+  <div class="fr" data-row="d"><span class="fx"><span class="t" data-t="params">F, k</span> ＝ 注ぐ強さ, 取り除く強さ</span><span class="fv" id="fvD">—</span></div>
+</div>
+<script src="../_law/ee06_turing.js"></script>
+<script>
+(() => {
+'use strict';
+const $ = id => document.getElementById(id);
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+const seg = (u, a, b) => clamp((u - a) / (b - a));
+const sm = t => t * t * (3 - 2 * t);
+const lerp = (a, b, t) => a + (b - a) * t;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let C = {};
+const readColors = () => { C = { ink: css('--ink'), ink2: css('--ink-2'), mute: css('--mute'), mute2: css('--mute-2'), line: css('--line'), acc: css('--acc'), ice: css('--ice'), rouge: css('--rouge'), sand: css('--sand'), bg: css('--bg'), mono: css('--mono'), disp: css('--disp'), jp: css('--jp') }; };
+
+
+// GPU で記録し、スクロールでは記録を引くだけ。実時間の位相や乱数を描画へ足さない。
+// FS_STEP / VS / SPECIES / seedChem は読み込んだ law のものをそのまま使う。
+const RECIPES = ['mitosis', 'spots', 'coral', 'maze', 'chaos', 'skate'];
+const RUNS = {
+  drop: { species: 0, w: 128, h: 128, steps: 16000, every: 40, seed: 1, one: true },
+  ...Object.fromEntries(RECIPES.map((id, species) => [id, { species, w: 128, h: 128, steps: 8000, every: 40, seed: 1 }])),
+  atlas: { species: 6, w: 160, h: 160, steps: 5000, every: 25, seed: 1993 },
+  heal: { species: 3, w: 128, h: 128, steps: 1500, every: 10, seed: 1, prep: 6000 },
+};
+const DATA = {};
+let gl = null, progStep = null, computeError = '', computeMode = 'pending';
+const gpuCanvas = document.createElement('canvas'); // detached: the visible surface is always 2D
+const computeTiming = { lastMs: 0, maxMs: 0, slices: 0, active: '' };
+function compile(fs) {
+  const p = gl.createProgram();
+  for (const [type, src] of [[gl.VERTEX_SHADER, VS], [gl.FRAGMENT_SHADER, fs]]) {
+    const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw Error(gl.getShaderInfoLog(s));
+    gl.attachShader(p, s); gl.deleteShader(s);
+  }
+  gl.bindAttribLocation(p, 0, 'p'); gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw Error(gl.getProgramInfoLog(p));
+  p.u = {};
+  for (let i = 0; i < gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS); i++) {
+    const n = gl.getActiveUniform(p, i).name; p.u[n] = gl.getUniformLocation(p, n);
+  }
+  return p;
+}
+function makeTarget(w, h) {
+  const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, w, h, 0, gl.RGBA, gl.FLOAT, null);
+  for (const k of [gl.TEXTURE_MIN_FILTER, gl.TEXTURE_MAG_FILTER]) gl.texParameteri(gl.TEXTURE_2D, k, gl.NEAREST);
+  for (const k of [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T]) gl.texParameteri(gl.TEXTURE_2D, k, gl.CLAMP_TO_EDGE);
+  const fb = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+  if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) throw Error('RGBA32F framebuffer incomplete');
+  return { w, h, tex, fb };
+}
+function writeChem(s, a) {
+  const d = new Float32Array(s.w * s.h * 4);
+  for (let i = 0; i < a.length / 2; i++) { d[i * 4] = a[i * 2]; d[i * 4 + 1] = a[i * 2 + 1]; d[i * 4 + 2] = a[i * 2] * a[i * 2 + 1] ** 2; d[i * 4 + 3] = 1; }
+  gl.bindTexture(gl.TEXTURE_2D, s.targets[s.cur].tex);
+  gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, s.w, s.h, gl.RGBA, gl.FLOAT, d);
+}
+function gpuStep(s, P, brush = [0, 0, 0, 0], run = 1) {
+  gl.useProgram(progStep); gl.bindFramebuffer(gl.FRAMEBUFFER, s.targets[1 - s.cur].fb); gl.viewport(0, 0, s.w, s.h);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, s.targets[s.cur].tex);
+  const u = progStep.u;
+  gl.uniform1i(u.uA, 0); gl.uniform2i(u.uSize, s.w, s.h); gl.uniform1f(u.uF, P.F); gl.uniform1f(u.uK, P.k);
+  gl.uniform1f(u.uAtlas, P.atlas ? 1 : 0); gl.uniform1f(u.uRun, run); gl.uniform1f(u.uSeed, 0); gl.uniform1f(u.uPulse, 0); gl.uniform4fv(u.uBrush, brush);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); s.cur = 1 - s.cur;
+}
+// METRICS-BEGIN: Node 検証でもこの計測関数を使う。しきい値は量子化前の V > .2。
+function measureChem(a, w, h, stride = 4) {
+  const n = w * h, seen = new Uint8Array(n), hot = new Uint8Array(n), queue = new Int32Array(n);
+  let count = 0, area = 0, hole = 0, holeCells = 0, peak = -Infinity, peakRow = 0;
+  for (let i = 0; i < n; i++) {
+    const v = a[i * stride + 1], x = i % w, y = Math.floor(i / w);
+    if (!Number.isFinite(v) || !Number.isFinite(a[i * stride])) throw Error('Non-finite chemistry');
+    if (v > peak) { peak = v; peakRow = y; }
+    hot[i] = v > .2 ? 1 : 0; area += hot[i];
+    if ((x - w / 2) ** 2 + (y - h / 2) ** 2 <= 14 ** 2) { holeCells++; hole += hot[i]; }
+  }
+  const push = j => { if (hot[j] && !seen[j]) { seen[j] = 1; queue[tail++] = j; } };
+  let tail = 0;
+  for (let i = 0; i < n; i++) {
+    if (!hot[i] || seen[i]) continue;
+    count++; let head = 0; tail = 0; push(i);
+    while (head < tail) {
+      const j = queue[head++], x = j % w, y = Math.floor(j / w);
+      push(y * w + (x + w - 1) % w); push(y * w + (x + 1) % w);
+      push(((y + h - 1) % h) * w + x); push(((y + 1) % h) * w + x);
+    }
+  }
+  return { count, area: area / n, hole: hole / holeCells, peakRow };
+}
+// METRICS-END
+function readChem(d) {
+  const s = d.world; gl.bindFramebuffer(gl.FRAMEBUFFER, s.targets[s.cur].fb);
+  gl.readPixels(0, 0, d.w, d.h, gl.RGBA, gl.FLOAT, d.raw);
+  if (gl.getError() !== gl.NO_ERROR) throw Error('Float readPixels failed');
+  return d.raw;
+}
+function record(d) {
+  const a = readChem(d), f = d.ready, n = d.w * d.h, base = f * n, m = measureChem(a, d.w, d.h);
+  let delta = 0;
+  for (let i = 0; i < n; i++) {
+    const v = Math.round(clamp(a[i * 4 + 1] / .5) * 255);
+    d.v[base + i] = v; d.u[base + i] = Math.round(clamp(a[i * 4]) * 255);
+    if (f) delta += Math.abs(v - d.v[base - n + i]) * .5 / 255;
+  }
+  for (const key of ['count', 'area', 'hole', 'peakRow']) d[key][f] = m[key];
+  d.delta[f] = delta; d.travel[f] = (f ? d.travel[f - 1] : 0) + delta;
+  d.maxCount = Math.max(d.maxCount, m.count);
+  for (const k of [2, 4, 8, 16, 32, 64]) if (m.count >= k && d.first[k] == null) d.first[k] = f * d.every;
+  if (d.id === 'heal' && d.recovery == null && d.baseline > 0 && m.hole >= d.baseline) d.recovery = f * d.every;
+  d.ready++;
+  if (d.ready === d.F) {
+    d.done = true;
+    for (const t of d.world.targets) { gl.deleteTexture(t.tex); gl.deleteFramebuffer(t.fb); }
+    d.world = null; d.raw = null;
+  }
+}
+function initRun(id) {
+  const r = RUNS[id], n = r.w * r.h, F = r.steps / r.every + 1;
+  const d = DATA[id] = { ...r, id, F, ready: 0, done: false, elapsed: 0, maxCount: 0, first: {}, baseline: null, recovery: null,
+    u: new Uint8Array(n * F), v: new Uint8Array(n * F), count: new Uint32Array(F), area: new Float64Array(F), hole: new Float64Array(F), peakRow: new Uint16Array(F), delta: new Float64Array(F), travel: new Float64Array(F), raw: new Float32Array(n * 4) };
+  d.world = { w: r.w, h: r.h, cur: 0, targets: [makeTarget(r.w, r.h), makeTarget(r.w, r.h)] };
+  const P = SPECIES[r.species]; writeChem(d.world, seedChem(r.w, r.h, P.seed, makeRng(r.seed), !!r.one));
+  if (!r.prep) record(d);
+  return d;
+}
+function computeFail(e) {
+  computeMode = 'unavailable'; computeError = e && e.message || String(e); calcLabel();
+}
+function startCompute() {
+  try {
+    gl = gpuCanvas.getContext('webgl2', { antialias: false, depth: false, stencil: false, preserveDrawingBuffer: false });
+    if (!gl || !gl.getExtension('EXT_color_buffer_float')) throw Error('WebGL2 / EXT_color_buffer_float unavailable');
+    progStep = compile(FS_STEP);
+    const quad = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    computeMode = 'gpu';
+  } catch (e) { computeFail(e); }
+}
+gpuCanvas.addEventListener('webglcontextlost', e => { e.preventDefault(); computeFail(Error('WebGL context lost; reload to retry')); });
+function needs(st) { return (st.recipes ? RECIPES : [st.run]).map(id => ({ id, f: st.f })); }
+function priority(loc) {
+  const ci = loc.k > .5 ? loc.i + 1 : loc.i, st = CH[ci].at(ci === loc.i ? loc.u : 0), wants = needs(st);
+  if (loc.k > 0) wants.push(...needs(CH[ci === loc.i ? loc.i + 1 : loc.i].at(ci === loc.i ? 0 : loc.u)));
+  const outstanding = wants.filter(q => !DATA[q.id] || DATA[q.id].ready <= q.f);
+  // RECIPES を均等に育てる。進みの少ないランから、現在必要なコマまでを最優先。
+  outstanding.sort((a, b) => ((DATA[a.id]?.elapsed || 0) / ((RUNS[a.id].prep || 0) + RUNS[a.id].steps)) - ((DATA[b.id]?.elapsed || 0) / ((RUNS[b.id].prep || 0) + RUNS[b.id].steps)));
+  return [...new Set([...outstanding.map(q => q.id), ...wants.map(q => q.id), ...Object.keys(RUNS)])].find(id => !DATA[id]?.done);
+}
+function computeSlice(loc) {
+  if (computeMode !== 'gpu') return;
+  const begin = performance.now(), deadline = begin + 8;
+  try {
+    while (performance.now() < deadline) {
+      const id = priority(loc); if (!id) break;
+      computeTiming.active = id;
+      const d = DATA[id] || initRun(id), P = SPECIES[d.species], prep = d.prep || 0;
+      // 最大 8 歩で時計を確認。記録時 readPixels が GPU を同期するため、8 ms は目安。
+      for (let k = 0; k < 8 && !d.done && performance.now() < deadline; k++) {
+        gpuStep(d.world, P); d.elapsed++;
+        if (prep && d.elapsed === prep) {
+          d.baseline = measureChem(readChem(d), d.w, d.h).hole;
+          gpuStep(d.world, P, [d.w / 2, d.h / 2, 14, -1], 0); record(d);
+        } else if (d.elapsed > prep && (d.elapsed - prep) % d.every === 0) record(d);
+      }
+    }
+  } catch (e) { computeFail(e); }
+  computeTiming.lastMs = performance.now() - begin; computeTiming.maxMs = Math.max(computeTiming.maxMs, computeTiming.lastMs); computeTiming.slices++;
+}
+
+// 章の状態は記録の有無に依存させない。u → 要求コマの純関数。
+const atStep = (run, step, extra = {}) => ({ run, f: Math.round(step / RUNS[run].every), ...extra });
+const CH = [
+  { id: 'TURING', at: () => atStep('spots', 8000), P: { FIELD: [0, 0, 1, 1] }, lit: ['Du', 'Dv', 'uv', 'F', 'k'], rows: 'abcd' },
+  { id: 'DROP', at: u => atStep('drop', 3000 * seg(u, .04, .94), { profile: true }), P: { FIELD: [0, 0, 1, .65], PROFILE: [0, .69, 1, .31] }, lit: ['uv'], rows: 'ab' },
+  { id: 'DOUBLE', at: u => atStep('drop', lerp(3000, 16000, seg(u, .04, .94))), P: { FIELD: [0, 0, 1, .64], COUNT: [0, .68, 1, .32] }, lit: ['uv', 'F', 'k'], rows: 'abd' },
+  { id: 'WHY', at: u => atStep('spots', 8000, { profile: true, row: Math.round(seg(u, .04, .94) * 127) }), P: { FIELD: [0, 0, 1, .48], PROFILE: [0, .52, 1, .48] }, lit: ['Du', 'Dv', 'ratio'], rows: 'abc' },
+  { id: 'RECIPES', at: u => atStep('mitosis', 8000 * seg(u, .04, .94), { recipes: true }), P: { RECIPES: [0, 0, 1, 1] }, lit: ['F', 'k', 'params'], rows: 'abd' },
+  { id: 'ATLAS', at: u => atStep('atlas', 5000 * seg(u, .04, .94)), P: { MAP: [0, 0, 1, 1] }, lit: ['F', 'k', 'params'], rows: 'abd' },
+  { id: 'HEAL', at: u => atStep('heal', 1500 * seg(u, .04, .94)), P: { FIELD: [0, 0, 1, .65], HEAL: [0, .69, 1, .31] }, lit: ['Du', 'Dv', 'uv'], rows: 'abc' },
+  { id: 'BLUEPRINT', at: u => atStep('atlas', 5000, { bp: seg(u, 0, .8) }), P: { MAP: [0, 0, 1, 1] }, lit: ['params'], rows: 'd' },
+];
+const PM = [CH[0].P, { FIELD: [0, 0, .5, 1], PROFILE: [.52, 0, .48, 1] }, { FIELD: [0, 0, .49, 1], COUNT: [.51, 0, .49, 1] },
+  { FIELD: [0, 0, .42, 1], PROFILE: [.44, 0, .56, 1] }, CH[4].P, CH[5].P, { FIELD: [0, 0, .5, 1], HEAL: [.52, 0, .48, 1] }, CH[7].P];
+CH.forEach((c, i) => { c.PM = PM[i]; });
+const chEls = [...document.querySelectorAll('.ch')];
+let M = [], VH = innerHeight, MAXY = 1;
+function measure() {
+  VH = innerHeight; M = chEls.map(el => ({ top: el.offsetTop, h: el.offsetHeight }));
+  MAXY = Math.max(1, document.documentElement.scrollHeight - VH);
+  $('ticks').innerHTML = M.slice(1).map(m => `<i style="left:${(m.top / MAXY * 100).toFixed(2)}%"></i>`).join('');
+}
+function locate(y) {
+  let i = 0; while (i < M.length - 1 && y >= M[i + 1].top) i++;
+  const m = M[i], dwell = Math.max(1, m.h - VH);
+  const u = clamp((y - m.top) / dwell), k = i < M.length - 1 ? sm(clamp((y - m.top - dwell) / VH)) : 0;
+  return { i, u, k };
+}
+
+// 未計算のコマを途中のコマで代用しない：停止中に模様が勝手に育つのを防ぐ。
+function frameOf(id, f) {
+  const d = DATA[id]; if (!d) return null;
+  const want = clamp(Math.round(f), 0, d.F - 1);
+  return d.ready > want ? { d, f: want, lag: 0 } : null;
+}
+function framesOf(st) {
+  const frames = needs(st).map(q => frameOf(q.id, q.f));
+  return frames.every(Boolean) ? frames : null;
+}
+const cv = $('cv'); let g = null, W = 0, H = 0;
+function fitAll() {
+  const d = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight;
+  if (cv.width !== Math.round(W * d) || cv.height !== Math.round(H * d)) { cv.width = Math.round(W * d); cv.height = Math.round(H * d); }
+  g = cv.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, W, H);
+}
+const MOBILE = () => W < 880;
+function stageRect() {
+  if (MOBILE()) return { x: 12, y: 54, w: W - 24, h: H * .36 - 58 };
+  const x = Math.min(40 + 400 + 36, W * .44); return { x, y: 68, w: W - x - 24, h: H - 68 - 22 };
+}
+function frameBox(x, y, w, h, cap, right) {
+  g.strokeStyle = C.line; g.lineWidth = 1; g.strokeRect(Math.round(x) + .5, Math.round(y) + .5, Math.round(w) - 1, Math.round(h) - 1);
+  g.fillStyle = 'rgba(7,7,7,.6)'; g.fillRect(x + 1, y + 1, w - 2, h - 2);
+  g.font = `10px ${C.mono}`; g.textAlign = 'left';
+  const rw = right ? g.measureText(right).width + 16 : 0;
+  if (g.measureText(cap).width + 20 + rw < w) { g.fillStyle = C.mute; g.fillText(cap, x + 10, y + 16); } // 狭い枠では見出しを省き、値だけ残す
+  if (right) { g.textAlign = 'right'; g.fillStyle = C.acc; g.fillText(right, x + w - 10, y + 16); }
+}
+function computing(x, y, w, h) {
+  g.font = `10px ${C.mono}`; g.fillStyle = C.mute; g.textAlign = 'center';
+  g.fillText(computeError ? '計算できません' : '計算中…', x + w / 2, y + h / 2);
+}
+
+function strip(x, y, w, h, cap, right, n, tmax, xlab, series) {
+  frameBox(x, y, w, h, cap, right);
+  const pl = x + 40, pr = x + w - 14, pt = y + 24, pb = y + h - 18;
+  g.font = `10px ${C.mono}`; g.fillStyle = C.mute; g.textAlign = 'center';
+  const steps = pr - pl < 240 ? [0, 1] : [0, .25, .5, .75, 1];
+  steps.forEach(k => g.fillText(xlab(k * tmax), pl + (pr - pl) * k, pb + 13));
+  series.forEach(s => s(pl, pr, pt, pb));
+}
+
+
+// LOOK INK: アプリの smoothstep(.02,.36,V) と .015 → .97。ぼかさず拡大。
+const INK = Uint8Array.from({ length: 256 }, (_, q) => Math.round(255 * lerp(.015, .97, sm(clamp((q * .5 / 255 - .02) / .34)))));
+const IMAGES = {};
+function chemImage(d, f) {
+  let o = IMAGES[d.id];
+  if (!o) { const c = document.createElement('canvas'); c.width = d.w; c.height = d.h; const ctx = c.getContext('2d'); o = IMAGES[d.id] = { c, ctx, image: ctx.createImageData(d.w, d.h), f: -1 }; }
+  if (o.f !== f) {
+    const n = d.w * d.h, base = f * n, a = o.image.data;
+    // readPixels の row 0 を ImageData の row 0 に。ATLAS は F=.09 が上（drawMap と同じ）。
+    for (let i = 0; i < n; i++) { const c = INK[d.v[base + i]]; a[i * 4] = a[i * 4 + 1] = a[i * 4 + 2] = c; a[i * 4 + 3] = 255; }
+    o.ctx.putImageData(o.image, 0, 0); o.f = f;
+  }
+  return o.c;
+}
+const rowOf = (st, fr) => st.row == null ? fr.d.peakRow[fr.f] : st.row;
+function imageRect(x, y, w, h, fr) {
+  const side = Math.max(1, Math.min(w, h)), r = { x: x + (w - side) / 2, y: y + (h - side) / 2, w: side, h: side };
+  g.imageSmoothingEnabled = false; g.drawImage(chemImage(fr.d, fr.f), r.x, r.y, r.w, r.h); g.imageSmoothingEnabled = true;
+  return r;
+}
+function drawField(x, y, w, h, st, recipe = false) {
+  const fr = frameOf(st.run, st.f), P = SPECIES[RUNS[st.run].species];
+  frameBox(x, y, w, h, recipe ? P.name : 'FIELD ⁄ ' + P.name, recipe ? '' : fr ? `${fmt(fr.f * fr.d.every)} 歩` : '');
+  if (recipe) {
+    g.fillStyle = C.acc; g.font = `8px ${C.mono}`; g.textAlign = 'left';
+    g.fillText(`F ${P.F.toFixed(4)}`, x + 7, y + 28); g.fillText(`k ${P.k.toFixed(4)}`, x + 7, y + 38);
+  }
+  if (!fr) { computing(x, y, w, h); return; }
+  const pad = recipe ? 44 : 26, r = imageRect(x + 7, y + pad, w - 14, h - pad - 7, fr);
+  if (st.profile) {
+    const yy = r.y + (rowOf(st, fr) + .5) / fr.d.h * r.h;
+    g.strokeStyle = C.rouge; g.lineWidth = 1; g.beginPath(); g.moveTo(r.x, yy); g.lineTo(r.x + r.w, yy); g.stroke();
+  }
+  if (st.run === 'heal') {
+    g.strokeStyle = C.rouge; g.setLineDash([3, 3]); g.beginPath();
+    g.arc(r.x + (fr.d.w / 2 + .5) / fr.d.w * r.w, r.y + (fr.d.h / 2 + .5) / fr.d.h * r.h, 14 / fr.d.w * r.w, 0, Math.PI * 2); g.stroke(); g.setLineDash([]);
+  }
+}
+function profile(x, y, w, h, st) {
+  const fr = frameOf(st.run, st.f);
+  frameBox(x, y, w, h, 'PROFILE ⁄ 濃さ', 'U / V');
+  if (!fr) { computing(x, y, w, h); return; }
+  const { d, f } = fr, row = rowOf(st, fr), pl = x + 24, pr = x + w - 10, pt = y + 30, pb = y + h - 24;
+  g.font = `9px ${C.mono}`;
+  for (const v of [0, .5, 1]) { const yy = lerp(pb, pt, v); g.strokeStyle = C.line; g.beginPath(); g.moveTo(pl, yy); g.lineTo(pr, yy); g.stroke(); g.fillStyle = C.mute; g.textAlign = 'right'; g.fillText(String(v), pl - 5, yy + 3); }
+  const base = f * d.w * d.h + row * d.w;
+  for (const [key, scale, col] of [['u', 1, C.ice], ['v', .5, C.acc]]) {
+    g.strokeStyle = col; g.lineWidth = 1.5; g.beginPath();
+    for (let i = 0; i < d.w; i++) { const xx = lerp(pl, pr, i / (d.w - 1)), yy = lerp(pb, pt, d[key][base + i] / 255 * scale); i ? g.lineTo(xx, yy) : g.moveTo(xx, yy); }
+    g.stroke();
+  }
+  g.lineWidth = 1; g.textAlign = 'left'; g.fillStyle = C.ice; g.fillText('U', pl, y + h - 7); g.fillStyle = C.acc; g.fillText('V', pl + 20, y + h - 7);
+  g.textAlign = 'right'; g.fillStyle = C.mute; g.fillText(`row ${row + 1}`, pr, y + h - 7);
+}
+function drawMap(x, y, w, h, st) {
+  const fr = frameOf('atlas', st.f);
+  frameBox(x, y, w, h, 'F–k MAP ⁄ 育った地図', fr ? `${fmt(fr.f * fr.d.every)} 歩` : '');
+  if (!fr) { computing(x, y, w, h); return; }
+  const legendW = w < 450 ? 104 : 152, side = Math.max(1, Math.min(w - legendW - 44, h - 62));
+  const r = imageRect(x + 33, y + 30 + Math.max(0, (h - 62 - side) / 2), side, side, fr);
+  const X = k => r.x + (k - .045) / .025 * r.w, Y = F => r.y + (1 - F / .09) * r.h;
+  g.strokeStyle = C.line; g.strokeRect(r.x, r.y, r.w, r.h); g.font = `9px ${C.mono}`; g.fillStyle = C.acc;
+  g.textAlign = 'right'; g.fillText('F .09', r.x - 4, r.y + 3); g.fillText('0', r.x - 4, r.y + r.h);
+  g.textAlign = 'left'; g.fillText('k .045', r.x, r.y + r.h + 15); g.textAlign = 'right'; g.fillText('.070', r.x + r.w, r.y + r.h + 15);
+  const stage = st.bp == null ? 4 : Math.floor(clamp(st.bp) * 4), lx = r.x + r.w + 16, lineH = Math.min(42, (h - 36) / 6);
+  SPECIES.slice(0, 6).forEach((P, j) => {
+    const chapters = [];
+    if (stage >= 1 && j === 0) chapters.push('01·02');
+    if (stage >= 2 && j === 1) chapters.push('03');
+    if (stage >= 3) chapters.push('04');
+    if (stage >= 4 && j === 3) chapters.push('06');
+    if (st.bp != null && !chapters.length) return;
+    const xx = X(P.k), yy = Y(P.F), ly = y + 37 + j * lineH;
+    g.strokeStyle = C.line; g.beginPath(); g.moveTo(xx, yy); g.lineTo(lx - 5, ly - 3); g.stroke();
+    // 地図の上の印：白い地でも黒い地でも読めるよう、暗い縁取りの輪にする。BLUEPRINT では章番号を印のすぐ横にも置く
+    const rr = st.bp == null ? 5 : 8;
+    g.lineWidth = 3; g.strokeStyle = 'rgba(7,7,7,.85)'; g.beginPath(); g.arc(xx, yy, rr, 0, Math.PI * 2); g.stroke();
+    g.lineWidth = 1.6; g.strokeStyle = st.bp == null ? C.acc : C.rouge; g.beginPath(); g.arc(xx, yy, rr, 0, Math.PI * 2); g.stroke(); g.lineWidth = 1;
+    g.fillStyle = st.bp == null ? C.acc : C.rouge; g.beginPath(); g.arc(xx, yy, 2, 0, Math.PI * 2); g.fill();
+    if (st.bp != null) { const lab = chapters.join('·'); g.font = `600 12px ${C.disp}`; const tw = g.measureText(lab).width + 8, bx = Math.min(xx + rr + 3, r.x + r.w - tw - 2);
+      g.fillStyle = 'rgba(7,7,7,.85)'; g.fillRect(bx, yy - 8, tw, 15); g.fillStyle = C.rouge; g.textAlign = 'left'; g.fillText(lab, bx + 4, yy + 4); }
+    g.textAlign = 'left'; g.fillStyle = C.acc; g.font = `9px ${C.mono}`; g.fillText(P.name, lx, ly);
+    g.fillStyle = st.bp == null ? C.mute : C.ice; g.font = `8px ${C.mono}`;
+    g.fillText(st.bp == null ? `${P.F.toFixed(4)} / ${P.k.toFixed(4)}` : chapters.join(' · '), lx, ly + 11);
+  });
+}
+const PANELS = {
+  FIELD: drawField,
+  PROFILE: profile,
+  MAP: drawMap,
+  RECIPES(x, y, w, h, st) {
+    if (!framesOf(st)) { frameBox(x, y, w, h, 'RECIPES ⁄ 同じ歩数', ''); computing(x, y, w, h); return; }
+    const gap = 6, cw = (w - gap * 2) / 3, rh = (h - gap) / 2;
+    RECIPES.forEach((id, j) => drawField(x + (j % 3) * (cw + gap), y + Math.floor(j / 3) * (rh + gap), cw, rh, { ...st, run: id }, true));
+  },
+  COUNT(x, y, w, h, st) {
+    const fr = frameOf('drop', st.f);
+    if (!fr) { frameBox(x, y, w, h, 'COUNT ⁄ 粒の数', ''); computing(x, y, w, h); return; }
+    strip(x, y, w, h, 'COUNT ⁄ 粒の数（log₂）', `${fr.d.count[fr.f]} 粒`, 0, RUNS.drop.steps, v => fmt(v), [(pl, pr, pt, pb) => {
+      const d = fr.d, shownMax = d.count.subarray(0, fr.f + 1).reduce((a, b) => Math.max(a, b), 1);
+      const X = f => lerp(pl, pr, f / (d.F - 1)), maxPower = Math.max(6, Math.ceil(Math.log2(shownMax))), Y = v => lerp(pb, pt, Math.log2(Math.max(1, v)) / maxPower);
+      for (let k = 0; k <= maxPower; k++) { const v = 2 ** k, yy = Y(v); g.strokeStyle = C.line; g.beginPath(); g.moveTo(pl, yy); g.lineTo(pr, yy); g.stroke(); g.fillStyle = C.mute; g.textAlign = 'right'; g.fillText(String(v), pl - 5, yy + 3); }
+      g.strokeStyle = C.acc; g.lineWidth = 1.5; g.beginPath();
+      for (let f = 0; f <= fr.f; f++) { f ? g.lineTo(X(f), Y(d.count[f])) : g.moveTo(X(f), Y(d.count[f])); }
+      g.stroke(); g.lineWidth = 1; g.fillStyle = C.rouge; g.fillRect(X(fr.f) - 1, pt, 2, pb - pt);
+    }]);
+  },
+  HEAL(x, y, w, h, st) {
+    const fr = frameOf('heal', st.f);
+    if (!fr) { frameBox(x, y, w, h, 'HEAL ⁄ 穴の中', ''); computing(x, y, w, h); return; }
+    strip(x, y, w, h, '穴の中の V > 0.2', `${pct(fr.d.hole[fr.f])}%`, 0, RUNS.heal.steps, v => fmt(v), [(pl, pr, pt, pb) => {
+      const d = fr.d, X = f => lerp(pl, pr, f / (d.F - 1)), Y = v => lerp(pb, pt, v);
+      g.fillStyle = C.mute; g.textAlign = 'right'; g.fillText('100%', pl - 4, pt + 3); g.fillText('0', pl - 4, pb + 3);
+      g.strokeStyle = C.ice; g.setLineDash([3, 3]); g.beginPath(); g.moveTo(pl, Y(d.baseline)); g.lineTo(pr, Y(d.baseline)); g.stroke(); g.setLineDash([]);
+      g.strokeStyle = C.acc; g.lineWidth = 1.5; g.beginPath();
+      for (let f = 0; f <= fr.f; f++) { f ? g.lineTo(X(f), Y(d.hole[f])) : g.moveTo(X(f), Y(d.hole[f])); }
+      g.stroke(); g.lineWidth = 1; g.fillStyle = C.rouge; g.fillRect(X(fr.f) - 1, pt, 2, pb - pt);
+    }]);
+  },
+};
+function draw(loc) {
+  fitAll();
+  const st0 = stageRect(), key = MOBILE() ? 'PM' : 'P', A = CH[loc.i][key], B = loc.k > 0 ? CH[loc.i + 1][key] : {};
+  const sA = CH[loc.i].at(loc.u), sB = loc.k > 0 ? CH[loc.i + 1].at(0) : null;
+  const names = new Set([...Object.keys(A), ...Object.keys(B)]);
+  for (const n of names) {
+    let r, al, s;
+    if (A[n] && B[n]) { r = A[n].map((v, j) => lerp(v, B[n][j], loc.k)); al = 1; s = loc.k < .5 ? sA : sB; }
+    else if (A[n]) { r = A[n]; al = 1 - loc.k; s = sA; } else { r = B[n]; al = loc.k; s = sB; }
+    if (al < .01) continue;
+    const px = st0.x + r[0] * st0.w, py = st0.y + r[1] * st0.h, pw = r[2] * st0.w, ph = r[3] * st0.h;
+    if (pw < 40 || ph < 40) continue;
+    g.save(); g.globalAlpha = al; g.beginPath(); g.rect(px, py, pw, ph); g.clip();
+    PANELS[n](px, py, pw, ph, s); g.restore();
+  }
+}
+
+
+const fmt = v => Math.round(v).toLocaleString('en-US'), pct = v => (v * 100).toFixed(1);
+let lastHud = '';
+function liveValues(st) {
+  const frames = framesOf(st), fr = frames && frames[0], d = fr && fr.d, f = fr && fr.f, drop = DATA.drop, heal = DATA.heal;
+  const gap = drop && [2, 4, 8, 16].every(k => drop.first[k] != null) ? (drop.first[16] - drop.first[2]) / 3 : null;
+  return {
+    step: fr ? fmt(f * d.every) : '—', count: fr ? fmt(d.count[f]) : '—', area: fr ? pct(d.area[f]) : '—', hole: fr ? pct(d.hole[f]) : '—',
+    split2: drop?.first[2] != null ? fmt(drop.first[2]) : '計算中', split4: drop?.first[4] != null ? fmt(drop.first[4]) : '計算中',
+    doubleGap: gap != null ? fmt(gap) : '—', dropMax: drop?.done ? fmt(drop.maxCount) : '—', dropLast: drop?.done ? fmt(drop.count[drop.F - 1]) : '—',
+    baseline: heal?.baseline != null ? pct(heal.baseline) : '—',
+    recovery: heal?.recovery != null ? `${fmt(heal.recovery)} 歩` : heal?.done ? 'この記録内では未回復' : '計算中',
+    recipes: st.recipes && frames ? frames.map(fr => `${SPECIES[fr.d.species].name} ${pct(fr.d.area[fr.f])}%`).join(' ／ ') : '—',
+  };
+}
+function hud(loc, y) {
+  const ci = loc.k > .5 ? loc.i + 1 : loc.i, st = CH[ci].at(ci === loc.i ? loc.u : 0), frs = framesOf(st), fr = frs && frs[0];
+  $('prog').style.width = (clamp(y / MAXY) * 100).toFixed(2) + '%';
+  $('chl').innerHTML = `${String(ci).padStart(2, '0')} ⁄ 07 <b>${CH[ci].id}</b>`;
+  const P = SPECIES[RUNS[st.run].species];
+  let val = fr ? fmt(fr.d.count[fr.f]) : '—', unit = '粒の数', zone = 'PATTERN';
+  if (st.run === 'drop') zone = fr && fr.d.count[fr.f] > 1 ? 'SPLIT' : 'SEED';
+  if (st.recipes) { val = frs ? fmt(frs[0].f * frs[0].d.every) : '—'; unit = '歩 · 6 種いっしょ'; } // 種族ごとに意味の違う粒の数を足しても読めないので、共通の歩数を出す
+  if (st.run === 'atlas') { val = '.09 / .070'; unit = 'F 上端 / k 右端'; zone = 'MAP'; }
+  if (st.run === 'heal') { val = fr ? pct(fr.d.hole[fr.f]) + '%' : '—'; unit = '穴の中の面積'; zone = 'HEAL'; }
+  $('hV').textContent = val; $('hVu').textContent = unit; $('hZone').className = 'zone ' + zone; $('hZone').textContent = zone;
+  const lit = new Set(CH[ci].lit);
+  document.querySelectorAll('#rail .t').forEach(e => e.classList.toggle('on', lit.has(e.dataset.t)));
+  document.querySelectorAll('#rail .fr').forEach(e => { e.classList.toggle('on', CH[ci].rows.includes(e.dataset.row)); e.classList.toggle('lit', !!e.querySelector('.t.on')); });
+  $('railRun').textContent = st.recipes ? '6 RECIPES' : st.run.toUpperCase();
+  $('fvA').textContent = st.recipes ? '各図の F' : P.atlas ? 'F .090 → 0' : `F ${P.F.toFixed(4)}`;
+  $('fvB').textContent = st.recipes ? '各図の k' : P.atlas ? 'k .045 → .070' : `k ${P.k.toFixed(4)}`;
+  $('fvC').textContent = fr ? `${fmt(fr.f * fr.d.every)} 歩` : '計算中';
+  $('fvD').textContent = fr ? `${val} ${st.run === 'heal' || st.run === 'atlas' ? '' : '粒'}` : '—';
+  const vals = liveValues(st);
+  document.querySelectorAll('[data-live]').forEach(e => { if (+e.closest('.ch').dataset.ch === ci) e.textContent = vals[e.dataset.live] ?? '—'; });
+}
+function calcLabel() {
+  const el = $('calc');
+  if (computeError) { el.style.opacity = 1; el.textContent = 'この環境では計算できません'; el.title = computeError; return; }
+  const ids = Object.keys(RUNS), done = ids.filter(id => DATA[id]?.done).length;
+  if (done === ids.length) { el.style.opacity = 0; return; }
+  const active = computeTiming.active, d = DATA[active], r = RUNS[active];
+  el.style.opacity = 1; el.textContent = `模様を計算中 ${done} / ${ids.length}${d ? ' · ' + active.toUpperCase() + ' ' + Math.floor(100 * d.elapsed / ((r.prep || 0) + r.steps)) + '%' : ''}`;
+}
+// 音だけの乱数はシミュレーションの makeRng と共有しない。
+let AC = null, master = null, gN = null, gTone = null, tone = null, audioError = '';
+const S = { mode: 'bow', vol: .45 };
+let vel = 0, CHANGE = 0, toneCount = 0, soundCells = 1;
+function ensureAudio() {
+  try {
+    if (!AC) {
+      AC = new (window.AudioContext || window.webkitAudioContext)(); master = AC.createGain(); master.gain.value = 0;
+      const lim = AC.createDynamicsCompressor(); lim.threshold.value = -10; lim.ratio.value = 20; lim.attack.value = .003; lim.release.value = .15;
+      master.connect(lim).connect(AC.destination);
+      const buf = AC.createBuffer(1, AC.sampleRate * 2, AC.sampleRate), ch = buf.getChannelData(0);
+      for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1;
+      const ns = AC.createBufferSource(); ns.buffer = buf; ns.loop = true;
+      const bp = AC.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 650; bp.Q.value = .65;
+      gN = AC.createGain(); gN.gain.value = 0; ns.connect(bp).connect(gN).connect(master); ns.start();
+      tone = AC.createOscillator(); tone.type = 'sine'; tone.frequency.value = 55;
+      gTone = AC.createGain(); gTone.gain.value = 0; tone.connect(gTone).connect(master); tone.start();
+    }
+    if (AC.state === 'suspended') AC.resume().catch(e => { audioError = e.message; });
+  } catch (e) { audioError = e.message; }
+}
+function updateAudio() {
+  if (!AC || !gN || !gTone) return;
+  const t = AC.currentTime, level = clamp(Math.log1p(CHANGE / soundCells * 600) / 4);
+  gN.gain.setTargetAtTime(.45 * level, t, .035);
+  tone.frequency.setTargetAtTime(Math.min(1760, 55 * Math.max(1, toneCount)), t, .025);
+  gTone.gain.setTargetAtTime(toneCount ? .18 * level : 0, t, .035);
+  const target = S.mode === 'off' ? 0 : S.vol * (S.mode === 'bow' ? clamp(vel / 900) : 1);
+  master.gain.setTargetAtTime(target, t, target > master.gain.value ? .06 : .12);
+}
+function setMode(m) {
+  if (!['off', 'bow', 'on'].includes(m)) return;
+  S.mode = m; autoArm = false; if (m !== 'off') ensureAudio();
+  document.querySelectorAll('#segSnd button').forEach(b => b.classList.toggle('on', b.dataset.v === m)); updateAudio();
+}
+let lastSoundKey = '', lastSoundF = -1;
+function chemistrySound(st) {
+  const frs = framesOf(st), key = st.recipes ? 'recipes' : st.run;
+  if (!frs) { CHANGE = 0; lastSoundKey = ''; toneCount = 0; return; }
+  const fr = frs[0], f = fr.f;
+  soundCells = frs.reduce((n, q) => n + q.d.w * q.d.h, 0);
+  toneCount = st.run === 'drop' ? fr.d.count[f] : 0;
+  if (key !== lastSoundKey) { lastSoundKey = key; lastSoundF = f; CHANGE = 0; return; }
+  if (f === lastSoundF) { CHANGE = CHANGE < .0001 ? 0 : CHANGE * .55; return; }
+  // 間を飛び越えた場合も、その間の Σ|ΔV| を加算。逆走でも同じ量。
+  CHANGE = frs.reduce((sum, q) => sum + Math.abs(q.d.travel[f] - q.d.travel[lastSoundF]), 0);
+  lastSoundF = f;
+}
+// ── なめらかな慣性（SCROLL_BEATS_LP と同じ）
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let tY = scrollY, cY = scrollY, smoothing = false, rewind = null;
+addEventListener('wheel', e => {
+  if (e.ctrlKey || REDUCED) return;
+  e.preventDefault(); rewind = null;
+  if (!smoothing) { tY = cY = scrollY; }
+  const d = e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? VH : 1);
+  tY = clamp(tY + d, 0, MAXY); smoothing = true;
+}, { passive: false });
+const stopRewind = () => { rewind = null; };
+addEventListener('keydown', stopRewind); addEventListener('touchstart', stopRewind, { passive: true }); addEventListener('mousedown', e => { if (e.target.id !== 'bRewind') stopRewind(); });
+function scrollStep(dt) {
+  if (rewind) {
+    const k = clamp((NOW - rewind.t0) / rewind.d), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    window.scrollTo(0, rewind.y0 * (1 - e)); if (k >= 1) rewind = null; return;
+  }
+  if (!smoothing) return;
+  cY += (tY - cY) * (1 - Math.exp(-dt * 6));
+  if (Math.abs(tY - cY) < .5) { cY = tY; smoothing = false; }
+  window.scrollTo(0, cY);
+}
+function startRewind() { smoothing = false; rewind = { y0: scrollY, t0: NOW, d: clamp(scrollY / 2400, 3, 9) * 1000 }; }
+
+// ── ループ
+let NOW = performance.now(), lastY = scrollY, LOC = { i: 0, u: 0, k: 0 }, calcT = 0;
+function tick(now, dt) {
+  NOW = now;
+  scrollStep(dt);
+  const y = scrollY;
+  vel = lerp(vel, Math.abs(y - lastY) / Math.max(dt, 1e-3), .25); lastY = y;
+  LOC = locate(y);
+  computeSlice(LOC);
+  const ci = LOC.k > .5 ? LOC.i + 1 : LOC.i;
+  chemistrySound(CH[ci].at(ci === LOC.i ? LOC.u : 0));
+  updateAudio(); draw(LOC); hud(LOC, y);
+  if ((calcT += dt) > .25) { calcT = 0; calcLabel(); }
+}
+let manual = false, lastT = 0;
+function frame(now) {
+  if (!manual) { const t = now / 1000, dt = Math.min(.05, t - (lastT || t)); lastT = t; tick(now, dt); }
+  if (manual) computeSlice(locate(scrollY));
+  requestAnimationFrame(frame);
+}
+
+// ── 入力
+document.querySelectorAll('#segSnd button').forEach(b => b.onclick = () => setMode(b.dataset.v));
+$('bStart').onclick = () => { setMode('bow'); };
+let autoArm = true;
+addEventListener('pointerdown', e => { if (!autoArm) return; autoArm = false; if (S.mode === 'bow' && !e.target.closest('#segSnd')) ensureAudio(); }, true);
+$('bRewind').onclick = startRewind;
+$('vol').oninput = e => { S.vol = e.target.value / 100; updateAudio(); };
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === 's' || e.key === 'S') { const order = ['off', 'bow', 'on']; setMode(order[(order.indexOf(S.mode) + 1) % 3]); }
+});
+addEventListener('resize', () => { measure(); lastHud = ''; });
+readColors(); measure(); startCompute();
+document.fonts && document.fonts.ready.then(() => { readColors(); measure(); lastHud = ''; });
+requestAnimationFrame(frame);
+(() => { const q = new URLSearchParams(location.search), ch = q.get('ch'); if (ch == null) return;
+  const go = () => { measure(); const i = clamp(+ch | 0, 0, M.length - 1), m = M[i]; window.scrollTo(0, m.top + clamp(+(q.get('u') || 0)) * Math.max(1, m.h - VH)); tY = cY = scrollY; };
+  go(); document.fonts && document.fonts.ready.then(go); })();
+
+
+// SANDPILE と同じ検証口。frameOf の第2引数はコマ番号（歩数ではない）。
+window.__LP = {
+  CH, RUNS, DATA, locate, measure, frameOf, framesOf, measureChem, liveValues,
+  loc: () => LOC, maxY: () => MAXY, metrics: () => M,
+  computeMode: () => computeMode, computeError: () => computeError, computeTiming: () => ({ ...computeTiming }),
+  priority: () => priority(locate(scrollY)), changes: () => CHANGE,
+  ready: () => Object.fromEntries(Object.keys(RUNS).map(id => [id, computeError ? 'unavailable' : DATA[id] ? `${DATA[id].ready}/${DATA[id].F}${DATA[id].done ? ' ✓' : ''}` : '-'])),
+  summary: () => Object.fromEntries(Object.entries(DATA).map(([id, d]) => [id, { ready: d.ready, done: d.done, first: { ...d.first }, maxCount: d.maxCount, finalCount: d.done ? d.count[d.F - 1] : null, finalArea: d.done ? d.area[d.F - 1] : null, baseline: d.baseline, recovery: d.recovery }])),
+  goto: (i, u = 0) => { smoothing = false; rewind = null; const m = M[clamp(i | 0, 0, M.length - 1)], y = m.top + clamp(u) * Math.max(1, m.h - VH); window.scrollTo(0, y); tY = cY = scrollY; return scrollY; },
+  setMode, rewind: startRewind, rewinding: () => !!rewind,
+  audio: () => AC && { state: AC.state, mode: S.mode, master: master?.gain.value, noise: gN?.gain.value, sine: gTone?.gain.value, frequency: tone?.frequency.value, error: audioError },
+  vel: () => vel,
+  manual: on => { manual = !!on; lastT = 0; if (manual) { CHANGE = 0; updateAudio(); } },
+  step: (sec = 1 / 60, fps = 60) => { for (let i = 0, n = Math.max(1, Math.round(sec * fps)); i < n; i++) tick(NOW + 1000 / fps, 1 / fps); },
+  wheel: dy => { if (!smoothing) tY = cY = scrollY; tY = clamp(tY + dy, 0, MAXY); smoothing = true; },
+};
+})();
+</script>
+</body>
+</html>

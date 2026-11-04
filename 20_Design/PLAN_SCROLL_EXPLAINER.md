@@ -38,9 +38,20 @@
 1. **SP-02 BEATS**（中身が新しく、式が 1 本で済む。型を固める 1 本目）
 2. SP-03 CONSONANCE
 3. Emergence Engine 08 → 07 → 06 → 05 → 01〜04（新しい順。古いものほどチャットでの解説を探し直す手間がかかる）
+   - ✅ 11-03 **08 SYNC** `Emergence Engine/scroll/SCROLL_SYNC_LP.html`。EE の LP は作品と同じ NOIR の見た目。
+     シミュレーションは「スクロール＝時間」：重い計算は Web Worker で起動直後に記録し、実時間では全員に同じ角度を足す共通の針だけを回す（r が変わらないので逆走・REWIND が成立）。
+     法則はアプリの SIM ブロックを `Emergence Engine/_law/ee0x_*.js` に**そのまま**切り出して両方から読む。
+   - ✅ 11-04 **06 TURING** `Emergence Engine/scroll/SCROLL_TURING_LP.html`。GPU の作品は LP の中の見えない WebGL2 で law のシェーダーを回して記録する（Codex astra 実装）。
+   - ✅ 11-04 **05 LENIA** `Emergence Engine/scroll/SCROLL_LENIA_LP.html`。06 の GPU の型をそのまま。記録が想定と違ったら seed を選び直さず本文を記録に合わせる（COLLIDE）。
+   - ✅ 11-04 **01 BIFURCATION** `Emergence Engine/scroll/SCROLL_BIFURCATION_LP.html`。状態は (r, 世代) の純関数でその場で計算（記録なし）。**これで EE の 01〜08 がそろった。**
+   - ✅ 11-04 **02 HIGHWAY** `Emergence Engine/scroll/SCROLL_HIGHWAY_LP.html`。1 歩が軽いので記録せず、2,500 歩ごとの節目の盤面から stepAnt で再生（Worker なし・起動 0.2 秒）。
+   - ✅ 11-04 **03 SLIME** `Emergence Engine/scroll/SCROLL_SLIME_LP.html`。04 と同じ CPU＋Worker の型。世界が小さいと網の目が粗すぎる（目の大きさは so で決まる）→ 400×250 に。
+   - ✅ 11-04 **04 FLOCK** `Emergence Engine/scroll/SCROLL_FLOCK_LP.html`。08 と同じ CPU＋Worker の型（800 羽・26 ラン）。記録が台本と違った所（温度曲線は単調でない・鷹で割れて戻るとは言えない・餌へまっすぐは塊でなく往復）は本文を記録に合わせた。
+   - ✅ 11-03 **07 SANDPILE** `Emergence Engine/scroll/SCROLL_SANDPILE_LP.html`。止まれば何も動かない世界なので、共通の針は無く、止めると画面も音も止まる。
 
 ## 解説の掘り起こし
 
+✅ 11-03：ユーザーがチャットを `Emergence Engine/chat/*.md` にコピペで入れてくれた → 01〜08 の解説を `Emergence Engine/scroll/CLAUDE.md` の「台本の素」に拾い済み。
 Emergence Engine のチャットでの解説は、セッションの記録に残っている。LP を作る前に、該当セッションから「なぜこう動くか」の説明を拾い、
 `Emergence Engine/90_Log/` か各 LP の CLAUDE.md に箇条書きで残してから構成する（拾った解説が LP の台本になる）。
 
