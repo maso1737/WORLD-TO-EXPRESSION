@@ -36,7 +36,7 @@
 ## 作る順
 
 1. **SP-02 BEATS**（中身が新しく、式が 1 本で済む。型を固める 1 本目）
-2. SP-03 CONSONANCE
+2. SP-03 CONSONANCE（✅ 11-05 SP-05 CHLADNI も：砂は履歴で決まるので「スクロール＝時間」・0.25 秒ごとの節目から再生）
 3. Emergence Engine 08 → 07 → 06 → 05 → 01〜04（新しい順。古いものほどチャットでの解説を探し直す手間がかかる）
    - ✅ 11-03 **08 SYNC** `Emergence Engine/scroll/SCROLL_SYNC_LP.html`。EE の LP は作品と同じ NOIR の見た目。
      シミュレーションは「スクロール＝時間」：重い計算は Web Worker で起動直後に記録し、実時間では全員に同じ角度を足す共通の針だけを回す（r が変わらないので逆走・REWIND が成立）。

@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CHLADNI (SP-05)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=IBM+Plex+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:"Bank Gothic";src:url("../cognitive/fonts/bank-gothic-light-bt.ttf") format("truetype");font-weight:300 600;font-display:swap}
+@font-face{font-family:"Square 721";src:url("../cognitive/fonts/Square_721_BT.ttf") format("truetype");font-weight:400 700;font-display:swap}
+:root{
+  --bg:#0a0a0a;--bg-2:#121212;--ink:#f2f2ef;--ink-2:#cfcfca;--mute:#9a9a93;--mute-2:#3a3a37;
+  --line:#2a2a27;--acc:#ffd400;--acc-ink:#0a0a0a;--warn:#ff6a3d;--fill:rgba(242,242,239,.06);
+  --grid:rgba(242,242,239,0.035);--panel-bg:#0e0e0e;--ez:cubic-bezier(0.2,0,0,1);
+  --mono:"JetBrains Mono","IBM Plex Mono",ui-monospace,monospace;
+  --display:"Bank Gothic","Square 721","Space Grotesk",system-ui,sans-serif;
+  --sans:"Square 721","Bank Gothic","Helvetica Neue",system-ui,sans-serif;
+  --jp:"IBM Plex Sans JP","Noto Sans JP",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--sans);font-feature-settings:"tnum"}
+#app{height:100vh;display:grid;grid-template-rows:46px 1fr 30px;grid-template-columns:1fr 320px;grid-template-areas:"top top" "stage aside" "bot bot"}
+.topbar{grid-area:top;display:flex;align-items:center;gap:18px;padding:0 16px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:baseline;gap:8px}
+.mark{font-family:var(--display);font-weight:600;letter-spacing:.14em;font-size:14px}
+.layer-tag{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.16em}
+.ttl{flex:1;font-family:var(--mono);font-size:11px;color:var(--ink-2);letter-spacing:.16em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.esc{font-family:var(--mono);font-size:10px;color:var(--mute);text-decoration:none;border:1px solid var(--line);padding:4px 8px;letter-spacing:.12em;white-space:nowrap}
+.esc:hover{color:var(--acc);border-color:var(--acc)}
+.stage{grid-area:stage;position:relative;overflow:hidden;display:grid;grid-template-rows:minmax(0,25fr) minmax(0,27fr) auto minmax(0,48fr);grid-template-columns:minmax(0,1fr) 300px;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+.cell{position:relative;min-width:0;min-height:0;border-bottom:1px solid var(--line)}
+.cell canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+#phaseBox,#sumBox{border-right:1px solid var(--line)}
+#readBox{grid-column:2;grid-row:1 / 3;padding:14px 16px;display:flex;flex-direction:column;gap:10px;overflow:hidden}
+#mapBox{grid-column:1 / -1;border-bottom:0;cursor:crosshair;touch-action:none}
+.cap{position:absolute;left:14px;top:8px;font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.14em;pointer-events:none;white-space:nowrap}
+.cap.r{left:auto;right:14px}
+.prompt{grid-column:1 / -1;text-align:center;padding:8px 16px;border-bottom:1px solid var(--line);pointer-events:none;min-height:34px}
+.prompt .pj{font-family:var(--jp);font-size:11px;letter-spacing:.06em;color:var(--ink-2)}
+.prompt.auto .pj{color:var(--acc)}
+.big{display:flex;align-items:baseline;gap:10px;white-space:nowrap}
+.big .rat{font-family:var(--display);font-weight:600;font-size:34px;letter-spacing:.04em}
+.big .off{font-family:var(--mono);font-size:12px;color:var(--ink-2)}
+.big .jp{font-family:var(--jp);font-size:11px;color:var(--mute)}
+.zone{align-self:flex-start;font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:.16em;padding:5px 12px;border:1px solid var(--line)}
+.zone.ONE{color:var(--ink-2);border-color:var(--mute)}
+.zone.BEAT{color:var(--acc);border-color:var(--acc)}
+.zone.ROUGH{color:var(--bg);background:var(--warn);border-color:var(--warn)}
+.zone.TWO{color:var(--acc-ink);background:var(--acc);border-color:var(--acc)}
+.meter .top{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--mute);margin-bottom:4px;letter-spacing:.06em}
+.meter .top b{font-family:var(--mono);font-weight:400;color:var(--ink-2)}
+.meter .track{height:10px;background:var(--bg-2);border:1px solid var(--mute-2);position:relative}
+.meter .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--ink-2)}
+.meter .th{position:absolute;top:-3px;bottom:-3px;width:1px;background:var(--mute)}
+.beat{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:10px;color:var(--mute)}
+.beat i{width:14px;height:14px;border:1px solid var(--acc);display:block;flex:none}
+.beat b{color:var(--acc);font-weight:400}
+.tapv{font-family:var(--mono);font-size:10px;color:var(--mute);line-height:1.6}
+.tapv b{color:var(--ink);font-weight:400}
+.aside{grid-area:aside;border-left:1px solid var(--line);background:var(--panel-bg);overflow-y:auto;padding:14px 14px 24px}
+.aside::-webkit-scrollbar{width:3px}.aside::-webkit-scrollbar-thumb{background:var(--mute-2)}
+.sec{margin-bottom:18px}
+.lt{display:inline-block;font-family:var(--mono);font-size:9px;color:var(--acc-ink);background:var(--acc);padding:1px 5px;margin-right:7px;letter-spacing:.1em}
+.sh{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.16em;text-transform:uppercase;margin-bottom:10px;border-bottom:1px solid var(--line);padding-bottom:5px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;margin-bottom:8px}
+.seg button,.btn{font-family:var(--mono);font-size:10px;letter-spacing:.08em;background:transparent;color:var(--ink-2);border:1px solid var(--line);padding:7px 4px;cursor:pointer}
+.seg button:hover,.btn:hover{border-color:var(--acc);color:var(--acc)}
+.seg button.on,.btn.on{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.btn{width:100%;margin-top:6px;padding:9px 10px;text-align:left}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:4px}.grid2 .btn{margin-top:0}
+.row{margin-bottom:12px}
+.row label{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--ink-2);margin-bottom:5px;letter-spacing:.06em}
+.row .val{color:var(--acc)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:2px;background:var(--mute-2);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;background:var(--acc);border:1px solid var(--acc-ink);border-radius:0}
+input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acc);border:1px solid var(--acc-ink);border-radius:0}
+.hint{font-family:var(--jp);font-size:10.5px;color:var(--ink-2);line-height:1.6;margin:4px 0 6px}
+.hint b{color:var(--acc);font-weight:500}
+.kvt{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:10px}
+.kvt th{color:var(--mute);font-weight:400;text-align:left;padding:3px 0;letter-spacing:.06em}
+.kvt td{color:var(--ink-2);text-align:right;padding:3px 0 3px 6px}
+.kvt tr{border-bottom:1px solid var(--line)}
+.params{font-family:var(--mono);font-size:10px;color:var(--mute);background:var(--bg-2);border:1px solid var(--line);padding:8px;word-break:break-all;line-height:1.5;cursor:pointer}
+.params:hover{border-color:var(--acc)}
+.bottombar{grid-area:bot;display:flex;align-items:center;gap:16px;padding:0 16px;border-top:1px solid var(--line);font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.1em;white-space:nowrap;overflow:hidden}
+.bottombar .sp{flex:1}.bottombar b{color:var(--ink-2);font-weight:400}
+.toast{position:fixed;left:50%;bottom:44px;transform:translateX(-50%);font-family:var(--mono);font-size:11px;color:var(--acc-ink);background:var(--acc);padding:6px 12px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
+.toast.show{opacity:1}
+@media (max-width:880px){
+  html,body{overflow:auto}
+  #app{height:auto;min-height:100vh;grid-template-columns:minmax(0,1fr);grid-template-rows:46px auto auto 30px;grid-template-areas:"top" "stage" "aside" "bot"}
+  .stage{min-width:0;grid-template-columns:minmax(0,1fr);grid-template-rows:170px 170px auto auto 320px}
+  #phaseBox,#sumBox{border-right:0}
+  .cap.r{display:none}
+  #readBox{grid-column:1;grid-row:auto}
+  .bottombar span:last-child{display:none}
+  .aside{border-left:0;border-top:1px solid var(--line)}
+  .big .rat{font-size:24px}
+}
+
+/* SP-05 stage only; shared NATURAL shell and controls remain SP-02. */
+.stage{grid-template-columns:minmax(0,1fr) 280px;grid-template-rows:minmax(0,1fr) auto 130px}
+#plateBox{grid-column:1;grid-row:1;border-right:1px solid var(--line)}
+#readBox{grid-column:2;grid-row:1;padding:14px 16px;overflow-y:auto}
+#readBox .sh{margin-bottom:0}
+#spectrumBox{grid-column:1 / -1;border-bottom:0;cursor:ew-resize;touch-action:none}
+.plate-note{position:absolute;bottom:7px;left:8px;right:8px;text-align:center;font-family:var(--jp);font-size:11px;color:var(--acc);pointer-events:none}
+.mode-read{display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-family:var(--mono);font-size:13px}
+.mode-read b{font-weight:400;color:var(--ink-2)}.mode-read span{font-size:11px;color:var(--mute)}
+.zone.RING{color:var(--acc-ink);background:var(--acc);border-color:var(--acc)}
+.zone.STIR{color:var(--acc);border-color:var(--acc)}
+.zone.STILL{color:var(--mute);border-color:var(--mute-2)}
+#fResp,#fLines{background:var(--acc)}.model-note{margin-top:auto;color:var(--mute)}
+button:focus-visible,a:focus-visible,input:focus-visible,.params:focus-visible{outline:1px solid var(--acc);outline-offset:3px}
+@media (max-width:880px){
+  .stage{grid-template-columns:minmax(0,1fr);grid-template-rows:calc(100vw + 26px) auto auto 130px}
+  #plateBox{grid-column:1;grid-row:1;border-right:0}
+  #readBox{grid-column:1;grid-row:2;overflow:visible}
+  .model-note{margin-top:0}
+  .topbar{gap:10px}
+  .layer-tag{display:none}
+}
+
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="brand"><span class="mark">GEN-EX</span><span class="layer-tag">L1d×L2</span></div>
+    <div class="ttl">CHLADNI — 振動が描く模様 ⁄ SP-05</div>
+    <a class="esc" href="scroll/SCROLL_CHLADNI_LP.html">解説 SCROLL →</a>
+    <a class="esc" href="index.html">[ESC] INDEX</a>
+  </div>
+  <div class="stage" id="stage">
+    <div class="cell" id="plateBox"><canvas id="cvPlate" aria-label="振動する正方形の板と砂"></canvas><div class="cap">PLATE ⁄ SAND</div><div class="plate-note" id="proofCap" hidden>砂は、揺れの少ない所へ逃げるだけ</div></div>
+    <div class="cell" id="readBox">
+      <div class="sh">READOUT</div>
+      <div class="big"><span class="rat" id="rF">—</span><span class="off">Hz</span></div>
+      <div class="mode-read"><b id="rMode">—</b><span id="rCents">—</span></div>
+      <div class="zone STILL" id="rZone">STILL</div>
+      <div class="meter"><div class="top"><span>共鳴 resp</span><b id="mResp">—</b></div><div class="track"><div class="fill" id="fResp"></div></div></div>
+      <div class="meter"><div class="top"><span>線の上</span><b id="mLines">—</b></div><div class="track"><div class="fill" id="fLines"></div><i class="th" id="baseMark"></i></div></div>
+      <div class="hint" id="lineRead">線の上 —（ばらまき —）</div>
+      <div class="hint">細い目印＝ばらまいた砂の目安。<br>節線に集まった割合を、実際の粒から数える。</div>
+      <div class="hint model-note">正方形板の模様の型を借りた近似モデルです。本物の自由端の板そのものの振動ではありません。</div>
+    </div>
+    <div class="prompt" id="prompt"><span class="pj" id="pj">ダイヤルを回して、砂が跳んで模様になる高さを探す</span></div>
+    <div class="cell" id="spectrumBox"><canvas id="cvSpectrum" aria-label="対数の振動数と45個の共鳴。ドラッグで周波数を変更"></canvas><div class="cap">SPECTRUM ⁄ 共鳴の山 · DRAG TO TUNE</div></div>
+  </div>
+  <div class="aside">
+    <div class="sec">
+      <div class="sh"><span class="lt">A</span>FREQUENCY</div>
+      <div class="row"><label for="frequency">振動数 <span class="val" id="vF">—</span></label><input type="range" id="frequency" min="0" max="1000" step="1" value="0"></div>
+      <div class="grid2"><button class="btn" id="bPrev">◀ 前の共鳴 [</button><button class="btn" id="bNext">次の共鳴 ] ▶</button></div>
+      <div class="hint">← →＝10 セント・Shift＋← →＝1 セント。<br>前／次の共鳴まで、0.6 秒かけて動く。</div>
+    </div>
+    <div class="sec">
+      <div class="sh"><span class="lt">B</span>DRIVE</div>
+      <div class="row"><label for="drive">板を揺らす強さ <span class="val" id="vDrive">—</span></label><input type="range" id="drive" min="8" max="24" step="0.1" value="12"></div>
+      <div class="hint"><b>線の形が変わる</b>。8＝ふっくらした線・12＝細い線・16 より上＝線がちぎれて点の列に（となりの共鳴が少し混ざり、線の上もわずかに揺れているので、本当に止まる点だけに集まる）。音も同じ強さから。</div>
+      <div class="sh">GRAINS</div>
+      <div class="seg" id="segGrains"><button data-v="10000">10k</button><button data-v="20000">20k</button><button data-v="40000" class="on">40k</button><button data-v="60000">60k</button></div>
+      <button class="btn" id="bScatter">SCATTER（R）— 砂をまき直す</button>
+    </div>
+    <div class="sec">
+      <div class="sh"><span class="lt">C</span>SOUND ⁄ SHOW</div>
+      <div class="grid2"><button class="btn" id="bSound">▶ SOUND</button><button class="btn" id="bAuto">◎ AUTO 75s</button></div>
+      <button class="btn" id="bProof">PROOF（P）</button>
+      <div class="row" style="margin-top:12px"><label for="vol">MASTER <span class="val" id="vVol">35</span></label><input type="range" id="vol" min="0" max="100" value="35"></div>
+      <div class="hint">ヘッドホン推奨。SOUND の最初のクリックで開始。純音は共鳴で膨らみ、高い音は自動で絞る。</div>
+      <button class="btn" id="bVoice">VOICE（V）— 声で揺らす</button>
+      <div class="sh" style="margin-top:12px">OCTAVE</div>
+      <div class="seg" id="segOctave"><button data-v="1" class="on">×1</button><button data-v="2">×2</button><button data-v="4">×4</button><button data-v="8">×8</button></div>
+      <div class="hint" id="voiceRead">声の高さ × OCTAVE → 板の振動数。拾えないときは、その高さで待つ。</div>
+    </div>
+    <div class="sec"><div class="sh"><span class="lt">D</span>READOUT</div><table class="kvt" id="kv"></table></div>
+    <div class="sec">
+      <div class="sh"><span class="lt">E</span>PARAMS — クリックでコピー</div>
+      <div class="params" id="params" role="button" tabindex="0" aria-label="PARAMS をコピー"></div>
+      <div class="grid2" style="margin-top:6px"><button class="btn" id="bCopy">COPY</button><button class="btn" id="bPaste">PASTE</button></div>
+    </div>
+  </div>
+  <div class="bottombar"><span>SOUND PATTERNS ⁄ <b>SP-05</b></span><span id="botInfo">—</span><span class="sp"></span><span>← → Hz · [ ] 共鳴 · R 砂 · SPACE 音 · V 声 · A 自動 · P PROOF</span></div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script src="_law/sp05_law.js"></script>
+<script>
+(() => {
+'use strict';
+const L = window.SP05, $ = id => document.getElementById(id);
+const firstMode = L.MODES.find(md => md.n === 0 && md.m === 2 && md.s === 1) || L.MODES[0];
+const S = { f: firstMode.f, drive: L.DRIVE_DEFAULT, grains: 40000, octave: 1, vol: .35, sound: false, proof: false, voice: false, auto: null, time: 0 };
+const grainCounts = [10000, 20000, 40000, 60000], octaves = [1, 2, 4, 8];
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+const fAt = u => L.F_MIN * Math.pow(L.F_MAX / L.F_MIN, clamp(u, 0, 1));
+const uAt = f => Math.log(f / L.F_MIN) / Math.log(L.F_MAX / L.F_MIN);
+// UI units only: cents and logarithmic interpolation; no plate law lives here.
+const shifted = (f, cents) => f * Math.pow(2, cents / 1200);
+const interpolate = (a, b, u) => u >= 1 ? b : a * Math.pow(b / a, u);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const rgb = hex => hex.slice(1).match(/../g).map(s => parseInt(s, 16));
+let C;
+function readColors() {
+  C = { ink: css('--ink'), ink2: css('--ink-2'), bg2: css('--bg-2'), line: css('--line'), mute: css('--mute'), acc: css('--acc'), warn: css('--warn'), mono: css('--mono') };
+  C.sand = rgb(C.ink); C.base = rgb(C.bg2); C.heat = rgb(C.warn);
+}
+const toast = message => {
+  const el = $('toast'); el.textContent = message; el.classList.add('show');
+  clearTimeout(toast.timer); toast.timer = setTimeout(() => el.classList.remove('show'), 1800);
+};
+
+// The only sand position writers are L.scatter and L.stepSand.
+let xy = new Float32Array(S.grains * 2), rand = Math.random, F = null, fieldF = NaN;
+let moved = 0, measureDue = 0, measured = { mode: firstMode, fraction: 0, base: 0 };
+const areas = new Map();
+function ensureField() {
+  if (fieldF !== S.f) { F = L.field(S.f, 192, F && F.A); fieldF = S.f; heatDirty = true; }
+  return F;
+}
+function measure() {
+  const md = L.dominant(S.f).mode;
+  if (!areas.has(md.i)) areas.set(md.i, L.lineArea(md));
+  measured = { mode: md, fraction: L.onLines(xy, S.grains, md), base: areas.get(md.i) };
+  measureDue = S.time + .25;
+}
+function scatter(seed) {
+  rand = seed === undefined ? Math.random : L.makeRng(seed);
+  L.scatter(xy, S.grains, rand); moved = 0; measure(); return xy;
+}
+function setGrains(n) {
+  if (!grainCounts.includes(n) || n === S.grains) return;
+  S.grains = n; xy = new Float32Array(n * 2); L.scatter(xy, n, rand); moved = 0; measure();
+}
+function setFrequency(f) {
+  if (!Number.isFinite(f)) return;
+  const next = clamp(f, L.F_MIN, L.F_MAX);
+  if (next === S.f) return;
+  S.f = next; updateAudio();
+}
+function setDrive(d) { if (Number.isFinite(d)) { S.drive = clamp(d, L.DRIVE_MIN, L.DRIVE_MAX); updateAudio(); } }
+
+// Sound follows exactly the law gain, then the same master + limiter as SP-02.
+let AC = null, master = null, osc = null, toneGain = null, limiter = null;
+async function ensureAudio() {
+  if (!AC) {
+    const Context = window.AudioContext || window.webkitAudioContext;
+    if (!Context) throw new Error('Web Audio unavailable');
+    AC = new Context();
+    master = AC.createGain(); master.gain.value = 0;
+    limiter = AC.createDynamicsCompressor();
+    limiter.threshold.value = -10; limiter.ratio.value = 20; limiter.attack.value = .003; limiter.release.value = .15;
+    master.connect(limiter).connect(AC.destination);
+    osc = AC.createOscillator(); osc.type = 'sine'; osc.frequency.value = S.f;
+    toneGain = AC.createGain(); toneGain.gain.value = L.gainOf(S.f, S.drive);
+    osc.connect(toneGain).connect(master); osc.start();
+  }
+  if (AC.state === 'suspended') await AC.resume();
+  updateAudio();
+}
+function updateAudio() {
+  if (!AC) return;
+  const t = AC.currentTime;
+  osc.frequency.setTargetAtTime(S.f, t, .03);
+  toneGain.gain.setTargetAtTime(L.gainOf(S.f, S.drive), t, .03);
+  master.gain.setTargetAtTime(S.sound ? S.vol : 0, t, S.sound ? .08 : .15);
+}
+async function setSound(on) {
+  S.sound = !!on;
+  try { if (on) await ensureAudio(); else updateAudio(); }
+  catch (err) { S.sound = false; updateAudio(); toast('音を開始できません。もう一度 SOUND を押してください'); }
+  $('bSound').classList.toggle('on', S.sound); $('bSound').textContent = S.sound ? '■ SOUND' : '▶ SOUND';
+}
+
+// Mic/test sources share the real AnalyserNode and L.detectPitch path.
+// The analyser goes to a zero-gain sink, so neither microphone nor test is monitored.
+let analyser = null, voiceBuffer = null, voiceSource = null, voiceSink = null, stream = null;
+let testOsc = null, voiceEpoch = 0, voicePending = false, voiceKind = null, voicePitch = 0, voiceDue = 0;
+function voiceButton() {
+  $('bVoice').classList.toggle('on', S.voice || voicePending);
+  $('bVoice').textContent = voicePending ? 'VOICE — 許可を待っています' : S.voice ? '■ VOICE（V）' : 'VOICE（V）— 声で揺らす';
+}
+function stopVoice() {
+  voiceEpoch++; voicePending = false; S.voice = false;
+  if (testOsc) { testOsc.stop(); testOsc = null; }
+  if (voiceSource) voiceSource.disconnect();
+  if (stream) stream.getTracks().forEach(track => track.stop());
+  if (analyser) analyser.disconnect();
+  if (voiceSink) voiceSink.disconnect();
+  voiceSource = stream = analyser = voiceSink = voiceBuffer = null;
+  voiceKind = null; voicePitch = 0;
+  $('voiceRead').textContent = '声の高さ × OCTAVE → 板の振動数。拾えないときは、その高さで待つ。';
+  voiceButton();
+}
+function connectVoice(source, kind) {
+  analyser = AC.createAnalyser(); analyser.fftSize = 4096;
+  voiceBuffer = new Float32Array(analyser.fftSize);
+  voiceSink = AC.createGain(); voiceSink.gain.value = 0;
+  source.connect(analyser); analyser.connect(voiceSink).connect(AC.destination);
+  voiceSource = source; voiceKind = kind; S.voice = true; voicePending = false; voiceDue = 0; voiceButton();
+}
+async function startVoice() {
+  stopAuto(); stopVoice(); voicePending = true; voiceButton();
+  const epoch = voiceEpoch;
+  try {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('Microphone unavailable');
+    await ensureAudio();
+    if (epoch !== voiceEpoch) return;
+    const captured = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+    if (epoch !== voiceEpoch) { captured.getTracks().forEach(track => track.stop()); return; }
+    stream = captured; connectVoice(AC.createMediaStreamSource(stream), 'microphone');
+  } catch (err) {
+    if (epoch !== voiceEpoch) return;
+    stopVoice(); toast('マイクを使えません。許可と接続を確認してください');
+  }
+}
+async function voiceTest(hz) {
+  if (hz == null || hz === 0) { stopVoice(); return null; }
+  if (!Number.isFinite(hz) || hz <= 0) throw new RangeError('voiceTest: positive Hz required');
+  stopAuto(); stopVoice(); const epoch = voiceEpoch;
+  await ensureAudio();
+  if (epoch !== voiceEpoch) return null;
+  if (hz >= AC.sampleRate / 2) throw new RangeError('voiceTest: Hz exceeds Nyquist');
+  testOsc = AC.createOscillator(); testOsc.type = 'sine'; testOsc.frequency.value = hz;
+  connectVoice(testOsc, 'test'); testOsc.start();
+  return { source: voiceKind, hz };
+}
+function tickVoice() {
+  if (!S.voice || S.time + 1e-9 < voiceDue) return;
+  voiceDue = S.time + .05;
+  analyser.getFloatTimeDomainData(voiceBuffer);
+  voicePitch = L.detectPitch(voiceBuffer, AC.sampleRate);
+  if (voicePitch > 0) setFrequency(voicePitch * S.octave);
+  $('voiceRead').textContent = voicePitch > 0
+    ? (voiceKind === 'test' ? 'TEST ' : 'VOICE ') + voicePitch.toFixed(1) + ' Hz ×' + S.octave + ' → ' + S.f.toFixed(1) + ' Hz'
+    : '声を待っています — 振動数はそのまま';
+}
+
+// Frequency changes rebuild field once per simulation frame; holds reuse it.
+let glide = null;
+function glideTo(f, duration = .6) { glide = { from: S.f, to: clamp(f, L.F_MIN, L.F_MAX), elapsed: 0, duration }; }
+function stopAuto() {
+  S.auto = null; glide = null;
+  $('bAuto').classList.remove('on'); $('prompt').classList.remove('auto');
+}
+function tune() { stopAuto(); if (S.voice || voicePending) stopVoice(); }
+
+// 10 ascending resonances: 50s holds + 16.2s travel + 8.6s detour + .2s final hold.
+// At the detuned stop, scatter once to compare formation from the same starting condition.
+const tourModes = L.MODES.slice(firstMode.i, firstMode.i + 10);
+const TOUR = [];
+let tourTime = 0;
+function tourSegment(from, to, duration, say, reset = false) {
+  TOUR.push({ at: tourTime, end: tourTime + duration, from, to, duration, say, reset });
+  tourTime += duration;
+}
+tourModes.forEach((md, i) => {
+  tourSegment(md.f, md.f, i === tourModes.length - 1 ? 5.2 : 5, md.name + ' ぴったり — 砂が跳ねて節線に集まる');
+  if (i === 3) {
+    const off = shifted(md.f, 30);
+    tourSegment(md.f, off, 1.8, 'ぴったりから 30 セントずらす');
+    tourSegment(off, off, 5, '少しずれると模様にならない — 砂をまき直して比べる', true);
+    tourSegment(off, md.f, 1.8, '共鳴へ戻る — 揺れと音が膨らむ');
+  }
+  if (i + 1 < tourModes.length) tourSegment(md.f, tourModes[i + 1].f, 1.8, '次の共鳴へ — 途中の砂と音の変化を見る');
+});
+const AUTO_DURATION = 75;
+function startAuto() {
+  stopAuto(); stopVoice(); setDrive(L.DRIVE_DEFAULT); setFrequency(tourModes[0].f); scatter();
+  S.auto = { elapsed: 0, i: -1 }; $('bAuto').classList.add('on'); $('prompt').classList.add('auto');
+  tickAuto(0);
+  if (!S.sound) toast('SOUND を押すと音も一緒に。操作すると AUTO は止まります');
+}
+function tickAuto(dt) {
+  const a = S.auto; a.elapsed = Math.min(AUTO_DURATION, a.elapsed + dt);
+  const i = TOUR.findIndex(segment => a.elapsed < segment.end - 1e-9);
+  if (i < 0 || a.elapsed >= AUTO_DURATION - 1e-9) { setFrequency(tourModes[tourModes.length - 1].f); stopAuto(); return; }
+  const segment = TOUR[i];
+  if (a.i !== i) { a.i = i; if (segment.reset) scatter(); }
+  setFrequency(interpolate(segment.from, segment.to, clamp((a.elapsed - segment.at) / segment.duration, 0, 1)));
+  $('pj').textContent = 'AUTO ' + String(Math.floor(a.elapsed)).padStart(2, '0') + 's ⁄ ' + segment.say;
+}
+
+// Drawing constants below are display resolution, colors and line widths only.
+function fit(cv) {
+  const d = Math.min(devicePixelRatio || 1, 2), w = cv.clientWidth, h = cv.clientHeight;
+  const pw = Math.max(1, Math.round(w * d)), ph = Math.max(1, Math.round(h * d));
+  if (cv.width !== pw || cv.height !== ph) { cv.width = pw; cv.height = ph; }
+  const g = cv.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, w, h);
+  return [g, w, h, d];
+}
+const sandCanvas = document.createElement('canvas'), sandCtx = sandCanvas.getContext('2d');
+const heatCanvas = document.createElement('canvas'), heatCtx = heatCanvas.getContext('2d');
+let sandImage = null, heatDirty = true, contourMode = -1, contours = [];
+function updateHeat() {
+  if (!heatDirty) return;
+  heatCanvas.width = heatCanvas.height = F.G;
+  const im = heatCtx.createImageData(F.G, F.G);
+  for (let i = 0; i < F.A.length; i++) {
+    // Fixed display scale, so a detuned field stays darker (not auto-normalized).
+    const a = clamp(F.A[i], 0, 1) * .65, k = i * 4;
+    for (let c = 0; c < 3; c++) im.data[k + c] = C.base[c] + (C.heat[c] - C.base[c]) * a;
+    im.data[k + 3] = 255;
+  }
+  heatCtx.putImageData(im, 0, 0); heatDirty = false;
+}
+function getContours(md) {
+  if (contourMode === md.i) return contours;
+  contourMode = md.i; contours = [];
+  const G = 128, values = new Float32Array((G + 1) * (G + 1));
+  for (let j = 0; j <= G; j++) for (let i = 0; i <= G; i++) values[j * (G + 1) + i] = L.shape(md, i / G, j / G);
+  // Marching triangles: only interpolate zero crossings of law.shape.
+  function triangle(a, b, c) {
+    const pts = [a, b, c], hits = [];
+    for (let i = 0; i < 3; i++) {
+      const p = pts[i], q = pts[(i + 1) % 3];
+      if ((p[2] < 0) === (q[2] < 0)) continue;
+      const t = p[2] / (p[2] - q[2]);
+      hits.push([p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t]);
+    }
+    if (hits.length === 2) contours.push(hits);
+  }
+  for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) {
+    const k = j * (G + 1) + i;
+    const a = [i / G, j / G, values[k]], b = [(i + 1) / G, j / G, values[k + 1]];
+    const c = [(i + 1) / G, (j + 1) / G, values[k + G + 2]], d = [i / G, (j + 1) / G, values[k + G + 1]];
+    triangle(a, b, c); triangle(a, c, d);
+  }
+  return contours;
+}
+function drawPlate() {
+  const [g, w, h, d] = fit($('cvPlate'));
+  const size = Math.floor(Math.min(w - 28, h - 54)); if (size < 1) return;
+  const x = (w - size) / 2, y = 28 + (h - 54 - size) / 2;
+  g.fillStyle = C.bg2; g.fillRect(x, y, size, size);
+  if (S.proof) { updateHeat(); g.drawImage(heatCanvas, x, y, size, size); }
+  const N = Math.max(1, Math.round(size * d));
+  if (!sandImage || sandCanvas.width !== N) {
+    sandCanvas.width = sandCanvas.height = N; sandImage = sandCtx.createImageData(N, N);
+  }
+  const pixels = sandImage.data; pixels.fill(0);
+  const dot = d >= 1.5 ? 2 : 1;
+  for (let i = 0; i < S.grains; i++) {
+    const px = clamp(Math.floor(xy[2 * i] * N), 0, N - 1), py = clamp(Math.floor(xy[2 * i + 1] * N), 0, N - 1);
+    for (let dy = 0; dy < dot && py + dy < N; dy++) for (let dx = 0; dx < dot && px + dx < N; dx++) {
+      const k = ((py + dy) * N + px + dx) * 4;
+      for (let c = 0; c < 3; c++) pixels[k + c] = Math.min(C.sand[c], pixels[k + c] + C.sand[c] * .32);
+      pixels[k + 3] = 255;
+    }
+  }
+  sandCtx.putImageData(sandImage, 0, 0);
+  g.globalCompositeOperation = 'lighter'; g.drawImage(sandCanvas, x, y, size, size); g.globalCompositeOperation = 'source-over';
+  if (S.proof) {
+    g.strokeStyle = C.acc; g.lineWidth = .8; g.beginPath();
+    for (const [a, b] of getContours(L.dominant(S.f).mode)) { g.moveTo(x + a[0] * size, y + a[1] * size); g.lineTo(x + b[0] * size, y + b[1] * size); }
+    g.stroke();
+  }
+  g.strokeStyle = C.line; g.lineWidth = 1; g.strokeRect(x - .5, y - .5, size + 1, size + 1);
+  $('proofCap').hidden = !S.proof;
+}
+const spectrum = [];
+let spectrumMax = 0;
+function makeSpectrum() {
+  const frequencies = Array.from({ length: 1601 }, (_, i) => fAt(i / 1600)).concat(L.MODES.map(md => md.f)).sort((a, b) => a - b);
+  for (const f of frequencies) {
+    const value = L.MODES.reduce((sum, md) => sum + L.respAbs(md, f), 0);
+    spectrum.push([uAt(f), value]); spectrumMax = Math.max(spectrumMax, value);
+  }
+}
+function drawSpectrum() {
+  const [g, w, h] = fit($('cvSpectrum')), left = 20, width = w - 40, top = 28, bottom = h - 26;
+  if (width <= 0 || bottom <= top) return;
+  const X = f => left + uAt(f) * width, Y = v => bottom - v / spectrumMax * (bottom - top);
+  g.strokeStyle = C.line; g.lineWidth = 1; g.beginPath();
+  for (const md of L.MODES) { const x = X(md.f); g.moveTo(x, top); g.lineTo(x, bottom); } g.stroke();
+  function curve(color) {
+    g.strokeStyle = color; g.beginPath();
+    spectrum.forEach(([u, v], i) => i ? g.lineTo(left + width * u, Y(v)) : g.moveTo(left + width * u, Y(v))); g.stroke();
+  }
+  curve(C.mute);
+  const needle = X(S.f);
+  g.save(); g.beginPath(); g.rect(needle - 70, top, 140, bottom - top); g.clip(); curve(C.acc); g.restore();
+  g.strokeStyle = C.acc; g.beginPath(); g.moveTo(needle, top - 5); g.lineTo(needle, bottom + 5); g.stroke();
+  g.fillStyle = C.acc; g.fillRect(needle - 3, top - 5, 6, 4);
+  g.font = '10px ' + C.mono; g.fillStyle = C.mute;
+  g.textAlign = 'left'; g.fillText(L.F_MIN.toFixed(0) + ' Hz', left, h - 8);
+  g.textAlign = 'right'; g.fillText(L.F_MAX.toFixed(0) + ' Hz', w - left, h - 8);
+  g.textAlign = 'center'; g.fillStyle = C.acc;
+  g.fillText(S.f.toFixed(1) + ' Hz', clamp(needle, left + 65, w - left - 65), h - 8);
+}
+let readKey = '';
+function drawRead() {
+  const z = L.zone(S.f, S.drive, F);
+  const key = [S.f, S.drive, S.grains, S.octave, measured.fraction, measured.mode.i, S.proof, moved.toFixed(3)].join('|');
+  if (key !== readKey) {
+    readKey = key;
+    $('rF').textContent = S.f.toFixed(1); $('rMode').textContent = z.mode.name;
+    $('rCents').textContent = (z.cents >= 0 ? '+' : '') + z.cents.toFixed(1) + '¢';
+    $('rZone').className = 'zone ' + z.id; $('rZone').textContent = z.id + ' ' + z.jp;
+    $('mResp').textContent = z.resp.toFixed(3); $('fResp').style.width = clamp(z.resp, 0, 1) * 100 + '%';
+    $('mLines').textContent = (measured.fraction * 100).toFixed(0) + '%';
+    $('fLines').style.width = measured.fraction * 100 + '%'; $('baseMark').style.left = measured.base * 100 + '%';
+    $('lineRead').textContent = '線の上 ' + (measured.fraction * 100).toFixed(0) + '%（ばらまき ' + (measured.base * 100).toFixed(0) + '%）' + (measured.mode.i !== z.mode.i ? ' ⁄ ' + measured.mode.name + ' 計測' : '');
+    $('vF').textContent = S.f.toFixed(2) + ' Hz'; $('frequency').value = Math.round(uAt(S.f) * 1000);
+    $('vDrive').textContent = S.drive.toFixed(1); $('drive').value = S.drive;
+    $('params').textContent = JSON.stringify({ f: S.f, drive: S.drive, grains: S.grains, octave: S.octave });
+    const rows = [['主役の固有振動数', z.mode.f.toFixed(3) + ' Hz'], ['主役モード', z.mode.name], ['ずれ', z.cents.toFixed(2) + '¢'], ['共鳴 resp', z.resp.toFixed(3)], ['最大加速度', z.peak.toFixed(3)], ['跳ねた粒', (moved * 100).toFixed(1) + '%'], ['線の上（実測）', (measured.fraction * 100).toFixed(1) + '%'], ['音のゲイン（master 前）', L.gainOf(S.f, S.drive).toFixed(4)], ['境界の読み', z.id]];
+    $('kv').innerHTML = rows.map(([a, v]) => '<tr><th>' + a + '</th><td>' + v + '</td></tr>').join('');
+    $('botInfo').textContent = S.grains / 1000 + 'k GRAINS · ' + z.mode.name + ' · ' + z.id;
+    document.querySelectorAll('#segGrains button').forEach(b => b.classList.toggle('on', +b.dataset.v === S.grains));
+    document.querySelectorAll('#segOctave button').forEach(b => b.classList.toggle('on', +b.dataset.v === S.octave));
+  }
+  if (!S.auto) $('pj').textContent = 'ダイヤルを回して、砂が跳んで模様になる高さを探す';
+}
+function draw() { ensureField(); drawPlate(); drawSpectrum(); drawRead(); }
+function advance(dt) {
+  S.time += dt;
+  if (S.auto) tickAuto(dt);
+  else if (glide) {
+    glide.elapsed += dt;
+    setFrequency(interpolate(glide.from, glide.to, clamp(glide.elapsed / glide.duration, 0, 1)));
+    if (glide.elapsed >= glide.duration - 1e-9) { setFrequency(glide.to); glide = null; }
+  }
+  tickVoice(); ensureField();
+  if (dt > 0) moved = L.stepSand(xy, S.grains, F, S.drive, dt, rand);
+  if (S.time + 1e-9 >= measureDue) measure();
+}
+let manual = false, lastT = null;
+function frame(now) {
+  if (!manual) {
+    const dt = lastT === null ? 0 : clamp((now - lastT) / 1000, 0, .05);
+    lastT = now; advance(dt); draw();
+  }
+  requestAnimationFrame(frame);
+}
+
+// Every deliberate control touch stops the tour. Tuning also releases voice control.
+$('app').addEventListener('pointerdown', e => { if (!e.target.closest('#bAuto')) stopAuto(); }, true);
+$('frequency').oninput = e => { tune(); setFrequency(fAt(+e.target.value / 1000)); };
+$('drive').oninput = e => { stopAuto(); setDrive(+e.target.value); };
+function next(dir) { tune(); glideTo(L.nextMode(S.f, dir).f); }
+$('bPrev').onclick = () => next(-1); $('bNext').onclick = () => next(1);
+$('bScatter').onclick = () => { stopAuto(); scatter(); };
+document.querySelectorAll('#segGrains button').forEach(b => b.onclick = () => { stopAuto(); setGrains(+b.dataset.v); });
+document.querySelectorAll('#segOctave button').forEach(b => b.onclick = () => { stopAuto(); S.octave = +b.dataset.v; voiceDue = 0; });
+$('bSound').onclick = () => { stopAuto(); void setSound(!S.sound); };
+$('bAuto').onclick = () => S.auto ? stopAuto() : startAuto();
+$('bProof').onclick = () => { stopAuto(); S.proof = !S.proof; $('bProof').classList.toggle('on', S.proof); };
+$('bVoice').onclick = () => { stopAuto(); if (S.voice || voicePending) stopVoice(); else void startVoice(); };
+$('vol').oninput = e => { stopAuto(); S.vol = +e.target.value / 100; $('vVol').textContent = e.target.value; updateAudio(); };
+const cv = $('cvSpectrum');
+let pointer = null;
+function spectrumAt(e) { const b = cv.getBoundingClientRect(); setFrequency(fAt((e.clientX - b.left - 20) / Math.max(1, b.width - 40))); }
+cv.addEventListener('pointerdown', e => { if (e.button !== 0) return; tune(); pointer = e.pointerId; cv.setPointerCapture(pointer); spectrumAt(e); });
+cv.addEventListener('pointermove', e => { if (e.pointerId === pointer) spectrumAt(e); });
+function release(e) { if (e.pointerId === pointer) { pointer = null; if (cv.hasPointerCapture(e.pointerId)) cv.releasePointerCapture(e.pointerId); } }
+cv.addEventListener('pointerup', release); cv.addEventListener('pointercancel', release); cv.addEventListener('lostpointercapture', () => { pointer = null; });
+
+function applyParams(o) {
+  if (!o || typeof o !== 'object' || Array.isArray(o) || !Number.isFinite(o.f) || !Number.isFinite(o.drive) || !grainCounts.includes(o.grains) || !octaves.includes(o.octave)) throw new Error('Invalid PARAMS');
+  tune(); setFrequency(o.f); setDrive(o.drive); setGrains(o.grains); S.octave = o.octave; draw();
+}
+async function copyParams() {
+  stopAuto();
+  const value = JSON.stringify({ f: S.f, drive: S.drive, grains: S.grains, octave: S.octave });
+  try { await navigator.clipboard.writeText(value); toast('COPIED'); }
+  catch (err) { window.prompt('PARAMS をコピー', value); }
+}
+$('params').onclick = copyParams; $('bCopy').onclick = copyParams;
+$('params').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); void copyParams(); } };
+$('bPaste').onclick = async () => {
+  stopAuto(); let value;
+  try { value = await navigator.clipboard.readText(); }
+  catch (err) { value = window.prompt('PARAMS を貼り付け'); }
+  if (!value) return;
+  try { applyParams(JSON.parse(value)); toast('PASTED'); } catch (err) { toast('読めない PARAMS'); }
+};
+addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey || e.target.isContentEditable || /^(TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+  if (e.target.tagName === 'INPUT' && e.target.type !== 'range') return;
+  const k = e.key, lower = k.toLowerCase();
+  if (k === 'ArrowLeft' || k === 'ArrowRight') {
+    if (e.target.tagName === 'INPUT' && e.target.id !== 'frequency') { stopAuto(); return; }
+    e.preventDefault(); tune(); setFrequency(shifted(S.f, (k === 'ArrowRight' ? 1 : -1) * (e.shiftKey ? 1 : 10)));
+  } else if (k === '[' || k === ']') { e.preventDefault(); next(k === ']' ? 1 : -1); }
+  else if (k === ' ') { e.preventDefault(); if (!e.repeat) { stopAuto(); void setSound(!S.sound); } }
+  else if (!e.repeat && ['r', 'v', 'a', 'p'].includes(lower)) {
+    e.preventDefault(); $('b' + ({ r: 'Scatter', v: 'Voice', a: 'Auto', p: 'Proof' }[lower])).click();
+  } else if (k === 'Escape') { stopAuto(); stopVoice(); void setSound(false); }
+  else if (k === 'Enter' && e.target.tagName === 'BUTTON' && e.target.id !== 'bAuto') stopAuto();
+});
+addEventListener('pagehide', () => { stopVoice(); S.sound = false; updateAudio(); if (AC) void AC.suspend(); });
+
+readColors(); makeSpectrum(); ensureField(); scatter(); draw();
+document.fonts && document.fonts.ready.then(() => { readColors(); heatDirty = true; draw(); });
+requestAnimationFrame(frame);
+window.__SP = {
+  L, law: L, state: S,
+  manual: on => { manual = !!on; lastT = null; },
+  step: (sec = 1 / 60, fps = 60) => {
+    if (!manual) throw new Error('Call __SP.manual(true) before step');
+    if (!Number.isFinite(sec) || sec < 0 || !Number.isFinite(fps) || fps <= 0) throw new RangeError('Invalid step duration/fps');
+    const h = Math.min(.05, 1 / fps), n = Math.ceil(sec / h - 1e-9);
+    for (let i = 0; i < n; i++) advance(Math.min(h, sec - i * h));
+    draw();
+  },
+  goto: f => { tune(); setFrequency(f); ensureField(); measure(); draw(); return S.f; },
+  scatter: seed => { stopAuto(); scatter(seed); draw(); return xy; },
+  grains: () => xy,
+  zone: () => L.zone(S.f, S.drive, ensureField()),
+  onLines: () => L.onLines(xy, S.grains, L.dominant(S.f).mode),
+  audio: () => AC && ({ state: AC.state, master: master.gain.value, f: osc.frequency.value, gain: toneGain.gain.value, targetGain: L.gainOf(S.f, S.drive),
+    limiter: { threshold: limiter.threshold.value, ratio: limiter.ratio.value, attack: limiter.attack.value, release: limiter.release.value },
+    voice: { active: S.voice, source: voiceKind, pitch: voicePitch } }),
+  voiceTest, field: () => ensureField(),
+  startAuto, stopAuto, setSound, applyParams
+};
+})();
+</script>
+</body>
+</html>
