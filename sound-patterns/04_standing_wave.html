@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STANDING WAVE (SP-04)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=IBM+Plex+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:"Bank Gothic";src:url("../cognitive/fonts/bank-gothic-light-bt.ttf") format("truetype");font-weight:300 600;font-display:swap}
+@font-face{font-family:"Square 721";src:url("../cognitive/fonts/Square_721_BT.ttf") format("truetype");font-weight:400 700;font-display:swap}
+:root{
+  --bg:#0a0a0a;--bg-2:#121212;--ink:#f2f2ef;--ink-2:#cfcfca;--mute:#9a9a93;--mute-2:#3a3a37;
+  --line:#2a2a27;--acc:#ffd400;--acc-ink:#0a0a0a;--warn:#ff6a3d;--fill:rgba(242,242,239,.06);
+  --grid:rgba(242,242,239,0.035);--panel-bg:#0e0e0e;--ez:cubic-bezier(0.2,0,0,1);
+  --mono:"JetBrains Mono","IBM Plex Mono",ui-monospace,monospace;
+  --display:"Bank Gothic","Square 721","Space Grotesk",system-ui,sans-serif;
+  --sans:"Square 721","Bank Gothic","Helvetica Neue",system-ui,sans-serif;
+  --jp:"IBM Plex Sans JP","Noto Sans JP",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--sans);font-feature-settings:"tnum"}
+#app{height:100vh;display:grid;grid-template-rows:46px 1fr 30px;grid-template-columns:1fr 320px;grid-template-areas:"top top" "stage aside" "bot bot"}
+.topbar{grid-area:top;display:flex;align-items:center;gap:18px;padding:0 16px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:baseline;gap:8px}
+.mark{font-family:var(--display);font-weight:600;letter-spacing:.14em;font-size:14px}
+.layer-tag{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.16em}
+.ttl{flex:1;font-family:var(--mono);font-size:11px;color:var(--ink-2);letter-spacing:.16em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.esc{font-family:var(--mono);font-size:10px;color:var(--mute);text-decoration:none;border:1px solid var(--line);padding:4px 8px;letter-spacing:.12em;white-space:nowrap}
+.esc:hover{color:var(--acc);border-color:var(--acc)}
+.stage{grid-area:stage;position:relative;overflow:hidden;display:grid;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+.cell{position:relative;min-width:0;min-height:0;border-bottom:1px solid var(--line)}
+.cell canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.cap{position:absolute;left:14px;top:8px;font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.14em;pointer-events:none;white-space:nowrap}
+.cap.r{left:auto;right:14px}
+.prompt{grid-column:1 / -1;text-align:center;padding:8px 16px;border-bottom:1px solid var(--line);pointer-events:none;min-height:34px}
+.prompt .pj{font-family:var(--jp);font-size:11px;letter-spacing:.06em;color:var(--ink-2)}
+.prompt.auto .pj{color:var(--acc)}
+.big{display:flex;align-items:baseline;gap:10px;white-space:nowrap}
+.big .rat{font-family:var(--display);font-weight:600;font-size:34px;letter-spacing:.04em}
+.big .off{font-family:var(--mono);font-size:12px;color:var(--ink-2)}
+.big .jp{font-family:var(--jp);font-size:11px;color:var(--mute)}
+.zone{align-self:flex-start;font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:.16em;padding:5px 12px;border:1px solid var(--line)}
+.meter .top{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--mute);margin-bottom:4px;letter-spacing:.06em}
+.meter .top b{font-family:var(--mono);font-weight:400;color:var(--ink-2)}
+.meter .track{height:10px;background:var(--bg-2);border:1px solid var(--mute-2);position:relative}
+.meter .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--ink-2)}
+.meter .th{position:absolute;top:-3px;bottom:-3px;width:1px;background:var(--mute)}
+.aside{grid-area:aside;border-left:1px solid var(--line);background:var(--panel-bg);overflow-y:auto;padding:14px 14px 24px}
+.aside::-webkit-scrollbar{width:3px}.aside::-webkit-scrollbar-thumb{background:var(--mute-2)}
+.sec{margin-bottom:18px}
+.lt{display:inline-block;font-family:var(--mono);font-size:9px;color:var(--acc-ink);background:var(--acc);padding:1px 5px;margin-right:7px;letter-spacing:.1em}
+.sh{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.16em;text-transform:uppercase;margin-bottom:10px;border-bottom:1px solid var(--line);padding-bottom:5px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;margin-bottom:8px}
+.seg button,.btn{font-family:var(--mono);font-size:10px;letter-spacing:.08em;background:transparent;color:var(--ink-2);border:1px solid var(--line);padding:7px 4px;cursor:pointer}
+.seg button:hover,.btn:hover{border-color:var(--acc);color:var(--acc)}
+.seg button.on,.btn.on{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.btn{width:100%;margin-top:6px;padding:9px 10px;text-align:left}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:4px}.grid2 .btn{margin-top:0}
+.row{margin-bottom:12px}
+.row label{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--ink-2);margin-bottom:5px;letter-spacing:.06em}
+.row .val{color:var(--acc)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:2px;background:var(--mute-2);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;background:var(--acc);border:1px solid var(--acc-ink);border-radius:0}
+input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acc);border:1px solid var(--acc-ink);border-radius:0}
+.hint{font-family:var(--jp);font-size:10.5px;color:var(--ink-2);line-height:1.6;margin:4px 0 6px}
+.hint b{color:var(--acc);font-weight:500}
+.kvt{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:10px}
+.kvt th{color:var(--mute);font-weight:400;text-align:left;padding:3px 0;letter-spacing:.06em}
+.kvt td{color:var(--ink-2);text-align:right;padding:3px 0 3px 6px}
+.kvt tr{border-bottom:1px solid var(--line)}
+.params{font-family:var(--mono);font-size:10px;color:var(--mute);background:var(--bg-2);border:1px solid var(--line);padding:8px;word-break:break-all;line-height:1.5;cursor:pointer}
+.params:hover{border-color:var(--acc)}
+.bottombar{grid-area:bot;display:flex;align-items:center;gap:16px;padding:0 16px;border-top:1px solid var(--line);font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.1em;white-space:nowrap;overflow:hidden}
+.bottombar .sp{flex:1}.bottombar b{color:var(--ink-2);font-weight:400}
+.toast{position:fixed;left:50%;bottom:44px;transform:translateX(-50%);font-family:var(--mono);font-size:11px;color:var(--acc-ink);background:var(--acc);padding:6px 12px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
+.toast.show{opacity:1}
+
+/* SP-04 stage only; shared NATURAL shell and controls remain SP-02 / SP-05. */
+.stage{grid-template-columns:minmax(0,1fr) 280px;grid-template-rows:minmax(0,1fr) auto 130px}
+#stringBox{grid-column:1;grid-row:1;border-right:1px solid var(--line);cursor:pointer;touch-action:none}
+#readBox{grid-column:2;grid-row:1;padding:14px 16px;display:flex;flex-direction:column;gap:10px;overflow-y:auto}
+#readBox .sh{margin-bottom:0}
+#resBox{grid-column:1;grid-row:3;border-bottom:0;border-right:1px solid var(--line);cursor:ew-resize;touch-action:none}
+#ladderBox{grid-column:2;grid-row:3;border-bottom:0}
+.string-note{position:absolute;bottom:7px;left:8px;right:8px;text-align:center;font-family:var(--jp);font-size:11px;color:var(--acc);pointer-events:none}
+.ladder-ttl{position:absolute;left:12px;right:12px;top:22px;font-family:var(--jp);font-size:10px;color:var(--ink-2);pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mode-read{display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-family:var(--mono);font-size:13px}
+.mode-read b{font-weight:400;color:var(--ink-2)}.mode-read span{font-size:11px;color:var(--mute)}
+.zone.RING{color:var(--acc-ink);background:var(--acc);border-color:var(--acc)}
+.zone.MUTED{color:var(--warn);border-color:var(--warn)}
+.zone.OFF{color:var(--mute);border-color:var(--mute-2)}
+#fMax,#fPur{background:var(--acc)}
+.read-line{font-family:var(--mono);font-size:11px;color:var(--ink-2);line-height:1.6}
+.read-line span{color:var(--mute)}.read-line b{color:var(--acc);font-weight:400}
+.model-note{margin-top:auto;color:var(--mute)}
+.snap{margin-top:6px}
+button:focus-visible,a:focus-visible,input:focus-visible,.params:focus-visible{outline:1px solid var(--acc);outline-offset:3px}
+@media (max-width:880px){
+  html,body{overflow:auto}
+  #app{height:auto;min-height:100vh;grid-template-columns:minmax(0,1fr);grid-template-rows:46px auto auto 30px;grid-template-areas:"top" "stage" "aside" "bot"}
+  .stage{min-width:0;grid-template-columns:minmax(0,1fr);grid-template-rows:300px auto auto 130px 130px}
+  #stringBox{grid-column:1;grid-row:1;border-right:0}
+  #readBox{grid-column:1;grid-row:2;overflow:visible;border-bottom:1px solid var(--line)}
+  .prompt{grid-row:3}
+  #resBox{grid-column:1;grid-row:4;border-right:0;border-bottom:1px solid var(--line)}
+  #ladderBox{grid-column:1;grid-row:5}
+  .cap.r{display:none}
+  .bottombar span:last-child{display:none}
+  .aside{border-left:0;border-top:1px solid var(--line)}
+  .big .rat{font-size:24px}
+  .model-note{margin-top:0}
+  .topbar{gap:10px}
+  .layer-tag{display:none}
+}
+
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="brand"><span class="mark">GEN-EX</span><span class="layer-tag">L1d</span></div>
+    <div class="ttl">STANDING WAVE — 弦が鳴ってよい高さ ⁄ SP-04</div>
+    <a class="esc" href="scroll/SCROLL_STANDING_LP.html">解説 SCROLL →</a>
+    <a class="esc" href="index.html">[ESC] INDEX</a>
+  </div>
+  <div class="stage" id="stage">
+    <div class="cell" id="stringBox"><canvas id="cvString" aria-label="両端を止めた弦。クリックで指を置く・ドラッグで動かす"></canvas><div class="cap">STRING ⁄ 弦 · CLICK TO TOUCH</div><div class="cap r">表示はスローモーション</div><div class="string-note" id="proofCap" hidden>止まって見える波＝進む波＋戻る波。両端で 0 になれる高さだけが残る</div></div>
+    <div class="cell" id="readBox">
+      <div class="sh">READOUT</div>
+      <div class="big"><span class="rat" id="rF">—</span><span class="off">Hz</span></div>
+      <div class="mode-read"><b id="rMode">—</b><span id="rCents">—</span></div>
+      <div class="zone OFF" id="rZone">OFF</div>
+      <div class="meter"><div class="top"><span>振れの最大</span><b id="mMax">—</b></div><div class="track"><div class="fill" id="fMax"></div></div></div>
+      <div class="meter"><div class="top"><span>形の純度</span><b id="mPur">—</b></div><div class="track"><div class="fill" id="fPur"></div></div></div>
+      <div class="read-line" id="rNodes">—</div>
+      <div class="read-line" id="rTouch">—</div>
+      <div class="read-line" id="rPluck">—</div>
+      <div class="hint model-note">理想の弦（両端固定・長さ 1）のモデル。外れた高さでも動かない点はできる。違うのは揺れの大きさと形の純度。</div>
+    </div>
+    <div class="prompt" id="prompt"><span class="pj" id="pj">ダイヤルを回して、弦が大きく鳴る高さを探す。見つけたら弦を指で押さえてみる</span></div>
+    <div class="cell" id="resBox"><canvas id="cvRes" aria-label="対数の振動数と弦の振れの最大（共鳴曲線）。ドラッグで周波数を変更"></canvas><div class="cap">RESONANCE ⁄ 共鳴の山 · DRAG TO TUNE</div></div>
+    <div class="cell" id="ladderBox"><canvas id="cvLadder" aria-label="はじいたときの各振動の強さ n=1〜16"></canvas><div class="cap">LADDER ⁄ はじいた強さ</div><div class="ladder-ttl">弦が鳴ってよい高さ＝110 Hz の整数倍（倍音列）</div></div>
+  </div>
+  <div class="aside">
+    <div class="sec">
+      <div class="sh"><span class="lt">A</span>FREQUENCY</div>
+      <div class="row"><label for="frequency">振動数 <span class="val" id="vF">—</span></label><input type="range" id="frequency" min="0" max="4000" step="1" value="0"></div>
+      <div class="grid2"><button class="btn" id="bPrev">◀ 前の n·110 [</button><button class="btn" id="bNext">次の n·110 ] ▶</button></div>
+      <div class="hint">← →＝10 セント・Shift＋← →＝1 セント。<br>前／次の固有振動（110 Hz の整数倍）まで、0.6 秒かけて動く。</div>
+    </div>
+    <div class="sec">
+      <div class="sh"><span class="lt">B</span>TOUCH</div>
+      <button class="btn" id="bTouch">TOUCH（T）— 指で軽く押さえる</button>
+      <div class="row" style="margin-top:12px"><label for="touchPos">押さえる位置 <span class="val" id="vTouch">—</span></label><input type="range" id="touchPos" min="0.02" max="0.98" step="0.001" value="0.5"></div>
+      <div class="seg snap" id="segSnap"><button data-v="2">1/2</button><button data-v="3">1/3</button><button data-v="4">1/4</button><button data-v="5">1/5</button></div>
+      <div class="hint">弦の上をクリックで指を置く・ドラッグで動かす。指をもう一度クリック、または右クリックで外す。<br><b>そこに節を持つ振動だけが生き残る</b>（フラジオレット）。</div>
+    </div>
+    <div class="sec">
+      <div class="sh"><span class="lt">C</span>PLUCK ⁄ SOUND ⁄ SHOW</div>
+      <button class="btn" id="bPluck">PLUCK（K）— はじく</button>
+      <div class="grid2" style="margin-top:6px"><button class="btn" id="bSound">▶ SOUND</button><button class="btn" id="bAuto">◎ AUTO 75s</button></div>
+      <button class="btn" id="bProof">PROOF（P）</button>
+      <div class="row" style="margin-top:12px"><label for="vol">MASTER <span class="val" id="vVol">35</span></label><input type="range" id="vol" min="0" max="100" value="35"></div>
+      <div class="hint">ヘッドホン推奨。SOUND か PLUCK の最初のクリックで開始。SOUND＝弦を揺らす純音（共鳴で膨らむ）。PLUCK＝弦の 1/5 の所をはじく音。はじいている間、揺らす音は小さくなる。</div>
+    </div>
+    <div class="sec"><div class="sh"><span class="lt">D</span>READOUT</div><table class="kvt" id="kv"></table></div>
+    <div class="sec">
+      <div class="sh"><span class="lt">E</span>PARAMS — クリックでコピー</div>
+      <div class="params" id="params" role="button" tabindex="0" aria-label="PARAMS をコピー"></div>
+      <div class="grid2" style="margin-top:6px"><button class="btn" id="bCopy">COPY</button><button class="btn" id="bPaste">PASTE</button></div>
+    </div>
+  </div>
+  <div class="bottombar"><span>SOUND PATTERNS ⁄ <b>SP-04</b></span><span id="botInfo">—</span><span class="sp"></span><span>← → Hz · [ ] 固有振動 · T 押さえ · K はじく · SPACE 音 · A 自動 · P PROOF</span></div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script src="_law/sp04_law.js"></script>
+<script>
+(() => {
+'use strict';
+const L = window.SP04, $ = id => document.getElementById(id);
+const S = { f: L.fn(1), touch: false, xt: 0.5, vol: .35, sound: false, proof: false, auto: null, time: 0, pluck: null, lastPluck: null };
+// Display/UI constants only (no string law here): pluck point, slow-motion rate, pluck display length, duck level, finger range.
+const XP = 0.2, SHOW_HZ = 1.2, PLUCK_DUR = 3, DUCK = .25, XT_MIN = .02, XT_MAX = .98;
+const STR_L = 44, STR_R = 92;   // string margins in CSS px (drawing and pointer share them)
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+const fAt = u => L.F_MIN * Math.pow(L.F_MAX / L.F_MIN, clamp(u, 0, 1));
+const uAt = f => Math.log(f / L.F_MIN) / Math.log(L.F_MAX / L.F_MIN);
+// UI units only: cents and logarithmic interpolation.
+const shifted = (f, cents) => f * Math.pow(2, cents / 1200);
+const interpolate = (a, b, u) => u >= 1 ? b : a * Math.pow(b / a, u);
+const xtNow = () => S.touch ? S.xt : null;
+const gcd = (a, b) => b ? gcd(b, a % b) : a;
+// Label a touch position with a simple fraction when it is close to one (display only).
+function fracOf(x) {
+  for (let q = 2; q <= 8; q++) { const p = Math.round(x * q); if (p > 0 && p < q && gcd(p, q) === 1 && Math.abs(x - p / q) < .004) return p + '/' + q; }
+  return '';
+}
+const xtText = x => x.toFixed(3) + (fracOf(x) ? ' ≈ ' + fracOf(x) : '');
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let C;
+function readColors() {
+  C = { ink: css('--ink'), ink2: css('--ink-2'), bg2: css('--bg-2'), line: css('--line'), mute: css('--mute'), mute2: css('--mute-2'), acc: css('--acc'), warn: css('--warn'), mono: css('--mono'), jp: css('--jp') };
+}
+const toast = message => {
+  const el = $('toast'); el.textContent = message; el.classList.add('show');
+  clearTimeout(toast.timer); toast.timer = setTimeout(() => el.classList.remove('show'), 1800);
+};
+
+// The string's shape, zone and purity come only from the law; rebuilt when f or the touch changes.
+let P = null, Z = null, PU = null, nodes = [], pKey = '';
+function ensureProfile() {
+  const xt = xtNow(), key = S.f + '|' + xt;
+  if (key !== pKey) { pKey = key; P = L.profile(S.f, xt); Z = L.zone(S.f, xt); PU = L.purity(S.f, xt); nodes = L.nodesOf(P); }
+  return P;
+}
+function setFrequency(f) {
+  if (!Number.isFinite(f)) return;
+  const next = clamp(f, L.F_MIN, L.F_MAX);
+  if (next === S.f) return;
+  S.f = next; updateAudio();
+}
+function setTouch(on, xt) {
+  if (xt != null && Number.isFinite(xt)) S.xt = clamp(xt, XT_MIN, XT_MAX);
+  S.touch = !!on; updateAudio();
+}
+
+// Sound: the drive tone follows L.gainOf; plucks are L.playPluck. Same master + limiter as SP-02 / SP-05.
+let AC = null, master = null, limiter = null, osc = null, toneGain = null, driveBus = null, pluckNodes = [];
+const plucking = () => !!S.pluck && S.time - S.pluck.at < PLUCK_DUR;
+async function ensureAudio() {
+  if (!AC) {
+    const Context = window.AudioContext || window.webkitAudioContext;
+    if (!Context) throw new Error('Web Audio unavailable');
+    AC = new Context();
+    master = AC.createGain(); master.gain.value = 0;
+    limiter = AC.createDynamicsCompressor();
+    limiter.threshold.value = -10; limiter.ratio.value = 20; limiter.attack.value = .003; limiter.release.value = .15;
+    master.connect(limiter).connect(AC.destination);
+    driveBus = AC.createGain(); driveBus.gain.value = 0; driveBus.connect(master);
+    osc = AC.createOscillator(); osc.type = 'sine'; osc.frequency.value = S.f;
+    toneGain = AC.createGain(); toneGain.gain.value = L.gainOf(S.f, xtNow());
+    osc.connect(toneGain).connect(driveBus); osc.start();
+  }
+  if (AC.state === 'suspended') await AC.resume();
+  updateAudio();
+}
+function updateAudio() {
+  if (!AC) return;
+  const t = AC.currentTime;
+  osc.frequency.setTargetAtTime(S.f, t, .03);
+  toneGain.gain.setTargetAtTime(L.gainOf(S.f, xtNow()), t, .03);
+  driveBus.gain.setTargetAtTime(S.sound ? (plucking() ? DUCK : 1) : 0, t, S.sound ? .08 : .15);
+  master.gain.setTargetAtTime(S.vol, t, .08);
+}
+async function setSound(on) {
+  S.sound = !!on;
+  try { if (on) await ensureAudio(); else updateAudio(); }
+  catch (err) { S.sound = false; updateAudio(); toast('音を開始できません。もう一度 SOUND を押してください'); }
+  $('bSound').classList.toggle('on', S.sound); $('bSound').textContent = S.sound ? '■ SOUND' : '▶ SOUND';
+}
+function stopPluckSound() {
+  for (const o of pluckNodes) { try { o.stop(); } catch (err) { /* already stopped */ } }
+  pluckNodes = [];
+}
+// PLUCK: state is set synchronously (so __SP.step is deterministic); sound follows when audio is available.
+// From AUTO the pluck sounds only when SOUND is on (no audio without the user's click).
+function doPluck(fromAuto) {
+  const xt = xtNow();
+  S.pluck = { at: S.time, xt, modes: L.pluck(XP, xt) };
+  S.lastPluck = { xt, pitch: L.pluckPitch(XP, xt) };
+  updateAudio();
+  if (fromAuto && !S.sound) return;
+  (async () => {
+    try {
+      await ensureAudio(); stopPluckSound();
+      pluckNodes = L.playPluck(AC, master, AC.currentTime + .01, XP, xt);
+      updateAudio();
+    } catch (err) { toast('音を開始できません。もう一度 PLUCK を押してください'); }
+  })();
+}
+
+// Glide and AUTO (same shape as SP-05).
+let glide = null;
+function glideTo(f, duration = .6) { glide = { from: S.f, to: clamp(f, L.F_MIN, L.F_MAX), elapsed: 0, duration }; }
+function stopAuto() {
+  S.auto = null; glide = null;
+  $('bAuto').classList.remove('on'); $('prompt').classList.remove('auto');
+}
+function tune() { stopAuto(); }
+function setProof(on) { S.proof = !!on; $('bProof').classList.toggle('on', S.proof); }
+
+/*TOUR-BEGIN*/
+// 75 s script. from→to: frequency (log glide). xt: null = no touch, number = touch there; xtFrom/xtTo: the finger moves.
+// plucks: seconds into the segment. proof: PROOF on. expect = zone over the whole hold, mid = zone in the middle of a move.
+function buildTour(L) {
+  const T = []; let t = 0;
+  const seg = (duration, o) => { T.push(Object.assign({ at: t, end: t + duration, duration, xt: null, proof: false, plucks: [] }, o)); t += duration; };
+  const f1 = L.fn(1), f2 = L.fn(2), f3 = L.fn(3), fHalf = L.F0 * 2.5;
+  seg(4, { from: 80, to: f1, say: '80 Hz から 110 Hz へ — 外れている間は、揺れが小さく形が混ざる', mid: 'OFF' });
+  seg(4, { from: f1, to: f1, say: '110 Hz＝基音にぴったり — 弦が大きく鳴る。節はまだ無い', expect: 'RING' });
+  seg(3, { from: f1, to: f2, say: '220 Hz へ — 途中は外れて、揺れが小さい', mid: 'OFF' });
+  seg(5, { from: f2, to: f2, say: '220 Hz＝2 倍 — 真ん中に節が 1 つ立つ', expect: 'RING' });
+  seg(3, { from: f2, to: f3, say: '330 Hz へ', mid: 'OFF' });
+  seg(5, { from: f3, to: f3, say: '330 Hz＝3 倍 — 節が 2 つ、等間隔', expect: 'RING' });
+  seg(7, { from: f3, to: f3, xt: 1 / 3, say: '1/3 を指で押さえる — 節に指を置いても、止まらない', expect: 'RING' });
+  seg(2, { from: f3, to: f3, xtFrom: 1 / 3, xtTo: 1 / 2, say: '指を 1/2 へ動かす', mid: 'MUTED' });
+  seg(6, { from: f3, to: f3, xt: 1 / 2, say: '1/2 はこの形の腹 — 腹を押さえると、止まる', expect: 'MUTED' });
+  seg(7, { from: f3, to: f3, xt: 1 / 2, plucks: [.3, 3.8], pitch: f2, say: '1/2 を押さえたまま、はじく — オクターブ上（220 Hz）が鳴る＝フラジオレット', expect: 'MUTED' });
+  seg(7, { from: f3, to: f3, xt: 1 / 3, plucks: [.3, 3.8], pitch: f3, say: '1/3 を押さえて、はじく — 330 Hz（3 倍）が鳴る', expect: 'RING' });
+  seg(2, { from: f3, to: fHalf, proof: true, say: '指を外して 275 Hz（2.5 倍）へ', mid: 'OFF' });
+  seg(8, { from: fHalf, to: fHalf, proof: true, say: '275 Hz — 向こうの壁で揺れてしまう＝この高さの波は弦に乗らない', expect: 'OFF' });
+  seg(4, { from: fHalf, to: f3, proof: true, say: '330 Hz へ戻す', mid: 'OFF' });
+  seg(8, { from: f3, to: f3, proof: true, say: '330 Hz — 壁で 0。両端で 0 になれる高さだけが残る', expect: 'RING' });
+  return { T, total: t };
+}
+/*TOUR-END*/
+const { T: TOUR, total: AUTO_DURATION } = buildTour(L);
+function startAuto() {
+  stopAuto(); setProof(false); setTouch(false); S.pluck = null; setFrequency(TOUR[0].from);
+  S.auto = { elapsed: 0, i: -1, fired: new Set() }; $('bAuto').classList.add('on'); $('prompt').classList.add('auto');
+  tickAuto(0);
+  if (!S.sound) toast('SOUND を押すと音も一緒に。操作すると AUTO は止まります');
+}
+function tickAuto(dt) {
+  const a = S.auto; a.elapsed = Math.min(AUTO_DURATION, a.elapsed + dt);
+  const i = TOUR.findIndex(segment => a.elapsed < segment.end - 1e-9);
+  if (i < 0 || a.elapsed >= AUTO_DURATION - 1e-9) { setFrequency(TOUR[TOUR.length - 1].to); stopAuto(); return; }
+  const segment = TOUR[i], u = clamp((a.elapsed - segment.at) / segment.duration, 0, 1);
+  a.i = i;
+  setFrequency(interpolate(segment.from, segment.to, u));
+  if (segment.xtFrom != null) setTouch(true, segment.xtFrom + (segment.xtTo - segment.xtFrom) * u);
+  else if (segment.xt == null) { if (S.touch) setTouch(false); }
+  else if (!S.touch || S.xt !== segment.xt) setTouch(true, segment.xt);
+  if (S.proof !== segment.proof) setProof(segment.proof);
+  segment.plucks.forEach((off, k) => {
+    const id = i + ':' + k;
+    if (!a.fired.has(id) && a.elapsed >= segment.at + off - 1e-9) { a.fired.add(id); doPluck(true); }
+  });
+  $('pj').textContent = 'AUTO ' + String(Math.floor(a.elapsed)).padStart(2, '0') + 's ⁄ ' + segment.say;
+}
+
+// Drawing constants below are display resolution, colors and line widths only.
+function fit(cv) {
+  const d = Math.min(devicePixelRatio || 1, 2), w = cv.clientWidth, h = cv.clientHeight;
+  const pw = Math.max(1, Math.round(w * d)), ph = Math.max(1, Math.round(h * d));
+  if (cv.width !== pw || cv.height !== ph) { cv.width = pw; cv.height = ph; }
+  const g = cv.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, w, h);
+  return [g, w, h, d];
+}
+// Pluck shape at time tau = Σ Aₙ e^{−γₙ tau} φₙ(x) cos(n·θ). Aₙ, γₙ, φₙ are the law's (L.pluck, L.shape); only the display speed (n × SHOW_HZ) is slowed.
+function pluckWeight() {
+  if (!S.pluck) return 0;
+  const tau = S.time - S.pluck.at;
+  return tau < PLUCK_DUR - .4 ? 1 : clamp((PLUCK_DUR - tau) / .4, 0, 1);
+}
+function pluckY(x, tau) {
+  const th = 2 * Math.PI * SHOW_HZ * tau; let y = 0;
+  for (const p of S.pluck.modes) y += p.amp * Math.exp(-p.decay * tau) * L.shape(p.n, x) * Math.cos(p.n * th);
+  return y;
+}
+function drawString() {
+  const [g, w, h] = fit($('cvString')), len = w - STR_L - STR_R;
+  if (len < 20 || h < 80) return;
+  ensureProfile();
+  const top = 34, bottom = h - (S.proof ? 34 : 16), cy = (top + bottom) / 2;
+  const A = Math.max(8, (bottom - top) / 2 - 22), s = A / 1.1;   // amplitude 1 = s px (fixed, not normalized)
+  const X = x => STR_L + x * len, Yv = v => cy - clamp(v, -1.15, 1.15) * s;
+  const th = 2 * Math.PI * SHOW_HZ * S.time, wP = pluckWeight(), tau = S.pluck ? S.time - S.pluck.at : 0;
+  // rest line and the two bridges
+  g.strokeStyle = C.line; g.lineWidth = 1; g.beginPath(); g.moveTo(X(0), cy); g.lineTo(X(1), cy); g.stroke();
+  g.fillStyle = C.mute;
+  for (const x of [0, 1]) { g.beginPath(); g.moveTo(X(x), cy); g.lineTo(X(x) - 7, cy + 14); g.lineTo(X(x) + 7, cy + 14); g.closePath(); g.fill(); }
+  // envelope ±|Y(x)|
+  g.save(); g.globalAlpha = 1 - wP * .8; g.strokeStyle = C.mute; g.setLineDash([2, 3]); g.lineWidth = 1;
+  for (const sign of [1, -1]) { g.beginPath(); for (let j = 0; j < P.M; j++) { const x = X(j / (P.M - 1)), y = Yv(sign * P.amp[j]); j ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke(); }
+  g.restore();
+  // the string
+  g.save(); g.globalAlpha = S.proof ? .35 : 1; g.strokeStyle = C.ink; g.lineWidth = 1.6; g.beginPath();
+  for (let j = 0; j < P.M; j++) {
+    const x = j / (P.M - 1), y = (1 - wP) * L.displacement(P, j, th) + (wP ? wP * pluckY(x, tau) : 0);
+    j ? g.lineTo(X(x), Yv(y)) : g.moveTo(X(x), Yv(y));
+  }
+  g.stroke(); g.restore();
+  // still points: yellow when a resonance stands (RING), dim otherwise
+  const ring = Z.id === 'RING' && wP < .5;
+  g.fillStyle = ring ? C.acc : C.mute2;
+  for (const x of nodes) { const px = X(x); g.beginPath(); g.moveTo(px, cy - 5); g.lineTo(px + 4, cy); g.lineTo(px, cy + 5); g.lineTo(px - 4, cy); g.closePath(); g.fill(); }
+  // finger
+  if (S.touch) {
+    const px = X(S.xt), tipY = cy - A - 6;
+    g.strokeStyle = C.ink2; g.lineWidth = 1; g.setLineDash([3, 3]); g.beginPath(); g.moveTo(px, tipY); g.lineTo(px, cy + A); g.stroke(); g.setLineDash([]);
+    g.fillStyle = C.ink; g.beginPath(); g.moveTo(px, tipY); g.lineTo(px - 7, tipY - 12); g.lineTo(px + 7, tipY - 12); g.closePath(); g.fill();
+    g.font = '10px ' + C.mono; g.textAlign = 'center'; g.fillStyle = fracOf(S.xt) ? C.acc : C.ink2;
+    g.fillText('TOUCH ' + xtText(S.xt), clamp(px, STR_L + 50, w - 60), tipY - 16);
+  }
+  // PROOF: travelling waves from L.travel and the mismatch at the far wall from L.endMismatch
+  if (S.proof) {
+    const M = 241, lines = [['right', C.acc, 1], ['left', C.warn, 1], ['sum', C.ink, 1.6]];
+    for (const [key, color, lw] of lines) {
+      g.strokeStyle = color; g.lineWidth = lw; g.beginPath();
+      for (let j = 0; j < M; j++) { const x = j / (M - 1), y = L.travel(S.f, x, th)[key]; j ? g.lineTo(X(x), Yv(y)) : g.moveTo(X(x), Yv(y)); }
+      g.stroke();
+    }
+    const m = L.endMismatch(S.f), ok = m < .02, bx = X(1) + 24, end = L.travel(S.f, 1, th).sum;
+    g.fillStyle = ok ? C.acc : C.warn; g.fillRect(bx - 3, cy - m * s, 6, Math.max(1, 2 * m * s));
+    g.beginPath(); g.arc(X(1), Yv(end), 3.5, 0, Math.PI * 2); g.fill();
+    g.font = '10px ' + C.mono; g.textAlign = 'left'; g.fillText(m.toFixed(3), bx + 8, cy + 4);
+    g.font = '10px ' + C.jp; g.fillStyle = C.mute; g.fillText('壁での振れ', X(1) + 6, cy - A - 8);
+    g.fillStyle = C.acc; g.fillText('→ 進む波', STR_L, top + 6);
+    g.fillStyle = C.warn; g.fillText('← 戻る波', STR_L + 70, top + 6);
+    g.fillStyle = C.ink; g.fillText('＝ 和（止まって見える波）', STR_L + 140, top + 6);
+  }
+  $('proofCap').hidden = !S.proof;
+}
+
+// RESONANCE: profile(f, xt).max over a log grid plus every n·110 inside the range (so each peak top is sampled).
+const resF = Array.from({ length: 521 }, (_, i) => fAt(i / 520));
+for (let n = 1; n <= L.N; n++) if (L.fn(n) > L.F_MIN && L.fn(n) < L.F_MAX) resF.push(L.fn(n));
+resF.sort((a, b) => a - b);
+const curveFor = xt => resF.map(f => [uAt(f), L.profile(f, xt).max]);
+const freeCurve = curveFor(null);
+let resCurve = freeCurve, resKey = 'null', resAtMs = 0;
+function ensureCurve() {
+  const xt = xtNow(), key = String(xt), now = performance.now();
+  // One rebuild costs ~20 ms; while the finger is dragged, rebuild at most every 80 ms (exact again on release).
+  if (key !== resKey && !(drag && now - resAtMs < 80)) { resKey = key; resAtMs = now; resCurve = xt == null ? freeCurve : curveFor(xt); }
+  return resCurve;
+}
+const RES_L = 20, RES_R = 20;
+function drawRes() {
+  const [g, w, h] = fit($('cvRes')), width = w - RES_L - RES_R, top = 34, bottom = h - 26;
+  if (width <= 0 || bottom <= top) return;
+  const curve = ensureCurve();
+  const X = f => RES_L + uAt(f) * width, Y = v => bottom - clamp(v, 0, 1.1) / 1.1 * (bottom - top);
+  g.strokeStyle = C.line; g.lineWidth = 1; g.beginPath();
+  g.font = '9px ' + C.mono; g.textAlign = 'center'; g.fillStyle = C.mute;
+  for (let n = 1; n <= L.N; n++) {
+    const f = L.fn(n); if (f < L.F_MIN || f > L.F_MAX) continue;
+    const x = X(f); g.moveTo(x, top); g.lineTo(x, bottom); g.fillText(n, x, top - 5);
+  }
+  g.stroke();
+  function line(points, color, dash) {
+    g.strokeStyle = color; g.setLineDash(dash || []); g.beginPath();
+    points.forEach(([u, v], i) => i ? g.lineTo(RES_L + width * u, Y(v)) : g.moveTo(RES_L + width * u, Y(v)));
+    g.stroke(); g.setLineDash([]);
+  }
+  if (curve !== freeCurve) line(freeCurve, C.mute2, [2, 3]);
+  line(curve, C.mute);
+  const needle = X(S.f);
+  g.save(); g.beginPath(); g.rect(needle - 60, top, 120, bottom - top); g.clip(); line(curve, C.acc); g.restore();
+  g.strokeStyle = C.acc; g.beginPath(); g.moveTo(needle, top - 2); g.lineTo(needle, bottom + 5); g.stroke();
+  g.fillStyle = C.acc; g.fillRect(needle - 3, bottom + 1, 6, 4);
+  g.font = '10px ' + C.mono; g.fillStyle = C.mute;
+  g.textAlign = 'left'; g.fillText(L.F_MIN.toFixed(0) + ' Hz', RES_L, h - 8);
+  g.textAlign = 'right'; g.fillText(L.F_MAX.toFixed(0) + ' Hz', w - RES_R, h - 8);
+  if (curve !== freeCurve) { g.font = '10px ' + C.jp; g.fillText('点線＝押さえなし', w - RES_R, 18); }
+  g.textAlign = 'center'; g.fillStyle = C.acc; g.font = '10px ' + C.mono;
+  g.fillText(S.f.toFixed(1) + ' Hz', clamp(needle, RES_L + 60, w - RES_R - 60), h - 8);
+}
+
+// LADDER: |Aₙ| from L.pluck(XP, xt). A mode whose decay is far above the open string's is stopped by the finger.
+// The 5 × DECAY0 line mirrors the survive line playPluck uses for its loudness match (not exported by the law).
+function drawLadder() {
+  const [g, w, h] = fit($('cvLadder')), left = 12, right = 12, top = 44, bottom = h - 20;
+  if (bottom <= top) return;
+  const modes = L.pluck(XP, xtNow()), mx = Math.max(...modes.map(p => Math.abs(p.amp))) || 1;
+  const bw = (w - left - right) / L.N, near = L.nearestN(S.f);
+  g.font = '9px ' + C.mono; g.textAlign = 'center';
+  for (const p of modes) {
+    const x0 = left + (p.n - 1) * bw + 1.5, bwid = Math.max(1, bw - 3), hh = Math.abs(p.amp) / mx * (bottom - top);
+    const dead = p.decay >= L.SURVIVE;
+    g.fillStyle = p.n === near ? C.acc : dead ? C.mute2 : C.ink2;
+    g.fillRect(x0, bottom - Math.max(1, hh), bwid, Math.max(1, hh));
+    if (dead) { g.strokeStyle = C.mute; g.lineWidth = 1.5; const y = bottom - Math.max(6, hh * .5); g.beginPath(); g.moveTo(x0 - 1, y); g.lineTo(x0 + bwid + 1, y); g.stroke(); }
+    g.fillStyle = p.n === near ? C.acc : C.mute; g.fillText(p.n, x0 + bwid / 2, h - 7);
+  }
+}
+
+let readKey = '';
+function drawRead() {
+  ensureProfile();
+  const xt = xtNow(), lp = S.lastPluck;
+  const key = [S.f, xt, S.xt, S.touch, lp ? lp.xt + '|' + lp.pitch.n : '-', S.proof].join('|');
+  if (key !== readKey) {
+    readKey = key;
+    $('rF').textContent = S.f.toFixed(1);
+    $('rMode').textContent = 'n = ' + Z.n + ' · ' + L.fn(Z.n) + ' Hz';
+    $('rCents').textContent = (Z.cents >= 0 ? '+' : '') + Z.cents.toFixed(1) + '¢';
+    $('rZone').className = 'zone ' + Z.id; $('rZone').textContent = Z.id + ' ' + Z.jp;
+    $('mMax').textContent = P.max.toFixed(2); $('fMax').style.width = clamp(P.max, 0, 1) * 100 + '%';
+    $('mPur').textContent = PU.purity.toFixed(2); $('fPur').style.width = clamp(PU.purity, 0, 1) * 100 + '%';
+    $('rNodes').innerHTML = Z.id === 'RING'
+      ? '節 <b>' + nodes.length + ' 個</b> <span>（n−1＝' + (Z.n - 1) + '・等間隔）</span>'
+      : '動かない点 ' + nodes.length + ' 個 <span>— ' + (Z.id === 'MUTED' ? '止められて小さい' : '小さく、形が混ざる') + '</span>';
+    $('rTouch').innerHTML = S.touch ? '押さえ <b>' + xtText(S.xt) + '</b>' : '押さえ <span>なし（T か 弦をクリック）</span>';
+    $('rPluck').innerHTML = lp
+      ? '聞こえる高さ <b>n=' + lp.pitch.n + ' · ' + lp.pitch.f + ' Hz</b> <span>' + (lp.xt == null ? '押さえなし' : '押さえ ' + (fracOf(lp.xt) || lp.xt.toFixed(3))) + '</span>'
+      : '<span>K ではじく — 聞こえる高さが出る</span>';
+    $('vF').textContent = S.f.toFixed(2) + ' Hz'; $('frequency').value = Math.round(uAt(S.f) * 4000);
+    $('vTouch').textContent = S.touch ? xtText(S.xt) : 'OFF（' + S.xt.toFixed(3) + '）'; $('touchPos').value = S.xt;
+    $('bTouch').classList.toggle('on', S.touch); $('bTouch').textContent = S.touch ? '■ TOUCH（T）— 押さえている' : 'TOUCH（T）— 指で軽く押さえる';
+    document.querySelectorAll('#segSnap button').forEach(b => b.classList.toggle('on', S.touch && Math.abs(S.xt - 1 / +b.dataset.v) < 1e-9));
+    $('params').textContent = JSON.stringify({ f: S.f, touch: S.touch, xt: S.xt });
+    const near = L.nearestN(S.f);
+    const rows = [['一番近い固有振動', 'n=' + near + ' · ' + L.fn(near) + ' Hz'], ['一番応えている振動', 'n=' + Z.n], ['ずれ', Z.cents.toFixed(2) + '¢'], ['共鳴 resp', Z.resp.toFixed(3)],
+      ['振れの最大', P.max.toFixed(3)], ['形の純度', PU.purity.toFixed(3) + '（n=' + PU.n + '）'], ['動かない点', nodes.map(x => x.toFixed(3)).join(' ') || '—'],
+      ['押さえ', xt == null ? '—' : xt.toFixed(3)], ['壁での振れ', L.endMismatch(S.f).toFixed(3)], ['音のゲイン（master 前）', L.gainOf(S.f, xt).toFixed(4)], ['境界の読み', Z.id]];
+    $('kv').innerHTML = rows.map(([a, v]) => '<tr><th>' + a + '</th><td>' + v + '</td></tr>').join('');
+    $('botInfo').textContent = 'n=' + Z.n + ' · ' + Z.id + (S.touch ? ' · TOUCH ' + (fracOf(S.xt) || S.xt.toFixed(3)) : '');
+  }
+  if (!S.auto) $('pj').textContent = 'ダイヤルを回して、弦が大きく鳴る高さを探す。見つけたら弦を指で押さえてみる';
+}
+function draw() { ensureProfile(); drawString(); drawRes(); drawLadder(); drawRead(); }
+function advance(dt) {
+  S.time += dt;
+  if (S.auto) tickAuto(dt);
+  else if (glide) {
+    glide.elapsed += dt;
+    setFrequency(interpolate(glide.from, glide.to, clamp(glide.elapsed / glide.duration, 0, 1)));
+    if (glide.elapsed >= glide.duration - 1e-9) { setFrequency(glide.to); glide = null; }
+  }
+  if (S.pluck && S.time - S.pluck.at >= PLUCK_DUR) { S.pluck = null; updateAudio(); }
+}
+let manual = false, lastT = null;
+function frame(now) {
+  if (!manual) {
+    const dt = lastT === null ? 0 : clamp((now - lastT) / 1000, 0, .05);
+    lastT = now; advance(dt); draw();
+  }
+  requestAnimationFrame(frame);
+}
+
+// Every deliberate control touch stops the tour.
+$('app').addEventListener('pointerdown', e => { if (!e.target.closest('#bAuto')) stopAuto(); }, true);
+$('frequency').oninput = e => { tune(); setFrequency(fAt(+e.target.value / 4000)); };
+function next(dir) { tune(); glideTo(L.fn(L.nextN(S.f, dir))); }
+$('bPrev').onclick = () => next(-1); $('bNext').onclick = () => next(1);
+$('bTouch').onclick = () => { stopAuto(); setTouch(!S.touch); };
+$('touchPos').oninput = e => { stopAuto(); setTouch(true, +e.target.value); };
+document.querySelectorAll('#segSnap button').forEach(b => b.onclick = () => { stopAuto(); setTouch(true, 1 / +b.dataset.v); });
+$('bPluck').onclick = () => { stopAuto(); doPluck(false); };
+$('bSound').onclick = () => { stopAuto(); void setSound(!S.sound); };
+$('bAuto').onclick = () => S.auto ? stopAuto() : startAuto();
+$('bProof').onclick = () => { stopAuto(); setProof(!S.proof); };
+$('vol').oninput = e => { stopAuto(); S.vol = +e.target.value / 100; $('vVol').textContent = e.target.value; updateAudio(); };
+// Resonance strip: click/drag to tune.
+const rc = $('cvRes');
+let pointer = null;
+function resAt(e) { const b = rc.getBoundingClientRect(); setFrequency(fAt((e.clientX - b.left - RES_L) / Math.max(1, b.width - RES_L - RES_R))); }
+rc.addEventListener('pointerdown', e => { if (e.button !== 0) return; tune(); pointer = e.pointerId; rc.setPointerCapture(pointer); resAt(e); });
+rc.addEventListener('pointermove', e => { if (e.pointerId === pointer) resAt(e); });
+function release(e) { if (e.pointerId === pointer) { pointer = null; if (rc.hasPointerCapture(e.pointerId)) rc.releasePointerCapture(e.pointerId); } }
+rc.addEventListener('pointerup', release); rc.addEventListener('pointercancel', release); rc.addEventListener('lostpointercapture', () => { pointer = null; });
+// String: click places the finger, drag moves it, clicking the finger again (or right-click) lifts it.
+const sc = $('cvString');
+let drag = null;
+function stringX(e) { const b = sc.getBoundingClientRect(); return (e.clientX - b.left - STR_L) / Math.max(1, b.width - STR_L - STR_R); }
+sc.addEventListener('pointerdown', e => {
+  if (e.button !== 0) return;
+  stopAuto();
+  const b = sc.getBoundingClientRect(), len = Math.max(1, b.width - STR_L - STR_R);
+  const onFinger = S.touch && Math.abs(e.clientX - b.left - (STR_L + S.xt * len)) < 12;
+  drag = { id: e.pointerId, x0: e.clientX, moved: false, onFinger };
+  sc.setPointerCapture(e.pointerId);
+  if (!onFinger) setTouch(true, stringX(e));
+});
+sc.addEventListener('pointermove', e => {
+  if (!drag || e.pointerId !== drag.id) return;
+  if (Math.abs(e.clientX - drag.x0) > 3) drag.moved = true;
+  if (drag.moved || !drag.onFinger) setTouch(true, stringX(e));
+});
+function dragEnd(e, cancel) {
+  if (!drag || e.pointerId !== drag.id) return;
+  if (!cancel && drag.onFinger && !drag.moved) setTouch(false);
+  drag = null; if (sc.hasPointerCapture(e.pointerId)) sc.releasePointerCapture(e.pointerId);
+}
+sc.addEventListener('pointerup', e => dragEnd(e, false)); sc.addEventListener('pointercancel', e => dragEnd(e, true));
+sc.addEventListener('contextmenu', e => { e.preventDefault(); stopAuto(); setTouch(false); });
+
+function applyParams(o) {
+  if (!o || typeof o !== 'object' || Array.isArray(o) || !Number.isFinite(o.f) || typeof o.touch !== 'boolean' || !Number.isFinite(o.xt) || o.xt < XT_MIN || o.xt > XT_MAX) throw new Error('Invalid PARAMS');
+  tune(); setFrequency(o.f); setTouch(o.touch, o.xt); draw();
+}
+async function copyParams() {
+  stopAuto();
+  const value = JSON.stringify({ f: S.f, touch: S.touch, xt: S.xt });
+  try { await navigator.clipboard.writeText(value); toast('COPIED'); }
+  catch (err) { window.prompt('PARAMS をコピー', value); }
+}
+$('params').onclick = copyParams; $('bCopy').onclick = copyParams;
+$('params').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); void copyParams(); } };
+$('bPaste').onclick = async () => {
+  stopAuto(); let value;
+  try { value = await navigator.clipboard.readText(); }
+  catch (err) { value = window.prompt('PARAMS を貼り付け'); }
+  if (!value) return;
+  try { applyParams(JSON.parse(value)); toast('PASTED'); } catch (err) { toast('読めない PARAMS'); }
+};
+addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey || e.target.isContentEditable || /^(TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+  if (e.target.tagName === 'INPUT' && e.target.type !== 'range') return;
+  const k = e.key, lower = k.toLowerCase();
+  if (k === 'ArrowLeft' || k === 'ArrowRight') {
+    if (e.target.tagName === 'INPUT' && e.target.id !== 'frequency') { stopAuto(); return; }
+    e.preventDefault(); tune(); setFrequency(shifted(S.f, (k === 'ArrowRight' ? 1 : -1) * (e.shiftKey ? 1 : 10)));
+  } else if (k === '[' || k === ']') { e.preventDefault(); next(k === ']' ? 1 : -1); }
+  else if (k === ' ') { e.preventDefault(); if (!e.repeat) { stopAuto(); void setSound(!S.sound); } }
+  else if (!e.repeat && ['t', 'k', 'a', 'p'].includes(lower)) {
+    e.preventDefault(); $('b' + ({ t: 'Touch', k: 'Pluck', a: 'Auto', p: 'Proof' }[lower])).click();
+  } else if (k === 'Escape') { stopAuto(); stopPluckSound(); void setSound(false); }
+  else if (k === 'Enter' && e.target.tagName === 'BUTTON' && e.target.id !== 'bAuto') stopAuto();
+});
+addEventListener('pagehide', () => { S.sound = false; stopPluckSound(); updateAudio(); if (AC) void AC.suspend(); });
+
+readColors(); ensureProfile(); draw();
+document.fonts && document.fonts.ready.then(() => { readColors(); readKey = ''; draw(); });
+requestAnimationFrame(frame);
+window.__SP = {
+  L, law: L, state: S, tour: TOUR,
+  manual: on => { manual = !!on; lastT = null; },
+  step: (sec = 1 / 60, fps = 60) => {
+    if (!manual) throw new Error('Call __SP.manual(true) before step');
+    if (!Number.isFinite(sec) || sec < 0 || !Number.isFinite(fps) || fps <= 0) throw new RangeError('Invalid step duration/fps');
+    const h = Math.min(.05, 1 / fps), n = Math.ceil(sec / h - 1e-9);
+    for (let i = 0; i < n; i++) advance(Math.min(h, sec - i * h));
+    draw();
+  },
+  goto: f => { tune(); setFrequency(f); draw(); return S.f; },
+  touch: xt => { stopAuto(); if (xt == null) setTouch(false); else setTouch(true, xt); draw(); return xtNow(); },
+  pluck: () => { stopAuto(); doPluck(false); draw(); return S.lastPluck.pitch; },
+  zone: () => (ensureProfile(), Z),
+  purity: () => (ensureProfile(), PU),
+  profile: () => ensureProfile(),
+  nodes: () => (ensureProfile(), nodes),
+  audio: () => AC && ({ state: AC.state, master: master.gain.value, f: osc.frequency.value, gain: toneGain.gain.value, targetGain: L.gainOf(S.f, xtNow()),
+    drive: driveBus.gain.value, plucking: plucking(), pluckVoices: pluckNodes.length,
+    limiter: { threshold: limiter.threshold.value, ratio: limiter.ratio.value, attack: limiter.attack.value, release: limiter.release.value } }),
+  startAuto, stopAuto, setSound, applyParams
+};
+})();
+</script>
+</body>
+</html>

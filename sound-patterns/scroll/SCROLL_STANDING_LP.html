@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STANDING WAVE — スクロール解説 (SP-04)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=IBM+Plex+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:"Bank Gothic";src:url("../../cognitive/fonts/bank-gothic-light-bt.ttf") format("truetype");font-weight:300 600;font-display:swap}
+@font-face{font-family:"Square 721";src:url("../../cognitive/fonts/Square_721_BT.ttf") format("truetype");font-weight:400 700;font-display:swap}
+:root{
+  --bg:#0a0a0a;--bg-2:#121212;--ink:#f2f2ef;--ink-2:#cfcfca;--mute:#9a9a93;--mute-2:#3a3a37;
+  --line:#2a2a27;--acc:#ffd400;--acc-ink:#0a0a0a;--warn:#ff6a3d;--fill:rgba(242,242,239,.06);
+  --grid:rgba(242,242,239,0.035);--ez:cubic-bezier(0.2,0,0,1);
+  --mono:"JetBrains Mono","IBM Plex Mono",ui-monospace,monospace;
+  --display:"Bank Gothic","Square 721","Space Grotesk",system-ui,sans-serif;
+  --sans:"Square 721","Bank Gothic","Helvetica Neue",system-ui,sans-serif;
+  --jp:"IBM Plex Sans JP","Noto Sans JP",system-ui,sans-serif;
+  --col:400px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg)}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-feature-settings:"tnum"}
+/* 背景：方眼と描画キャンバス（固定）。sticky を殺さないよう body に overflow は付けない */
+#grid{position:fixed;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;pointer-events:none}
+#cv{position:fixed;inset:0;width:100vw;height:100vh;display:block;pointer-events:none}
+
+/* HUD */
+.hud{position:fixed;left:0;right:0;top:0;height:46px;display:flex;align-items:center;gap:16px;padding:0 16px;border-bottom:1px solid var(--line);background:rgba(10,10,10,.92);z-index:5}
+.brand{display:flex;align-items:baseline;gap:8px;white-space:nowrap}
+.mark{font-family:var(--display);font-weight:600;letter-spacing:.14em;font-size:14px}
+.tag{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.16em}
+.chl{flex:1;font-family:var(--mono);font-size:11px;color:var(--ink-2);letter-spacing:.16em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chl b{color:var(--acc);font-weight:400}
+.rd{display:flex;align-items:baseline;gap:6px;white-space:nowrap}
+.rd .n{font-family:var(--display);font-weight:600;font-size:20px;letter-spacing:.04em;min-width:72px;text-align:right}
+.rd .u{font-family:var(--mono);font-size:10px;color:var(--mute)}
+.zone{font-family:var(--display);font-weight:600;font-size:11px;letter-spacing:.16em;padding:3px 8px;border:1px solid var(--line);white-space:nowrap;min-width:64px;text-align:center}
+.zone.RING{color:var(--acc-ink);background:var(--acc);border-color:var(--acc)}
+.zone.MUTED{color:var(--warn);border-color:var(--warn)}
+.zone.OFF{color:var(--mute);border-color:var(--mute-2)}
+.zone.PLUCK{color:var(--acc);border-color:var(--acc)}
+.seg{display:flex;gap:3px}
+.seg button,.lnk{font-family:var(--mono);font-size:10px;letter-spacing:.08em;background:transparent;color:var(--ink-2);border:1px solid var(--line);padding:5px 8px;cursor:pointer;text-decoration:none;white-space:nowrap}
+.seg button:hover,.lnk:hover{border-color:var(--acc);color:var(--acc)}
+.seg button.on{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.vol{width:70px;-webkit-appearance:none;appearance:none;height:2px;background:var(--mute-2);outline:none;cursor:pointer}
+.vol::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;background:var(--acc);border:1px solid var(--acc-ink);border-radius:0}
+.vol::-moz-range-thumb{width:11px;height:11px;background:var(--acc);border:1px solid var(--acc-ink);border-radius:0}
+.prog{position:fixed;left:0;top:46px;height:2px;width:0;background:var(--acc);z-index:5}
+.ticks{position:fixed;left:0;right:0;top:46px;height:6px;z-index:4;pointer-events:none}
+.ticks i{position:absolute;top:0;width:1px;height:6px;background:var(--mute-2)}
+
+/* 章（縦長のトラック）＋ sticky のカード */
+main{position:relative;z-index:2}
+.ch{position:relative}
+.card{position:sticky;top:76px;width:var(--col);margin-left:40px;padding:20px 22px 22px;background:rgba(10,10,10,.88);border:1px solid var(--line);border-left:2px solid var(--acc)}
+.card .no{font-family:var(--mono);font-size:10px;color:var(--acc);letter-spacing:.18em;margin-bottom:8px}
+.card h2{font-family:var(--display);font-weight:600;font-size:22px;letter-spacing:.06em;line-height:1.2;margin-bottom:4px}
+.card .jh{font-family:var(--jp);font-weight:500;font-size:15px;color:var(--ink);margin-bottom:12px;line-height:1.5}
+.card p{font-family:var(--jp);font-size:13px;line-height:1.85;color:var(--ink-2);margin-bottom:10px}
+.card p b{color:var(--acc);font-weight:500}
+.card p em{font-style:normal;color:var(--warn)}
+.card .note{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.04em;line-height:1.6;border-top:1px solid var(--line);padding-top:8px;margin-top:4px}
+.card .live{font-family:var(--mono);color:var(--acc);font-weight:400}
+.hero h1{font-family:var(--display);font-weight:600;font-size:40px;letter-spacing:.06em;line-height:1;margin:2px 0 10px}
+.hero .jh{font-size:18px}
+.btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.btn{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;background:transparent;color:var(--ink-2);border:1px solid var(--line);padding:8px 10px;cursor:pointer;text-decoration:none}
+.btn:hover{border-color:var(--acc);color:var(--acc)}
+.btn.pri{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.scrollcue{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.2em;margin-top:14px}
+
+/* FORMULA RAIL（左下・固定）：いま絵で動いている項だけが光る */
+#rail{position:fixed;left:40px;bottom:18px;width:var(--col);z-index:3;background:rgba(10,10,10,.9);border:1px solid var(--line);padding:9px 12px 8px;pointer-events:none}
+#rail .rh{font-family:var(--mono);font-size:9px;color:var(--mute);letter-spacing:.16em;margin-bottom:5px;display:flex;justify-content:space-between}
+.fr{display:flex;justify-content:space-between;gap:10px;font-family:var(--mono);font-size:10.5px;line-height:1.75;color:var(--mute-2);transition:color .25s}
+.fr.on{color:var(--mute)}
+.fr .fv{color:inherit;text-align:right;white-space:nowrap}
+.fr.on .fv{color:var(--ink-2)}
+.fr .fx{white-space:nowrap}
+.t{transition:color .25s,background .25s;padding:0 1px}
+.t.on{color:var(--acc-ink);background:var(--acc)}
+
+@media (max-width:880px){
+  :root{--col:auto}
+  .hud{gap:8px;padding:0 10px}
+  .brand,.chl,.vol,.lnk.app{display:none}
+  .rd .n{font-size:16px;min-width:56px}
+  .rd .u{display:none}
+  .zone{min-width:0;padding:3px 6px}
+  .seg button,.lnk{padding:5px 6px}
+  /* スマホ：上から 図（36vh まで）→ 式の帯 → カード の順に積む */
+  .card{margin:0 12px;width:auto;top:calc(36vh + 62px);padding:14px 16px 14px}
+  .card p{font-size:12px;line-height:1.75;margin-bottom:8px}
+  .card .jh{margin-bottom:8px}
+  .hero h1{font-size:30px}
+  .scrollcue{display:none}
+  #rail{left:12px;right:12px;width:auto;top:calc(36vh + 2px);bottom:auto;padding:6px 10px}
+  #rail .rh{display:none}
+  .fr:not(.lit){display:none}
+  .fr .fv{display:none}
+}
+@media (prefers-reduced-motion:reduce){.t,.fr{transition:none}}
+</style>
+</head>
+<body>
+<div id="grid"></div>
+<canvas id="cv"></canvas>
+
+<div class="hud">
+  <div class="brand"><span class="mark">GEN-EX</span><span class="tag">L1d ⁄ SP-04 SCROLL</span></div>
+  <div class="chl" id="chl">00 ⁄ 10 <b>STANDING WAVE</b></div>
+  <div class="rd"><span class="n" id="hF">—</span><span class="u" id="hMode">Hz</span></div>
+  <div class="zone RING" id="hZone">RING</div>
+  <div class="seg" id="segSnd" title="S キーでも切り替え"><button data-v="off" class="on">OFF</button><button data-v="bow">BOW</button><button data-v="on">♪ ON</button></div>
+  <input class="vol" id="vol" type="range" min="0" max="100" value="35" title="MASTER">
+  <a class="lnk app" href="../04_standing_wave.html">APP →</a>
+  <a class="lnk" href="../index.html">INDEX</a>
+</div>
+<div class="prog" id="prog"></div>
+<div class="ticks" id="ticks"></div>
+
+<main id="main">
+  <section class="ch" data-ch="0" style="height:150vh">
+    <div class="card hero">
+      <div class="no">SOUND PATTERNS ⁄ SP-04 ⁄ SCROLL EXPLAINER</div>
+      <h1>STANDING WAVE</h1>
+      <div class="jh">弦は、なぜ決まった高さでしか鳴らない？</div>
+      <p><b>これは何か</b>：両端を止めた弦を、スピーカーで揺らしたり、指ではじいたりする。弦が大きく鳴るのは <b>110 Hz の整数倍</b>だけ。このページは、その<b>なぜ</b>をスクロールで順に見る。</p>
+      <p>いまの弦は <span class="live" data-live="f">—</span> Hz・<span class="live" data-live="zone">—</span>。弦の動きはスローモーション（1 秒に約 1.2 往復）。</p>
+      <p>音は <b>BOW</b>：スクロールしている間だけ、弦を揺らしている音が鳴る（ヘッドホン推奨・どこかを 1 回クリックで入る）。鳴りっぱなしは右上の <b>♪ ON</b>。</p>
+      <div class="btns"><button class="btn pri" id="bStart">♪ 音を出して読む（BOW）</button><a class="btn" href="../04_standing_wave.html">アプリで触る →</a><a class="btn" href="SCROLL_CHLADNI_LP.html">SP-05 の解説</a></div>
+      <div class="scrollcue">↓ SCROLL</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="1" style="height:260vh">
+    <div class="card">
+      <div class="no">01 ⁄ 10</div>
+      <h2>DRIVE</h2>
+      <div class="jh">揺らしても、ふつうはほとんど揺れない</div>
+      <p>弦をスピーカーで揺らす。高さを 60 → 100 Hz へ上げていく（いま <span class="live" data-live="f">—</span> Hz）。</p>
+      <p>弦はほとんど動かない。振れの最大は <b>0.002 → 0.02</b>（共鳴のてっぺん＝1）。揺らす強さは同じなのに、弦が応えない。</p>
+      <div class="note">下の図＝共鳴の山（横＝振動数・対数、縦＝振れの最大）。山は 110 Hz の整数倍にだけ立つ。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="2" style="height:300vh">
+    <div class="card">
+      <div class="no">02 ⁄ 10</div>
+      <h2>RESONANCE</h2>
+      <div class="jh">ぴったり 110 Hz だけ、弦が大きく応える</div>
+      <p>100 → 110 Hz へ近づける（いま <span class="live" data-live="cents">—</span>）。110 Hz ちょうどで、振れは <b>0.02 → 1</b>。音も約 <b>5 倍</b>に膨らむ。</p>
+      <p>山はとても細い。Q＝200 で、山の幅は約 <b>±4 セント</b>（てっぺんの 0.71 倍まで）。<b>10 セント</b>ずれるだけで振れは <b>0.40</b>、30 セントで 0.15。</p>
+      <div class="note">右下の図＝110 Hz の山を ±30 セントで拡大したもの。1 セント＝半音の 1/100。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="3" style="height:360vh">
+    <div class="card">
+      <div class="no">03 ⁄ 10</div>
+      <h2>HARMONICS</h2>
+      <div class="jh">鳴ってよい高さは 110 の整数倍</div>
+      <p>110 → 220 → 330 → 440 Hz と、山から山へ移る（いま <span class="live" data-live="f">—</span> Hz・<span class="live" data-live="n">—</span>）。</p>
+      <p>n 番目の山では、弦は sin(nπx) の形で揺れる。動かない点（節・黄の◆）が <b>n−1 個、等間隔</b>に立つ：220 Hz は 1/2、330 Hz は 1/3 と 2/3、440 Hz は 1/4・1/2・3/4。</p>
+      <p>山と山のあいだでは、また振れが小さくなる。</p>
+      <div class="note">右下＝LADDER。棒＝各 n の今の応え。いま共鳴している n が黄。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="4" style="height:240vh">
+    <div class="card">
+      <div class="no">04 ⁄ 10</div>
+      <h2>BETWEEN</h2>
+      <div class="jh">外れた高さでも、動かない点はできる</div>
+      <p>220 と 330 のあいだ、<b>275 Hz</b>（110 の 2.5 倍）で止める。</p>
+      <p>揺らされた弦は、その高さなりの形で揺れる。動かない点も <b>2 個</b>できる（灰の◆）。でも等間隔ではない（0.15 と 0.61）。</p>
+      <p>違うのは<b>揺れの大きさ</b>と<b>形の純度</b>：振れの最大 <b>0.023</b>（共鳴の 2%）、純度 <b>0.52</b>（いくつもの振動が混ざる）。共鳴ではどちらも 1.00。</p>
+      <div class="note">弦の図の細い点線＝形だけを拡大したもの（そのままでは小さすぎて見えない）。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="5" style="height:280vh">
+    <div class="card">
+      <div class="no">05 ⁄ 10</div>
+      <h2>TWO WAVES</h2>
+      <div class="jh">止まって見える波＝進む波＋戻る波</div>
+      <p>330 Hz に戻して、弦を伝わる波に分けて見る。<b>黄</b>＝右へ進む波、<em>橙</em>＝左へ戻る波、白＝その和。</p>
+      <p>½sin(kx − θ) + ½sin(kx + θ) = sin(kx)·cos θ。和は sin(kx) の形のまま、大きさ cos θ で揺れるだけ。<b>山も節も横に動かない</b>＝定在波。</p>
+      <p>壁で跳ね返った波が、来た波と重なっている。</p>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="6" style="height:320vh">
+    <div class="card">
+      <div class="no">06 ⁄ 10</div>
+      <h2>WALL</h2>
+      <div class="jh">両端で 0 になれる高さだけが残る</div>
+      <p>2 つの波のまま、275 → 330 Hz へ上げる（いま <span class="live" data-live="f">—</span> Hz）。</p>
+      <p>手前の壁（x＝0）では、和はいつも 0。向こうの壁（x＝1）では sin(πf/F0) が残る：壁での振れ <b>1.000</b>（275 Hz）→ 0.541（310）→ 0.282（320）→ <b>0</b>（330）。いま <span class="live" data-live="end">—</span>。</p>
+      <p>0 になれるのは f が 110 の整数倍のときだけ。<b>だから弦はその高さでしか鳴らない</b>。</p>
+      <div class="note">下の図＝向こうの壁での振れ |sin(πf/F0)|（横＝振動数）。0 に触れる所が倍音列。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="7" style="height:360vh">
+    <div class="card">
+      <div class="no">07 ⁄ 10</div>
+      <h2>TOUCH</h2>
+      <div class="jh">指で押さえると、そこで動く振動は止められる</div>
+      <p>330 Hz で揺らしたまま、指で軽く押さえる。指を 0.15 → 0.85 へ動かす（いま <span class="live" data-live="xt">—</span>・<span class="live" data-live="zone">—</span>）。</p>
+      <p>指の所で動こうとする振動ほど強く止められる（止める強さ ∝ sin²(nπ·xt)）。ほとんどの場所で弦は止められ、応えは 0.01 前後（MUTED）。1/2 は腹なので 0.008。</p>
+      <p>鳴るのは <b>1/3 と 2/3</b> のまわりだけ（0.324〜0.343・0.657〜0.676）。330 Hz（n＝3）の節だから、指があっても邪魔にならない。</p>
+      <div class="note">下の図＝押さえる位置ごとの応え（330 Hz）。0.5 より上が RING。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="8" style="height:300vh">
+    <div class="card">
+      <div class="no">08 ⁄ 10</div>
+      <h2>PLUCK</h2>
+      <div class="jh">はじくと、倍音列が全部いっしょに鳴る</div>
+      <p>指を外して、弦の 0.2 の所をはじく。<b>スクロールが、はじいてからの時間</b>になる（いま <span class="live" data-live="tau">—</span> 秒）。戻すと時間も戻る。</p>
+      <p>1 回はじくだけで、n＝1・2・3・4 … の振動が全部生まれる。強さは 0.74・0.30・0.13・0.05 …。<b>n＝5 は 0</b>（はじいた 0.2 がちょうど n＝5 の節）。</p>
+      <p>聞こえる高さは一番強い <b>n＝1（110 Hz）</b>。2 秒たつと n＝1 は 0.22 まで減る。</p>
+      <div class="note">下＝LADDER（各 n の今の強さ Aₙ·e^(−γτ)・枠＝はじいた瞬間）。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="9" style="height:440vh">
+    <div class="card">
+      <div class="no">09 ⁄ 10</div>
+      <h2>FLAGEOLET</h2>
+      <div class="jh">押さえると、そこに節を持つ振動だけが残る</div>
+      <p>指で軽く押さえて、はじく。<b>1/2 → 1/3 → 1/4</b> と押さえる所を変え、そのたびにはじき直す（いま <span class="live" data-live="xt">—</span>・<span class="live" data-live="tau">—</span> 秒）。</p>
+      <p>押さえた所が節の振動だけが生き残り、ほかは一瞬で消える（灰の棒・0.03 秒もたたずに 1/3 以下）：1/2 → n＝2・4・6…、1/3 → 3・6・9…、1/4 → 4・8・12…。</p>
+      <p>残った列の一番下が聞こえる：<b>1/2 → 220 Hz、1/3 → 330 Hz、1/4 → 440 Hz</b>（はじいて 0.25 秒）。これがハーモニクス（フラジオレット）。</p>
+      <div class="note">いま一番強い振動：<span class="live" data-live="pitch">—</span>。はじいた直後の一瞬だけは n＝1 が強い（「コツ」という音）。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="10" style="height:230vh">
+    <div class="card">
+      <div class="no">10 ⁄ 10</div>
+      <h2>BLUEPRINT</h2>
+      <div class="jh">弦が鳴ってよい高さ＝倍音列</div>
+      <p>このページで立ち寄った高さを、共鳴の山に章番号で置いた。弦が大きく応えたのは、山のてっぺん＝110 Hz の整数倍だけ。</p>
+      <p><b>弦が鳴ってよい高さ＝両端で 0 になれる波＝倍音列</b>。揺らしても、はじいても、押さえても、同じ列から選ばれる。</p>
+      <div class="btns"><button class="btn" id="bRewind">◀◀ REWIND</button><a class="btn pri" href="../04_standing_wave.html">アプリで自分で探す →</a><a class="btn" href="SCROLL_CHLADNI_LP.html">SP-05：同じ共鳴を 2 次元の板で</a><a class="btn" href="../index.html">INDEX</a></div>
+      <div class="note">近似モデル：理想の弦（両端固定・長さ 1）。揺らし方はどの振動にも同じ強さで効く。はじいた音は、残った振動だけで音量をそろえている（本物のハーモニクスは開放弦より小さい）。REWIND はスクロールを巻き戻すだけ。</div>
+    </div>
+  </section>
+</main>
+
+<div id="rail">
+  <div class="rh"><span>FORMULA RAIL</span><span>いま動いている項が光る</span></div>
+  <div class="fr" data-row="a"><span class="fx"><span class="t" data-t="fn">fₙ = n · F0</span>,  F0 = 110 Hz</span><span class="fv" id="fvA">—</span></div>
+  <div class="fr" data-row="b"><span class="fx">y(x) = <span class="t" data-t="sum">Σ aₙ · <span class="t" data-t="sinn">sin(nπx)</span></span></span><span class="fv" id="fvB">—</span></div>
+  <div class="fr" data-row="c"><span class="fx">aₙ = <span class="t" data-t="rH">r²·H/Q</span>,  r = <span class="t" data-t="f">f</span>/fₙ,  <span class="t" data-t="Q">Q = 200</span></span><span class="fv" id="fvC">—</span></div>
+  <div class="fr" data-row="i"><span class="fx">H = 1/(1 − r² + i·r/Q)</span><span class="fv" id="fvI">—</span></div>
+  <div class="fr" data-row="d"><span class="fx"><span class="t" data-t="travel">½sin(kx−θ) + ½sin(kx+θ) = sin(kx)·cos θ</span></span><span class="fv" id="fvD">—</span></div>
+  <div class="fr" data-row="e"><span class="fx">壁：<span class="t" data-t="wall">sin(πf/F0) = 0  ⇔  f = n·F0</span></span><span class="fv" id="fvE">—</span></div>
+  <div class="fr" data-row="g"><span class="fx">押さえ：1/Q → 1/Q + K·<span class="t" data-t="touch">sin²(nπ·xt)</span></span><span class="fv" id="fvG">—</span></div>
+  <div class="fr" data-row="h"><span class="fx">はじく：<span class="t" data-t="An">Aₙ = 2 sin(nπxp) / (n²π²·xp(1−xp))</span></span><span class="fv" id="fvH">—</span></div>
+  <div class="fr" data-row="j"><span class="fx">減衰：<span class="t" data-t="decay">e^(−γₙ τ)</span>,  <span class="t" data-t="gam">γₙ ∝ sin²(nπ·xt)</span></span><span class="fv" id="fvJ">—</span></div>
+</div>
+
+<script src="../_law/sp04_law.js"></script>
+<script>
+(() => {
+'use strict';
+const L = window.SP04, $ = id => document.getElementById(id);
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+const seg = (u, a, b) => clamp((u - a) / (b - a));
+const sm = t => t * t * (3 - 2 * t);
+const lerp = (a, b, t) => a + (b - a) * t;
+const lerpLog = (a, b, t) => a * Math.pow(b / a, t);
+const shifted = (f, c) => f * Math.pow(2, c / 1200);                 // セント（UI の単位）
+const centsOf = (f, ref) => 1200 * Math.log2(f / ref);
+const cstr = c => (c >= 0 ? '+' : '−') + Math.abs(c).toFixed(1) + '¢';
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let C = {};
+const readColors = () => { C = { ink: css('--ink'), ink2: css('--ink-2'), mute: css('--mute'), mute2: css('--mute-2'), line: css('--line'), acc: css('--acc'), warn: css('--warn'), bg: css('--bg'), bg2: css('--bg-2'), mono: css('--mono'), display: css('--display'), jp: css('--jp') }; };
+
+// 表示と台本の定数だけ（弦の法則は law）：はじく位置・スローモーションの速さ（1 秒に約 1.2 往復）・共鳴の帯の範囲・音量
+const XP = 0.2, SHOW_HZ = 1.2, F_LO = 50, F_HI = 500, PLUCK_LEVEL = 0.22;   // PLUCK_LEVEL＝law の playPluck の既定 level
+const f1 = L.fn(1), f2 = L.fn(2), f3 = L.fn(3), f4 = L.fn(4), fMid = L.F0 * 2.5;
+
+// ── 台本：章の中の u → 状態 { f, xt（押さえ・null＝なし）, proof（0..1）, pw（はじいた弦の重み 0..1）, pluck: null | { xp, xt, tau } }
+const ST = (f, o = {}) => Object.assign({ f, xt: null, proof: 0, pw: 0, pluck: null }, o);
+const glideLog = (a, b, t) => a * Math.pow(b / a, sm(clamp(t)));
+// 章 3：110 → 220 → 330 → 440。1 つに 1.2 ぶん止まり、0.8 ぶんで次へ（SP-05 の HIGHER と同じ割合）
+const H3 = [f1, f2, f3, f4], HOLD = 1.2, MOVE = .8, T3 = H3.length * HOLD + (H3.length - 1) * MOVE;
+const harmF = u => { const t = clamp(u) * T3, p = HOLD + MOVE, i = Math.min(H3.length - 1, Math.floor(t / p)), r = t - i * p;
+  return r <= HOLD || i === H3.length - 1 ? H3[i] : glideLog(H3[i], H3[i + 1], (r - HOLD) / MOVE); };
+// 章 7：指の道（1/3 と 2/3 で少し止まる）
+const X7 = [[0, .15], [.2, 1 / 3], [.32, 1 / 3], [.6, 2 / 3], [.72, 2 / 3], [.95, .85], [1, .85]];
+const pathAt = (P, u) => { for (let i = 1; i < P.length; i++) if (u <= P[i][0]) { const [a, va] = P[i - 1], [b, vb] = P[i]; return lerp(va, vb, (u - a) / (b - a)); } return P[P.length - 1][1]; };
+// 章 9：押さえ 1/2 → 1/3 → 1/4。区間ごとにはじき直す（τ 0 → 1.2）
+const FLAG = [1 / 2, 1 / 3, 1 / 4], TAU8 = 2.0, TAU9 = 1.2;
+const pl = (xt, tau) => ({ xp: XP, xt, tau });
+const flagAt = u => { const j = Math.min(FLAG.length - 1, Math.floor(clamp(u) * FLAG.length)), v = clamp(u) * FLAG.length - j;
+  return ST(f3, { xt: FLAG[j], pw: 1, pluck: pl(FLAG[j], TAU9 * seg(v, .04, .9)) }); };
+
+const CH = [
+  { id: 'STANDING WAVE', at: () => ST(f3), P: { STRING: [0, .1, 1, .78] }, lit: ['fn'], rows: 'ab' },
+  { id: 'DRIVE', at: u => ST(lerpLog(60, 100, sm(seg(u, .04, .92)))), P: { STRING: [0, 0, 1, .56], RES: [0, .6, 1, .4] }, lit: ['f'], rows: 'bc' },
+  { id: 'RESONANCE', at: u => ST(glideLog(100, f1, seg(u, 0, .7))), P: { STRING: [0, 0, 1, .52], RES: [0, .56, .5, .44], ZOOM: [.52, .56, .48, .44] }, lit: ['rH', 'Q'], rows: 'ci' },
+  { id: 'HARMONICS', at: u => ST(harmF(seg(u, .02, .98))), P: { STRING: [0, 0, 1, .56], RES: [0, .6, .5, .4], LADDER: [.52, .6, .48, .4] }, lit: ['fn', 'sinn'], rows: 'ab' },
+  { id: 'BETWEEN', at: () => ST(fMid), P: { STRING: [0, 0, 1, .56], PURITY: [0, .6, 1, .4] }, lit: ['sum'], rows: 'bc' },
+  { id: 'TWO WAVES', at: u => ST(f3, { proof: sm(seg(u, 0, .35)) }), P: { STRING: [0, .06, 1, .8] }, lit: ['travel'], rows: 'de' },
+  { id: 'WALL', at: u => ST(lerpLog(fMid, f3, sm(seg(u, .05, .88))), { proof: 1 }), P: { STRING: [0, 0, 1, .56], WALL: [0, .6, 1, .4] }, lit: ['wall'], rows: 'de' },
+  { id: 'TOUCH', at: u => ST(f3, { xt: pathAt(X7, clamp(u)) }), P: { STRING: [0, 0, 1, .56], TOUCHMAP: [0, .6, 1, .4] }, lit: ['touch'], rows: 'cg' },
+  { id: 'PLUCK', at: u => ST(f3, { pw: 1, pluck: pl(null, TAU8 * seg(u, .03, .95)) }), P: { STRING: [0, 0, 1, .56], LADDER: [0, .6, 1, .4] }, lit: ['An', 'decay'], rows: 'hj' },
+  { id: 'FLAGEOLET', at: flagAt, P: { STRING: [0, 0, 1, .56], LADDER: [0, .6, 1, .4] }, lit: ['decay', 'gam'], rows: 'gj' },
+  { id: 'BLUEPRINT', at: () => ST(f3), P: { RES: [0, 0, 1, .52], LADDER: [0, .56, 1, .44] }, lit: [], rows: 'abcideghj' },
+];
+// スマホ：弦（上）＋ 図 1 枚（下）
+const PM = [{ STRING: [0, 0, 1, 1] }, { STRING: [0, 0, 1, .56], RES: [0, .6, 1, .4] }, { STRING: [0, 0, 1, .56], ZOOM: [0, .6, 1, .4] }, { STRING: [0, 0, 1, .56], LADDER: [0, .6, 1, .4] },
+  { STRING: [0, 0, 1, .56], PURITY: [0, .6, 1, .4] }, { STRING: [0, 0, 1, 1] }, { STRING: [0, 0, 1, .56], WALL: [0, .6, 1, .4] }, { STRING: [0, 0, 1, .56], TOUCHMAP: [0, .6, 1, .4] },
+  { STRING: [0, 0, 1, .56], LADDER: [0, .6, 1, .4] }, { STRING: [0, 0, 1, .56], LADDER: [0, .6, 1, .4] }, { RES: [0, 0, 1, .5], LADDER: [0, .54, 1, .46] }];
+CH.forEach((c, i) => { c.PM = PM[i]; });
+const optAt = (i, u) => ({ stops: i === 10 ? sm(seg(u, 0, .6)) : 0 });
+// BLUEPRINT：立ち寄った高さと章番号（はじく章は聞こえる高さ＝law の pluckPitch）
+const STOPS = [{ ch: 1, f: 100 }, { ch: 2, f: f1 }, { ch: 3, f: f2 }, { ch: 3, f: f3 }, { ch: 3, f: f4 }, { ch: 4, f: fMid }, { ch: 5, f: f3 }, { ch: 6, f: f3 }, { ch: 7, f: f3 },
+  { ch: 8, f: L.pluckPitch(XP, null).f }, ...FLAG.map(xt => ({ ch: 9, f: L.pluckPitch(XP, xt).f }))];
+
+// ── スクロールの採寸（SP-02／03／05 の LP と同じ）
+const chEls = [...document.querySelectorAll('.ch')];
+let M = [], VH = innerHeight, MAXY = 1;
+function measure() {
+  VH = innerHeight; M = chEls.map(el => ({ top: el.offsetTop, h: el.offsetHeight }));
+  MAXY = Math.max(1, document.documentElement.scrollHeight - VH);
+  $('ticks').innerHTML = M.slice(1).map(m => `<i style="left:${(m.top / MAXY * 100).toFixed(2)}%"></i>`).join('');
+}
+function locate(y) {
+  let i = 0; while (i < M.length - 1 && y >= M[i + 1].top) i++;
+  const m = M[i], dwell = Math.max(1, m.h - VH);
+  const u = clamp((y - m.top) / dwell), k = i < M.length - 1 ? sm(clamp((y - m.top - dwell) / VH)) : 0;
+  return { i, u, k };
+}
+// 状態はスクロール位置の純関数。章のあいだ（k）は f を対数・xt／proof／pw を線形で混ぜる
+// （押さえのある章となしの章のあいだは、xt は k＝0.5 で切り替え、指の絵だけ fa で薄める。はじき直しも k＝0.5）
+function withFinger(s) { s.fa = s.xt == null ? 0 : 1; s.fx = s.xt; return s; }
+function stateAt(loc) {
+  const a = withFinger(CH[loc.i].at(loc.u)); if (!loc.k) return a;
+  const b = withFinger(CH[loc.i + 1].at(0)), k = loc.k, both = a.xt != null && b.xt != null;
+  return { f: lerpLog(a.f, b.f, k), xt: both ? lerp(a.xt, b.xt, k) : (k < .5 ? a.xt : b.xt), fa: lerp(a.fa, b.fa, k), fx: both ? lerp(a.xt, b.xt, k) : (a.xt != null ? a.xt : b.xt),
+    proof: lerp(a.proof, b.proof, k), pw: lerp(a.pw, b.pw, k), pluck: a.pluck && b.pluck ? (k < .5 ? a.pluck : b.pluck) : (a.pluck || b.pluck) };
+}
+
+// ── 読み（毎コマ 1 回。f・xt が変わったときだけ law を呼び直す）
+const S = { f: f3, xt: null, fa: 0, fx: null, proof: 0, pw: 0, pluck: null, mode: 'off', vol: .35 };
+let R = { ci: 0 }, T = 0, pKey = '', plKey = '';
+const OPEN = L.pluck(XP, null), AMAX = Math.max(...OPEN.map(p => Math.abs(p.amp)));
+function readState(loc) {
+  const key = S.f + '|' + S.xt;
+  if (key !== pKey) { pKey = key; R.P = L.profile(S.f, S.xt); R.Z = L.zone(S.f, S.xt); R.PU = L.purity(S.f, S.xt); R.nodes = L.nodesOf(R.P); R.end = L.endMismatch(S.f); R.gain = L.gainOf(S.f, S.xt); }
+  R.ci = loc.k > .5 ? loc.i + 1 : loc.i;
+  const p = S.pluck;
+  if (p) {
+    const k2 = p.xp + '|' + p.xt; if (k2 !== plKey) { plKey = k2; R.PL = L.pluck(p.xp, p.xt); }
+    R.pitch = L.pluckPitch(p.xp, p.xt, p.tau);
+    // 音：振動ごとの正弦波の強さ。law の playPluck と同じ音量合わせ（生き残る振動＝decay < SURVIVE の合計を level に）を、いまの τ で
+    const w = q => Math.abs(q.amp) * L.hfAtt(q.f), sumAll = R.PL.reduce((s, q) => s + w(q), 0) || 1, sumLive = R.PL.reduce((s, q) => s + (q.decay < L.SURVIVE ? w(q) : 0), 0) || sumAll;
+    R.pg = R.PL.map(q => PLUCK_LEVEL * q.amp * L.hfAtt(q.f) / (q.decay < L.SURVIVE ? sumLive : sumAll) * Math.exp(-q.decay * p.tau));
+  } else { R.PL = null; R.pitch = null; R.pg = null; plKey = ''; }
+}
+const plucked = () => S.pw >= .5 && !!S.pluck;
+
+// ── 描画
+const cvs = $('cv'); let g = null, W = 0, H = 0, DPR = 1;
+function fitAll() {
+  DPR = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight;
+  if (cvs.width !== Math.round(W * DPR) || cvs.height !== Math.round(H * DPR)) { cvs.width = Math.round(W * DPR); cvs.height = Math.round(H * DPR); }
+  g = cvs.getContext('2d'); g.setTransform(DPR, 0, 0, DPR, 0, 0); g.clearRect(0, 0, W, H);
+}
+const MOBILE = () => W < 880;
+function stageRect() {
+  if (MOBILE()) return { x: 12, y: 54, w: W - 24, h: H * .36 - 58 };
+  const x = Math.min(40 + 400 + 36, W * .44); return { x, y: 68, w: W - x - 24, h: H - 68 - 22 };
+}
+function frameBox(x, y, w, h, cap) {
+  g.strokeStyle = C.line; g.lineWidth = 1; g.strokeRect(Math.round(x) + .5, Math.round(y) + .5, Math.round(w) - 1, Math.round(h) - 1);
+  g.fillStyle = 'rgba(10,10,10,.55)'; g.fillRect(x + 1, y + 1, w - 2, h - 2);
+  g.font = `10px ${C.mono}`; g.fillStyle = C.mute; g.textAlign = 'left'; g.textBaseline = 'alphabetic'; g.fillText(fitText(cap, w - 20), x + 10, y + 16);
+}
+// 幅に入らない文字は末尾を「…」で切る（スマホの狭い枠で隣と重ならないように）
+function fitText(t, mw) {
+  if (mw <= 0) return '';
+  if (g.measureText(t).width <= mw) return t;
+  let lo = 0, hi = t.length;
+  while (lo < hi) { const m = (lo + hi + 1) >> 1; if (g.measureText(t.slice(0, m) + '…').width <= mw) lo = m; else hi = m - 1; }
+  return t.slice(0, lo) + '…';
+}
+// 右上の数値（見出しと重なる幅では出さない）
+function capRight(x, y, w, cap, t) {
+  g.font = `10px ${C.mono}`; const rw = g.measureText(t).width;
+  if (w - 20 - rw - 16 > g.measureText(cap).width) { g.fillStyle = 'rgba(10,10,10,.9)'; g.fillRect(x + w - 14 - rw, y + 5, rw + 6, 14); g.textAlign = 'right'; g.fillStyle = C.ink2; g.fillText(t, x + w - 10, y + 16); g.textAlign = 'left'; }
+}
+const pad = n => String(n).padStart(2, '0');
+const nodeMark = (px, cy) => { g.beginPath(); g.moveTo(px, cy - 5); g.lineTo(px + 4, cy); g.lineTo(px, cy + 5); g.lineTo(px - 4, cy); g.closePath(); g.fill(); };
+
+// 共鳴の山：押さえなしの弦の振れの最大（law.profile）。対数の格子＋各 n·F0 のまわりを細かく（山は ±4 セントしかない）
+const RES_PTS = (() => {
+  const fs = []; for (let i = 0; i <= 600; i++) fs.push(F_LO * Math.pow(F_HI / F_LO, i / 600));
+  for (let n = 1; n <= L.N; n++) { const f = L.fn(n); if (f <= F_LO || f >= F_HI) continue; fs.push(f); [.5, 1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 25, 32, 40, 50, 64].forEach(c => fs.push(shifted(f, c), shifted(f, -c))); }
+  fs.sort((a, b) => a - b); return fs.map(f => [f, L.profile(f, null, 121).max]);
+})();
+const resAt = f => L.profile(f, null, 121).max;
+// 押さえる位置ごとの応え（law.zone の resp）。f ごとに 1 回
+const tmCache = new Map();
+function touchCurve(f) {
+  if (tmCache.has(f)) return tmCache.get(f);
+  const xs = []; for (let i = 0; i <= 480; i++) xs.push(.02 + .96 * i / 480);
+  [1 / 4, 1 / 3, 1 / 2, 2 / 3, 3 / 4].forEach(x => xs.push(x)); xs.sort((a, b) => a - b);
+  const out = xs.map(x => [x, L.zone(f, x).resp]); tmCache.set(f, out); return out;
+}
+
+const PANELS = {
+  // 弦：揺らした形（law.profile＋displacement）と、はじいた形（law.pluck＋shape）を pw で混ぜる。位相だけが実時間で進む
+  STRING(x, y, w, h, o) {
+    const cap = 'STRING ⁄ 弦（表示はスローモーション）'; frameBox(x, y, w, h, cap);
+    const P = R.P, Z = R.Z, pw = S.pw, pr = S.proof, pk = plucked();
+    capRight(x, y, w, cap, pk ? `PLUCK xp ${XP.toFixed(2)} · τ ${S.pluck.tau.toFixed(2)} s` : `${S.f.toFixed(1)} Hz · n=${Z.n} · ${Z.id}`);
+    const sl = x + 34, sr = x + w - 66, len = sr - sl, top = y + 40, bottom = y + h - 28;
+    if (len < 40 || bottom - top < 40) return;
+    const cy = (top + bottom) / 2, A = (bottom - top) / 2 - 10, s = A / 1.15;
+    const X = t => sl + t * len, Yv = v => cy - clamp(v, -1.15, 1.15) * s;
+    const th = 2 * Math.PI * SHOW_HZ * T, A0 = g.globalAlpha;
+    // はじいた形の係数：Aₙ e^{−γₙτ} cos(n·θ)（表示の速さは n×1.2 Hz）
+    const cf = S.pluck && R.PL ? R.PL.map(q => q.amp * Math.exp(-q.decay * S.pluck.tau) * Math.cos(q.n * th)) : null;
+    const pluckY = t => { let v = 0; for (let n = 1; n <= cf.length; n++) v += cf[n - 1] * L.shape(n, t); return v; };
+    // 静止線と駒
+    g.strokeStyle = C.line; g.lineWidth = 1; g.beginPath(); g.moveTo(X(0), cy); g.lineTo(X(1), cy); g.stroke();
+    g.fillStyle = C.mute; for (const t of [0, 1]) { g.beginPath(); g.moveTo(X(t), cy); g.lineTo(X(t) - 7, cy + 14); g.lineTo(X(t) + 7, cy + 14); g.closePath(); g.fill(); }
+    const dA = (1 - pw) * (1 - .7 * pr);
+    // 包絡線 ±|Y(x)|
+    if (dA > .01) { g.globalAlpha = A0 * dA; g.strokeStyle = C.mute; g.setLineDash([2, 3]); g.lineWidth = 1;
+      for (const sg of [1, -1]) { g.beginPath(); for (let j = 0; j < P.M; j++) { const xx = X(j / (P.M - 1)), yy = Yv(sg * P.amp[j]); j ? g.lineTo(xx, yy) : g.moveTo(xx, yy); } g.stroke(); }
+      g.setLineDash([]); g.globalAlpha = A0; }
+    // 小さすぎて見えないときは、形だけを拡大して細い点線で重ねる
+    const mag = P.max > 1e-9 && P.max < .15 ? .85 / P.max : 0, mA = dA * (1 - pr);
+    if (mag && mA > .01) { g.globalAlpha = A0 * mA; g.strokeStyle = C.mute2; g.setLineDash([1, 3]); g.lineWidth = 1;
+      for (const sg of [1, -1]) { g.beginPath(); for (let j = 0; j < P.M; j++) { const xx = X(j / (P.M - 1)), yy = Yv(sg * P.amp[j] * mag); j ? g.lineTo(xx, yy) : g.moveTo(xx, yy); } g.stroke(); }
+      g.setLineDash([]); g.font = `10px ${C.mono}`; g.fillStyle = C.mute; g.textAlign = 'left'; g.fillText(fitText(`点線＝形だけ ×${mag.toFixed(0)} 拡大`, len), sl, top + 4); g.globalAlpha = A0; }
+    // 弦そのもの
+    g.globalAlpha = A0 * (1 - .65 * pr); g.strokeStyle = C.ink; g.lineWidth = 1.6; g.beginPath();
+    for (let j = 0; j < P.M; j++) { const t = j / (P.M - 1), v = (1 - pw) * L.displacement(P, j, th) + (cf && pw > 0 ? pw * pluckY(t) : 0); j ? g.lineTo(X(t), Yv(v)) : g.moveTo(X(t), Yv(v)); }
+    g.stroke(); g.globalAlpha = A0;
+    // 動かない点：共鳴（RING）なら黄、そうでなければ灰
+    if (dA > .01) { g.globalAlpha = A0 * dA; g.fillStyle = Z.id === 'RING' ? C.acc : C.mute; for (const t of R.nodes) nodeMark(X(t), cy); g.globalAlpha = A0; }
+    // 指
+    if (S.fa > .01 && S.fx != null) {
+      const px = X(S.fx), tipY = cy - A - 2; g.globalAlpha = A0 * S.fa;
+      g.strokeStyle = C.ink2; g.lineWidth = 1; g.setLineDash([3, 3]); g.beginPath(); g.moveTo(px, tipY); g.lineTo(px, cy + A); g.stroke(); g.setLineDash([]);
+      g.fillStyle = C.ink; g.beginPath(); g.moveTo(px, tipY); g.lineTo(px - 7, tipY - 11); g.lineTo(px + 7, tipY - 11); g.closePath(); g.fill();
+      g.font = `10px ${C.mono}`; g.textAlign = 'center'; g.fillStyle = C.ink2; g.fillText(`TOUCH ${S.fx.toFixed(3)}`, clamp(px, sl + 50, sr - 20), tipY - 15); g.textAlign = 'left'; g.globalAlpha = A0;
+    }
+    // PROOF：進む波・戻る波・和（law.travel）と、向こうの壁での振れ（law.endMismatch）
+    if (pr > .01) {
+      g.globalAlpha = A0 * pr; const NP = 241;
+      for (const [key, col, lw] of [['right', C.acc, 1], ['left', C.warn, 1], ['sum', C.ink, 1.8]]) {
+        g.strokeStyle = col; g.lineWidth = lw; g.beginPath();
+        for (let j = 0; j < NP; j++) { const t = j / (NP - 1), v = L.travel(S.f, t, th)[key]; j ? g.lineTo(X(t), Yv(v)) : g.moveTo(X(t), Yv(v)); } g.stroke();
+      }
+      const m = R.end, ok = m < .02, bx = X(1) + 22, end = L.travel(S.f, 1, th).sum;
+      g.fillStyle = ok ? C.acc : C.warn; g.fillRect(bx - 3, cy - m * s, 6, Math.max(1, 2 * m * s));
+      g.beginPath(); g.arc(X(1), Yv(end), 3.5, 0, Math.PI * 2); g.fill();
+      g.font = `10px ${C.mono}`; g.textAlign = 'left'; g.fillText(m.toFixed(3), bx + 7, cy + 4);
+      g.fillStyle = C.mute; g.font = `10px ${C.jp}`; g.fillText('壁', bx - 4, cy - A + 4);
+      g.font = `10px ${C.jp}`; g.fillStyle = C.acc; g.fillText('→ 進む波', sl, top + 4); g.fillStyle = C.warn; g.fillText('← 戻る波', sl + 64, top + 4); g.fillStyle = C.ink; g.fillText(fitText('＝ 和（止まって見える波）', len - 128), sl + 128, top + 4);
+      g.globalAlpha = A0;
+    }
+    // 下の読み
+    g.font = `10px ${C.mono}`; g.fillStyle = C.mute; g.textAlign = 'left';
+    const t = pk ? `いちばん強い振動 n=${R.pitch.n}（${R.pitch.f} Hz）· τ ${S.pluck.tau.toFixed(2)} 秒${S.pluck.xt != null ? ' · 押さえ ' + S.pluck.xt.toFixed(3) : ''}`
+      : `振れの最大 ${P.max.toFixed(3)} · 純度 ${R.PU.purity.toFixed(2)} · 動かない点 ${R.nodes.length} 個${pr > .5 ? ' · 壁での振れ ' + R.end.toFixed(3) : ''}`;
+    g.fillText(fitText(t, w - 20), x + 10, y + h - 9);
+  },
+  // 共鳴の山：横＝振動数（対数）・縦＝振れの最大。針＝いまの f。BLUEPRINT では立ち寄った高さに章番号
+  RES(x, y, w, h, o) {
+    frameBox(x, y, w, h, 'RESONANCE ⁄ 共鳴の山（横＝振動数・対数）');
+    const pl = x + 14, pr = x + w - 14, pt = y + 34, pb = y + h - 30;
+    if (pr - pl < 40 || pb - pt < 20) return;
+    const X = f => pl + (pr - pl) * Math.log(f / F_LO) / Math.log(F_HI / F_LO), Y = v => pb - (pb - pt) * clamp(v, 0, 1.1) / 1.1;
+    g.strokeStyle = C.line; g.lineWidth = 1; g.beginPath(); g.font = `10px ${C.mono}`; g.textAlign = 'center'; g.fillStyle = C.mute;
+    for (let n = 1; n <= L.N; n++) { const f = L.fn(n); if (f <= F_LO || f >= F_HI) continue; const xx = Math.round(X(f)) + .5; g.moveTo(xx, pt); g.lineTo(xx, pb); g.fillText(`${f}`, xx, pb + 13); }
+    g.stroke();
+    const curve = col => { g.strokeStyle = col; g.lineWidth = 1.2; g.beginPath(); RES_PTS.forEach(([f, v], i) => i ? g.lineTo(X(f), Y(v)) : g.moveTo(X(f), Y(v))); g.stroke(); };
+    curve(C.mute);
+    const nx = X(S.f), showNeedle = !plucked() && o.stops < .5;
+    if (showNeedle) {
+      g.save(); g.beginPath(); g.rect(nx - 40, pt - 4, 80, pb - pt + 8); g.clip(); curve(C.acc); g.restore();
+      if (nx >= pl - 1 && nx <= pr + 1) { g.strokeStyle = C.acc; g.lineWidth = 1; g.beginPath(); g.moveTo(nx, pt - 6); g.lineTo(nx, pb + 2); g.stroke();
+        g.fillStyle = C.acc; g.fillRect(nx - 3, pt - 8, 6, 4); g.fillText(`${S.f.toFixed(1)} Hz · ${R.P.max.toFixed(3)}`, clamp(nx, pl + 60, pr - 60), pt - 12); }
+    }
+    if (o.stops > 0) {
+      const n = Math.round(STOPS.length * o.stops), groups = [];
+      STOPS.slice(0, n).forEach(s => { const xx = X(s.f), gr = groups.find(q => Math.abs(q.x - xx) < 14), lab = pad(s.ch);
+        if (gr) { if (!gr.labs.includes(lab)) gr.labs.push(lab); } else groups.push({ x: xx, f: s.f, labs: [lab] }); });
+      g.font = `600 11px ${C.display}`;
+      for (const q of groups) { const yy = Y(resAt(q.f));
+        g.strokeStyle = C.acc; g.lineWidth = 1.4; g.beginPath(); g.arc(q.x, yy, 6, 0, Math.PI * 2); g.stroke();
+        const t = q.labs.join('·'), tw = g.measureText(t).width + 8, lx = clamp(q.x, pl + tw / 2, pr - tw / 2), ly = Math.max(pt + 2, yy - 12);
+        g.fillStyle = C.bg; g.fillRect(lx - tw / 2, ly - 10, tw, 13); g.fillStyle = C.acc; g.fillText(t, lx, ly); }
+    }
+    g.textAlign = 'left';
+  },
+  // 110 Hz の山の拡大：横＝ずれ（セント・±30）・縦＝応え（law.respAbs）
+  ZOOM(x, y, w, h) {
+    const cap = `ZOOM ⁄ ${f1} Hz の山（±30 セント）`; frameBox(x, y, w, h, cap);
+    const CW = 30, pl = x + 34, pr = x + w - 14, pt = y + 44, pb = y + h - 28;
+    if (pr - pl < 40 || pb - pt < 20) return;
+    const X = c => pl + (pr - pl) * (c + CW) / (2 * CW), Y = r => pb - (pb - pt) * clamp(r, 0, 1.05) / 1.05;
+    g.font = `10px ${C.mono}`; g.fillStyle = C.mute; g.strokeStyle = C.line; g.lineWidth = 1;
+    g.textAlign = 'right'; [0, .5, 1].forEach(r => { g.fillText(r.toFixed(1), pl - 6, Y(r) + 3); g.beginPath(); g.moveTo(pl, Y(r) + .5); g.lineTo(pr, Y(r) + .5); g.stroke(); });
+    g.textAlign = 'center'; [-30, -10, 0, 10, 30].forEach(c => g.fillText((c > 0 ? '+' : '') + c, X(c), pb + 14));
+    const r10 = L.respAbs(1, shifted(f1, 10));
+    g.setLineDash([3, 4]); g.beginPath(); [-10, 10].forEach(c => { g.moveTo(X(c), pt); g.lineTo(X(c), pb); }); g.stroke(); g.setLineDash([]);
+    g.textAlign = 'left'; g.fillText(`±10¢ → ${r10.toFixed(2)}`, X(10) + 5, Y(r10) - 6);
+    g.strokeStyle = C.ink; g.lineWidth = 1.3; g.beginPath();
+    for (let c = -CW; c <= CW + 1e-9; c += .25) { const r = L.respAbs(1, shifted(f1, c)); c > -CW ? g.lineTo(X(c), Y(r)) : g.moveTo(X(c), Y(r)); } g.stroke();
+    const c = centsOf(S.f, f1), r = L.respAbs(1, S.f), cc = clamp(c, -CW, CW), col = r >= .5 ? C.acc : C.ink2;
+    g.strokeStyle = col; g.beginPath(); g.moveTo(X(cc), Y(r)); g.lineTo(X(cc), pb); g.stroke();
+    g.fillStyle = col; g.fillRect(X(cc) - 5, Y(r) - 5, 10, 10); g.strokeStyle = C.bg; g.strokeRect(X(cc) - 5, Y(r) - 5, 10, 10);
+    if (Math.abs(c) > CW) { g.textAlign = 'center'; g.fillStyle = C.ink2; g.fillText(c < 0 ? '◀ ' + c.toFixed(0) + '¢' : c.toFixed(0) + '¢ ▶', X(cc) + (c < 0 ? 30 : -30), Y(r) - 10); }
+    g.textAlign = 'left'; g.fillStyle = col; g.fillText(fitText(`${cstr(c)} → ${r.toFixed(3)}`, w - 20), x + 10, y + 32);
+  },
+  // LADDER：揺らす章＝各 n の今の応え（law.respAbs）／はじく章＝各 n の今の強さ |Aₙ|e^{−γₙτ}（law.pluck）
+  LADDER(x, y, w, h) {
+    const pk = plucked(), bp = !pk && CH[R.ci] && CH[R.ci].id === 'BLUEPRINT', OPEN = bp ? L.pluck(0.2, null) : null;
+    // BLUEPRINT：鳴ってよい高さを全部見せる＝押さえずに 0.2 をはじいたときの各振動の強さ（倍音列）。いまの n は黄
+    const OMAX = OPEN ? Math.max(...OPEN.map(q => Math.abs(q.amp))) : 1;
+    frameBox(x, y, w, h, pk ? 'LADDER ⁄ はじいた強さ |Aₙ|·e^(−γτ)（枠＝はじいた瞬間・灰＝押さえで消える）' : bp ? 'LADDER ⁄ 鳴ってよい高さ＝110 Hz の整数倍（棒＝押さえずにはじいたときの強さ・n=5 は 0.2 が節で 0）' : 'LADDER ⁄ 鳴ってよい高さ n·110 Hz（棒＝いまの応え）');
+    const pl = x + 14, pr = x + w - 14, pt = y + 32, pb = y + h - (w / L.N > 26 ? 32 : 20);
+    if (pr - pl < 60 || pb - pt < 20) return;
+    const bw = (pr - pl) / L.N, Z = R.Z;
+    g.font = `10px ${C.mono}`; g.textAlign = 'center';
+    for (let n = 1; n <= L.N; n++) {
+      const x0 = pl + (n - 1) * bw + 1.5, bwid = Math.max(1, bw - 3);
+      let v, v0 = 0, col, dead = false;
+      if (pk) { const q = R.PL[n - 1]; v0 = Math.abs(q.amp) / AMAX; v = Math.abs(q.amp) * Math.exp(-q.decay * S.pluck.tau) / AMAX; dead = q.decay >= L.SURVIVE;
+        col = dead ? C.mute2 : n === R.pitch.n ? C.acc : C.ink2; }
+      else if (bp) { v = Math.sqrt(Math.abs(OPEN[n - 1].amp) / OMAX); col = n === Z.n && Z.id === 'RING' ? C.acc : C.ink2; }   // 小さい n が見えるよう平方根の目盛り
+      else { v = clamp(L.respAbs(n, S.f, S.xt)); col = n === Z.n && Z.id === 'RING' ? C.acc : C.ink2; }
+      g.strokeStyle = C.line; g.lineWidth = 1; g.strokeRect(x0 + .5, pt + .5, bwid - 1, pb - pt - 1);
+      if (pk && v0 > 0) { g.strokeStyle = dead ? C.mute2 : C.mute; g.strokeRect(x0 + .5, pb - v0 * (pb - pt) + .5, bwid - 1, v0 * (pb - pt) - 1); }
+      const hh = Math.max(1, v * (pb - pt)); g.fillStyle = col; g.fillRect(x0, pb - hh, bwid, hh);
+      if (dead) { g.strokeStyle = C.mute; g.lineWidth = 1.5; const yy = pb - Math.max(6, v0 * (pb - pt) * .5); g.beginPath(); g.moveTo(x0 - 1, yy); g.lineTo(x0 + bwid + 1, yy); g.stroke(); }
+      const on = col === C.acc; g.fillStyle = on ? C.acc : C.mute; g.fillText(n, x0 + bwid / 2, pb + 12);
+      if (bw > 26) { g.fillStyle = on ? C.acc : C.mute2; g.fillText(L.fn(n), x0 + bwid / 2, pb + 24); }
+    }
+    g.textAlign = 'left';
+  },
+  // 揺れの大きさと形の純度（law.profile.max・law.purity）＋各振動の割合
+  PURITY(x, y, w, h) {
+    frameBox(x, y, w, h, 'PURITY ⁄ 揺れの大きさと形の純度（共鳴では両方 1.00）');
+    const pl = x + 14, pr = x + w - 14; if (pr - pl < 80 || h < 90) return;
+    const meters = [['振れの最大', R.P.max], ['形の純度', R.PU.purity]];
+    let yy = y + 40;
+    g.font = `10px ${C.mono}`;
+    for (const [lab, v] of meters) {
+      g.fillStyle = C.mute; g.textAlign = 'left'; g.fillText(lab, pl, yy); g.textAlign = 'right'; g.fillStyle = C.ink2; g.fillText(v.toFixed(3), pr, yy);
+      g.fillStyle = C.bg2; g.fillRect(pl, yy + 5, pr - pl, 10); g.strokeStyle = C.mute2; g.lineWidth = 1; g.strokeRect(pl + .5, yy + 5.5, pr - pl - 1, 9);
+      g.fillStyle = v >= .9 ? C.acc : C.ink2; g.fillRect(pl + 1, yy + 6, (pr - pl - 2) * clamp(v), 8);
+      yy += 34;
+    }
+    // 各振動の割合（純度の中身）：|aₙ|² の比
+    const pb = y + h - 22, ph = pb - yy - 4; if (ph < 16) { g.textAlign = 'left'; return; }
+    const e = []; for (let n = 1; n <= L.N; n++) { const a = L.respAbs(n, S.f, S.xt); e.push(a * a); } const tot = e.reduce((s, v) => s + v, 0) || 1;
+    const bw = (pr - pl) / L.N; g.textAlign = 'center';
+    g.fillStyle = C.mute; g.textAlign = 'left'; g.fillText(fitText('各振動の割合（|aₙ|²）', pr - pl), pl, yy - 2); g.textAlign = 'center';
+    e.forEach((v, i) => { const hh = Math.max(1, v / tot * ph); g.fillStyle = i + 1 === R.PU.n ? C.acc : C.ink2; g.fillRect(pl + i * bw + 1.5, pb - hh, Math.max(1, bw - 3), hh); g.fillStyle = C.mute; g.fillText(i + 1, pl + i * bw + bw / 2, pb + 12); });
+    g.textAlign = 'left';
+  },
+  // 向こうの壁での振れ |sin(πf/F0)|（law.endMismatch）：横＝振動数
+  WALL(x, y, w, h) {
+    const cap = 'WALL ⁄ 向こうの壁での振れ |sin(πf/F0)|'; frameBox(x, y, w, h, cap);
+    capRight(x, y, w, cap, `${S.f.toFixed(1)} Hz → ${R.end.toFixed(3)}`);
+    const pl = x + 34, pr = x + w - 14, pt = y + 30, pb = y + h - 28, fa = f2, fb = f4;
+    if (pr - pl < 60 || pb - pt < 20) return;
+    const X = f => pl + (pr - pl) * (f - fa) / (fb - fa), Y = v => pb - (pb - pt) * v;
+    g.strokeStyle = C.line; g.lineWidth = 1; g.strokeRect(pl + .5, pt + .5, pr - pl, pb - pt);
+    g.font = `10px ${C.mono}`; g.fillStyle = C.mute; g.textAlign = 'right'; g.fillText('1', pl - 6, Y(1) + 3); g.fillText('0', pl - 6, Y(0) + 3);
+    g.textAlign = 'center'; [f2, fMid, f3, f4].forEach(f => g.fillText(f, X(f), pb + 14));
+    g.strokeStyle = C.ink; g.lineWidth = 1.3; g.beginPath(); for (let i = 0; i <= 300; i++) { const f = fa + (fb - fa) * i / 300; i ? g.lineTo(X(f), Y(L.endMismatch(f))) : g.moveTo(X(f), Y(L.endMismatch(f))); } g.stroke();
+    g.fillStyle = C.acc; [f2, f3, f4].forEach(f => { g.beginPath(); g.arc(X(f), Y(0), 3.5, 0, Math.PI * 2); g.fill(); });
+    const nx = X(clamp(S.f, fa, fb)), ok = R.end < .02, col = ok ? C.acc : C.warn;
+    g.strokeStyle = col; g.beginPath(); g.moveTo(nx, pt); g.lineTo(nx, pb); g.stroke();
+    g.fillStyle = col; g.fillRect(nx - 4, Y(R.end), 8, Math.max(1, pb - Y(R.end)));
+    g.textAlign = 'left';
+  },
+  // 押さえる位置ごとの応え（law.zone(f, xt).resp）。0.5 より上＝RING
+  TOUCHMAP(x, y, w, h) {
+    const cap = `TOUCH ⁄ 押さえる位置ごとの応え（${S.f.toFixed(0)} Hz）`; frameBox(x, y, w, h, cap);
+    if (S.xt != null) capRight(x, y, w, cap, `xt ${S.xt.toFixed(3)} → ${R.Z.resp.toFixed(3)} ${R.Z.id}`);
+    const pl = x + 34, pr = x + w - 14, pt = y + 30, pb = y + h - 28;
+    if (pr - pl < 60 || pb - pt < 20) return;
+    const X = t => pl + (pr - pl) * t, Y = v => pb - (pb - pt) * clamp(v);
+    g.strokeStyle = C.line; g.lineWidth = 1; g.strokeRect(pl + .5, pt + .5, pr - pl, pb - pt);
+    g.font = `10px ${C.mono}`; g.fillStyle = C.mute; g.textAlign = 'right'; g.fillText('1', pl - 6, Y(1) + 3); g.fillText('0', pl - 6, Y(0) + 3);
+    g.fillStyle = C.acc; g.fillText('.5', pl - 6, Y(.5) + 3);
+    g.strokeStyle = C.acc; g.setLineDash([4, 3]); g.beginPath(); g.moveTo(pl, Y(.5)); g.lineTo(pr, Y(.5)); g.stroke(); g.setLineDash([]);
+    g.textAlign = 'center'; g.fillStyle = C.mute; [['0', 0], ['1/4', .25], ['1/3', 1 / 3], ['1/2', .5], ['2/3', 2 / 3], ['3/4', .75], ['1', 1]].forEach(([s, t]) => g.fillText(s, X(t), pb + 14));
+    g.strokeStyle = C.ink; g.lineWidth = 1.3; g.beginPath(); touchCurve(S.f).forEach(([t, v], i) => i ? g.lineTo(X(t), Y(v)) : g.moveTo(X(t), Y(v))); g.stroke();
+    if (S.fx != null && S.fa > .01) {
+      const r = L.zone(S.f, S.fx).resp, col = r >= .5 ? C.acc : C.warn, nx = X(S.fx);
+      g.strokeStyle = col; g.beginPath(); g.moveTo(nx, pt); g.lineTo(nx, pb); g.stroke();
+      g.fillStyle = col; g.fillRect(nx - 5, Y(r) - 5, 10, 10); g.strokeStyle = C.bg; g.strokeRect(nx - 5, Y(r) - 5, 10, 10);
+    }
+    g.textAlign = 'left';
+  },
+};
+
+function draw(loc) {
+  fitAll();
+  const st = stageRect(), key = MOBILE() ? 'PM' : 'P', A = CH[loc.i][key], B = loc.k > 0 ? CH[loc.i + 1][key] : {};
+  const names = new Set([...Object.keys(A), ...Object.keys(B)]);
+  const oa = optAt(loc.i, loc.u), ob = loc.k > 0 ? optAt(loc.i + 1, 0) : oa;
+  const opt = { stops: lerp(oa.stops, ob.stops, loc.k) };
+  for (const n of names) {
+    let r, al;
+    if (A[n] && B[n]) { r = A[n].map((v, j) => lerp(v, B[n][j], loc.k)); al = 1; }
+    else if (A[n]) { r = A[n]; al = 1 - loc.k; } else { r = B[n]; al = loc.k; }
+    if (al < .01) continue;
+    const px = st.x + r[0] * st.w, py = st.y + r[1] * st.h, pw = r[2] * st.w, ph = r[3] * st.h;
+    if (pw < 40 || ph < 40) continue;
+    g.save(); g.globalAlpha = al; g.beginPath(); g.rect(px, py, pw, ph); g.clip();
+    PANELS[n](px, py, pw, ph, opt); g.restore();
+  }
+}
+
+// ── HUD と FORMULA RAIL
+let lastHud = '';
+function hud(loc, y) {
+  const ci = R.ci, Z = R.Z, pk = plucked();
+  const key = [S.f.toFixed(2), S.xt == null ? '-' : S.xt.toFixed(3), ci, pk, pk ? S.pluck.tau.toFixed(2) + S.pluck.xt : '', S.proof > .5].join('|');
+  $('prog').style.width = (clamp(y / MAXY) * 100).toFixed(2) + '%';
+  if (key === lastHud) return; lastHud = key;
+  $('chl').innerHTML = `${pad(ci)} ⁄ 10 <b>${CH[ci].id}</b>`;
+  $('hF').textContent = pk ? R.pitch.f.toFixed(1) : S.f.toFixed(1);
+  $('hMode').textContent = pk ? `Hz · 一番強い n=${R.pitch.n}` : `Hz · n=${Z.n} ${cstr(Z.cents)}`;
+  const zl = $('hZone'), zid = pk ? 'PLUCK' : Z.id; zl.className = 'zone ' + zid; zl.textContent = zid;
+  const lit = new Set(CH[ci].lit), rows = CH[ci].rows;
+  document.querySelectorAll('#rail .t').forEach(e => e.classList.toggle('on', lit.has(e.dataset.t)));
+  document.querySelectorAll('#rail .fr').forEach(e => { e.classList.toggle('on', rows.includes(e.dataset.row)); e.classList.toggle('lit', !!e.querySelector('.t.on')); });
+  $('fvA').textContent = `n=${Z.n} · ${L.fn(Z.n)} Hz`;
+  $('fvB').textContent = `max ${R.P.max.toFixed(3)} · 純度 ${R.PU.purity.toFixed(2)}`;
+  $('fvC').textContent = `${S.f.toFixed(1)} Hz · resp ${Z.resp.toFixed(3)}`;
+  $('fvI').textContent = `ずれ ${cstr(Z.cents)}`;
+  $('fvD').textContent = `k = ${(L.kOf(S.f) / Math.PI).toFixed(2)}π`;
+  $('fvE').textContent = `壁での振れ ${R.end.toFixed(3)}`;
+  $('fvG').textContent = S.xt == null ? '押さえなし' : `xt ${S.xt.toFixed(3)} · ${pk ? '' : Z.id}`;
+  $('fvH').textContent = S.pluck ? `A₁ ${R.PL[0].amp.toFixed(2)}` : '—';
+  $('fvJ').textContent = S.pluck ? `τ ${S.pluck.tau.toFixed(2)} s · n=${R.pitch.n} ${R.pitch.f} Hz` : '—';
+  document.querySelectorAll('[data-live]').forEach(e => { const k = e.dataset.live;
+    e.textContent = k === 'f' ? S.f.toFixed(1) : k === 'cents' ? `${S.f.toFixed(1)} Hz（${cstr(centsOf(S.f, f1))}）` : k === 'n' ? `n=${Z.n}` : k === 'zone' ? (pk ? 'PLUCK' : Z.id)
+      : k === 'end' ? R.end.toFixed(3) : k === 'xt' ? (S.xt == null ? '押さえなし' : 'xt ' + S.xt.toFixed(3)) : k === 'tau' ? (S.pluck ? 'τ ' + S.pluck.tau.toFixed(2) : '—')
+      : k === 'pitch' ? (S.pluck ? `n=${R.pitch.n}（${R.pitch.f} Hz）` : '—') : ''; });
+}
+
+// ── 音：揺らす章＝純音 f（音量は law の gainOf(f, xt)）。はじく章＝n=1..16 の正弦波（強さはいまの τ の Aₙe^{−γₙτ}）。
+//    BOW（既定）＝スクロールの速さで鳴る／♪ ON＝鳴りっぱなし。はじく音もスクロールの τ を追う（巻き戻すと音も戻る）
+let AC = null, master = null, osc = null, tone = null; const pOsc = [], pGain = [];
+function ensureAudio() {
+  if (!AC) {
+    AC = new AudioContext(); master = AC.createGain(); master.gain.value = 0;
+    const lim = AC.createDynamicsCompressor(); lim.threshold.value = -10; lim.ratio.value = 20; lim.attack.value = .003; lim.release.value = .15;
+    master.connect(lim).connect(AC.destination);
+    osc = AC.createOscillator(); osc.type = 'sine'; osc.frequency.value = S.f; tone = AC.createGain(); tone.gain.value = 0;
+    osc.connect(tone).connect(master); osc.start();
+    for (let n = 1; n <= L.N; n++) { const o = AC.createOscillator(), gg = AC.createGain(); o.type = 'sine'; o.frequency.value = L.fn(n); gg.gain.value = 0; o.connect(gg).connect(master); o.start(); pOsc.push(o); pGain.push(gg); }
+  }
+  if (AC.state === 'suspended') AC.resume();
+}
+let vel = 0, bowG = 0;
+function updateAudio() {
+  if (!AC) return;
+  const t = AC.currentTime;
+  osc.frequency.setTargetAtTime(S.f, t, .03); tone.gain.setTargetAtTime(R.gain * (1 - S.pw), t, .04);
+  for (let n = 0; n < L.N; n++) pGain[n].gain.setTargetAtTime(R.pg ? R.pg[n] * S.pw : 0, t, .03);
+  let target = 0, tc = .12;
+  if (S.mode === 'on') target = S.vol;
+  else if (S.mode === 'bow') { target = S.vol * clamp(vel / 900); tc = target > bowG ? .06 : .55; }
+  bowG = target;
+  master.gain.setTargetAtTime(target, t, tc);
+}
+let autoArm = true;
+function setMode(m) {
+  S.mode = m; autoArm = false; if (m !== 'off') ensureAudio();
+  document.querySelectorAll('#segSnd button').forEach(b => b.classList.toggle('on', b.dataset.v === m));
+  updateAudio();
+}
+
+// ── なめらかな慣性（SP-02／03／05 の LP と同じ）
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let tY = scrollY, cY = scrollY, smoothing = false, rewind = null;
+addEventListener('wheel', e => {
+  if (e.ctrlKey || REDUCED) return;
+  e.preventDefault(); rewind = null;
+  if (!smoothing) { tY = cY = scrollY; }
+  const d = e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? VH : 1);
+  tY = clamp(tY + d, 0, MAXY); smoothing = true;
+}, { passive: false });
+const stopRewind = () => { rewind = null; };
+addEventListener('keydown', stopRewind); addEventListener('touchstart', stopRewind, { passive: true }); addEventListener('mousedown', e => { if (e.target.id !== 'bRewind') stopRewind(); });
+function scrollStep(dt) {
+  if (rewind) {
+    const k = clamp((NOW - rewind.t0) / rewind.d), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    window.scrollTo(0, rewind.y0 * (1 - e)); if (k >= 1) rewind = null; return;
+  }
+  if (!smoothing) return;
+  cY += (tY - cY) * (1 - Math.exp(-dt * 6));
+  if (Math.abs(tY - cY) < .5) { cY = tY; smoothing = false; }
+  window.scrollTo(0, cY);
+}
+function startRewind() { smoothing = false; rewind = { y0: scrollY, t0: NOW, d: clamp(scrollY / 2400, 3, 9) * 1000 }; }
+
+// ── ループ（時間で進むのは弦の位相 T だけ）
+let NOW = performance.now(), lastY = scrollY, LOC = { i: 0, u: 0, k: 0 };
+function tick(now, dt) {
+  NOW = now; T += dt;
+  scrollStep(dt);
+  const y = scrollY;
+  vel = lerp(vel, Math.abs(y - lastY) / Math.max(dt, 1e-3), .25); lastY = y;
+  LOC = locate(y); Object.assign(S, stateAt(LOC));
+  readState(LOC); updateAudio(); draw(LOC); hud(LOC, y);
+}
+let manual = false, lastT = 0;
+function frame(now) {
+  if (!manual) { const t = now / 1000, dt = Math.min(.05, t - (lastT || t)); lastT = t; tick(now, dt); }
+  requestAnimationFrame(frame);
+}
+
+// ── 入力
+document.querySelectorAll('#segSnd button').forEach(b => b.onclick = () => setMode(b.dataset.v));
+$('bStart').onclick = () => setMode('bow');
+// 既定は BOW：ブラウザは操作なしに音を出せないので、最初のクリックで BOW を入れる（自分で OFF を選んだら入れない）
+addEventListener('pointerdown', e => { if (!autoArm) return; autoArm = false; if (S.mode === 'off' && !e.target.closest('#segSnd')) setMode('bow'); }, true);
+$('bRewind').onclick = startRewind;
+$('vol').oninput = e => { S.vol = e.target.value / 100; updateAudio(); };
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === 's' || e.key === 'S') { const order = ['off', 'bow', 'on']; setMode(order[(order.indexOf(S.mode) + 1) % 3]); }
+});
+addEventListener('resize', () => { measure(); lastHud = ''; });
+readColors(); measure();
+document.fonts && document.fonts.ready.then(() => { readColors(); measure(); lastHud = ''; });
+requestAnimationFrame(frame);
+// ?ch=章&u=0..1 でその場面から開く（共有・検証用）
+(() => { const q = new URLSearchParams(location.search), ch = q.get('ch'); if (ch == null) return;
+  const go = () => { measure(); const i = clamp(+ch | 0, 0, M.length - 1), m = M[i]; window.scrollTo(0, m.top + clamp(+(q.get('u') || 0)) * Math.max(1, m.h - VH)); tY = cY = scrollY; };
+  go(); document.fonts && document.fonts.ready.then(go); })();
+
+// ── 検証フック（Claude 側）
+const r4 = v => +v.toFixed(4);
+window.__LP = {
+  law: L, CH, STOPS, locate, stateAt, measure, read: () => R, S,
+  loc: () => LOC, maxY: () => MAXY, metrics: () => M,
+  goto: (i, u = 0) => { smoothing = false; rewind = null; const m = M[i], y = m.top + u * Math.max(1, m.h - VH); window.scrollTo(0, y); tY = cY = scrollY; return scrollY; },
+  setMode, rewind: startRewind, rewinding: () => !!rewind,
+  audio: () => AC && { state: AC.state, master: +master.gain.value.toFixed(3), f: +osc.frequency.value.toFixed(2), gain: +tone.gain.value.toFixed(4), target: r4(R.gain * (1 - S.pw)),
+    pluck: pGain.map(gg => r4(gg.gain.value)), pluckTarget: R.pg ? R.pg.map(v => r4(v * S.pw)) : null },
+  vel: () => vel, autoArm: () => autoArm,
+  manual: on => { manual = on; },
+  step: (sec = 1 / 60, fps = 60) => { for (let i = 0, n = Math.max(1, Math.round(sec * fps)); i < n; i++) tick(NOW + 1000 / fps, 1 / fps); },
+  wheel: dy => { if (!smoothing) tY = cY = scrollY; tY = clamp(tY + dy, 0, MAXY); smoothing = true; },
+  // いまの状態と読み（すべて law から）
+  state: () => ({ ch: R.ci, id: CH[R.ci].id, i: LOC.i, u: r4(LOC.u), k: r4(LOC.k), f: +S.f.toFixed(3), xt: S.xt == null ? null : r4(S.xt), proof: r4(S.proof), pw: r4(S.pw),
+    n: R.Z.n, zone: plucked() ? 'PLUCK' : R.Z.id, zoneDrive: R.Z.id, resp: r4(R.Z.resp), cents: +R.Z.cents.toFixed(2), max: r4(R.P.max), purity: +R.PU.purity.toFixed(3), nodes: R.nodes.map(x => +x.toFixed(3)),
+    end: +R.end.toFixed(3), gain: r4(R.gain), pluck: S.pluck && { xp: S.pluck.xp, xt: S.pluck.xt == null ? null : r4(S.pluck.xt), tau: +S.pluck.tau.toFixed(3) },
+    pitch: R.pitch && { n: R.pitch.n, f: R.pitch.f }, strengths: R.PL ? R.PL.map(q => r4(Math.abs(q.amp) * Math.exp(-q.decay * S.pluck.tau))) : null }),
+};
+})();
+</script>
+</body>
+</html>
