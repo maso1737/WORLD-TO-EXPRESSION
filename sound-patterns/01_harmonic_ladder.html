@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HARMONIC LADDER (SP-01)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=IBM+Plex+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:"Bank Gothic";src:url("../cognitive/fonts/bank-gothic-light-bt.ttf") format("truetype");font-weight:300 600;font-display:swap}
+@font-face{font-family:"Square 721";src:url("../cognitive/fonts/Square_721_BT.ttf") format("truetype");font-weight:400 700;font-display:swap}
+:root{
+  --bg:#0a0a0a;--bg-2:#121212;--ink:#f2f2ef;--ink-2:#cfcfca;--mute:#9a9a93;--mute-2:#3a3a37;
+  --line:#2a2a27;--acc:#ffd400;--acc-ink:#0a0a0a;--warn:#ff6a3d;--fill:rgba(242,242,239,.06);
+  --grid:rgba(242,242,239,0.035);--panel-bg:#0e0e0e;--ez:cubic-bezier(0.2,0,0,1);
+  --mono:"JetBrains Mono","IBM Plex Mono",ui-monospace,monospace;
+  --display:"Bank Gothic","Square 721","Space Grotesk",system-ui,sans-serif;
+  --sans:"Square 721","Bank Gothic","Helvetica Neue",system-ui,sans-serif;
+  --jp:"IBM Plex Sans JP","Noto Sans JP",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--sans);font-feature-settings:"tnum"}
+#app{height:100vh;display:grid;grid-template-rows:46px 1fr 30px;grid-template-columns:1fr 320px;grid-template-areas:"top top" "stage aside" "bot bot"}
+.topbar{grid-area:top;display:flex;align-items:center;gap:18px;padding:0 16px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:baseline;gap:8px}
+.mark{font-family:var(--display);font-weight:600;letter-spacing:.14em;font-size:14px}
+.layer-tag{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.16em}
+.ttl{flex:1;font-family:var(--mono);font-size:11px;color:var(--ink-2);letter-spacing:.16em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.esc{font-family:var(--mono);font-size:10px;color:var(--mute);text-decoration:none;border:1px solid var(--line);padding:4px 8px;letter-spacing:.12em;white-space:nowrap}
+.esc:hover{color:var(--acc);border-color:var(--acc)}
+.stage{grid-area:stage;position:relative;overflow:hidden;display:grid;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+.cell{position:relative;min-width:0;min-height:0;border-bottom:1px solid var(--line)}
+.cell canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.cap{position:absolute;left:14px;top:8px;font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.14em;pointer-events:none;white-space:nowrap}
+.cap.r{left:auto;right:14px}
+.prompt{grid-column:1 / -1;text-align:center;padding:8px 16px;border-bottom:1px solid var(--line);pointer-events:none;min-height:34px}
+.prompt .pj{font-family:var(--jp);font-size:11px;letter-spacing:.06em;color:var(--ink-2)}
+.prompt.auto .pj{color:var(--acc)}
+.big{display:flex;align-items:baseline;gap:10px;white-space:nowrap}
+.big .rat{font-family:var(--display);font-weight:600;font-size:34px;letter-spacing:.04em}
+.big .off{font-family:var(--mono);font-size:12px;color:var(--ink-2)}
+.zone{align-self:flex-start;font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:.16em;padding:5px 12px;border:1px solid var(--line)}
+.meter .top{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--mute);margin-bottom:4px;letter-spacing:.06em}
+.meter .top b{font-family:var(--mono);font-weight:400;color:var(--ink-2)}
+.meter .track{height:10px;background:var(--bg-2);border:1px solid var(--mute-2);position:relative}
+.meter .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--ink-2)}
+.meter .th{position:absolute;top:-3px;bottom:-3px;width:1px;background:var(--mute)}
+.aside{grid-area:aside;border-left:1px solid var(--line);background:var(--panel-bg);overflow-y:auto;padding:14px 14px 24px}
+.aside::-webkit-scrollbar{width:3px}.aside::-webkit-scrollbar-thumb{background:var(--mute-2)}
+.sec{margin-bottom:18px}
+.lt{display:inline-block;font-family:var(--mono);font-size:9px;color:var(--acc-ink);background:var(--acc);padding:1px 5px;margin-right:7px;letter-spacing:.1em}
+.sh{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.16em;text-transform:uppercase;margin-bottom:10px;border-bottom:1px solid var(--line);padding-bottom:5px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;margin-bottom:8px}
+.seg button,.btn{font-family:var(--mono);font-size:10px;letter-spacing:.08em;background:transparent;color:var(--ink-2);border:1px solid var(--line);padding:7px 4px;cursor:pointer}
+.seg button:hover,.btn:hover{border-color:var(--acc);color:var(--acc)}
+.seg button.on,.btn.on{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.btn{width:100%;margin-top:6px;padding:9px 10px;text-align:left}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:4px}.grid2 .btn{margin-top:0}
+.row{margin-bottom:12px}
+.row label{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--ink-2);margin-bottom:5px;letter-spacing:.06em}
+.row .val{color:var(--acc)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:2px;background:var(--mute-2);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;background:var(--acc);border:1px solid var(--acc-ink);border-radius:0}
+input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acc);border:1px solid var(--acc-ink);border-radius:0}
+.hint{font-family:var(--jp);font-size:10.5px;color:var(--ink-2);line-height:1.6;margin:4px 0 6px}
+.hint b{color:var(--acc);font-weight:500}
+.kvt{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:10px}
+.kvt th{color:var(--mute);font-weight:400;text-align:left;padding:3px 0;letter-spacing:.06em}
+.kvt td{color:var(--ink-2);text-align:right;padding:3px 0 3px 6px}
+.kvt tr{border-bottom:1px solid var(--line)}
+.params{font-family:var(--mono);font-size:10px;color:var(--mute);background:var(--bg-2);border:1px solid var(--line);padding:8px;word-break:break-all;line-height:1.5;cursor:pointer}
+.params:hover{border-color:var(--acc)}
+.bottombar{grid-area:bot;display:flex;align-items:center;gap:16px;padding:0 16px;border-top:1px solid var(--line);font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.1em;white-space:nowrap;overflow:hidden}
+.bottombar .sp{flex:1}.bottombar b{color:var(--ink-2);font-weight:400}
+.toast{position:fixed;left:50%;bottom:44px;transform:translateX(-50%);font-family:var(--mono);font-size:11px;color:var(--acc-ink);background:var(--acc);padding:6px 12px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
+.toast.show{opacity:1}
+
+/* SP-01 stage only; shared NATURAL shell and controls follow SP-04. */
+.stage{grid-template-columns:minmax(0,1fr) 280px;grid-template-rows:minmax(0,1fr) auto 150px}
+#ladderBox{grid-column:1;grid-row:1;border-right:1px solid var(--line);cursor:crosshair;touch-action:none}
+#readBox{grid-column:2;grid-row:1;padding:14px 16px;display:flex;flex-direction:column;gap:10px;overflow-y:auto}
+#readBox .sh{margin-bottom:0}
+#waveBox{grid-column:1;grid-row:3;border-bottom:0;border-right:1px solid var(--line)}
+#acBox{grid-column:2;grid-row:3;border-bottom:0}
+.ladder-note{position:absolute;top:24px;left:8px;right:8px;text-align:center;font-family:var(--jp);font-size:11px;color:var(--acc);pointer-events:none}
+.zone.FUSED{color:var(--ink-2);border-color:var(--mute)}
+.zone.WOBBLE{color:var(--warn);border-color:var(--warn)}
+.zone.POP{color:var(--acc-ink);background:var(--acc);border-color:var(--acc)}
+#fScore,#fDrift{background:var(--acc)}
+.read-line{font-family:var(--mono);font-size:11px;color:var(--ink-2);line-height:1.6}
+.read-line span{color:var(--mute)}.read-line b{color:var(--acc);font-weight:400}
+.pitch-ttl{font-family:var(--jp);font-size:10.5px;color:var(--mute);margin-top:-6px}
+.model-note{margin-top:auto;color:var(--mute)}
+.selrow{display:grid;grid-template-columns:34px 1fr 34px;gap:4px;align-items:center;margin-bottom:10px}
+.selrow .btn{margin:0;text-align:center;padding:7px 0}
+.selrow .seln{font-family:var(--display);font-weight:600;font-size:16px;letter-spacing:.08em;text-align:center;color:var(--acc)}
+button:focus-visible,a:focus-visible,input:focus-visible,.params:focus-visible{outline:1px solid var(--acc);outline-offset:3px}
+@media (max-width:880px){
+  html,body{overflow:auto}
+  #app{height:auto;min-height:100vh;grid-template-columns:minmax(0,1fr);grid-template-rows:46px auto auto 30px;grid-template-areas:"top" "stage" "aside" "bot"}
+  .stage{min-width:0;grid-template-columns:minmax(0,1fr);grid-template-rows:320px auto auto 140px 140px}
+  #ladderBox{grid-column:1;grid-row:1;border-right:0}
+  #readBox{grid-column:1;grid-row:2;overflow:visible;border-bottom:1px solid var(--line)}
+  .prompt{grid-row:3}
+  #waveBox{grid-column:1;grid-row:4;border-right:0;border-bottom:1px solid var(--line)}
+  #acBox{grid-column:1;grid-row:5}
+  .cap.r{display:none}
+  .bottombar span:last-child{display:none}
+  .aside{border-left:0;border-top:1px solid var(--line)}
+  .big .rat{font-size:24px}
+  .model-note{margin-top:0}
+  .topbar{gap:10px}
+  .layer-tag{display:none}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="brand"><span class="mark">GEN-EX</span><span class="layer-tag">L1d</span></div>
+    <div class="ttl">HARMONIC LADDER — 1 つの音の中の倍音 ⁄ SP-01</div>
+    <a class="esc" href="index.html">[ESC] INDEX</a>
+  </div>
+  <div class="stage" id="stage">
+    <div class="cell" id="ladderBox"><canvas id="cvLadder" aria-label="倍音の梯子。棒の上をなぞって強さを描く。下のひし形を横に引くとその倍音がずれる"></canvas><div class="cap">LADDER ⁄ 倍音の梯子 · DRAW BARS · DRAG ◆ TO SHIFT</div><div class="cap r">横のずれは拡大表示</div><div class="ladder-note" id="proofCap" hidden>倍音どうしの間隔＝聞こえる高さ。基音を消しても、間隔が同じなら高さは変わらない</div></div>
+    <div class="cell" id="readBox">
+      <div class="sh">READOUT</div>
+      <div class="big"><span class="rat" id="rPitch">—</span><span class="off">Hz</span></div>
+      <div class="pitch-ttl">聞こえる高さ（目安・周期の山から）</div>
+      <div class="zone FUSED" id="rZone">FUSED</div>
+      <div class="meter"><div class="top"><span>ずれ ÷ 浮き出る目安</span><b id="mScore">—</b></div><div class="track"><div class="fill" id="fScore"></div><div class="th" style="left:50%"></div></div></div>
+      <div class="meter"><div class="top"><span>形の変わる速さ</span><b id="mDrift">—</b></div><div class="track"><div class="fill" id="fDrift"></div></div></div>
+      <div class="read-line" id="rSel">—</div>
+      <div class="read-line" id="rSpace">—</div>
+      <div class="read-line" id="rCount">—</div>
+      <div class="hint model-note">浮き出る目安（低い倍音で約 2 %）は聴覚実験の傾向をなぞった仮の線。個人差がある。最後に決めるのは耳。</div>
+    </div>
+    <div class="prompt" id="prompt"><span class="pj" id="pj">棒をなぞって音色を描く。次に、下のひし形を横に引いて 1 本だけずらしてみる</span></div>
+    <div class="cell" id="waveBox"><canvas id="cvWave" aria-label="220 Hz に同期させた波形（3 周期）"></canvas><div class="cap">WAVE ⁄ 波形 · 220 Hz に同期</div><div class="cap r">形の変わる速さは 1/4 で表示</div></div>
+    <div class="cell" id="acBox"><canvas id="cvAc" aria-label="周期の山（波形の自己相関）"></canvas><div class="cap">PERIOD ⁄ 周期の山</div></div>
+  </div>
+  <div class="aside">
+    <div class="sec">
+      <div class="sh"><span class="lt">A</span>DRAW ⁄ 音色</div>
+      <div class="seg" id="segPreset"><button data-v="SINE">SINE</button><button data-v="SAW">SAW</button><button data-v="ODD">ODD</button><button data-v="SL-02">SL-02</button></div>
+      <button class="btn" id="bFund">FUND 0（F）— 基音を消す</button>
+      <div class="hint">梯子の棒の上をなぞると、その倍音の強さが描ける（オルガンのドローバー）。<br>SINE＝1 本だけ・SAW＝全部を 1/n・ODD＝奇数だけ・SL-02＝GENEX_NEXT の結晶の音。<br><b>基音を消しても、高さは下がらない</b>。</div>
+    </div>
+    <div class="sec">
+      <div class="sh"><span class="lt">B</span>SHIFT ⁄ 1 本だけずらす</div>
+      <div class="selrow"><button class="btn" id="bSelPrev" aria-label="前の倍音">◀</button><span class="seln" id="selN">n = 3</span><button class="btn" id="bSelNext" aria-label="次の倍音">▶</button></div>
+      <div class="row"><label for="shift">ずれ <span class="val" id="vShift">—</span></label><input type="range" id="shift" min="-800" max="800" step="1" value="0"></div>
+      <div class="seg" id="segShift"><button data-v="0">0</button><button data-v="0.005">+0.5%</button><button data-v="0.02">+2%</button><button data-v="0.04">+4%</button></div>
+      <div class="grid2"><button class="btn" id="bHear">HEAR OUT（H）</button><button class="btn" id="bReset">ALL 0（R）</button></div>
+      <div class="hint">← →＝0.25 %・Shift＋← →＝0.05 %・↑ ↓＝倍音を選ぶ。<br>HEAR OUT＝選んだ 1 本だけを先に鳴らす。直後は、溶けた音の中でもその 1 本を追える。</div>
+    </div>
+    <div class="sec">
+      <div class="sh"><span class="lt">C</span>SOUND ⁄ SHOW</div>
+      <div class="grid2"><button class="btn" id="bSound">▶ SOUND</button><button class="btn" id="bAuto">◎ AUTO</button></div>
+      <button class="btn" id="bProof">PROOF（P）</button>
+      <div class="row" style="margin-top:12px"><label for="vol">MASTER <span class="val" id="vVol">35</span></label><input type="range" id="vol" min="0" max="100" value="35"></div>
+      <div class="hint">ヘッドホン推奨（ノートの内蔵スピーカーは 220 Hz が小さく、それ自体が「基音の欠落」になる）。SOUND か HEAR OUT の最初のクリックで開始。全体の音量はそろえてある。</div>
+    </div>
+    <div class="sec"><div class="sh"><span class="lt">D</span>READOUT</div><table class="kvt" id="kv"></table></div>
+    <div class="sec">
+      <div class="sh"><span class="lt">E</span>PARAMS — クリックでコピー</div>
+      <div class="params" id="params" role="button" tabindex="0" aria-label="PARAMS をコピー"></div>
+      <div class="grid2" style="margin-top:6px"><button class="btn" id="bCopy">COPY</button><button class="btn" id="bPaste">PASTE</button></div>
+    </div>
+  </div>
+  <div class="bottombar"><span>SOUND PATTERNS ⁄ <b>SP-01</b></span><span id="botInfo">—</span><span class="sp"></span><span>← → ずれ · ↑ ↓ 倍音 · F 基音 · H 聞き分け · R 全部 0 · SPACE 音 · A 自動 · P PROOF</span></div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script src="_law/sp01_law.js"></script>
+<script>
+(() => {
+'use strict';
+const L = window.SP01, N = L.N, $ = id => document.getElementById(id);
+const S = { amps: L.PRESETS.SAW.slice(), shifts: L.zeros(), sel: 3, fundMem: 1, vol: .35, sound: false, proof: false, auto: null, time: 0, lastPing: null };
+// Display/UI constants only: scope slow-down, ping duck level, shift drawing scale.
+const SHOW = .25, DUCK = 0, SHIFT_VIS = .45;
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+const pct = d => (d >= 0 ? '+' : '−') + Math.abs(d * 100).toFixed(2) + '%';
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let C;
+function readColors() {
+  C = { ink: css('--ink'), ink2: css('--ink-2'), bg2: css('--bg-2'), line: css('--line'), mute: css('--mute'), mute2: css('--mute-2'), acc: css('--acc'), warn: css('--warn'), mono: css('--mono'), jp: css('--jp') };
+}
+const toast = message => {
+  const el = $('toast'); el.textContent = message; el.classList.add('show');
+  clearTimeout(toast.timer); toast.timer = setTimeout(() => el.classList.remove('show'), 1800);
+};
+
+// Zone, pitch, spacing come only from the law; rebuilt when amps/shifts change.
+let Z = null, PI = null, SP = null, lawKey = '';
+function ensureLaw() {
+  const key = S.amps.join(',') + '|' + S.shifts.join(',');
+  if (key !== lawKey) { lawKey = key; Z = L.zone(S.amps, S.shifts); PI = L.pitch(S.amps, S.shifts); SP = L.spacing(S.amps, S.shifts); }
+}
+function setAmp(n, a) { a = clamp(a, 0, 1); if (a < .03) a = 0; if (S.amps[n - 1] === a) return; S.amps[n - 1] = a; updateAudio(); }
+function setShift(n, d) { if (!Number.isFinite(d)) return; d = clamp(d, -L.SHIFT_MAX, L.SHIFT_MAX); if (Math.abs(d) < 5e-5) d = 0; if (S.shifts[n - 1] === d) return; S.shifts[n - 1] = d; updateAudio(); }
+function setAll(amps, shifts) { S.amps = amps.map(a => clamp(a, 0, 1)); if (shifts) S.shifts = shifts.map(d => clamp(d, -L.SHIFT_MAX, L.SHIFT_MAX)); updateAudio(); }
+function select(n) { S.sel = clamp(Math.round(n), 1, N); }
+function preset(name) { setAll(L.PRESETS[name], L.zeros()); S.fundMem = L.PRESETS[name][0] || 1; }
+function toggleFund() {
+  if (S.amps[0] > 0) { S.fundMem = S.amps[0]; setAmp(1, 0); } else setAmp(1, S.fundMem || 1);
+}
+
+// Sound: N sine oscillators, gains from L.gains (overall strength held constant). Same master + limiter as SP-02..05.
+let AC = null, master = null, limiter = null, toneBus = null, oscs = [], ogains = [];
+async function ensureAudio() {
+  if (!AC) {
+    const Context = window.AudioContext || window.webkitAudioContext;
+    if (!Context) throw new Error('Web Audio unavailable');
+    AC = new Context();
+    master = AC.createGain(); master.gain.value = 0;
+    limiter = AC.createDynamicsCompressor();
+    limiter.threshold.value = -10; limiter.ratio.value = 20; limiter.attack.value = .003; limiter.release.value = .15;
+    master.connect(limiter).connect(AC.destination);
+    toneBus = AC.createGain(); toneBus.gain.value = 0; toneBus.connect(master);
+    const G = L.gains(S.amps, S.shifts);
+    for (let n = 1; n <= N; n++) {
+      const o = AC.createOscillator(), g = AC.createGain();
+      o.type = 'sine'; o.frequency.value = L.fn(n, S.shifts[n - 1]); g.gain.value = G[n - 1];
+      o.connect(g).connect(toneBus); o.start(); oscs.push(o); ogains.push(g);
+    }
+  }
+  if (AC.state === 'suspended') await AC.resume();
+  updateAudio();
+}
+// The duck follows the audio clock (not the animation clock, which slows in a background tab).
+let pingUntil = -1, pingTimer = 0;
+const pinging = () => !!AC && AC.currentTime < pingUntil;
+function updateAudio() {
+  if (!AC) return;
+  const t = AC.currentTime, G = L.gains(S.amps, S.shifts);
+  for (let n = 1; n <= N; n++) { oscs[n - 1].frequency.setTargetAtTime(L.fn(n, S.shifts[n - 1]), t, .02); ogains[n - 1].gain.setTargetAtTime(G[n - 1], t, .03); }
+  toneBus.gain.setTargetAtTime(S.sound ? (pinging() ? DUCK : 1) : 0, t, S.sound ? .06 : .15);
+  master.gain.setTargetAtTime(S.vol, t, .08);
+}
+async function setSound(on) {
+  S.sound = !!on;
+  try { if (on) await ensureAudio(); else updateAudio(); }
+  catch (err) { S.sound = false; updateAudio(); toast('音を開始できません。もう一度 SOUND を押してください'); }
+  $('bSound').classList.toggle('on', S.sound); $('bSound').textContent = S.sound ? '■ SOUND' : '▶ SOUND';
+}
+// HEAR OUT: the selected partial alone (tone ducked), then the full tone returns. From AUTO it sounds only when SOUND is on.
+let pingNode = null;
+function doPing(fromAuto) {
+  const n = S.sel, d = S.shifts[n - 1];
+  S.lastPing = { n, f: L.fn(n, d), at: S.time };
+  if (fromAuto && !S.sound) return;
+  (async () => {
+    try {
+      await ensureAudio();
+      if (pingNode) { try { pingNode.stop(); } catch (err) { /* already stopped */ } }
+      const t0 = AC.currentTime + .01;
+      pingNode = L.playPing(AC, master, n, d, t0);
+      pingUntil = t0 + L.PING_DUR;
+      updateAudio();
+      clearTimeout(pingTimer); pingTimer = setTimeout(updateAudio, (L.PING_DUR + .05) * 1000);
+      if (!S.sound) toast('SOUND を押すと、続けて全体の音が鳴ります');
+    } catch (err) { toast('音を開始できません。もう一度 HEAR OUT を押してください'); }
+  })();
+}
+
+function stopAuto() {
+  S.auto = null;
+  $('bAuto').classList.remove('on'); $('prompt').classList.remove('auto');
+}
+function setProof(on) { S.proof = !!on; $('bProof').classList.toggle('on', S.proof); }
+
+/*TOUR-BEGIN*/
+// AUTO script. Each segment moves from the previous state to `amps`/`shifts` over `ramp` seconds (0 = jump), then holds.
+// ampsAt(u) / shiftsAt(u): custom paths. ping: seconds into the segment. expect = zone over the hold, mid = zone in the middle.
+// pitch = expected pitch estimate (Hz) at the end of the segment.
+function buildTour(L) {
+  const T = []; let t = 0;
+  const seg = (duration, o) => { T.push(Object.assign({ at: t, end: t + duration, duration, ramp: 0, proof: false, pings: [] }, o)); t += duration; };
+  const z = L.zeros(), P = L.PRESETS, saw = P.SAW;
+  const only = ns => saw.map((a, i) => ns.includes(i + 1) ? a : 0);
+  const sh3 = d => z.map((_, i) => i === 2 ? d : 0);
+  seg(5, { amps: P.SINE, shifts: z, sel: 1, say: '純音＝倍音 1 本だけ（220 Hz）。波形はなめらかな正弦波', expect: 'FUSED', pitch: 220 });
+  seg(10, { ampsAt: u => saw.map((a, i) => i === 0 ? 1 : a * clamp(u * (N - 1) - (i - 1), 0, 1)), say: '倍音を 1 本ずつ足す — 高さは 220 Hz のまま、音色だけが変わる', expect: 'FUSED', pitch: 220 });
+  seg(3, { amps: saw, sel: 3, say: 'のこぎり波＝全部の倍音を 1/n の強さで。12 本が 1 つの音に溶けている', expect: 'FUSED', pitch: 220 });
+  seg(9, { shiftsAt: u => sh3(.04 * u * u), say: '3 倍音（660 Hz）を少しずつ上へずらす — まず音色がうねり、2 % を超えると別の音として浮き出る', mid: 'WOBBLE' });
+  seg(5, { shifts: sh3(.04), say: '+4 % — ずれた 1 本だけが梯子の段から外れて、上に浮いて聞こえる', expect: 'POP' });
+  seg(3, { shifts: z, ramp: 2, say: '段に戻すと、また 1 つの音に溶ける' });
+  seg(5, { shifts: z, pings: [.3], say: '3 倍音だけを先に鳴らしてから聴くと、溶けていても中に 660 Hz が聞こえる', expect: 'FUSED', pitch: 220 });
+  seg(3, { amps: only([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]), ramp: 2.5, sel: 1, say: '基音（220 Hz）を消していく' });
+  seg(6, { say: '基音が無いのに、高さは 220 Hz のまま＝基音の欠落', expect: 'FUSED', pitch: 220 });
+  seg(3, { amps: only([4, 5, 6, 7, 8, 9, 10, 11, 12]), ramp: 2.5, say: '2 倍・3 倍も消す（880 Hz から上だけ）' });
+  seg(7, { proof: true, say: '残った倍音の間隔はどれも 220 Hz — 波形も 4.55 ms ごとに繰り返す。耳はこの間隔を高さとして聞く', expect: 'FUSED', pitch: 220 });
+  seg(3, { amps: only([2, 4, 6, 8, 10, 12]), ramp: 2.5, proof: true, say: '偶数番だけにする' });
+  seg(7, { proof: true, say: '間隔が 440 Hz になると、1 オクターブ上に聞こえる', expect: 'FUSED', pitch: 440 });
+  seg(5, { amps: saw, ramp: 3, sel: 3, say: 'のこぎり波に戻す', pitch: 220 });
+  return { T, total: t };
+}
+/*TOUR-END*/
+const { T: TOUR, total: AUTO_DURATION } = buildTour(L);
+$('bAuto').textContent = '◎ AUTO ' + Math.round(AUTO_DURATION) + 's';
+function segStart(i) {
+  // The state each segment starts from = where the previous one ended (computed once, deterministic).
+  let amps = L.PRESETS.SINE.slice(), shifts = L.zeros();
+  for (let k = 0; k < i; k++) { const s = TOUR[k]; if (s.ampsAt) amps = s.ampsAt(1); if (s.amps) amps = s.amps.slice(); if (s.shiftsAt) shifts = s.shiftsAt(1); if (s.shifts) shifts = s.shifts.slice(); }
+  return { amps, shifts };
+}
+const TOUR_START = TOUR.map((_, i) => segStart(i));
+function startAuto() {
+  stopAuto(); setProof(false);
+  S.auto = { elapsed: 0, i: -1, fired: new Set() }; $('bAuto').classList.add('on'); $('prompt').classList.add('auto');
+  tickAuto(0);
+  if (!S.sound) toast('SOUND を押すと音も一緒に。操作すると AUTO は止まります');
+}
+const lerpArr = (a, b, u) => a.map((v, i) => v + (b[i] - v) * u);
+function tickAuto(dt) {
+  const a = S.auto; a.elapsed = Math.min(AUTO_DURATION, a.elapsed + dt);
+  const i = TOUR.findIndex(segment => a.elapsed < segment.end - 1e-9);
+  if (i < 0 || a.elapsed >= AUTO_DURATION - 1e-9) { const last = TOUR[TOUR.length - 1]; setAll(last.amps || S.amps, last.shifts || S.shifts); stopAuto(); return; }
+  const s = TOUR[i], from = TOUR_START[i], el = a.elapsed - s.at;
+  const u = clamp(el / s.duration, 0, 1), ur = s.ramp > 0 ? clamp(el / s.ramp, 0, 1) : 1;
+  const amps = s.ampsAt ? s.ampsAt(u) : s.amps ? lerpArr(from.amps, s.amps, ur) : from.amps;
+  const shifts = s.shiftsAt ? s.shiftsAt(u) : s.shifts ? lerpArr(from.shifts, s.shifts, ur) : from.shifts;
+  setAll(amps, shifts);
+  if (i !== a.i && s.sel) select(s.sel);
+  a.i = i;
+  if (S.proof !== s.proof) setProof(s.proof);
+  s.pings.forEach((off, k) => {
+    const id = i + ':' + k;
+    if (!a.fired.has(id) && el >= off - 1e-9) { a.fired.add(id); doPing(true); }
+  });
+  $('pj').textContent = 'AUTO ' + String(Math.floor(a.elapsed)).padStart(2, '0') + 's ⁄ ' + s.say;
+}
+
+// Drawing constants below are display resolution, colors and line widths only.
+function fit(cv) {
+  const d = Math.min(devicePixelRatio || 1, 2), w = cv.clientWidth, h = cv.clientHeight;
+  const pw = Math.max(1, Math.round(w * d)), ph = Math.max(1, Math.round(h * d));
+  if (cv.width !== pw || cv.height !== ph) { cv.width = pw; cv.height = ph; }
+  const g = cv.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, w, h);
+  return [g, w, h, d];
+}
+// LADDER geometry (drawing and pointer share it). Frequency axis is linear; rung n sits at n·F0.
+// A shift d is drawn exaggerated on a square-root scale: ±SHIFT_MAX = ±SHIFT_VIS of the rung spacing (true positions differ by only n·F0·d).
+const LAD = { l: 34, r: 24, top: 74, foot: 58 };
+function ladGeom() {
+  const cv = $('cvLadder'), w = cv.clientWidth, h = cv.clientHeight;
+  const width = w - LAD.l - LAD.r, rung = width / (N + .6), axis = h - LAD.foot, handleY = axis + 22;
+  return { w, h, width, rung, axis, handleY, top: LAD.top, X0: n => LAD.l + n * rung };
+}
+const visOff = d => Math.sign(d) * Math.sqrt(Math.abs(d) / L.SHIFT_MAX) * SHIFT_VIS;   // in rungs
+const offToShift = o => Math.sign(o) * L.SHIFT_MAX * Math.pow(clamp(Math.abs(o) / SHIFT_VIS, 0, 1), 2);
+function barX(G, n) { return G.X0(n) + visOff(S.shifts[n - 1]) * G.rung; }
+function drawLadder() {
+  const [g, w, h] = fit($('cvLadder')), G = ladGeom();
+  if (G.width < 60 || G.axis - G.top < 40) return;
+  ensureLaw();
+  const H = G.axis - G.top, bw = Math.max(4, G.rung * .42), Tshow = S.time * SHOW;
+  // rungs: the integer multiples n·F0
+  g.font = '9px ' + C.mono; g.textAlign = 'center';
+  for (let n = 1; n <= N; n++) {
+    const x = G.X0(n);
+    g.strokeStyle = C.line; g.lineWidth = 1; g.setLineDash([2, 4]); g.beginPath(); g.moveTo(x, G.top - 18); g.lineTo(x, G.axis); g.stroke(); g.setLineDash([]);
+    g.fillStyle = n === S.sel ? C.acc : C.mute; g.fillText(n, x, G.axis + 12);
+  }
+  g.strokeStyle = C.mute2; g.beginPath(); g.moveTo(LAD.l - 10, G.axis); g.lineTo(w - LAD.r, G.axis); g.stroke();
+  g.fillStyle = C.mute; g.textAlign = 'left'; g.fillText('0', LAD.l - 10, G.axis + 12);
+  g.textAlign = 'right'; g.fillText((N * L.F0) + ' Hz', w - LAD.r, G.axis + 46);
+  g.textAlign = 'left'; g.fillText('× ' + L.F0 + ' Hz', LAD.l - 10, G.axis + 46);
+  // bars
+  for (let n = 1; n <= N; n++) {
+    const a = S.amps[n - 1], d = S.shifts[n - 1], x = barX(G, n), hh = a * H;
+    const aud = L.audible(S.amps, n), pop = Z.id === 'POP' && Z.n === n, wob = Z.id === 'WOBBLE' && Z.n === n;
+    g.fillStyle = pop ? C.acc : wob ? C.warn : aud ? C.ink2 : C.mute2;
+    if (a > 0) g.fillRect(x - bw / 2, G.axis - hh, bw, hh);
+    if (n === S.sel) { g.strokeStyle = C.acc; g.lineWidth = 1; g.strokeRect(x - bw / 2 - 3, G.axis - Math.max(hh, 4) - 3, bw + 6, Math.max(hh, 4) + 3); }
+    // phase dial: the partial's phase against the rung grid turns at n·F0·|d| Hz (shown at 1/4) — still when it sits on its rung
+    if (a > 0) {
+      const cy = G.top - 30, r = Math.min(7, bw / 2 + 2), ang = -Math.PI / 2 + 2 * Math.PI * n * L.F0 * d * Tshow;
+      g.strokeStyle = d ? (pop ? C.acc : C.warn) : C.mute2; g.lineWidth = 1; g.beginPath(); g.arc(x, cy, r, 0, Math.PI * 2); g.stroke();
+      g.beginPath(); g.moveTo(x, cy); g.lineTo(x + r * Math.cos(ang), cy + r * Math.sin(ang)); g.stroke();
+    }
+    // shift handle ◆ (the true offset is tiny; ◆ sits at the exaggerated position)
+    const hy = G.handleY;
+    g.fillStyle = d ? (pop ? C.acc : C.warn) : (n === S.sel ? C.ink2 : C.mute2);
+    g.beginPath(); g.moveTo(x, hy - 6); g.lineTo(x + 5, hy); g.lineTo(x, hy + 6); g.lineTo(x - 5, hy); g.closePath(); g.fill();
+    if (d) { g.strokeStyle = g.fillStyle; g.beginPath(); g.moveTo(G.X0(n), hy); g.lineTo(x, hy); g.stroke(); }
+  }
+  // labels on the selected / popped partial
+  const n = S.sel, x = barX(G, n), a = S.amps[n - 1];
+  g.font = '10px ' + C.mono; g.textAlign = 'center'; g.fillStyle = C.acc;
+  const lab = L.fn(n, S.shifts[n - 1]).toFixed(1) + ' Hz' + (S.shifts[n - 1] ? ' ' + pct(S.shifts[n - 1]) : '');
+  if (a > 0 || !S.proof) g.fillText(lab, clamp(x, LAD.l + 50, w - LAD.r - 50), Math.max(G.top - 8, G.axis - a * H - 10));
+  // PROOF: spacing arcs between neighbouring audible on-rung partials, and the ghost where the spacing points (the heard pitch)
+  if (S.proof && SP) {
+    const m = SP.members, yArc = G.top - 6;
+    g.strokeStyle = C.acc; g.fillStyle = C.acc; g.lineWidth = 1; g.font = '9px ' + C.mono;
+    for (let k = 1; k < m.length; k++) {
+      const x1 = G.X0(m[k - 1]), x2 = G.X0(m[k]), mx = (x1 + x2) / 2;
+      g.beginPath(); g.moveTo(x1, yArc + 8); g.quadraticCurveTo(mx, yArc - 10, x2, yArc + 8); g.stroke();
+      g.fillText((m[k] - m[k - 1]) * L.F0, mx, yArc - 6);
+    }
+    // the spacing, laid down from 0: lands on SP.f — the rung of the heard pitch (dashed ghost if that partial is silent)
+    const kx = G.X0(SP.k), y0 = G.axis;
+    g.setLineDash([4, 3]); g.strokeStyle = C.acc;
+    g.beginPath(); g.moveTo(G.X0(0), y0 - 4); g.quadraticCurveTo((G.X0(0) + kx) / 2, y0 - 34, kx, y0 - 4); g.stroke();
+    if (!SP.fundPresent) { g.strokeRect(kx - bw / 2, G.top + H * .35, bw, H * .65 - 1); }
+    g.setLineDash([]);
+    g.font = '10px ' + C.jp; g.textAlign = 'center';
+    g.fillText(SP.fundPresent ? '間隔 ' + SP.f + ' Hz' : '間隔 ' + SP.f + ' Hz（ここには音が無い）', clamp(kx, LAD.l + 90, w - LAD.r - 90), G.top + H * .35 - 8);
+  }
+  $('proofCap').hidden = !S.proof;
+}
+
+// WAVE: 3 periods of 1/F0 as a scope synced to F0 would show them (L.wave). Mistuned partials make the shape morph at n·F0·|d| Hz (shown at SHOW).
+function drawWave() {
+  const [g, w, h] = fit($('cvWave')), left = 16, right = 16, top = 26, bottom = h - 18;
+  if (w - left - right < 40 || bottom - top < 30) return;
+  const M = Math.max(120, Math.round(w - left - right)), span = 3 / L.F0, Tshow = S.time * SHOW, ys = new Float64Array(M + 1);
+  let pk = 1e-9; for (let j = 0; j <= M; j++) { ys[j] = L.wave(S.amps, S.shifts, j / M * span, Tshow); pk = Math.max(pk, Math.abs(ys[j])); }
+  const cy = (top + bottom) / 2, s = (bottom - top) / 2 / pk * .92, X = j => left + j / M * (w - left - right);
+  g.strokeStyle = C.line; g.lineWidth = 1; g.beginPath(); g.moveTo(left, cy); g.lineTo(w - right, cy); g.stroke();
+  // period marks every 1/F0
+  g.font = '9px ' + C.mono; g.fillStyle = C.mute; g.textAlign = 'center';
+  for (let k = 0; k <= 3; k++) { const x = left + k / 3 * (w - left - right); g.strokeStyle = S.proof ? C.acc : C.line; g.beginPath(); g.moveTo(x, top - 4); g.lineTo(x, bottom); g.stroke(); if (k) g.fillText((k / L.F0 * 1000).toFixed(2) + ' ms', x, h - 5); }
+  if (S.proof) {   // ghost: the first period copied onto the 2nd and 3rd — it matches only when the tone repeats every 1/F0
+    g.save(); g.setLineDash([3, 3]); g.strokeStyle = C.acc; g.globalAlpha = .7; g.beginPath();
+    const P = Math.round(M / 3);
+    for (let k = 1; k < 3; k++) for (let j = 0; j <= P; j++) { const x = X(k * P + j), y = cy - ys[j] * s; j ? g.lineTo(x, y) : g.moveTo(x, y); }
+    g.stroke(); g.restore();
+  }
+  g.strokeStyle = C.ink; g.lineWidth = 1.5; g.beginPath();
+  for (let j = 0; j <= M; j++) { const x = X(j), y = cy - ys[j] * s; j ? g.lineTo(x, y) : g.moveTo(x, y); }
+  g.stroke();
+}
+
+// PERIOD: r(τ) = L.autocorr over 0..3/F0; the chosen peak (L.pitch) is marked.
+function drawAc() {
+  const [g, w, h] = fit($('cvAc')), left = 14, right = 14, top = 44, bottom = h - 20;
+  if (w - left - right < 40 || bottom - top < 30) return;
+  ensureLaw();
+  const span = 3 / L.F0, M = 240, X = tau => left + tau / span * (w - left - right), Y = r => bottom - (r + 1) / 2 * (bottom - top);
+  g.strokeStyle = C.line; g.lineWidth = 1; g.beginPath(); g.moveTo(left, Y(0)); g.lineTo(w - right, Y(0)); g.stroke();
+  g.strokeStyle = C.mute; g.lineWidth = 1.2; g.beginPath();
+  for (let j = 0; j <= M; j++) { const tau = j / M * span, x = X(tau), y = Y(L.autocorr(S.amps, S.shifts, tau)); j ? g.lineTo(x, y) : g.moveTo(x, y); }
+  g.stroke();
+  g.font = '10px ' + C.mono; g.textAlign = 'center';
+  if (PI && PI.tau <= span) {
+    const x = X(PI.tau), y = Y(PI.strength);
+    g.strokeStyle = C.acc; g.beginPath(); g.moveTo(x, y); g.lineTo(x, bottom); g.stroke();
+    g.fillStyle = C.acc; g.beginPath(); g.arc(x, y, 3.5, 0, Math.PI * 2); g.fill();
+    g.fillText((PI.tau * 1000).toFixed(2) + ' ms → ' + PI.f.toFixed(1) + ' Hz', clamp(x, left + 70, w - right - 70), top - 8);
+  }
+  g.fillStyle = C.mute; g.textAlign = 'left'; g.fillText('0', left, h - 6); g.textAlign = 'right'; g.fillText((span * 1000).toFixed(1) + ' ms', w - right, h - 6);
+}
+
+let readKey = '';
+function drawRead() {
+  ensureLaw();
+  const n = S.sel, d = S.shifts[n - 1], key = [lawKey, n, S.proof, S.fundMem].join('|');
+  if (key !== readKey) {
+    readKey = key;
+    $('rPitch').textContent = PI ? PI.f.toFixed(1) : '—';
+    $('rZone').className = 'zone ' + Z.id; $('rZone').textContent = Z.id + ' ' + Z.jp;
+    const score = L.popScore(S.amps, S.shifts, n), dr = L.drift(n, d);
+    $('mScore').textContent = 'n=' + n + ' · ' + score.toFixed(2); $('fScore').style.width = clamp(score / 2, 0, 1) * 100 + '%';
+    const drLog = dr > 0 ? clamp((Math.log10(dr) + 1) / 3, 0, 1) : 0;   // 0.1 .. 100 Hz
+    $('mDrift').textContent = dr.toFixed(2) + ' Hz'; $('fDrift').style.width = drLog * 100 + '%';
+    $('rSel').innerHTML = 'n=' + n + ' <b>' + L.fn(n, d).toFixed(1) + ' Hz</b> <span>' + (d ? pct(d) + '・' + L.cents(d).toFixed(1) + '¢・目安 ' + (L.popThreshold(n) * 100).toFixed(1) + '%' : '段の上（整数倍）') + (L.audible(S.amps, n) ? '' : '・弱すぎる') + '</span>';
+    $('rSpace').innerHTML = SP ? '間隔 <b>' + SP.f + ' Hz</b> <span>' + (SP.fundPresent ? '— その高さの倍音も鳴っている' : '— その高さには音が無い（基音の欠落）') + '</span>' : '<span>聞こえる倍音が段の上に無い</span>';
+    const live = S.amps.filter((_, i) => L.audible(S.amps, i + 1)).length, off = S.shifts.filter((v, i) => v && L.audible(S.amps, i + 1)).length;
+    $('rCount').innerHTML = '鳴っている倍音 <b>' + live + ' 本</b> <span>うち段から外れた ' + off + ' 本</span>';
+    $('selN').textContent = 'n = ' + n;
+    $('vShift').textContent = pct(d) + ' · ' + L.fn(n, d).toFixed(1) + ' Hz'; $('shift').value = Math.round(d * 10000);
+    document.querySelectorAll('#segShift button').forEach(b => b.classList.toggle('on', Math.abs(d - +b.dataset.v) < 1e-9));
+    document.querySelectorAll('#segPreset button').forEach(b => b.classList.toggle('on', L.PRESETS[b.dataset.v].every((v, i) => Math.abs(v - S.amps[i]) < 1e-9) && S.shifts.every(v => !v)));
+    $('bFund').classList.toggle('on', S.amps[0] === 0); $('bFund').textContent = S.amps[0] === 0 ? '■ FUND 0（F）— 基音なし・戻す' : 'FUND 0（F）— 基音を消す';
+    $('params').textContent = paramsText();
+    const rows = [['聞こえる高さ（目安）', PI ? PI.f.toFixed(2) + ' Hz' : '—'], ['周期 τ', PI ? (PI.tau * 1000).toFixed(3) + ' ms' : '—'], ['周期の山の高さ', PI ? PI.strength.toFixed(3) : '—'],
+      ['間隔', SP ? SP.f + ' Hz（' + SP.members.join(',') + '）' : '—'], ['境界の読み', Z.id + (Z.n ? ' · n=' + Z.n : '')], ['ずれ ÷ 目安（一番）', Z.score.toFixed(2)],
+      ['形の変わる速さ（一番）', Z.drift.toFixed(2) + ' Hz'], ['選んだ倍音', 'n=' + n + ' · ' + L.fn(n, d).toFixed(2) + ' Hz'], ['ゲイン（master 前）', L.gains(S.amps, S.shifts)[n - 1].toFixed(4)]];
+    $('kv').innerHTML = rows.map(([a, v]) => '<tr><th>' + a + '</th><td>' + v + '</td></tr>').join('');
+    $('botInfo').textContent = (PI ? PI.f.toFixed(1) + ' Hz · ' : '') + Z.id + (Z.n ? ' · n=' + Z.n : '');
+  }
+  if (!S.auto) $('pj').textContent = Z.id === 'POP' ? n + ' 倍音が浮き出た — ◆ を段へ戻すと、また 1 つの音に溶ける' : S.amps[0] === 0 ? '基音が無いのに、高さは下がらない。PROOF で間隔を見る' : '棒をなぞって音色を描く。次に、下のひし形を横に引いて 1 本だけずらしてみる';
+}
+const round4 = v => Math.round(v * 1e4) / 1e4;
+const paramsText = () => JSON.stringify({ amps: S.amps.map(round4), shifts: S.shifts.map(round4), sel: S.sel });
+function draw() { ensureLaw(); drawLadder(); drawWave(); drawAc(); drawRead(); }
+function advance(dt) {
+  S.time += dt;
+  if (S.auto) tickAuto(dt);
+}
+let manual = false, lastT = null;
+function frame(now) {
+  if (!manual) {
+    const dt = lastT === null ? 0 : clamp((now - lastT) / 1000, 0, .05);
+    lastT = now; advance(dt); draw();
+  }
+  requestAnimationFrame(frame);
+}
+
+// Every deliberate control touch stops the tour.
+$('app').addEventListener('pointerdown', e => { if (!e.target.closest('#bAuto')) stopAuto(); }, true);
+document.querySelectorAll('#segPreset button').forEach(b => b.onclick = () => preset(b.dataset.v));
+$('bFund').onclick = toggleFund;
+$('bSelPrev').onclick = () => select(S.sel - 1); $('bSelNext').onclick = () => select(S.sel + 1);
+$('shift').oninput = e => { stopAuto(); setShift(S.sel, +e.target.value / 10000); };
+document.querySelectorAll('#segShift button').forEach(b => b.onclick = () => setShift(S.sel, +b.dataset.v));
+$('bHear').onclick = () => doPing(false);
+$('bReset').onclick = () => setAll(S.amps, L.zeros());
+$('bSound').onclick = () => void setSound(!S.sound);
+$('bAuto').onclick = () => S.auto ? stopAuto() : startAuto();
+$('bProof').onclick = () => setProof(!S.proof);
+$('vol').oninput = e => { stopAuto(); S.vol = +e.target.value / 100; $('vVol').textContent = e.target.value; updateAudio(); };
+
+// LADDER pointer: above the axis = paint heights (sweeping across bars fills the ones in between); on the ◆ row = drag that partial sideways.
+const lc = $('cvLadder');
+let lp = null;
+function localXY(e) { const b = lc.getBoundingClientRect(); return [e.clientX - b.left, e.clientY - b.top]; }
+function nearestBar(G, x) { let best = 1, bd = Infinity; for (let n = 1; n <= N; n++) { const dd = Math.abs(barX(G, n) - x); if (dd < bd) { bd = dd; best = n; } } return [best, bd]; }
+function paintAt(G, x, y) {
+  const [n, dist] = nearestBar(G, x); if (dist > G.rung * .5) return null;
+  setAmp(n, (G.axis - y) / (G.axis - G.top)); return n;
+}
+lc.addEventListener('pointerdown', e => {
+  if (e.button !== 0) return;
+  stopAuto();
+  const G = ladGeom(), [x, y] = localXY(e);
+  lc.setPointerCapture(e.pointerId);
+  if (y > G.axis + 4) {
+    const [n] = nearestBar(G, x); select(n);
+    lp = { id: e.pointerId, mode: 'shift', n };
+  } else {
+    lp = { id: e.pointerId, mode: 'paint', x, y };
+    const n = paintAt(G, x, y); if (n) select(n);
+  }
+});
+lc.addEventListener('pointermove', e => {
+  if (!lp || e.pointerId !== lp.id) return;
+  const G = ladGeom(), [x, y] = localXY(e);
+  if (lp.mode === 'shift') { setShift(lp.n, offToShift((x - G.X0(lp.n)) / G.rung)); return; }
+  // interpolate between the last and current point so a quick sweep fills every bar it crosses
+  const steps = Math.max(1, Math.ceil(Math.abs(x - lp.x) / Math.max(2, G.rung / 3)));
+  for (let k = 1; k <= steps; k++) paintAt(G, lp.x + (x - lp.x) * k / steps, lp.y + (y - lp.y) * k / steps);
+  lp.x = x; lp.y = y;
+});
+function lpEnd(e) { if (lp && e.pointerId === lp.id) { lp = null; if (lc.hasPointerCapture(e.pointerId)) lc.releasePointerCapture(e.pointerId); } }
+lc.addEventListener('pointerup', lpEnd); lc.addEventListener('pointercancel', lpEnd);
+lc.addEventListener('dblclick', e => { const G = ladGeom(), [x, y] = localXY(e); if (y > G.axis + 4) { const [n] = nearestBar(G, x); setShift(n, 0); } });
+
+function applyParams(o) {
+  const ok = a => Array.isArray(a) && a.length === N && a.every(Number.isFinite);
+  if (!o || typeof o !== 'object' || !ok(o.amps) || !ok(o.shifts) || !Number.isInteger(o.sel) || o.sel < 1 || o.sel > N) throw new Error('Invalid PARAMS');
+  stopAuto(); setAll(o.amps, o.shifts); select(o.sel); draw();
+}
+async function copyParams() {
+  stopAuto();
+  const value = paramsText();
+  try { await navigator.clipboard.writeText(value); toast('COPIED'); }
+  catch (err) { window.prompt('PARAMS をコピー', value); }
+}
+$('params').onclick = copyParams; $('bCopy').onclick = copyParams;
+$('params').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); void copyParams(); } };
+$('bPaste').onclick = async () => {
+  stopAuto(); let value;
+  try { value = await navigator.clipboard.readText(); }
+  catch (err) { value = window.prompt('PARAMS を貼り付け'); }
+  if (!value) return;
+  try { applyParams(JSON.parse(value)); toast('PASTED'); } catch (err) { toast('読めない PARAMS'); }
+};
+addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey || e.target.isContentEditable || /^(TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+  if (e.target.tagName === 'INPUT' && e.target.type !== 'range') return;
+  const k = e.key, lower = k.toLowerCase();
+  if (k === 'ArrowLeft' || k === 'ArrowRight') {
+    if (e.target.tagName === 'INPUT' && e.target.id !== 'shift') { stopAuto(); return; }
+    e.preventDefault(); stopAuto(); setShift(S.sel, S.shifts[S.sel - 1] + (k === 'ArrowRight' ? 1 : -1) * (e.shiftKey ? .0005 : .0025));
+  } else if (k === 'ArrowUp' || k === 'ArrowDown') {
+    if (e.target.tagName === 'INPUT') return;
+    e.preventDefault(); stopAuto(); select(S.sel + (k === 'ArrowUp' ? 1 : -1));
+  } else if (k === ' ') { e.preventDefault(); if (!e.repeat) { stopAuto(); void setSound(!S.sound); } }
+  else if (!e.repeat && ['f', 'h', 'r', 'a', 'p'].includes(lower)) {
+    e.preventDefault(); if (lower !== 'a') stopAuto();
+    $({ f: 'bFund', h: 'bHear', r: 'bReset', a: 'bAuto', p: 'bProof' }[lower]).click();
+  } else if (k === 'Escape') { stopAuto(); void setSound(false); }
+  else if (k === 'Enter' && e.target.tagName === 'BUTTON' && e.target.id !== 'bAuto') stopAuto();
+});
+addEventListener('pagehide', () => { S.sound = false; updateAudio(); if (AC) void AC.suspend(); });
+
+readColors(); draw();
+document.fonts && document.fonts.ready.then(() => { readColors(); readKey = ''; draw(); });
+requestAnimationFrame(frame);
+window.__SP = {
+  L, law: L, state: S, tour: TOUR, tourStart: TOUR_START, duration: AUTO_DURATION,
+  manual: on => { manual = !!on; lastT = null; },
+  step: (sec = 1 / 60, fps = 60) => {
+    if (!manual) throw new Error('Call __SP.manual(true) before step');
+    if (!Number.isFinite(sec) || sec < 0 || !Number.isFinite(fps) || fps <= 0) throw new RangeError('Invalid step duration/fps');
+    const h = Math.min(.05, 1 / fps), n = Math.ceil(sec / h - 1e-9);
+    for (let i = 0; i < n; i++) advance(Math.min(h, sec - i * h));
+    draw();
+  },
+  set: (amps, shifts) => { stopAuto(); setAll(amps, shifts || S.shifts); draw(); return paramsText(); },
+  preset: name => { stopAuto(); preset(name); draw(); return paramsText(); },
+  select: n => { select(n); draw(); return S.sel; },
+  shift: (n, d) => { stopAuto(); select(n); setShift(n, d); draw(); return S.shifts[n - 1]; },
+  fund: () => { stopAuto(); toggleFund(); draw(); return S.amps[0]; },
+  ping: () => { stopAuto(); doPing(false); return S.lastPing; },
+  zone: () => (ensureLaw(), Z), pitch: () => (ensureLaw(), PI), spacing: () => (ensureLaw(), SP),
+  ladder: () => { const G = ladGeom(); return { G, bars: S.amps.map((a, i) => ({ n: i + 1, x: barX(G, i + 1), y: G.axis - a * (G.axis - G.top) })) }; },
+  audio: () => AC && ({ state: AC.state, master: master.gain.value, bus: toneBus.gain.value, pinging: pinging(),
+    f: oscs.map(o => o.frequency.value), gain: ogains.map(g => g.gain.value), target: L.gains(S.amps, S.shifts),
+    limiter: { threshold: limiter.threshold.value, ratio: limiter.ratio.value, attack: limiter.attack.value, release: limiter.release.value } }),
+  startAuto, stopAuto, setSound, applyParams
+};
+})();
+</script>
+</body>
+</html>
