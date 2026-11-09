@@ -83,7 +83,9 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acc)
 #helixBox{grid-column:1;grid-row:1;border-right:1px solid var(--line)}
 #readBox{grid-column:2;grid-row:1;padding:14px 16px;display:flex;flex-direction:column;gap:10px;overflow-y:auto}
 #readBox .sh{margin-bottom:0}
-#specBox{grid-column:1;grid-row:3;border-bottom:0;border-right:1px solid var(--line)}
+#specBox{grid-column:1;grid-row:3;border-bottom:0;border-right:1px solid var(--line);touch-action:none;cursor:ew-resize}
+#helixBox{touch-action:none;cursor:grab}
+#helixBox:active{cursor:grabbing}
 #traceBox{grid-column:2;grid-row:3;border-bottom:0}
 .helix-note{position:absolute;top:24px;left:8px;right:8px;text-align:center;font-family:var(--jp);font-size:11px;color:var(--acc);pointer-events:none}
 .zone.LINE{color:var(--ink-2);border-color:var(--mute)}
@@ -134,7 +136,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,.params:focus-visible{o
     <a class="esc" href="index.html">[ESC] INDEX</a>
   </div>
   <div class="stage" id="stage">
-    <div class="cell" id="helixBox"><canvas id="cvHelix" aria-label="音の螺旋。角度＝音名、高さ＝オクターブ。光っている所が山（音量の山）。黄色の線は 1 周ぶん上げたときの聞こえる高さの足あと"></canvas><div class="cap">HELIX ⁄ 螺旋 · 角度＝音名 · 高さ＝オクターブ</div><div class="cap r">黄＝1 周上げたときの聞こえる高さ</div><div class="helix-note" id="proofCap" hidden>12 半音上げた音（○）の部品は、今の音（●）とぴったり同じ位置＝同じ音に戻っている</div></div>
+    <div class="cell" id="helixBox"><canvas id="cvHelix" aria-label="音の螺旋。角度＝音名、高さ＝オクターブ。光っている所が山（音量の山）。黄色の線は 1 周ぶん上げたときの聞こえる高さの足あと"></canvas><div class="cap">HELIX ⁄ 角度＝音名 · 高さ＝オクターブ</div><div class="cap r">DRAG 輪を回す · 左の山の端＝幅</div><div class="helix-note" id="proofCap" hidden>12 半音上げた音（○）の部品は、今の音（●）とぴったり同じ位置＝同じ音に戻っている</div></div>
     <div class="cell" id="readBox">
       <div class="sh">READOUT</div>
       <div class="big"><span class="rat" id="rName">C</span><span class="off" id="rNameSub">—</span></div>
@@ -157,7 +159,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,.params:focus-visible{o
       <div class="row"><label for="sig">山の幅 σ <span class="val" id="vSig">—</span></label><input type="range" id="sig" min="0" max="1000" step="1" value="800"></div>
       <div class="seg" id="segSig"><button data-v="0.25">NARROW</button><button data-v="0.6">MID</button><button data-v="2">WIDE</button></div>
       <button class="btn" id="bFollow">FOLLOW（F）— 山が音についていく</button>
-      <div class="hint">狭い山＝ほぼ 1 本だけ鳴る＝<b>高さがある</b>。広い山＝8 本が並んで鳴る＝聞こえる高さが動かない。<br>FOLLOW＝山ごと音について上がる（ふつうの楽器の音）。±2 オクターブで天井・床にぶつかる。</div>
+      <div class="hint">狭い山＝ほぼ 1 本だけ鳴る＝<b>高さがある</b>。広い山＝8 本が並んで鳴る＝聞こえる高さが動かない。<br>螺旋の左の山の端をつかむ、または SPECTRUM を上下にドラッグでも幅が変わる。<br>FOLLOW＝山ごと音について上がる（ふつうの楽器の音）。±2 オクターブで天井・床にぶつかる。</div>
     </div>
     <div class="sec">
       <div class="sh"><span class="lt">B</span>CHROMA ⁄ 音名を回す</div>
@@ -165,7 +167,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,.params:focus-visible{o
       <div class="grid2"><button class="btn hold" id="bHoldUp">▲ HOLD（↑）</button><button class="btn hold" id="bHoldDown">▼ HOLD（↓）</button></div>
       <button class="btn" id="bGlide">GLIDE（G）— なめらかに回し続ける</button>
       <div class="row" style="margin-top:10px"><label for="speed">GLIDE の速さ <span class="val" id="vSpeed">+1.0 半音/秒</span></label><input type="range" id="speed" min="-30" max="30" step="1" value="10"></div>
-      <div class="hint">← →＝半音 1 つ。▲ HOLD／↑ を押し続けると半音ずつ上がり続ける（0.4 秒ごと）。<br>広い山で 1 周（12 回）上げても、<b>聞こえる高さの横線は動かない</b>。</div>
+      <div class="hint">螺旋の輪をドラッグで回す＝音名をなめらかに回す（半音をまたぐごとに ▲／▼）。螺旋の黄の線＝1 周回したときの聞こえる高さの足あと。下の SPECTRUM の左右ドラッグでも同じ。<br>← →＝半音 1 つ。▲ HOLD／↑ を押し続けると半音ずつ上がり続ける（0.4 秒ごと）。<br>広い山で 1 周（12 回）上げても、<b>聞こえる高さの横線は動かない</b>。</div>
     </div>
     <div class="sec">
       <div class="sh"><span class="lt">C</span>TRITONE ⁄ 6 半音のなぞ</div>
@@ -450,8 +452,8 @@ function renderEar() {
     const r = e.result, nm = L.NAMES[mod(Math.round(r.top), 12)], pct = Math.round(r.rate * 100);
     $('earQ').innerHTML = '12 組おわり。<b>上がった ' + r.ups + '・下がった ' + (r.n - r.ups) + '</b>';
     $('earRes').innerHTML = r.consistent
-      ? 'あなたの耳の輪の「上」は <b>' + nm + ' のあたり</b>（答えの ' + pct + '% がこの向きで説明できる）。<br>その近くの音名を高く聞き、遠い半分から 6 半音進むと「上がった」と聞いている。別の人は別の所に「上」を持っている。'
-      : '答えを 1 つの向きでは説明しきれなかった（いちばん合う向きでも ' + pct + '%）。<br>耳がまだ向きを決めていないか、どちらにも聞こえている。もう一度やると変わることもある。';
+      ? 'あなたの耳の輪の「上」は <b>' + nm + ' のあたり</b>（答えの ' + pct + '% がこの向きで説明できる）。<br>その近くの音名を高く聞き、遠い半分から 6 半音進むと「上がった」と聞いている。別の人は別の所に「上」を持っている。<br>輪の音名をクリックすると、その組をもう一度聞ける。'
+      : '答えを 1 つの向きでは説明しきれなかった（いちばん合う向きでも ' + pct + '%）。<br>耳がまだ向きを決めていないか、どちらにも聞こえている。もう一度やると変わることもある。<br>輪の音名をクリックすると、その組をもう一度聞ける。';
   }
 }
 // EAR circle: A's chroma around the ring, the answer as a mark, the fitted "top".
@@ -598,7 +600,7 @@ function drawSpec() {
   }
   g.strokeStyle = C.acc; g.setLineDash([3, 3]); g.beginPath(); g.moveTo(X(ht.h), top - 6); g.lineTo(X(ht.h), bottom); g.stroke(); g.setLineDash([]);
   g.fillStyle = C.acc; g.textAlign = 'center'; g.fillText('重心 ' + fmtHz(ht.f), clamp(X(ht.h), l + 50, w - r - 50), top - 10);
-  $('specCapR').textContent = S.proof ? '点線の枠＝12 半音上げた音の部品' : '棒＝部品 · 曲線＝山';
+  $('specCapR').textContent = S.proof ? '点線の枠＝12 半音上げた音の部品' : 'DRAG ← → 部品を滑らせる＝音名 · ↑ ↓ 山の幅';
 }
 
 // STAIRS: the heard height over the last TRACE_SEC seconds; each step marked with its verdict.
@@ -674,6 +676,80 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 
+// Direct drag (the meaning of each axis is the same as in the drawing):
+//   HELIX ring  : the angle around the ring is the chroma → turning the ring = moving the chroma (each semitone crossed is judged like a step)
+//   HELIX left  : the mountain's profile along the height axis → grab its edge = set the width σ (distance from the centre μ = σ)
+//   SPECTRUM    : ← → slides the partials under the mountain (1 octave of axis = 12 semitones) · ↑ ↓ sharpens / flattens the mountain (σ)
+// Sound starts on the first drag unless SOUND was switched by hand.
+let soundArm = true, drag = null;
+function armSound() { if (soundArm && !S.sound) { soundArm = false; void setSound(true); } }
+function dragP(P) {
+  // continuous chroma; every integer semitone crossed gets a verdict mark (like HOLD)
+  const from = S.P;
+  if (!moveP(P - from, false)) return false;
+  const a = Math.floor(from + 1e-9), b = Math.floor(S.P + 1e-9);
+  if (a !== b) {
+    const dir = b > a ? 1 : -1;
+    for (let k = a; k !== b; k += dir) {
+      const p0 = dir > 0 ? k : k + 1, p1 = p0 + dir, mu1 = S.follow ? S.mu - (S.P - p1) / 12 : S.mu, mu0 = S.follow ? mu1 - dir / 12 : S.mu;
+      const r = L.step(p0, p1, S.sigma, mu0, mu1);
+      S.lastStep = Object.assign({ from: p0, to: p1, at: S.time }, r);
+      marks.push({ t: S.time, h: r.hB, dir: r.dir });
+    }
+  }
+  return true;
+}
+const local = (cv, e) => { const b = cv.getBoundingClientRect(); return [e.clientX - b.left, e.clientY - b.top]; };
+function ringAngle(G, x, y) {
+  const yH = G.Y(L.height(S.P, S.sigma, S.mu).h);
+  return Math.atan2(x - G.cx, (y - yH) / TILT);   // 0 = front (C) · clockwise seen from above = up
+}
+const hc = $('cvHelix'), sc = $('cvSpec');
+hc.addEventListener('pointerdown', e => {
+  if (e.button !== 0 || S.ear) return;
+  stopAuto(); stopHold(); stopGlide();
+  const G = helixGeom(hc.clientWidth, hc.clientHeight), [x, y] = local(hc, e);
+  hc.setPointerCapture(e.pointerId); armSound();
+  if (x < G.left - 6) {
+    drag = { id: e.pointerId, mode: 'width', cv: hc };
+    setSigma(Math.abs(y - G.Y(S.mu)) / ((G.bottom - G.top) / K));
+  } else drag = { id: e.pointerId, mode: 'ring', cv: hc, th: ringAngle(G, x, y) };
+});
+sc.addEventListener('pointerdown', e => {
+  if (e.button !== 0 || S.ear) return;
+  stopAuto(); stopHold(); stopGlide();
+  const [x, y] = local(sc, e);
+  sc.setPointerCapture(e.pointerId); armSound();
+  drag = { id: e.pointerId, mode: 'spec', cv: sc, x0: x, y0: y, x, y, axis: null, P0: S.P, s0: S.sigma };
+});
+function onDragMove(e) {
+  if (!drag || e.pointerId !== drag.id) return;
+  const [x, y] = local(drag.cv, e);
+  if (drag.mode === 'ring') {
+    const G = helixGeom(hc.clientWidth, hc.clientHeight), th = ringAngle(G, x, y);
+    let d = th - drag.th; d -= 2 * Math.PI * Math.round(d / (2 * Math.PI));
+    drag.th = th; dragP(S.P + d / (2 * Math.PI) * 12);
+  } else if (drag.mode === 'width') {
+    const G = helixGeom(hc.clientWidth, hc.clientHeight);
+    setSigma(Math.abs(y - G.Y(S.mu)) / ((G.bottom - G.top) / K));
+  } else {
+    if (!drag.axis && Math.hypot(x - drag.x0, y - drag.y0) > 6) drag.axis = Math.abs(x - drag.x0) >= Math.abs(y - drag.y0) ? 'x' : 'y';
+    const pxPerOct = (sc.clientWidth - 36) / K;
+    if (drag.axis === 'x') dragP(S.P + (x - drag.x) / pxPerOct * 12);
+    else if (drag.axis === 'y') setSigma(drag.s0 * Math.pow(2, (y - drag.y0) / 60));   // 60 px down = twice as wide
+    drag.x = x; drag.y = y;
+  }
+}
+function onDragEnd(e) { if (drag && e.pointerId === drag.id) { if (drag.cv.hasPointerCapture(e.pointerId)) drag.cv.releasePointerCapture(e.pointerId); drag = null; } }
+for (const cv of [hc, sc]) { cv.addEventListener('pointermove', onDragMove); cv.addEventListener('pointerup', onDragEnd); cv.addEventListener('pointercancel', onDragEnd); }
+// EAR circle: after the test, click a note to hear its pair again
+$('earCv').addEventListener('click', e => {
+  const ea = S.ear; if (!ea || !ea.done) return;
+  const cv = $('earCv'), [x, y] = local(cv, e), cx = cv.clientWidth / 2, cy = cv.clientHeight / 2 + 4;
+  const c = mod(Math.round(Math.atan2(x - cx, -(y - cy)) / (2 * Math.PI) * 12), 12);
+  void playPair(c, L.SIG_WIDE, L.MU, false);
+});
+
 // Every deliberate control touch stops the tour.
 $('app').addEventListener('pointerdown', e => { if (!e.target.closest('#bAuto')) stopAuto(); }, true);
 $('sig').oninput = e => { stopAuto(); setSigma(vToSig(+e.target.value)); };
@@ -693,7 +769,7 @@ $('bEar').onclick = () => S.ear ? quitEar() : startEar();
 $('bEarUp').onclick = () => earAnswer(true); $('bEarDown').onclick = () => earAnswer(false);
 $('bEarAgain').onclick = () => { if (!S.ear) return; if (S.ear.done) startEar(); else playPair(S.ear.order[S.ear.i], L.SIG_WIDE, L.MU, false); };
 $('bEarQuit').onclick = quitEar;
-$('bSound').onclick = () => void setSound(!S.sound);
+$('bSound').onclick = () => { soundArm = false; void setSound(!S.sound); };
 $('bAuto').onclick = () => S.auto ? stopAuto() : startAuto();
 $('bProof').onclick = () => setProof(!S.proof);
 $('vol').oninput = e => { stopAuto(); S.vol = +e.target.value / 100; $('vVol').textContent = e.target.value; updateAudio(); };
@@ -732,7 +808,7 @@ addEventListener('keydown', e => {
     e.preventDefault(); stopAuto(); stopGlide(); if (!S.ear) moveP(k === 'ArrowRight' ? 1 : -1, true);
   } else if (k === 'ArrowUp' || k === 'ArrowDown') {
     e.preventDefault(); if (!e.repeat) startHold(k === 'ArrowUp' ? 1 : -1);
-  } else if (k === ' ') { e.preventDefault(); if (!e.repeat) { stopAuto(); void setSound(!S.sound); } }
+  } else if (k === ' ') { e.preventDefault(); if (!e.repeat) { stopAuto(); soundArm = false; void setSound(!S.sound); } }
   else if (!e.repeat && ['f', 'g', 't', 'e', 'a', 'p'].includes(lower)) {
     e.preventDefault(); if (lower !== 'a') stopAuto();
     $({ f: 'bFollow', g: 'bGlide', t: 'bPair', e: 'bEar', a: 'bAuto', p: 'bProof' }[lower]).click();
