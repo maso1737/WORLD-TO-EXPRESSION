@@ -19,7 +19,7 @@
 30_Levels/      7階層ごとの知識ノート L1〜L7
 40_Primitives/  Perception Primitive P-01〜P-30 の個票（_TEMPLATE.md あり）
 90_Log/         日付ごとの作業ログ／申し送り
-sound-patterns/               L1d 音響の教材（PLAN_SOUND_PATTERNS.md・SP-01 本体 01_harmonic_ladder.html＝11-09・SP-02 本体 02_beats.html・SP-03 本体 03_consonance.html＝11-03／SP-05 本体 05_chladni.html・SP-04 本体 04_standing_wave.html＝11-05／入口 index.html＝APP と SCROLL を横並び／解説 LP scroll/SCROLL_HARMONIC_LP.html（11-09）・SCROLL_BEATS_LP.html・SCROLL_CONSONANCE_LP.html・SCROLL_CHLADNI_LP.html・SCROLL_STANDING_LP.html（音の既定 BOW・方針 20_Design/PLAN_SCROLL_EXPLAINER.md）／法則 _law/sp01_law.js・sp02_law.js・sp03_law.js・sp05_law.js・sp04_law.js／見た目は NATURAL＝natural-patterns の型）
+sound-patterns/               L1d 音響の教材（PLAN_SOUND_PATTERNS.md・SP-06 本体 06_up_down.html＋解説 LP scroll/SCROLL_UPDOWN_LP.html＋法則 _law/sp06_law.js＝11-10・6 本完結・SP-01 本体 01_harmonic_ladder.html＝11-09・SP-02 本体 02_beats.html・SP-03 本体 03_consonance.html＝11-03／SP-05 本体 05_chladni.html・SP-04 本体 04_standing_wave.html＝11-05／入口 index.html＝APP と SCROLL を横並び／解説 LP scroll/SCROLL_HARMONIC_LP.html（11-09）・SCROLL_BEATS_LP.html・SCROLL_CONSONANCE_LP.html・SCROLL_CHLADNI_LP.html・SCROLL_STANDING_LP.html（音の既定 BOW・方針 20_Design/PLAN_SCROLL_EXPLAINER.md）／法則 _law/sp01_law.js・sp02_law.js・sp03_law.js・sp05_law.js・sp04_law.js／見た目は NATURAL＝natural-patterns の型）
 scroll-experience/            特設LP「From rules to worlds.」（2026-10-24 Codex から引継ぎ・申し送り HANDOFF_20261024.md・制作ルール AGENTS.md）
 cognitive/                    完成HTML（Level 4 GESTALT）※git管理なし
 12-Principles-of-Animation/   完成HTML（Level 6）※独自gitリポジトリ

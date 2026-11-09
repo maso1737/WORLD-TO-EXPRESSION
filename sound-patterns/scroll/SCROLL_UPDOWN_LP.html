@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UP &amp; DOWN — スクロール解説 (SP-06)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=IBM+Plex+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:"Bank Gothic";src:url("../../cognitive/fonts/bank-gothic-light-bt.ttf") format("truetype");font-weight:300 600;font-display:swap}
+@font-face{font-family:"Square 721";src:url("../../cognitive/fonts/Square_721_BT.ttf") format("truetype");font-weight:400 700;font-display:swap}
+:root{
+  --bg:#0a0a0a;--bg-2:#121212;--ink:#f2f2ef;--ink-2:#cfcfca;--mute:#9a9a93;--mute-2:#3a3a37;
+  --line:#2a2a27;--acc:#ffd400;--acc-ink:#0a0a0a;--warn:#ff6a3d;--fill:rgba(242,242,239,.06);
+  --grid:rgba(242,242,239,0.035);--ez:cubic-bezier(0.2,0,0,1);
+  --mono:"JetBrains Mono","IBM Plex Mono",ui-monospace,monospace;
+  --display:"Bank Gothic","Square 721","Space Grotesk",system-ui,sans-serif;
+  --sans:"Square 721","Bank Gothic","Helvetica Neue",system-ui,sans-serif;
+  --jp:"IBM Plex Sans JP","Noto Sans JP",system-ui,sans-serif;
+  --col:400px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg)}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-feature-settings:"tnum"}
+#grid{position:fixed;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;pointer-events:none}
+#cv{position:fixed;inset:0;width:100vw;height:100vh;display:block;pointer-events:none}
+
+.hud{position:fixed;left:0;right:0;top:0;height:46px;display:flex;align-items:center;gap:16px;padding:0 16px;border-bottom:1px solid var(--line);background:rgba(10,10,10,.92);z-index:5}
+.brand{display:flex;align-items:baseline;gap:8px;white-space:nowrap}
+.mark{font-family:var(--display);font-weight:600;letter-spacing:.14em;font-size:14px}
+.tag{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.16em}
+.chl{flex:1;font-family:var(--mono);font-size:11px;color:var(--ink-2);letter-spacing:.16em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chl b{color:var(--acc);font-weight:400}
+.rd{display:flex;align-items:baseline;gap:6px;white-space:nowrap}
+.rd .n{font-family:var(--display);font-weight:600;font-size:20px;letter-spacing:.04em;min-width:44px;text-align:right}
+.rd .u{font-family:var(--mono);font-size:10px;color:var(--mute)}
+.zone{font-family:var(--display);font-weight:600;font-size:11px;letter-spacing:.16em;padding:3px 8px;border:1px solid var(--line);white-space:nowrap;min-width:64px;text-align:center}
+.zone.LINE{color:var(--ink-2);border-color:var(--mute)}
+.zone.BLEND{color:var(--warn);border-color:var(--warn)}
+.zone.CIRCLE{color:var(--acc-ink);background:var(--acc);border-color:var(--acc)}
+.seg{display:flex;gap:3px}
+.seg button,.lnk{font-family:var(--mono);font-size:10px;letter-spacing:.08em;background:transparent;color:var(--ink-2);border:1px solid var(--line);padding:5px 8px;cursor:pointer;text-decoration:none;white-space:nowrap}
+.seg button:hover,.lnk:hover{border-color:var(--acc);color:var(--acc)}
+.seg button.on{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.vol{width:70px;-webkit-appearance:none;appearance:none;height:2px;background:var(--mute-2);outline:none;cursor:pointer}
+.vol::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;background:var(--acc);border:1px solid var(--acc-ink);border-radius:0}
+.vol::-moz-range-thumb{width:11px;height:11px;background:var(--acc);border:1px solid var(--acc-ink);border-radius:0}
+.prog{position:fixed;left:0;top:46px;height:2px;width:0;background:var(--acc);z-index:5}
+.ticks{position:fixed;left:0;right:0;top:46px;height:6px;z-index:4;pointer-events:none}
+.ticks i{position:absolute;top:0;width:1px;height:6px;background:var(--mute-2)}
+
+main{position:relative;z-index:2}
+.ch{position:relative}
+.card{position:sticky;top:76px;width:var(--col);margin-left:40px;padding:20px 22px 22px;background:rgba(10,10,10,.88);border:1px solid var(--line);border-left:2px solid var(--acc)}
+.card .no{font-family:var(--mono);font-size:10px;color:var(--acc);letter-spacing:.18em;margin-bottom:8px}
+.card h2{font-family:var(--display);font-weight:600;font-size:22px;letter-spacing:.06em;line-height:1.2;margin-bottom:4px}
+.card .jh{font-family:var(--jp);font-weight:500;font-size:15px;color:var(--ink);margin-bottom:12px;line-height:1.5}
+.card p{font-family:var(--jp);font-size:13px;line-height:1.85;color:var(--ink-2);margin-bottom:10px}
+.card p b{color:var(--acc);font-weight:500}
+.card p em{font-style:normal;color:var(--warn)}
+.card .note{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.04em;line-height:1.6;border-top:1px solid var(--line);padding-top:8px;margin-top:4px}
+.card .live{font-family:var(--mono);color:var(--acc);font-weight:400}
+.hero h1{font-family:var(--display);font-weight:600;font-size:40px;letter-spacing:.06em;line-height:1;margin:2px 0 10px}
+.hero .jh{font-size:18px}
+.btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.btn{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;background:transparent;color:var(--ink-2);border:1px solid var(--line);padding:8px 10px;cursor:pointer;text-decoration:none}
+.btn:hover{border-color:var(--acc);color:var(--acc)}
+.btn.pri{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.scrollcue{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.2em;margin-top:14px}
+
+#rail{position:fixed;left:40px;bottom:18px;width:var(--col);z-index:3;background:rgba(10,10,10,.9);border:1px solid var(--line);padding:9px 12px 8px;pointer-events:none}
+#rail .rh{font-family:var(--mono);font-size:9px;color:var(--mute);letter-spacing:.16em;margin-bottom:5px;display:flex;justify-content:space-between}
+.fr{display:flex;justify-content:space-between;gap:10px;font-family:var(--mono);font-size:10.5px;line-height:1.75;color:var(--mute-2);transition:color .25s}
+.fr.on{color:var(--mute)}
+.fr .fv{color:inherit;text-align:right;white-space:nowrap}
+.fr.on .fv{color:var(--ink-2)}
+.fr .fx{white-space:nowrap}
+.t{transition:color .25s,background .25s;padding:0 1px}
+.t.on{color:var(--acc-ink);background:var(--acc)}
+
+@media (max-width:880px){
+  :root{--col:auto}
+  .hud{gap:8px;padding:0 10px}
+  .brand,.chl,.vol,.lnk.app{display:none}
+  .rd .n{font-size:16px;min-width:36px}
+  .rd .u{display:none}
+  .zone{min-width:0;padding:3px 6px}
+  .seg button,.lnk{padding:5px 6px}
+  .card{margin:0 12px;width:auto;top:calc(36vh + 62px);padding:14px 16px 14px}
+  .card p{font-size:12px;line-height:1.75;margin-bottom:8px}
+  .card .jh{margin-bottom:8px}
+  .hero h1{font-size:30px}
+  .scrollcue{display:none}
+  #rail{left:12px;right:12px;width:auto;top:calc(36vh + 2px);bottom:auto;padding:6px 10px}
+  #rail .rh{display:none}
+  .fr:not(.lit){display:none}
+  .fr .fv{display:none}
+}
+@media (prefers-reduced-motion:reduce){.t,.fr{transition:none}}
+</style>
+</head>
+<body>
+<div id="grid"></div>
+<canvas id="cv"></canvas>
+
+<div class="hud">
+  <div class="brand"><span class="mark">GEN-EX</span><span class="tag">L1d × L3 ⁄ SP-06 SCROLL</span></div>
+  <div class="chl" id="chl">00 ⁄ 10 <b>UP &amp; DOWN</b></div>
+  <div class="rd"><span class="n" id="hN">C</span><span class="u" id="hMode">—</span></div>
+  <div class="zone CIRCLE" id="hZone">CIRCLE</div>
+  <div class="seg" id="segSnd" title="S キーでも切り替え"><button data-v="off" class="on">OFF</button><button data-v="bow">BOW</button><button data-v="on">♪ ON</button></div>
+  <input class="vol" id="vol" type="range" min="0" max="100" value="35" title="MASTER">
+  <a class="lnk app" href="../06_up_down.html">APP →</a>
+  <a class="lnk" href="../index.html">INDEX</a>
+</div>
+<div class="prog" id="prog"></div>
+<div class="ticks" id="ticks"></div>
+
+<main id="main">
+  <section class="ch" data-ch="0" style="height:150vh">
+    <div class="card hero">
+      <div class="no">SOUND PATTERNS ⁄ SP-06 ⁄ SCROLL EXPLAINER</div>
+      <h1>UP &amp; DOWN</h1>
+      <div class="jh">「高い音＝上」は、音の性質？</div>
+      <p><b>これは何か</b>：音の高さには 2 つの成分がある。ド→レ→…→シ→ドと一周して戻る<b>音名（輪）</b>と、低い⇄高いの<b>高さ（線）</b>。ふつうの音では 2 つが一緒に動くので、音は<b>螺旋</b>を登る。このページは、高さの成分だけを消した音（シェパード音）を使って、「高い＝上」がどこから来るのかを見る。</p>
+      <p>いま <span class="live" data-live="name">—</span>・聞こえる高さ <span class="live" data-live="hz">—</span>・<span class="live" data-live="zone">—</span>。</p>
+      <p>音は <b>BOW</b>：スクロールしている間だけ鳴る（ヘッドホン推奨・どこかを 1 回クリックで入る）。6 半音の章は右上の <b>♪ ON</b>（鳴りっぱなし）が聴きやすい。</p>
+      <div class="btns"><button class="btn pri" id="bStart">♪ 音を出して読む（BOW）</button><a class="btn" href="../06_up_down.html">アプリで触る →</a><a class="btn" href="SCROLL_HARMONIC_LP.html">SP-01 の解説</a></div>
+      <div class="scrollcue">↓ SCROLL</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="1" style="height:280vh">
+    <div class="card">
+      <div class="no">01 ⁄ 10</div>
+      <h2>HELIX</h2>
+      <div class="jh">ふつうの音は、螺旋を登る</div>
+      <p>正弦波 1 本を、C4（262 Hz）から C6（1047 Hz）までなめらかに上げる（いま <span class="live" data-live="name">—</span>・<span class="live" data-live="hz">—</span>）。</p>
+      <p>螺旋の角度＝音名、高さ＝オクターブ。1 オクターブ上がると、<b>同じ角度に戻って 1 段上</b>にいる。ドと 1 オクターブ上のドが「同じ名前」に聞こえるのは、この角度が同じだから。</p>
+      <p>右の目盛り＝聞こえる高さ。ここでは音名が回ると一緒に<b>上へ</b>動く。音名と高さが、いつも一緒に動いている。</p>
+      <div class="note">縦はオクターブ等間隔（1 段で周波数が 2 倍）。螺旋の光っている所＝いま鳴っている所。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="2" style="height:280vh">
+    <div class="card">
+      <div class="no">02 ⁄ 10</div>
+      <h2>STACK</h2>
+      <div class="jh">オクターブ違いを、山形に重ねる</div>
+      <p>C の音だけを <b>8 オクターブぶん</b>（33 Hz〜4.2 kHz）重ねる。強さは山形（真ん中 523 Hz）にして、山の幅 σ を広げていく（いま σ <span class="live" data-live="sigma">—</span>）。</p>
+      <p>広げるほど、螺旋の同じ角度（C）にある段が全部鳴る。音名ははっきり C なのに、<b>どの高さの C か</b>が分からなくなっていく。これが<b>シェパード音</b>（Shepard 1964）。</p>
+      <div class="note">部品 k の強さ aₖ＝山の形（下の式 c）。山を広げても、全体の音量はそろえてある。聞こえる高さ＝部品の強さ（2 乗）で重みづけした重心。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="3" style="height:340vh">
+    <div class="card">
+      <div class="no">03 ⁄ 10</div>
+      <h2>STAIRS</h2>
+      <div class="jh">上がり続ける階段</div>
+      <p>広い山のまま、音名を半音ずつ上げる（いま <span class="live" data-live="name">—</span>・<span class="live" data-live="stairs">—</span>）。8 本の部品がそろって少しずつ上へ動き、上の端で消え、下の端から生まれる。</p>
+      <p>1 歩ずつは、輪の<b>近い方へ回った</b>ので「上がった」と聞こえる（右上の ▲）。でも 12 段のぼっても、聞こえる高さ（黄の横線）は <span class="live" data-live="hz">—</span> のまま<b>動かない</b>。足あとは平らな線。</p>
+      <div class="note">1 歩の向き＝「輪の近い方へ回った」手がかり（1 半音で 0.83）と「重心が動いた」手がかりの混ぜ合わせ（下の式 g）。どちらも仮の模型。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="4" style="height:240vh">
+    <div class="card">
+      <div class="no">04 ⁄ 10</div>
+      <h2>SAME</h2>
+      <div class="jh">12 段のぼったら、同じ音</div>
+      <p>12 段のぼった音の部品（点線の ○）を、最初の音の部品（●）に重ねる。<b>ぴったり同じ位置</b>。1 本ずつ隣の席へ移っただけで、音は最初とまったく同じ。</p>
+      <p>だから何周でも「上がり続ける」。上がった分は、どこにも積み上がっていない。螺旋の黄の線＝1 周上げたときの聞こえる高さの足あとで、<b>平たい輪</b>になっている。</p>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="5" style="height:260vh">
+    <div class="card">
+      <div class="no">05 ⁄ 10</div>
+      <h2>NARROW</h2>
+      <div class="jh">山を狭くする</div>
+      <p>山の幅 σ を 2.0 → 0.25 オクターブに狭める（いま σ <span class="live" data-live="sigma">—</span>・高さの成分 H <span class="live" data-live="H">—</span>）。鳴るのは、ほぼ 1 本になる。</p>
+      <p>黄の足あとが、平たい輪から<b>螺旋の 1 周</b>へ起き上がる。のぼって、どこかで縦にストンと落ちる形。高さの成分が戻ってきた。</p>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="6" style="height:340vh">
+    <div class="card">
+      <div class="no">06 ⁄ 10</div>
+      <h2>DROP</h2>
+      <div class="jh">上がって、落ちる</div>
+      <p>狭い山で、もう一度半音ずつ 12 段上げる（いま <span class="live" data-live="name">—</span>・<span class="live" data-live="stairs">—</span>）。</p>
+      <p>聞こえる高さは 1 段ごとに上がる…が、<b>F♯ のあたりで 1 オクターブ落ちる</b>（▼）。山のてっぺんを越えた部品が弱まり、1 オクターブ下の部品に主役が入れ替わるから。</p>
+      <p>高さがある音は、上がり続けられない。足あとは「のぼって、落ちる」のくり返し。</p>
+      <div class="note">F♯ は、山の真ん中（C5）の上下の F♯ がちょうど同じ強さになる所。ここではどちらにも聞こえる（落ちる 1 オクターブが 2 歩に分かれる）。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="7" style="height:280vh">
+    <div class="card">
+      <div class="no">07 ⁄ 10</div>
+      <h2>SQUASH</h2>
+      <div class="jh">螺旋が、輪につぶれる</div>
+      <p>今度は山を 0.25 → 2.0 へ広げていく（いま σ <span class="live" data-live="sigma">—</span>・<span class="live" data-live="zone">—</span>）。足あとの落差が小さくなり、やがて<b>平たい輪</b>になる。</p>
+      <p>右上＝高さの成分 H。音名を 1 オクターブ動かしたとき、聞こえる高さが何オクターブ動くか。σ 0.4 で 0.96・0.6 で 0.48・1.0 で 0.01（いま <span class="live" data-live="H">—</span>）。<b>0.6〜0.9 オクターブのあたりが境目</b>。</p>
+      <p>H が 0 の音には、「高い⇄低い」を決める手がかりが、音の中に無い。</p>
+      <div class="note">H は重心の傾き（山の真ん中で測る）から出した仮の量。境目の位置は重みのつけ方で少し動く。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="8" style="height:320vh">
+    <div class="card">
+      <div class="no">08 ⁄ 10</div>
+      <h2>TRITONE</h2>
+      <div class="jh">6 半音のなぞ</div>
+      <p>広い山で、A と 6 半音上の D♯ を続けて鳴らす（くり返し）。<b>上がった？ 下がった？</b></p>
+      <p>輪の上で A から D♯ へは、時計回りでも反時計回りでも <b>6 半音</b>。近い方が無い。高さの成分も無い。だから<b>音の中には答えが無い</b>（いま <span class="live" data-live="tri">—</span>）。</p>
+      <p>それでも多くの人は、迷わずどちらかに聞く。そして<b>人によって向きが逆</b>になる（三全音のパラドックス・Deutsch 1986）。人はそれぞれ、輪のどこかに「上」を持っているらしい。右の例：「上」が D の人は<b>上がった</b>、G♯ の人は<b>下がった</b>と聞く。</p>
+      <div class="note">「上」の位置は、育った土地の話し声の高さと関係するという報告がある。アプリの EAR TEST（12 組）で自分の「上」を探せる。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="9" style="height:280vh">
+    <div class="card">
+      <div class="no">09 ⁄ 10</div>
+      <h2>DECIDED</h2>
+      <div class="jh">山が狭いと、答えは 1 つ</div>
+      <p>同じ A → D♯ のまま、山を狭くする（いま σ <span class="live" data-live="sigma">—</span>・<span class="live" data-live="tri">—</span>）。</p>
+      <p>狭い山では、A は <b>440 Hz</b> が主役、D♯ は <b>622 Hz</b> が主役。聞こえる高さが半オクターブ上がるので、答えは<b>上がった</b>に決まる。高さの成分があれば、「上」は音の中から読める。</p>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="10" style="height:230vh">
+    <div class="card">
+      <div class="no">10 ⁄ 10</div>
+      <h2>BLUEPRINT</h2>
+      <div class="jh">「高い＝上」は、高さの成分があるときだけ</div>
+      <p>このページで立ち寄った音を、山の幅（横）と高さの成分 H（縦）の地図に置いた。</p>
+      <p><b>音名（輪）は、いつも聞こえる。高さ（線）は、山が狭いときだけある</b>。上下の感覚が働くのは、線があるときだけ。広い山では階段は終わらず、6 半音は人によって上にも下にもなる。</p>
+      <p>つながり：SL-01 SEDIMENT の「音高＝重力の向き」は、高さの成分がはっきりした音で効く（シェパード音では効かない）。</p>
+      <div class="btns"><button class="btn" id="bRewind">◀◀ REWIND</button><a class="btn pri" href="../06_up_down.html">アプリで自分の「上」を探す →</a><a class="btn" href="SCROLL_HARMONIC_LP.html">SP-01：1 つの音の中の倍音</a><a class="btn" href="../index.html">INDEX</a></div>
+      <div class="note">聞こえる高さ＝部品の強さ（2 乗）の重心・H＝その傾き・1 歩の向き＝輪と高さの混ぜ合わせ。どれも仮の模型で、最後に決めるのは耳。REWIND はスクロールを巻き戻すだけ。</div>
+    </div>
+  </section>
+</main>
+
+<div id="rail">
+  <div class="rh"><span>FORMULA RAIL</span><span>いま動いている項が光る</span></div>
+  <div class="fr" data-row="a"><span class="fx">x(t) = <span class="t" data-t="sum">Σₖ aₖ · sin(2π fₖ t)</span>,  k = 0..7</span><span class="fv" id="fvA">—</span></div>
+  <div class="fr" data-row="b"><span class="fx"><span class="t" data-t="fk">fₖ = 32.7 Hz · 2^(k + <span class="t" data-t="c">c/12</span>)</span></span><span class="fv" id="fvB">—</span></div>
+  <div class="fr" data-row="c"><span class="fx"><span class="t" data-t="env">aₖ = exp(−(xₖ − μ)² / 2<span class="t" data-t="sigma">σ²</span>)</span></span><span class="fv" id="fvC">—</span></div>
+  <div class="fr" data-row="d"><span class="fx">高さ <span class="t" data-t="h">h = Σ aₖ² xₖ / Σ aₖ²</span></span><span class="fv" id="fvD">—</span></div>
+  <div class="fr" data-row="e"><span class="fx">高さの成分 <span class="t" data-t="H">H = dh ⁄ d(c/12)</span></span><span class="fv" id="fvE">—</span></div>
+  <div class="fr" data-row="f"><span class="fx"><span class="t" data-t="same">c + 12 → 同じ部品（輪だけが回る）</span></span><span class="fv" id="fvF">—</span></div>
+  <div class="fr" data-row="g"><span class="fx">1 歩 = <span class="t" data-t="step">(1−w)·輪 + w·sign(Δh)</span>  <span class="t" data-t="tri">6 半音で輪 = 0</span></span><span class="fv" id="fvG">—</span></div>
+</div>
+
+<script src="../_law/sp06_law.js"></script>
+<script>
+(() => {
+'use strict';
+const L = window.SP06, K = L.K, $ = id => document.getElementById(id);
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+const seg = (u, a, b) => clamp((u - a) / (b - a));
+const sm = t => t * t * (3 - 2 * t);
+const lerp = (a, b, t) => a + (b - a) * t;
+const lerpLog = (a, b, t) => Math.exp(lerp(Math.log(a), Math.log(b), t));
+const mod = L.mod;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let C = {};
+const readColors = () => { C = { ink: css('--ink'), ink2: css('--ink-2'), mute: css('--mute'), mute2: css('--mute-2'), line: css('--line'), acc: css('--acc'), warn: css('--warn'), bg: css('--bg'), bg2: css('--bg-2'), mono: css('--mono'), display: css('--display'), jp: css('--jp') }; };
+const fmtHz = f => f >= 1000 ? (f / 1000).toFixed(2) + ' kHz' : f.toFixed(1) + ' Hz';
+
+// 表示と台本の定数だけ（音の法則は law）：螺旋の傾き・三全音のくり返し（A 0.5 秒・間 0.1・B 0.5 秒・間 0.5＝Deutsch の 1 音 0.5 秒）
+const TILT = .3, PAIR_CYCLE = 1.6, TRI_A = 9;
+const W2 = L.SIG_WIDE, NA = L.SIG_NARROW, SIG_HELIX = .2;
+// 耳の型の例（law の earPredict）。上＝D の人・G♯ の人
+const EAR_TOPS = [2, 8];
+
+// ── 台本：章の中の u → 状態 { P（音名の通しの値・半音）, sigma, mu（山の真ん中）, proof（0..1）, pair（0..1） }
+const ST = (P, sigma, o = {}) => Object.assign({ P, sigma, mu: L.MU, proof: 0, pair: 0 }, o);
+const steps12 = (u, a, b) => Math.min(12, Math.floor(seg(u, a, b) * 12 + 1e-9));
+const CH = [
+  { id: 'UP & DOWN', at: () => ST(0, W2), P: { HELIX: [0, 0, 1, .7], SPEC: [0, .74, 1, .26] }, lit: ['fk'], rows: 'abc' },
+  { id: 'HELIX', at: u => { const P = 24 * sm(seg(u, .05, .9)); return ST(P, SIG_HELIX, { mu: L.MU - 1 + P / 12 }); }, P: { HELIX: [0, 0, 1, .7], SPEC: [0, .74, 1, .26] }, lit: ['fk', 'c'], rows: 'bd' },
+  { id: 'STACK', at: u => ST(24, lerpLog(SIG_HELIX, W2, sm(seg(u, .1, .85)))), P: { HELIX: [0, 0, 1, .7], SPEC: [0, .74, 1, .26] }, lit: ['env', 'sigma'], rows: 'acd' },
+  { id: 'STAIRS', at: u => ST(24 + steps12(u, .04, .92), W2), base: 24, P: { HELIX: [0, 0, .6, 1], STAIRS: [.63, 0, .37, .5], SPEC: [.63, .54, .37, .46] }, lit: ['c', 'step'], rows: 'bdg' },
+  { id: 'SAME', at: u => ST(36, W2, { proof: sm(seg(u, .05, .4)) }), P: { HELIX: [0, 0, .6, 1], STAIRS: [.63, 0, .37, .5], SPEC: [.63, .54, .37, .46] }, lit: ['same'], rows: 'bf' },
+  { id: 'NARROW', at: u => ST(36, lerpLog(W2, NA, sm(seg(u, .1, .8)))), P: { HELIX: [0, 0, .6, 1], CLARITY: [.63, 0, .37, .5], SPEC: [.63, .54, .37, .46] }, lit: ['sigma'], rows: 'cde' },
+  { id: 'DROP', at: u => ST(36 + steps12(u, .04, .92), NA), base: 36, P: { HELIX: [0, 0, .6, 1], STAIRS: [.63, 0, .37, .5], SPEC: [.63, .54, .37, .46] }, lit: ['h', 'step'], rows: 'dg' },
+  { id: 'SQUASH', at: u => ST(48, lerpLog(NA, W2, sm(seg(u, .08, .85)))), P: { HELIX: [0, 0, .6, 1], CLARITY: [.63, 0, .37, .5], SPEC: [.63, .54, .37, .46] }, lit: ['H'], rows: 'cde' },
+  { id: 'TRITONE', at: () => ST(48 + TRI_A, W2, { pair: 1 }), P: { HELIX: [0, 0, .6, 1], EAR: [.63, 0, .37, 1] }, lit: ['tri'], rows: 'dg' },
+  { id: 'DECIDED', at: u => ST(48 + TRI_A, lerpLog(W2, NA, sm(seg(u, .12, .7))), { pair: 1 }), P: { HELIX: [0, 0, .6, 1], EAR: [.63, 0, .37, 1] }, lit: ['h', 'step'], rows: 'dg' },
+  { id: 'BLUEPRINT', at: () => ST(48 + TRI_A, W2), P: { CLARITY: [0, 0, .56, 1], HELIX: [.59, 0, .41, 1] }, lit: [], rows: 'abcdefg' },
+];
+// スマホ：螺旋（上）＋ 図 1 枚（下）
+const PM = [{ HELIX: [0, 0, 1, 1] }, { HELIX: [0, 0, 1, 1] }, { HELIX: [0, 0, .62, 1], SPEC: [.64, 0, .36, 1] }, { HELIX: [0, 0, .55, 1], STAIRS: [.57, 0, .43, 1] }, { HELIX: [0, 0, 1, 1] },
+  { HELIX: [0, 0, .55, 1], CLARITY: [.57, 0, .43, 1] }, { HELIX: [0, 0, .55, 1], STAIRS: [.57, 0, .43, 1] }, { HELIX: [0, 0, .55, 1], CLARITY: [.57, 0, .43, 1] },
+  { HELIX: [0, 0, .5, 1], EAR: [.52, 0, .48, 1] }, { HELIX: [0, 0, .5, 1], EAR: [.52, 0, .48, 1] }, { CLARITY: [0, 0, 1, 1] }];
+CH.forEach((c, i) => { c.PM = PM[i]; });
+const optAt = (i, u) => ({ stops: i === 10 ? sm(seg(u, 0, .6)) : 0 });
+// BLUEPRINT：立ち寄った音（各章が止まっている所を CH.at で評価）。読みは law から
+const STOPS = [[1, 1, 'ふつうの音'], [2, 1, 'シェパード音'], [3, 1, '上がり続ける'], [6, 1, '上がって落ちる'], [7, .45, '境目'], [8, .5, '6 半音・答えなし'], [9, 1, '6 半音・上がった']]
+  .map(([ch, u, label]) => { const s = CH[ch].at(u); return { ch, label, sigma: s.sigma, mu: s.mu, zone: L.zone(s.sigma, s.mu), tri: L.step(s.P, s.P + 6, s.sigma, s.mu) }; });
+
+// ── スクロールの採寸（SP-01〜05 の LP と同じ）
+const chEls = [...document.querySelectorAll('.ch')];
+let M = [], VH = innerHeight, MAXY = 1;
+function measure() {
+  VH = innerHeight; M = chEls.map(el => ({ top: el.offsetTop, h: el.offsetHeight }));
+  MAXY = Math.max(1, document.documentElement.scrollHeight - VH);
+  $('ticks').innerHTML = M.slice(1).map(m => `<i style="left:${(m.top / MAXY * 100).toFixed(2)}%"></i>`).join('');
+}
+function locate(y) {
+  let i = 0; while (i < M.length - 1 && y >= M[i + 1].top) i++;
+  const m = M[i], dwell = Math.max(1, m.h - VH);
+  const u = clamp((y - m.top) / dwell), k = i < M.length - 1 ? sm(clamp((y - m.top - dwell) / VH)) : 0;
+  return { i, u, k };
+}
+// 状態はスクロール位置の純関数。章のあいだ（k）は P・mu・proof・pair を線形、sigma を対数で混ぜる
+function stateAt(loc) {
+  const a = CH[loc.i].at(loc.u); if (!loc.k) return a;
+  const b = CH[loc.i + 1].at(0), k = loc.k;
+  return { P: lerp(a.P, b.P, k), sigma: lerpLog(a.sigma, b.sigma, k), mu: lerp(a.mu, b.mu, k), proof: lerp(a.proof, b.proof, k), pair: lerp(a.pair, b.pair, k) };
+}
+
+// ── 三全音のくり返し（時間で動く）：鳴っているのは A か B か、間か
+function shown() {
+  if (S.pair < .5) return { P: S.P, gate: 1, role: null };
+  const ph = mod(T, PAIR_CYCLE);
+  if (ph < L.PAIR_DUR) return { P: S.P, gate: 1, role: 'A' };
+  if (ph < L.PAIR_DUR + L.PAIR_GAP) return { P: S.P, gate: 0, role: 'A' };
+  if (ph < 2 * L.PAIR_DUR + L.PAIR_GAP) return { P: S.P + 6, gate: 1, role: 'B' };
+  return { P: S.P + 6, gate: 0, role: 'B' };
+}
+
+// ── 読み（状態が変わったときだけ law を呼び直す）
+const S = { P: 0, sigma: W2, mu: L.MU, proof: 0, pair: 0, mode: 'off', vol: .35 };
+let R = { ci: 0 }, T = 0, lawKey = '';
+const r6 = v => Math.round(v * 1e6) / 1e6;
+function readState(loc) {
+  S.P = r6(S.P); S.sigma = r6(S.sigma); S.mu = r6(S.mu);
+  const key = S.P + '|' + S.sigma + '|' + S.mu;
+  if (key !== lawKey) { lawKey = key; R.Z = L.zone(S.sigma, S.mu); R.HT = L.height(S.P, S.sigma, S.mu); R.TRI = L.step(S.P, S.P + 6, S.sigma, S.mu); R.parts = L.partials(S.P, S.sigma, S.mu); }
+  R.ci = loc.k > .5 ? loc.i + 1 : loc.i;
+}
+// 階段の章：いま何段目か・各段の向き（law の step）
+function stairsInfo(ci) {
+  const base = CH[ci].base; if (base === undefined) return null;
+  const n = clamp(Math.round(S.P - base), 0, 12), dirs = [];
+  for (let j = 1; j <= 12; j++) dirs.push(L.step(base + j - 1, base + j, S.sigma, S.mu).dir);
+  return { base, n, dirs, last: n ? dirs[n - 1] : null, downs: dirs.filter(d => d === 'DOWN').length };
+}
+
+// ── 描画
+const cvs = $('cv'); let g = null, W = 0, H = 0, DPR = 1;
+function fitAll() {
+  DPR = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight;
+  if (cvs.width !== Math.round(W * DPR) || cvs.height !== Math.round(H * DPR)) { cvs.width = Math.round(W * DPR); cvs.height = Math.round(H * DPR); }
+  g = cvs.getContext('2d'); g.setTransform(DPR, 0, 0, DPR, 0, 0); g.clearRect(0, 0, W, H);
+}
+const MOBILE = () => W < 880;
+function stageRect() {
+  if (MOBILE()) return { x: 12, y: 54, w: W - 24, h: H * .36 - 58 };
+  const x = Math.min(40 + 400 + 36, W * .44); return { x, y: 68, w: W - x - 24, h: H - 68 - 22 };
+}
+function frameBox(x, y, w, h, cap) {
+  g.strokeStyle = C.line; g.lineWidth = 1; g.strokeRect(Math.round(x) + .5, Math.round(y) + .5, Math.round(w) - 1, Math.round(h) - 1);
+  g.fillStyle = 'rgba(10,10,10,.55)'; g.fillRect(x + 1, y + 1, w - 2, h - 2);
+  g.font = `10px ${C.mono}`; g.fillStyle = C.mute; g.textAlign = 'left'; g.textBaseline = 'alphabetic'; g.fillText(fitText(cap, w - 20), x + 10, y + 16);
+}
+function fitText(t, mw) {
+  if (mw <= 0) return '';
+  if (g.measureText(t).width <= mw) return t;
+  let lo = 0, hi = t.length;
+  while (lo < hi) { const m = (lo + hi + 1) >> 1; if (g.measureText(t.slice(0, m) + '…').width <= mw) lo = m; else hi = m - 1; }
+  return t.slice(0, lo) + '…';
+}
+function capRight(x, y, w, cap, t) {
+  g.font = `10px ${C.mono}`; const rw = g.measureText(t).width;
+  if (w - 20 - rw - 16 > g.measureText(cap).width) { g.fillStyle = 'rgba(10,10,10,.9)'; g.fillRect(x + w - 14 - rw, y + 5, rw + 6, 14); g.textAlign = 'right'; g.fillStyle = C.ink2; g.fillText(t, x + w - 10, y + 16); g.textAlign = 'left'; }
+}
+const pad = n => String(n).padStart(2, '0');
+const dirMark = d => d === 'UP' ? '▲' : d === 'DOWN' ? '▼' : '◆';
+const dirCol = d => d === 'UP' ? C.ink : d === 'DOWN' ? C.warn : C.acc;
+
+const PANELS = {
+  // 螺旋：点（x オクターブ・音名 c）→ 角度 2πc/12（C が手前）・高さ x。光る所＝山。黄の線＝1 周上げたときの聞こえる高さの足あと
+  HELIX(x, y, w, h) {
+    const sh = shown(), tone = { P: sh.P, sigma: S.sigma, mu: S.mu }, cap = 'HELIX ⁄ 螺旋（角度＝音名・高さ＝オクターブ）';
+    frameBox(x, y, w, h, cap);
+    const ht = L.height(tone.P, tone.sigma, tone.mu), parts = L.partials(tone.P, tone.sigma, tone.mu), c0 = mod(tone.P, 12);
+    capRight(x, y, w, cap, sh.role ? `${sh.role === 'A' ? '1 つ目' : '2 つ目'} ${L.name(tone.P)}` : `${L.name(tone.P)} · ${fmtHz(ht.f)}`);
+    const compact = w < 380, left = compact ? 10 : Math.min(84, w * .18), right = compact ? 34 : Math.min(80, w * .17);
+    const R0 = Math.max(24, Math.min((w - left - right) / 2 - (compact ? 14 : 24), 170)), cx = x + (left + w - right) / 2;
+    const top = y + (compact ? 30 : 46) + R0 * TILT, bottom = y + h - (compact ? 14 : 24) - R0 * TILT;
+    if (bottom - top < 40) return;
+    const Y = xx => bottom - xx / K * (bottom - top), pt = (xx, c) => { const th = 2 * Math.PI * c / 12; return { X: cx + R0 * Math.sin(th), Y: Y(xx) + R0 * TILT * Math.cos(th), d: Math.cos(th) }; };
+    let emax = 1e-9; for (let xx = 0; xx <= K; xx += .02) emax = Math.max(emax, L.env(xx, tone.sigma, tone.mu));
+    const A0 = g.globalAlpha;
+    // 山（左）
+    if (!compact) {
+      const ex0 = x + 12, ew = left - 30;
+      g.strokeStyle = C.line; g.lineWidth = 1; g.beginPath(); g.moveTo(ex0, Y(0)); g.lineTo(ex0, Y(K)); g.stroke();
+      g.fillStyle = 'rgba(255,212,0,.10)'; g.strokeStyle = C.acc; g.beginPath(); g.moveTo(ex0, Y(0));
+      for (let xx = 0; xx <= K + 1e-9; xx += .02) g.lineTo(ex0 + L.env(xx, tone.sigma, tone.mu) / emax * ew, Y(xx));
+      g.lineTo(ex0, Y(K)); g.closePath(); g.fill(); g.stroke();
+      g.font = `9px ${C.mono}`; g.fillStyle = C.mute; g.textAlign = 'left';
+      for (let k = 0; k <= K; k += 2) g.fillText('C' + (k + 1), ex0 + 3, Y(k) - 2);
+    }
+    const segs = [];
+    for (let xx = 0; xx < K; xx += 1 / 60) { const a = pt(xx, 12 * (xx % 1)), b = pt(xx + 1 / 60, 12 * ((xx + 1 / 60) % 1)); segs.push({ a, b, d: (a.d + b.d) / 2, e: L.env(xx, tone.sigma, tone.mu) / emax }); }
+    const drawSegs = front => { for (const s of segs) { if ((s.d >= 0) !== front) continue; g.strokeStyle = front ? C.ink2 : C.mute2; g.globalAlpha = A0 * ((front ? .25 : .18) + s.e * (front ? .75 : .45)); g.lineWidth = 1 + 2.2 * s.e; g.beginPath(); g.moveTo(s.a.X, s.a.Y); g.lineTo(s.b.X, s.b.Y); g.stroke(); } g.globalAlpha = A0; };
+    const drawDots = front => {
+      for (const q of parts) {
+        const p = pt(q.x, c0); if ((p.d >= 0) !== front || q.a / emax < .004) continue;
+        const r = (compact ? 1.5 : 2) + (compact ? 5 : 7) * q.a / emax;
+        g.fillStyle = sh.role ? C.acc : C.ink; g.globalAlpha = A0 * (.35 + .65 * q.a / emax) * (sh.gate ? 1 : .35);
+        g.beginPath(); g.arc(p.X, p.Y, r, 0, Math.PI * 2); g.fill(); g.globalAlpha = A0;
+        if (S.proof > .01) { g.globalAlpha = A0 * S.proof; g.strokeStyle = C.acc; g.setLineDash([2, 2]); g.beginPath(); g.arc(p.X, p.Y, r + 4, 0, Math.PI * 2); g.stroke(); g.setLineDash([]); g.globalAlpha = A0; }
+      }
+    };
+    drawSegs(false); drawDots(false);
+    const yH = Y(ht.h);
+    g.strokeStyle = C.acc; g.globalAlpha = A0 * .35; g.lineWidth = 1; g.beginPath(); g.ellipse(cx, yH, R0, R0 * TILT, 0, 0, Math.PI * 2); g.stroke(); g.globalAlpha = A0;
+    // 足あと：音名を 1 周回したときの聞こえる高さ
+    g.strokeStyle = C.acc; g.lineWidth = 1.3 + S.proof; g.globalAlpha = A0 * (.8 + .2 * S.proof); g.beginPath();
+    for (let k = 0; k <= 240; k++) { const c = c0 + k / 20, th = 2 * Math.PI * c / 12, yy = Y(L.height(c, tone.sigma, tone.mu).h) + R0 * TILT * Math.cos(th), xx = cx + R0 * Math.sin(th); k ? g.lineTo(xx, yy) : g.moveTo(xx, yy); }
+    g.stroke(); g.globalAlpha = A0;
+    drawSegs(true); drawDots(true);
+    const hp = pt(ht.h, c0); g.strokeStyle = C.acc; g.lineWidth = 2; g.beginPath(); g.arc(hp.X, hp.Y, compact ? 5 : 7, 0, Math.PI * 2); g.stroke(); g.lineWidth = 1;
+    if (!compact) {
+      g.font = `10px ${C.mono}`; g.textAlign = 'center';
+      for (let c = 0; c < 12; c++) { const th = 2 * Math.PI * c / 12; g.fillStyle = Math.round(c0) % 12 === c ? C.acc : C.mute; g.fillText(L.NAMES[c], cx + (R0 + 15) * Math.sin(th), yH + (R0 * TILT + 10) * Math.cos(th) + 3); }
+    }
+    // 右：上下の目盛りと聞こえる高さ
+    const gx = x + w - right + (compact ? 18 : 32);
+    g.strokeStyle = C.mute2; g.beginPath(); g.moveTo(gx, Y(0)); g.lineTo(gx, Y(K)); g.stroke();
+    for (let k = 0; k <= K; k++) { g.beginPath(); g.moveTo(gx - 3, Y(k)); g.lineTo(gx + 3, Y(k)); g.stroke(); }
+    g.fillStyle = C.mute; g.font = `10px ${C.jp}`; g.textAlign = 'center'; g.fillText('上', gx, Y(K) - 8); g.fillText('下', gx, Y(0) + 14);
+    g.fillStyle = C.acc; g.beginPath(); g.moveTo(gx - 4, yH); g.lineTo(gx - 12, yH - 5); g.lineTo(gx - 12, yH + 5); g.closePath(); g.fill();
+    if (!compact) { g.font = `9px ${C.mono}`; g.fillText(fmtHz(ht.f), gx, yH - 9 > Y(K) + 4 ? yH - 9 : yH + 16); }
+    g.textAlign = 'left';
+  },
+  // スペクトル：横＝周波数（オクターブ等間隔）・棒＝部品の強さ・曲線＝山・点線＝重心
+  SPEC(x, y, w, h) {
+    const sh = shown(), cap = 'SPECTRUM ⁄ 部品（横はオクターブ等間隔）'; frameBox(x, y, w, h, cap);
+    const parts = L.partials(sh.P, S.sigma, S.mu), ht = L.height(sh.P, S.sigma, S.mu);
+    const l = x + 14, r = x + w - 14, top = y + 40, bottom = y + h - 20, Hh = bottom - top;
+    if (r - l < 80 || Hh < 20) return;
+    const X = xx => l + xx / K * (r - l);
+    let emax = 1e-9; for (let xx = 0; xx <= K; xx += .02) emax = Math.max(emax, L.env(xx, S.sigma, S.mu));
+    g.strokeStyle = C.line; g.lineWidth = 1; g.beginPath(); g.moveTo(l, bottom); g.lineTo(r, bottom); g.stroke();
+    g.font = `9px ${C.mono}`; g.fillStyle = C.mute; g.textAlign = 'center';
+    const every = r - l < 300 ? 2 : 1;
+    for (let k = 0; k <= K; k += every) g.fillText('C' + (k + 1), X(k), y + h - 6);
+    g.strokeStyle = C.acc; g.globalAlpha *= .7; g.beginPath();
+    for (let xx = 0; xx <= K + 1e-9; xx += .02) { const yy = bottom - L.env(xx, S.sigma, S.mu) / emax * Hh; xx ? g.lineTo(X(xx), yy) : g.moveTo(X(xx), yy); }
+    g.stroke(); g.globalAlpha /= .7;
+    for (const q of parts) {
+      const xx = X(q.x), hh = q.a / emax * Hh; g.fillStyle = sh.role ? C.acc : C.ink2; g.fillRect(xx - 2, bottom - hh, 4, hh);
+      if (S.proof > .01) { g.save(); g.globalAlpha *= S.proof; g.strokeStyle = C.acc; g.setLineDash([2, 2]); g.strokeRect(xx - 5, bottom - hh - 3, 10, hh + 3); g.restore(); }
+    }
+    g.strokeStyle = C.acc; g.setLineDash([3, 3]); g.beginPath(); g.moveTo(X(ht.h), top - 6); g.lineTo(X(ht.h), bottom); g.stroke(); g.setLineDash([]);
+    g.fillStyle = C.acc; const t = '重心 ' + fmtHz(ht.f), tw = g.measureText(t).width; g.fillText(t, clamp(X(ht.h), l + tw / 2, r - tw / 2), top - 10);
+    g.textAlign = 'left';
+  },
+  // 階段：この章の 12 段の聞こえる高さ（law の height）と、各段の向き（law の step）
+  STAIRS(x, y, w, h) {
+    const cap = 'STAIRS ⁄ 12 段の聞こえる高さ'; frameBox(x, y, w, h, cap);
+    const si = stairsInfo(R.ci) || stairsInfo(3); if (!si) return;
+    capRight(x, y, w, cap, `${si.n} 段目${si.last ? ' ' + dirMark(si.last) : ''}`);
+    const l = x + 46, r = x + w - 14, top = y + 34, bottom = y + h - 22;
+    if (r - l < 60 || bottom - top < 30) return;
+    const hs = []; for (let j = 0; j <= 12; j++) hs.push(L.height(si.base + j, S.sigma, S.mu).h);
+    const lo = L.MU - .7, hi = L.MU + .7, X = j => l + j / 12 * (r - l), Y = v => bottom - (v - lo) / (hi - lo) * (bottom - top);
+    g.font = `9px ${C.mono}`; g.fillStyle = C.mute; g.textAlign = 'right'; g.strokeStyle = C.line; g.lineWidth = 1;
+    for (const v of [lo + .2, L.MU, hi - .2]) { g.beginPath(); g.moveTo(l, Y(v)); g.lineTo(r, Y(v)); g.stroke(); g.fillText(Math.round(L.freq(v)), l - 4, Y(v) + 3); }
+    g.textAlign = 'center';
+    for (let j = 0; j <= 12; j += 3) g.fillText(L.name(si.base + j), X(j), y + h - 7);
+    // 階段（踏み板）
+    g.strokeStyle = C.mute; g.lineWidth = 1.2; g.beginPath();
+    for (let j = 0; j <= 12; j++) { const yy = Y(hs[j]); j ? (g.lineTo(X(j), yy)) : g.moveTo(X(0), yy); g.lineTo(X(Math.min(12, j + 1)) - (j === 12 ? 0 : 0), yy); }
+    g.stroke();
+    // 通った所
+    g.strokeStyle = C.acc; g.lineWidth = 2; g.beginPath();
+    for (let j = 0; j <= si.n; j++) { const yy = Y(hs[j]); j ? g.lineTo(X(j), yy) : g.moveTo(X(0), yy); if (j < si.n) g.lineTo(X(j + 1), yy); }
+    g.stroke();
+    g.font = `10px ${C.mono}`;
+    for (let j = 1; j <= si.n; j++) { const d = si.dirs[j - 1]; g.fillStyle = dirCol(d); g.fillText(dirMark(d), X(j), Math.min(Y(hs[j]), Y(hs[j - 1])) - 6); }
+    g.textAlign = 'left';
+  },
+  // 高さの成分 H と山の幅（law の clarity）。針＝いまの σ。BLUEPRINT では立ち寄った所に章番号
+  CLARITY(x, y, w, h, o) {
+    const cap = 'CLARITY ⁄ 高さの成分 H と山の幅 σ'; frameBox(x, y, w, h, cap);
+    capRight(x, y, w, cap, `σ ${S.sigma.toFixed(2)} · H ${R.Z.H.toFixed(2)}`);
+    const l = x + 40, r = x + w - 16, top = y + 34, bottom = y + h - 26;
+    if (r - l < 80 || bottom - top < 40) return;
+    const lmin = Math.log(L.SIG_MIN), lmax = Math.log(L.SIG_MAX), X = s => l + (Math.log(s) - lmin) / (lmax - lmin) * (r - l), Y = v => bottom - v * (bottom - top);
+    // 区分の帯
+    const sLine = (() => { let s = L.SIG_MIN; while (s < L.SIG_MAX && L.clarity(s) >= L.LINE_H) s *= 1.01; return s; })();
+    const sCirc = (() => { let s = sLine; while (s < L.SIG_MAX && L.clarity(s) > L.CIRCLE_H) s *= 1.01; return s; })();
+    g.fillStyle = 'rgba(255,106,61,.08)'; g.fillRect(X(sLine), top, X(sCirc) - X(sLine), bottom - top);
+    g.fillStyle = 'rgba(255,212,0,.08)'; g.fillRect(X(sCirc), top, r - X(sCirc), bottom - top);
+    g.font = `10px ${C.jp}`; g.textAlign = 'center';
+    g.fillStyle = C.ink2; if (X(sLine) - l > 60) g.fillText('LINE 線', (l + X(sLine)) / 2, top + 14);
+    g.fillStyle = C.acc; if (r - X(sCirc) > 60) g.fillText('CIRCLE 輪', (X(sCirc) + r) / 2, top + 14);
+    g.strokeStyle = C.line; g.lineWidth = 1; g.strokeRect(l + .5, top + .5, r - l, bottom - top);
+    g.font = `9px ${C.mono}`; g.fillStyle = C.mute; g.textAlign = 'right';
+    [0, .5, 1].forEach(v => g.fillText(v.toFixed(1), l - 5, Y(v) + 3));
+    g.textAlign = 'center'; [.15, .25, .5, 1, 2].forEach(s => g.fillText(s, X(s), bottom + 13));
+    g.fillText('山の幅 σ（オクターブ）', (l + r) / 2, y + h - 4);
+    g.strokeStyle = C.ink2; g.lineWidth = 1.5; g.beginPath();
+    for (let j = 0; j <= 160; j++) { const s = Math.exp(lmin + j / 160 * (lmax - lmin)), xx = X(s), yy = Y(L.clarity(s)); j ? g.lineTo(xx, yy) : g.moveTo(xx, yy); }
+    g.stroke();
+    const n = Math.round(STOPS.length * (o.stops || 0));
+    if (n) {
+      // 点は本当の位置。ラベルは上の角（H≈1）・下の角（H≈0）・途中に分けて、重ならないように積む
+      const list = STOPS.slice(0, n), hiL = list.filter(s => s.zone.H > .9), loL = list.filter(s => s.zone.H < .1), midL = list.filter(s => s.zone.H >= .1 && s.zone.H <= .9);
+      const lab = s => pad(s.ch) + (r - l > 300 ? ' ' + s.label : '');
+      list.forEach(s => { g.fillStyle = C.acc; g.beginPath(); g.arc(X(s.sigma), Y(s.zone.H), 3.5, 0, Math.PI * 2); g.fill(); });
+      g.font = `11px ${C.jp}`; g.fillStyle = C.acc;
+      g.textAlign = 'left'; hiL.forEach((s, j) => g.fillText(lab(s) + `（σ ${s.sigma.toFixed(2)}）`, Math.max(...hiL.map(q => X(q.sigma))) + 12, top + 38 + j * 15));
+      g.textAlign = 'right'; loL.forEach((s, j) => g.fillText(lab(s) + `（σ ${s.sigma.toFixed(2)}）`, Math.min(...loL.map(q => X(q.sigma))) - 12, bottom - 10 - (loL.length - 1 - j) * 15));
+      g.textAlign = 'left'; midL.forEach(s => g.fillText(lab(s) + `（H ${s.zone.H.toFixed(2)}）`, X(s.sigma) + 10, Y(s.zone.H) + 4));
+    } else {
+      const xx = X(S.sigma), yy = Y(R.Z.H);
+      g.strokeStyle = C.acc; g.setLineDash([3, 3]); g.beginPath(); g.moveTo(xx, bottom); g.lineTo(xx, yy); g.stroke(); g.setLineDash([]);
+      g.fillStyle = C.acc; g.beginPath(); g.arc(xx, yy, 4.5, 0, Math.PI * 2); g.fill();
+    }
+    g.textAlign = 'left';
+  },
+  // 6 半音：輪の上の A と B、時計回り・反時計回りの 2 本の弧（どちらも 6）。音の中の答え（law の step）と、耳の型の例（law の earPredict）
+  EAR(x, y, w, h) {
+    const cap = 'TRITONE ⁄ 6 半音はどちら回り？'; frameBox(x, y, w, h, cap);
+    const sh = shown(), tri = R.TRI, a = mod(Math.round(S.P), 12), b = mod(a + 6, 12);
+    const cx = x + w / 2, R1 = Math.max(30, Math.min(w / 2 - 34, h * .24)), cy = y + 38 + R1 + 10;
+    if (R1 < 30 || h < 200) return;
+    const P = (c, rr = R1) => { const th = 2 * Math.PI * c / 12 - Math.PI / 2; return [cx + rr * Math.cos(th), cy + rr * Math.sin(th)]; };
+    g.strokeStyle = C.line; g.lineWidth = 1; g.beginPath(); g.arc(cx, cy, R1, 0, Math.PI * 2); g.stroke();
+    g.font = `10px ${C.mono}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    for (let c = 0; c < 12; c++) { const [tx, ty] = P(c, R1 + 14); g.fillStyle = c === a || c === b ? C.acc : C.mute; g.fillText(L.NAMES[c], tx, ty); }
+    // 2 本の弧：時計回り（内側）・反時計回り（外側）
+    const th = c => 2 * Math.PI * c / 12 - Math.PI / 2;
+    g.lineWidth = 2; g.strokeStyle = C.ink2; g.beginPath(); g.arc(cx, cy, R1 - 9, th(a), th(a + 6), false); g.stroke();
+    g.strokeStyle = C.warn; g.beginPath(); g.arc(cx, cy, R1 - 18, th(a), th(a - 6), true); g.stroke(); g.lineWidth = 1;
+    g.font = `9px ${C.jp}`; g.fillStyle = C.ink2; const [m1x, m1y] = P(a + 3, R1 - 30); g.fillText('+6', m1x, m1y);
+    g.fillStyle = C.warn; const [m2x, m2y] = P(a - 3, R1 - 30); g.fillText('−6', m2x, m2y);
+    for (const [c, role] of [[a, 'A'], [b, 'B']]) { const [px, py] = P(c); const on = sh.role === role && sh.gate; g.fillStyle = on ? C.acc : C.ink2; g.beginPath(); g.arc(px, py, on ? 6 : 4, 0, Math.PI * 2); g.fill(); }
+    g.textBaseline = 'alphabetic';
+    // 音の中の答え
+    let yy = cy + R1 + 36; const lx = x + 14, lw = w - 28;
+    g.textAlign = 'left'; g.font = `10px ${C.mono}`; g.fillStyle = C.mute; g.fillText(fitText(`音の中の答え（σ ${S.sigma.toFixed(2)}）`, lw), lx, yy); yy += 18;
+    g.font = `600 16px ${C.display}`; g.fillStyle = dirCol(tri.dir); g.fillText(tri.dir === 'EITHER' ? 'EITHER' : tri.dir, lx, yy);
+    g.font = `11px ${C.jp}`; g.fillStyle = C.ink2; g.fillText(fitText(tri.dir === 'EITHER' ? '— 上にも下にもなる' : tri.dir === 'UP' ? '— 上がった' : '— 下がった', lw - 80), lx + 78, yy);
+    yy += 16; g.font = `9px ${C.mono}`; g.fillStyle = C.mute;
+    g.fillText(fitText(`高さ ${fmtHz(L.freq(tri.hA))} → ${fmtHz(L.freq(tri.hB))}・score ${tri.score.toFixed(3)}`, lw), lx, yy);
+    // 耳の型の例（広い山のときだけ意味がある）
+    if (tri.dir === 'EITHER' && h > 360) {
+      yy += 26; g.font = `10px ${C.mono}`; g.fillStyle = C.mute; g.fillText(fitText('耳の型の例（Deutsch 1986 の形・仮）', lw), lx, yy); yy += 6;
+      EAR_TOPS.forEach(top => { yy += 18; const up = L.earPredict(a, top);
+        g.font = `11px ${C.jp}`; g.fillStyle = C.ink2; g.fillText(fitText(`「上」が ${L.NAMES[top]} の人`, lw - 90), lx, yy);
+        g.font = `600 12px ${C.display}`; g.fillStyle = up ? C.ink : C.warn; g.textAlign = 'right'; g.fillText(up ? '▲ UP' : '▼ DOWN', x + w - 14, yy); g.textAlign = 'left'; });
+    }
+  },
+};
+
+function draw(loc) {
+  fitAll();
+  const st = stageRect(), key = MOBILE() ? 'PM' : 'P', A = CH[loc.i][key], B = loc.k > 0 ? CH[loc.i + 1][key] : {};
+  const names = new Set([...Object.keys(A), ...Object.keys(B)]);
+  const oa = optAt(loc.i, loc.u), ob = loc.k > 0 ? optAt(loc.i + 1, 0) : oa;
+  const opt = { stops: lerp(oa.stops, ob.stops, loc.k) };
+  for (const n of names) {
+    let r, al;
+    if (A[n] && B[n]) { r = A[n].map((v, j) => lerp(v, B[n][j], loc.k)); al = 1; }
+    else if (A[n]) { r = A[n]; al = 1 - loc.k; } else { r = B[n]; al = loc.k; }
+    if (al < .01) continue;
+    const px = st.x + r[0] * st.w, py = st.y + r[1] * st.h, pw = r[2] * st.w, ph = r[3] * st.h;
+    if (pw < 40 || ph < 40) continue;
+    g.save(); g.globalAlpha = al; g.beginPath(); g.rect(px, py, pw, ph); g.clip();
+    PANELS[n](px, py, pw, ph, opt); g.restore();
+  }
+}
+
+// ── HUD と FORMULA RAIL
+let lastHud = '';
+function hud(loc, y) {
+  const ci = R.ci, Z = R.Z, HT = R.HT, TRI = R.TRI, si = stairsInfo(ci);
+  const key = [lawKey, ci, si ? si.n : -1].join('|');
+  $('prog').style.width = (clamp(y / MAXY) * 100).toFixed(2) + '%';
+  if (key === lastHud) return; lastHud = key;
+  $('chl').innerHTML = `${pad(ci)} ⁄ 10 <b>${CH[ci].id}</b>`;
+  $('hN').textContent = L.name(S.P);
+  $('hMode').textContent = `聞こえる高さ ${fmtHz(HT.f)}`;
+  const zl = $('hZone'); zl.className = 'zone ' + Z.id; zl.textContent = Z.id;
+  const lit = new Set(CH[ci].lit), rows = CH[ci].rows;
+  document.querySelectorAll('#rail .t').forEach(e => e.classList.toggle('on', lit.has(e.dataset.t)));
+  document.querySelectorAll('#rail .fr').forEach(e => { e.classList.toggle('on', rows.includes(e.dataset.row)); e.classList.toggle('lit', !!e.querySelector('.t.on')); });
+  const live = R.parts.filter(q => q.a > .02 * Math.max(...R.parts.map(p => p.a))).length;
+  $('fvA').textContent = `${live} 本が聞こえる`;
+  $('fvB').textContent = `c = ${mod(S.P, 12).toFixed(2)}（${L.name(S.P)}）`;
+  $('fvC').textContent = `σ ${S.sigma.toFixed(2)} · μ ${fmtHz(L.freq(S.mu))}`;
+  $('fvD').textContent = `${HT.h.toFixed(3)} oct → ${fmtHz(HT.f)}`;
+  $('fvE').textContent = `H ${Z.H.toFixed(3)} · ${Z.id}`;
+  $('fvF').textContent = `${Math.floor(S.P / 12)} 周目`;
+  $('fvG').textContent = si && si.last ? `${si.n} 段目 ${si.last}` : `6 半音 ${TRI.dir}（${TRI.score.toFixed(2)}）`;
+  document.querySelectorAll('[data-live]').forEach(e => { const k = e.dataset.live;
+    e.textContent = k === 'name' ? L.name(S.P) : k === 'hz' ? fmtHz(HT.f) : k === 'zone' ? Z.id : k === 'sigma' ? S.sigma.toFixed(2) + ' oct' : k === 'H' ? Z.H.toFixed(2)
+      : k === 'tri' ? TRI.dir : k === 'stairs' ? (si ? `${si.n} 段目${si.last ? '・' + si.last : ''}` : '—') : ''; });
+}
+
+// ── 音：8 本の正弦波の「席」（law の slots）。上の端を越えた部品は下の端へ席ごと移る（窓で無音なので飛んでもよい）。
+//    三全音の章は、A と B のあいだの間で周波数を切り替える。BOW（既定）＝スクロールの速さで鳴る／♪ ON＝鳴りっぱなし
+let AC = null, master = null, bus = null, prevX = null; const oscs = [], ogains = [];
+function ensureAudio() {
+  if (!AC) {
+    AC = new AudioContext(); master = AC.createGain(); master.gain.value = 0;
+    const lim = AC.createDynamicsCompressor(); lim.threshold.value = -10; lim.ratio.value = 20; lim.attack.value = .003; lim.release.value = .15;
+    master.connect(lim).connect(AC.destination);
+    bus = AC.createGain(); bus.gain.value = 1; bus.connect(master);
+    const Sl = L.slots(S.P, S.sigma, S.mu);
+    for (let j = 0; j < K; j++) { const o = AC.createOscillator(), gg = AC.createGain(); o.type = 'sine'; o.frequency.value = Sl.f[j]; gg.gain.value = 0; o.connect(gg).connect(bus); o.start(); oscs.push(o); ogains.push(gg); }
+    prevX = Sl.x.slice();
+  }
+  if (AC.state === 'suspended') AC.resume();
+}
+let vel = 0, bowG = 0, lastShownP = null;
+function updateAudio() {
+  if (!AC) return;
+  const t = AC.currentTime, sh = shown(), Sl = L.slots(sh.P, S.sigma, S.mu);
+  for (let j = 0; j < K; j++) {
+    const fr = oscs[j].frequency, jump = Math.abs(Sl.x[j] - prevX[j]);
+    if (jump > K / 2 || jump > .2) { fr.cancelScheduledValues(t); fr.setValueAtTime(Sl.f[j], t); } else fr.setTargetAtTime(Sl.f[j], t, .012);
+    ogains[j].gain.setTargetAtTime(Sl.g[j], t, .03);
+  }
+  prevX = Sl.x.slice(); lastShownP = sh.P;
+  bus.gain.setTargetAtTime(sh.gate, t, .008);
+  let target = 0, tc = .12;
+  if (S.mode === 'on') target = S.vol;
+  else if (S.mode === 'bow') { target = S.vol * clamp(vel / 900); tc = target > bowG ? .06 : .55; }
+  bowG = target;
+  master.gain.setTargetAtTime(target, t, tc);
+}
+let autoArm = true;
+function setMode(m) {
+  S.mode = m; autoArm = false; if (m !== 'off') ensureAudio();
+  document.querySelectorAll('#segSnd button').forEach(b => b.classList.toggle('on', b.dataset.v === m));
+  updateAudio();
+}
+
+// ── なめらかな慣性（SP-01〜05 の LP と同じ）
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let tY = scrollY, cY = scrollY, smoothing = false, rewind = null;
+addEventListener('wheel', e => {
+  if (e.ctrlKey || REDUCED) return;
+  e.preventDefault(); rewind = null;
+  if (!smoothing) { tY = cY = scrollY; }
+  const d = e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? VH : 1);
+  tY = clamp(tY + d, 0, MAXY); smoothing = true;
+}, { passive: false });
+const stopRewind = () => { rewind = null; };
+addEventListener('keydown', stopRewind); addEventListener('touchstart', stopRewind, { passive: true }); addEventListener('mousedown', e => { if (e.target.id !== 'bRewind') stopRewind(); });
+function scrollStep(dt) {
+  if (rewind) {
+    const k = clamp((NOW - rewind.t0) / rewind.d), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    window.scrollTo(0, rewind.y0 * (1 - e)); if (k >= 1) rewind = null; return;
+  }
+  if (!smoothing) return;
+  cY += (tY - cY) * (1 - Math.exp(-dt * 6));
+  if (Math.abs(tY - cY) < .5) { cY = tY; smoothing = false; }
+  window.scrollTo(0, cY);
+}
+function startRewind() { smoothing = false; rewind = { y0: scrollY, t0: NOW, d: clamp(scrollY / 2400, 3, 9) * 1000 }; }
+
+// ── ループ（時間で進むのは三全音のくり返し T だけ）
+let NOW = performance.now(), lastY = scrollY, LOC = { i: 0, u: 0, k: 0 };
+function tick(now, dt) {
+  NOW = now; T += dt;
+  scrollStep(dt);
+  const y = scrollY;
+  vel = lerp(vel, Math.abs(y - lastY) / Math.max(dt, 1e-3), .25); lastY = y;
+  LOC = locate(y); Object.assign(S, stateAt(LOC));
+  readState(LOC); updateAudio(); draw(LOC); hud(LOC, y);
+}
+let manual = false, lastT = 0;
+function frame(now) {
+  if (!manual) { const t = now / 1000, dt = Math.min(.05, t - (lastT || t)); lastT = t; tick(now, dt); }
+  requestAnimationFrame(frame);
+}
+
+// ── 入力
+document.querySelectorAll('#segSnd button').forEach(b => b.onclick = () => setMode(b.dataset.v));
+$('bStart').onclick = () => setMode('bow');
+addEventListener('pointerdown', e => { if (!autoArm) return; autoArm = false; if (S.mode === 'off' && !e.target.closest('#segSnd')) setMode('bow'); }, true);
+$('bRewind').onclick = startRewind;
+$('vol').oninput = e => { S.vol = e.target.value / 100; updateAudio(); };
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === 's' || e.key === 'S') { const order = ['off', 'bow', 'on']; setMode(order[(order.indexOf(S.mode) + 1) % 3]); }
+});
+addEventListener('resize', () => { measure(); lastHud = ''; });
+readColors(); measure();
+document.fonts && document.fonts.ready.then(() => { readColors(); measure(); lastHud = ''; });
+requestAnimationFrame(frame);
+(() => { const q = new URLSearchParams(location.search), ch = q.get('ch'); if (ch == null) return;
+  const go = () => { measure(); const i = clamp(+ch | 0, 0, M.length - 1), m = M[i]; window.scrollTo(0, m.top + clamp(+(q.get('u') || 0)) * Math.max(1, m.h - VH)); tY = cY = scrollY; };
+  go(); document.fonts && document.fonts.ready.then(go); })();
+
+// ── 検証フック（Claude 側）
+const r4 = v => +v.toFixed(4);
+window.__LP = {
+  law: L, CH, STOPS, locate, stateAt, measure, read: () => R, S, shown,
+  loc: () => LOC, maxY: () => MAXY, metrics: () => M,
+  goto: (i, u = 0) => { smoothing = false; rewind = null; const m = M[i], y = m.top + u * Math.max(1, m.h - VH); window.scrollTo(0, y); tY = cY = scrollY; return scrollY; },
+  setMode, rewind: startRewind, rewinding: () => !!rewind,
+  audio: () => AC && { state: AC.state, master: +master.gain.value.toFixed(3), bus: +bus.gain.value.toFixed(3), f: oscs.map(o => +o.frequency.value.toFixed(2)), gain: ogains.map(gg => r4(gg.gain.value)), target: L.slots(shown().P, S.sigma, S.mu) },
+  vel: () => vel, autoArm: () => autoArm, time: () => T,
+  manual: on => { manual = on; },
+  step: (sec = 1 / 60, fps = 60) => { for (let i = 0, n = Math.max(1, Math.round(sec * fps)); i < n; i++) tick(NOW + 1000 / fps, 1 / fps); },
+  wheel: dy => { if (!smoothing) tY = cY = scrollY; tY = clamp(tY + dy, 0, MAXY); smoothing = true; },
+  state: () => { const si = stairsInfo(R.ci); return { ch: R.ci, id: CH[R.ci].id, i: LOC.i, u: r4(LOC.u), k: r4(LOC.k), P: r4(S.P), name: L.name(S.P), sigma: r4(S.sigma), mu: r4(S.mu), proof: r4(S.proof), pair: r4(S.pair),
+    zone: R.Z.id, H: r4(R.Z.H), h: r4(R.HT.h), hz: +R.HT.f.toFixed(2), tri: R.TRI.dir, triScore: r4(R.TRI.score), stairs: si && { n: si.n, last: si.last, dirs: si.dirs.join(','), downs: si.downs }, shown: shown() }; },
+};
+})();
+</script>
+</body>
+</html>

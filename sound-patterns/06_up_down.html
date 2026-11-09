@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UP &amp; DOWN (SP-06)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=IBM+Plex+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:"Bank Gothic";src:url("../cognitive/fonts/bank-gothic-light-bt.ttf") format("truetype");font-weight:300 600;font-display:swap}
+@font-face{font-family:"Square 721";src:url("../cognitive/fonts/Square_721_BT.ttf") format("truetype");font-weight:400 700;font-display:swap}
+:root{
+  --bg:#0a0a0a;--bg-2:#121212;--ink:#f2f2ef;--ink-2:#cfcfca;--mute:#9a9a93;--mute-2:#3a3a37;
+  --line:#2a2a27;--acc:#ffd400;--acc-ink:#0a0a0a;--warn:#ff6a3d;--fill:rgba(242,242,239,.06);
+  --grid:rgba(242,242,239,0.035);--panel-bg:#0e0e0e;--ez:cubic-bezier(0.2,0,0,1);
+  --mono:"JetBrains Mono","IBM Plex Mono",ui-monospace,monospace;
+  --display:"Bank Gothic","Square 721","Space Grotesk",system-ui,sans-serif;
+  --sans:"Square 721","Bank Gothic","Helvetica Neue",system-ui,sans-serif;
+  --jp:"IBM Plex Sans JP","Noto Sans JP",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--sans);font-feature-settings:"tnum"}
+#app{height:100vh;display:grid;grid-template-rows:46px 1fr 30px;grid-template-columns:1fr 320px;grid-template-areas:"top top" "stage aside" "bot bot"}
+.topbar{grid-area:top;display:flex;align-items:center;gap:18px;padding:0 16px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:baseline;gap:8px}
+.mark{font-family:var(--display);font-weight:600;letter-spacing:.14em;font-size:14px}
+.layer-tag{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.16em}
+.ttl{flex:1;font-family:var(--mono);font-size:11px;color:var(--ink-2);letter-spacing:.16em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.esc{font-family:var(--mono);font-size:10px;color:var(--mute);text-decoration:none;border:1px solid var(--line);padding:4px 8px;letter-spacing:.12em;white-space:nowrap}
+.esc:hover{color:var(--acc);border-color:var(--acc)}
+.stage{grid-area:stage;position:relative;overflow:hidden;display:grid;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+.cell{position:relative;min-width:0;min-height:0;border-bottom:1px solid var(--line)}
+.cell canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.cap{position:absolute;left:14px;top:8px;font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.14em;pointer-events:none;white-space:nowrap}
+.cap.r{left:auto;right:14px}
+.prompt{grid-column:1 / -1;text-align:center;padding:8px 16px;border-bottom:1px solid var(--line);pointer-events:none;min-height:34px}
+.prompt .pj{font-family:var(--jp);font-size:11px;letter-spacing:.06em;color:var(--ink-2)}
+.prompt.auto .pj{color:var(--acc)}
+.big{display:flex;align-items:baseline;gap:10px;white-space:nowrap}
+.big .rat{font-family:var(--display);font-weight:600;font-size:34px;letter-spacing:.04em}
+.big .off{font-family:var(--mono);font-size:12px;color:var(--ink-2)}
+.zone{align-self:flex-start;font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:.16em;padding:5px 12px;border:1px solid var(--line)}
+.meter .top{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--mute);margin-bottom:4px;letter-spacing:.06em}
+.meter .top b{font-family:var(--mono);font-weight:400;color:var(--ink-2)}
+.meter .track{height:10px;background:var(--bg-2);border:1px solid var(--mute-2);position:relative}
+.meter .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--ink-2)}
+.meter .th{position:absolute;top:-3px;bottom:-3px;width:1px;background:var(--mute)}
+.aside{grid-area:aside;border-left:1px solid var(--line);background:var(--panel-bg);overflow-y:auto;padding:14px 14px 24px}
+.aside::-webkit-scrollbar{width:3px}.aside::-webkit-scrollbar-thumb{background:var(--mute-2)}
+.sec{margin-bottom:18px}
+.lt{display:inline-block;font-family:var(--mono);font-size:9px;color:var(--acc-ink);background:var(--acc);padding:1px 5px;margin-right:7px;letter-spacing:.1em}
+.sh{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.16em;text-transform:uppercase;margin-bottom:10px;border-bottom:1px solid var(--line);padding-bottom:5px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;margin-bottom:8px}
+.seg button,.btn{font-family:var(--mono);font-size:10px;letter-spacing:.08em;background:transparent;color:var(--ink-2);border:1px solid var(--line);padding:7px 4px;cursor:pointer}
+.seg button:hover,.btn:hover{border-color:var(--acc);color:var(--acc)}
+.seg button.on,.btn.on{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.btn{width:100%;margin-top:6px;padding:9px 10px;text-align:left}
+.btn:disabled{opacity:.35;cursor:default;border-color:var(--line);color:var(--ink-2)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:4px}.grid2 .btn{margin-top:0}
+.row{margin-bottom:12px}
+.row label{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--ink-2);margin-bottom:5px;letter-spacing:.06em}
+.row .val{color:var(--acc)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:2px;background:var(--mute-2);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;background:var(--acc);border:1px solid var(--acc-ink);border-radius:0}
+input[type=range]::-moz-range-thumb{width:13px;height:13px;background:var(--acc);border:1px solid var(--acc-ink);border-radius:0}
+.hint{font-family:var(--jp);font-size:10.5px;color:var(--ink-2);line-height:1.6;margin:4px 0 6px}
+.hint b{color:var(--acc);font-weight:500}
+.kvt{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:10px}
+.kvt th{color:var(--mute);font-weight:400;text-align:left;padding:3px 0;letter-spacing:.06em}
+.kvt td{color:var(--ink-2);text-align:right;padding:3px 0 3px 6px}
+.kvt tr{border-bottom:1px solid var(--line)}
+.params{font-family:var(--mono);font-size:10px;color:var(--mute);background:var(--bg-2);border:1px solid var(--line);padding:8px;word-break:break-all;line-height:1.5;cursor:pointer}
+.params:hover{border-color:var(--acc)}
+.bottombar{grid-area:bot;display:flex;align-items:center;gap:16px;padding:0 16px;border-top:1px solid var(--line);font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.1em;white-space:nowrap;overflow:hidden}
+.bottombar .sp{flex:1}.bottombar b{color:var(--ink-2);font-weight:400}
+.toast{position:fixed;left:50%;bottom:44px;transform:translateX(-50%);font-family:var(--mono);font-size:11px;color:var(--acc-ink);background:var(--acc);padding:6px 12px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
+.toast.show{opacity:1}
+
+/* SP-06 stage only; shared NATURAL shell and controls follow SP-01/04. */
+.stage{grid-template-columns:minmax(0,1fr) 280px;grid-template-rows:minmax(0,1fr) auto 150px}
+#helixBox{grid-column:1;grid-row:1;border-right:1px solid var(--line)}
+#readBox{grid-column:2;grid-row:1;padding:14px 16px;display:flex;flex-direction:column;gap:10px;overflow-y:auto}
+#readBox .sh{margin-bottom:0}
+#specBox{grid-column:1;grid-row:3;border-bottom:0;border-right:1px solid var(--line)}
+#traceBox{grid-column:2;grid-row:3;border-bottom:0}
+.helix-note{position:absolute;top:24px;left:8px;right:8px;text-align:center;font-family:var(--jp);font-size:11px;color:var(--acc);pointer-events:none}
+.zone.LINE{color:var(--ink-2);border-color:var(--mute)}
+.zone.BLEND{color:var(--warn);border-color:var(--warn)}
+.zone.CIRCLE{color:var(--acc-ink);background:var(--acc);border-color:var(--acc)}
+#fH{background:var(--acc)}#fHt{background:var(--ink-2)}
+.read-line{font-family:var(--mono);font-size:11px;color:var(--ink-2);line-height:1.6}
+.read-line span{color:var(--mute)}.read-line b{color:var(--acc);font-weight:400}
+.read-line .UP{color:var(--ink)}.read-line .DOWN{color:var(--warn)}.read-line .EITHER{color:var(--acc)}
+.pitch-ttl{font-family:var(--jp);font-size:10.5px;color:var(--mute);margin-top:-6px}
+.model-note{margin-top:auto;color:var(--mute)}
+.selrow{display:grid;grid-template-columns:34px 1fr 34px;gap:4px;align-items:center;margin-bottom:6px}
+.selrow .btn{margin:0;text-align:center;padding:7px 0}
+.selrow .seln{font-family:var(--display);font-weight:600;font-size:16px;letter-spacing:.08em;text-align:center;color:var(--acc)}
+.hold{user-select:none;-webkit-user-select:none;touch-action:none}
+#earBox{border:1px solid var(--line);padding:10px;margin-top:8px}
+#earBox[hidden]{display:none}
+#earCv{width:100%;height:150px;display:block}
+.ear-q{font-family:var(--jp);font-size:11px;color:var(--ink);margin-bottom:8px;line-height:1.6}
+.ear-q b{color:var(--acc);font-weight:500}
+.ear-res{font-family:var(--jp);font-size:11px;color:var(--ink-2);line-height:1.7;margin-top:6px}
+.ear-res b{color:var(--acc);font-weight:500}
+button:focus-visible,a:focus-visible,input:focus-visible,.params:focus-visible{outline:1px solid var(--acc);outline-offset:3px}
+@media (max-width:880px){
+  html,body{overflow:auto}
+  #app{height:auto;min-height:100vh;grid-template-columns:minmax(0,1fr);grid-template-rows:46px auto auto 30px;grid-template-areas:"top" "stage" "aside" "bot"}
+  .stage{min-width:0;grid-template-columns:minmax(0,1fr);grid-template-rows:380px auto auto 140px 140px}
+  #helixBox{grid-column:1;grid-row:1;border-right:0}
+  #readBox{grid-column:1;grid-row:2;overflow:visible;border-bottom:1px solid var(--line)}
+  .prompt{grid-row:3}
+  #specBox{grid-column:1;grid-row:4;border-right:0;border-bottom:1px solid var(--line)}
+  #traceBox{grid-column:1;grid-row:5}
+  .cap.r{display:none}
+  .bottombar span:last-child{display:none}
+  .aside{border-left:0;border-top:1px solid var(--line)}
+  .big .rat{font-size:24px}
+  .model-note{margin-top:0}
+  .topbar{gap:10px}
+  .layer-tag{display:none}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="brand"><span class="mark">GEN-EX</span><span class="layer-tag">L1d × L3</span></div>
+    <div class="ttl">UP &amp; DOWN — 音の高さの 2 つの成分 ⁄ SP-06</div>
+    <a class="esc" href="index.html">[ESC] INDEX</a>
+  </div>
+  <div class="stage" id="stage">
+    <div class="cell" id="helixBox"><canvas id="cvHelix" aria-label="音の螺旋。角度＝音名、高さ＝オクターブ。光っている所が山（音量の山）。黄色の線は 1 周ぶん上げたときの聞こえる高さの足あと"></canvas><div class="cap">HELIX ⁄ 螺旋 · 角度＝音名 · 高さ＝オクターブ</div><div class="cap r">黄＝1 周上げたときの聞こえる高さ</div><div class="helix-note" id="proofCap" hidden>12 半音上げた音（○）の部品は、今の音（●）とぴったり同じ位置＝同じ音に戻っている</div></div>
+    <div class="cell" id="readBox">
+      <div class="sh">READOUT</div>
+      <div class="big"><span class="rat" id="rName">C</span><span class="off" id="rNameSub">—</span></div>
+      <div class="pitch-ttl">音名（輪の上の角度）</div>
+      <div class="zone CIRCLE" id="rZone">CIRCLE</div>
+      <div class="meter"><div class="top"><span>高さの成分 H</span><b id="mH">—</b></div><div class="track"><div class="fill" id="fH"></div><div class="th" style="left:5%"></div><div class="th" style="left:50%"></div></div></div>
+      <div class="meter"><div class="top"><span>聞こえる高さ（重心）</span><b id="mHt">—</b></div><div class="track"><div class="fill" id="fHt"></div></div></div>
+      <div class="read-line" id="rSig">—</div>
+      <div class="read-line" id="rStep">—</div>
+      <div class="read-line" id="rTri">—</div>
+      <div class="hint model-note">聞こえる高さ＝部品の強さ（2 乗）で重みづけした重心。1 歩の向き＝「輪の近い方へ回った」と「重心が動いた」の混ぜ合わせ。どちらも仮の模型。最後に決めるのは耳。</div>
+    </div>
+    <div class="prompt" id="prompt"><span class="pj" id="pj">▲ HOLD を押し続けると、音名が半音ずつ上がる。山の幅を変えて、同じことをもう一度</span></div>
+    <div class="cell" id="specBox"><canvas id="cvSpec" aria-label="スペクトル。横＝周波数（オクターブごと）、棒＝部品の強さ、曲線＝山"></canvas><div class="cap">SPECTRUM ⁄ 部品 · 横はオクターブ等間隔</div><div class="cap r" id="specCapR">—</div></div>
+    <div class="cell" id="traceBox"><canvas id="cvTrace" aria-label="聞こえる高さの足あと（最近 12 秒）"></canvas><div class="cap">STAIRS ⁄ 聞こえる高さの足あと</div></div>
+  </div>
+  <div class="aside">
+    <div class="sec">
+      <div class="sh"><span class="lt">A</span>WIDTH ⁄ 山の幅</div>
+      <div class="row"><label for="sig">山の幅 σ <span class="val" id="vSig">—</span></label><input type="range" id="sig" min="0" max="1000" step="1" value="800"></div>
+      <div class="seg" id="segSig"><button data-v="0.25">NARROW</button><button data-v="0.6">MID</button><button data-v="2">WIDE</button></div>
+      <button class="btn" id="bFollow">FOLLOW（F）— 山が音についていく</button>
+      <div class="hint">狭い山＝ほぼ 1 本だけ鳴る＝<b>高さがある</b>。広い山＝8 本が並んで鳴る＝聞こえる高さが動かない。<br>FOLLOW＝山ごと音について上がる（ふつうの楽器の音）。±2 オクターブで天井・床にぶつかる。</div>
+    </div>
+    <div class="sec">
+      <div class="sh"><span class="lt">B</span>CHROMA ⁄ 音名を回す</div>
+      <div class="selrow"><button class="btn" id="bDown1" aria-label="半音下げる">◀</button><span class="seln" id="selName">C</span><button class="btn" id="bUp1" aria-label="半音上げる">▶</button></div>
+      <div class="grid2"><button class="btn hold" id="bHoldUp">▲ HOLD（↑）</button><button class="btn hold" id="bHoldDown">▼ HOLD（↓）</button></div>
+      <button class="btn" id="bGlide">GLIDE（G）— なめらかに回し続ける</button>
+      <div class="row" style="margin-top:10px"><label for="speed">GLIDE の速さ <span class="val" id="vSpeed">+1.0 半音/秒</span></label><input type="range" id="speed" min="-30" max="30" step="1" value="10"></div>
+      <div class="hint">← →＝半音 1 つ。▲ HOLD／↑ を押し続けると半音ずつ上がり続ける（0.4 秒ごと）。<br>広い山で 1 周（12 回）上げても、<b>聞こえる高さの横線は動かない</b>。</div>
+    </div>
+    <div class="sec">
+      <div class="sh"><span class="lt">C</span>TRITONE ⁄ 6 半音のなぞ</div>
+      <button class="btn" id="bPair">PLAY PAIR（T）— 今の音 → 6 半音上</button>
+      <button class="btn" id="bEar">EAR TEST（E）— あなたの耳の「上」を探す</button>
+      <div id="earBox" hidden>
+        <div class="ear-q" id="earQ">—</div>
+        <div class="grid2"><button class="btn" id="bEarUp">上がった（U）</button><button class="btn" id="bEarDown">下がった（D）</button></div>
+        <div class="grid2" style="margin-top:4px"><button class="btn" id="bEarAgain">▶ もう一度（Enter）</button><button class="btn" id="bEarQuit">やめる</button></div>
+        <canvas id="earCv" aria-label="答えの輪。音名ごとの答えと、推定した『上』の向き"></canvas>
+        <div class="ear-res" id="earRes"></div>
+      </div>
+      <div class="hint">6 半音（三全音）は、輪のどちら回りでも同じ距離。広い山では<b>音の中に答えが無い</b>のに、多くの人ははっきり「上がった」か「下がった」と聞く。向きは人によって違う（Deutsch 1986）。EAR TEST は広い山（σ 2.0）で 12 組。</div>
+    </div>
+    <div class="sec">
+      <div class="sh"><span class="lt">D</span>SOUND ⁄ SHOW</div>
+      <div class="grid2"><button class="btn" id="bSound">▶ SOUND</button><button class="btn" id="bAuto">◎ AUTO</button></div>
+      <button class="btn" id="bProof">PROOF（P）</button>
+      <div class="row" style="margin-top:12px"><label for="vol">MASTER <span class="val" id="vVol">35</span></label><input type="range" id="vol" min="0" max="100" value="35"></div>
+      <div class="hint">ヘッドホン推奨。SOUND か PLAY PAIR の最初のクリックで開始。山の幅を変えても全体の音量はそろえてある。</div>
+    </div>
+    <div class="sec"><div class="sh"><span class="lt">E</span>READOUT</div><table class="kvt" id="kv"></table></div>
+    <div class="sec">
+      <div class="sh"><span class="lt">F</span>PARAMS — クリックでコピー</div>
+      <div class="params" id="params" role="button" tabindex="0" aria-label="PARAMS をコピー"></div>
+      <div class="grid2" style="margin-top:6px"><button class="btn" id="bCopy">COPY</button><button class="btn" id="bPaste">PASTE</button></div>
+    </div>
+  </div>
+  <div class="bottombar"><span>SOUND PATTERNS ⁄ <b>SP-06</b></span><span id="botInfo">—</span><span class="sp"></span><span>← → 半音 · ↑ ↓ 押し続け · G 回し続け · F FOLLOW · T 三全音 · E 耳 · SPACE 音 · A 自動 · P PROOF</span></div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script src="_law/sp06_law.js"></script>
+<script>
+(() => {
+'use strict';
+const L = window.SP06, K = L.K, $ = id => document.getElementById(id);
+// P＝音名の通しの値（半音・何周しても良い）。c＝P mod 12 が輪の上の角度。mu＝山の真ん中（オクターブ）
+const S = { P: 0, sigma: L.SIG_WIDE, mu: L.MU, follow: false, glide: false, speed: 1, vol: .35, sound: false, proof: false, auto: null, time: 0,
+  lastStep: null, ear: null, pairVis: null };
+// Display/UI constants only.
+const HOLD_IV = .4, TRACE_SEC = 12, TILT = .3;
+const clamp = L.clamp, mod = L.mod;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let C;
+function readColors() {
+  C = { ink: css('--ink'), ink2: css('--ink-2'), bg: css('--bg'), bg2: css('--bg-2'), line: css('--line'), mute: css('--mute'), mute2: css('--mute-2'), acc: css('--acc'), warn: css('--warn'), mono: css('--mono'), jp: css('--jp') };
+}
+const toast = message => {
+  const el = $('toast'); el.textContent = message; el.classList.add('show');
+  clearTimeout(toast.timer); toast.timer = setTimeout(() => el.classList.remove('show'), 1900);
+};
+const sigToV = s => Math.round(1000 * Math.log(s / L.SIG_MIN) / Math.log(L.SIG_MAX / L.SIG_MIN));
+const vToSig = v => L.SIG_MIN * Math.pow(L.SIG_MAX / L.SIG_MIN, v / 1000);
+const chroma = () => mod(S.P, 12);
+function nameOf(P) {
+  const c = mod(P, 12), r = Math.round(c), ct = Math.round((c - r) * 100);
+  return { n: L.NAMES[mod(r, 12)], jp: L.NAMES_JP[mod(r, 12)], ct };
+}
+const fmtHz = f => f >= 1000 ? (f / 1000).toFixed(2) + ' kHz' : f.toFixed(1) + ' Hz';
+
+// Zone, height, tritone verdict come only from the law; rebuilt when P/sigma/mu change.
+let Z = null, HT = null, TRI = null, lawKey = '';
+const muB = (mu, dP) => S.follow ? clamp(mu + dP / 12, L.MU - L.MU_RANGE - .5, L.MU + L.MU_RANGE + .5) : mu;
+function ensureLaw() {
+  const key = S.P.toFixed(6) + '|' + S.sigma.toFixed(6) + '|' + S.mu.toFixed(6) + '|' + S.follow;
+  if (key !== lawKey) {
+    lawKey = key; Z = L.zone(S.sigma, S.mu); HT = L.height(S.P, S.sigma, S.mu);
+    TRI = L.step(S.P, S.P + 6, S.sigma, S.mu, muB(S.mu, 6));
+  }
+}
+
+// Trace of the heard height (display only).
+const trace = [], marks = [];
+function pushTrace() {
+  ensureLaw();
+  trace.push({ t: S.time, h: HT.h });
+  while (trace.length && trace[0].t < S.time - TRACE_SEC - 1) trace.shift();
+  while (marks.length && marks[0].t < S.time - TRACE_SEC - 1) marks.shift();
+}
+
+// Moving the chroma. Steps are judged by the law (L.step) and marked on the trace.
+// FOLLOW: mu moves with the chroma; a step past ±MU_RANGE is refused (ceiling / floor).
+function moveP(dP, judge) {
+  if (!dP) return true;
+  let mu = S.mu;
+  if (S.follow) {
+    mu = S.mu + dP / 12;
+    if (mu > L.MU + L.MU_RANGE + 1e-9 || mu < L.MU - L.MU_RANGE - 1e-9) {
+      toast(dP > 0 ? '天井 — ふつうの音は、上がり続けられない' : '床 — ふつうの音は、下がり続けられない');
+      return false;
+    }
+  }
+  const from = S.P, muFrom = S.mu;
+  S.P += dP; S.mu = mu;
+  if (judge) {
+    const r = L.step(from, S.P, S.sigma, muFrom, S.mu);
+    S.lastStep = Object.assign({ from, to: S.P, at: S.time }, r);
+    marks.push({ t: S.time, h: r.hB, dir: r.dir });
+  }
+  updateAudio();
+  return true;
+}
+function setSigma(s) { s = clamp(s, L.SIG_MIN, L.SIG_MAX); if (Math.abs(s - S.sigma) < 1e-9) return; S.sigma = s; updateAudio(); }
+function setFollow(on) {
+  S.follow = !!on;
+  if (!S.follow) S.mu = L.MU;
+  updateAudio();
+}
+function setP(P) { S.P = P; updateAudio(); }
+
+// Sound: K sine "slots" (L.slots). A slot whose partial runs off the top edge moves to the bottom edge, where the window makes it silent.
+let AC = null, master = null, limiter = null, toneBus = null, oscs = [], ogains = [], prevX = null;
+async function ensureAudio() {
+  if (!AC) {
+    const Context = window.AudioContext || window.webkitAudioContext;
+    if (!Context) throw new Error('Web Audio unavailable');
+    AC = new Context();
+    master = AC.createGain(); master.gain.value = 0;
+    limiter = AC.createDynamicsCompressor();
+    limiter.threshold.value = -10; limiter.ratio.value = 20; limiter.attack.value = .003; limiter.release.value = .15;
+    master.connect(limiter).connect(AC.destination);
+    toneBus = AC.createGain(); toneBus.gain.value = 0; toneBus.connect(master);
+    const Sl = L.slots(S.P, S.sigma, S.mu);
+    for (let j = 0; j < K; j++) {
+      const o = AC.createOscillator(), g = AC.createGain();
+      o.type = 'sine'; o.frequency.value = Sl.f[j]; g.gain.value = Sl.g[j];
+      o.connect(g).connect(toneBus); o.start(); oscs.push(o); ogains.push(g);
+    }
+    prevX = Sl.x.slice();
+  }
+  if (AC.state === 'suspended') await AC.resume();
+  updateAudio();
+}
+let pairUntil = -1, pairTimer = 0;
+const pairing = () => !!AC && AC.currentTime < pairUntil;
+function updateAudio() {
+  if (!AC) return;
+  const t = AC.currentTime, Sl = L.slots(S.P, S.sigma, S.mu);
+  for (let j = 0; j < K; j++) {
+    const fr = oscs[j].frequency;
+    if (Math.abs(Sl.x[j] - prevX[j]) > K / 2) { fr.cancelScheduledValues(t); fr.setValueAtTime(Sl.f[j], t); }   // wrapped: silent edge, jump
+    else fr.setTargetAtTime(Sl.f[j], t, .012);
+    ogains[j].gain.setTargetAtTime(Sl.g[j], t, .03);
+  }
+  prevX = Sl.x.slice();
+  toneBus.gain.setTargetAtTime(S.sound && !S.ear ? (pairing() ? 0 : 1) : 0, t, S.sound ? .05 : .15);
+  master.gain.setTargetAtTime(S.vol, t, .08);
+}
+async function setSound(on) {
+  S.sound = !!on;
+  try { if (on) await ensureAudio(); else updateAudio(); }
+  catch (err) { S.sound = false; updateAudio(); toast('音を開始できません。もう一度 SOUND を押してください'); }
+  $('bSound').classList.toggle('on', S.sound); $('bSound').textContent = S.sound ? '■ SOUND' : '▶ SOUND';
+}
+// Pair: A then B = A + 6, each 0.5 s (Deutsch). The continuous tone ducks meanwhile. The helix shows the tone that is sounding.
+function playPair(a, sigma, mu, fromAuto) {
+  const mb = S.follow && !S.ear ? muB(mu, 6) : mu;
+  const total = 2 * L.PAIR_DUR + L.PAIR_GAP;
+  S.pairVis = { a, sigma, muA: mu, muB: mb, at: S.time, total };
+  if (fromAuto && !S.sound) return Promise.resolve();
+  return (async () => {
+    try {
+      await ensureAudio();
+      const t0 = AC.currentTime + .03;
+      L.playShepard(AC, master, a, sigma, t0, L.PAIR_DUR, mu);
+      L.playShepard(AC, master, a + 6, sigma, t0 + L.PAIR_DUR + L.PAIR_GAP, L.PAIR_DUR, mb);
+      pairUntil = t0 + total + .05;
+      updateAudio();
+      clearTimeout(pairTimer); pairTimer = setTimeout(updateAudio, (total + .12) * 1000);
+    } catch (err) { toast('音を開始できません。もう一度押してください'); }
+  })();
+}
+
+// HOLD: one step now, then one every HOLD_IV seconds (counted on the app clock).
+let hold = null;
+function startHold(dir) { stopAuto(); stopGlide(); if (S.ear) return; hold = { dir, next: S.time + HOLD_IV }; moveP(dir, true); $(dir > 0 ? 'bHoldUp' : 'bHoldDown').classList.add('on'); }
+function stopHold() { hold = null; $('bHoldUp').classList.remove('on'); $('bHoldDown').classList.remove('on'); }
+function setGlide(on) { S.glide = !!on; glideAcc = 0; $('bGlide').classList.toggle('on', S.glide); }
+function stopGlide() { if (S.glide) setGlide(false); }
+let glideAcc = 0;
+
+function stopAuto() {
+  S.auto = null;
+  $('bAuto').classList.remove('on'); $('prompt').classList.remove('auto');
+}
+function setProof(on) { S.proof = !!on; $('bProof').classList.toggle('on', S.proof); }
+
+/*TOUR-BEGIN*/
+// AUTO script. Each segment: sigma ramps from the previous value to `sig` over `ramp` s; chroma moves by `steps` (semitones, one every `iv` s)
+// or glides at `glide` semitones/s; `at` jumps the chroma (mod 12) at the start; pairs = seconds into the segment.
+// expect = zone over the segment's end, verdict = tritone verdict expected for the pairs.
+function buildTour(L) {
+  const T = []; let t = 0;
+  const seg = (duration, o) => { T.push(Object.assign({ at: t, end: t + duration, duration, ramp: 0, steps: 0, iv: 1, glide: 0, pairs: [], proof: false, follow: false }, o)); t += duration; };
+  seg(5, { sig: 2, chroma: 0, say: 'シェパード音＝オクターブ違いの 8 本を、山形の音量で重ねた音。螺旋の光っている所が山', expect: 'CIRCLE' });
+  seg(13, { steps: 12, iv: 1, say: '半音ずつ上げる — ずっと上がって聞こえるのに、聞こえる高さ（横線）は動かない', expect: 'CIRCLE' });
+  seg(5, { proof: true, say: '12 段上げた音は、部品の位置が最初とぴったり同じ＝同じ音に戻っている', expect: 'CIRCLE' });
+  seg(4, { sig: .25, ramp: 3, say: '山を狭くする — 鳴るのはほぼ 1 本だけになる', expect: 'LINE' });
+  seg(13, { steps: 12, iv: 1, say: '今度は上がって… F♯ のあたりでストンと落ちる。高さがあるから、落ちるのが聞こえる', expect: 'LINE' });
+  seg(6, { sig: 2, ramp: 5, glide: 1, say: '山を広げていく — 黄色の足あとが、螺旋から平たい輪につぶれる', expect: 'CIRCLE' });
+  seg(8, { glide: 1.5, say: 'なめらかに上げ続ける — 終わりのない上り坂', expect: 'CIRCLE' });
+  seg(11, { chroma: 9, pairs: [.6, 4.2, 7.8], say: 'A と D♯（6 半音）を続けて鳴らす — 上がった？ 下がった？ 音の中に答えが無いので、人によって分かれる', expect: 'CIRCLE', verdict: 'EITHER' });
+  seg(9, { sig: .25, ramp: 1.5, pairs: [2.4, 5.8], say: '山が狭いと、答えは 1 つに決まる — 高さの成分で「上がった」と聞ける', expect: 'LINE', verdict: 'UP' });
+  seg(5, { sig: 2, ramp: 3, say: '「高い＝上」は音そのものの性質ではない。高さの成分があるときだけ働く', expect: 'CIRCLE' });
+  return { T, total: t };
+}
+/*TOUR-END*/
+const { T: TOUR, total: AUTO_DURATION } = buildTour(L);
+$('bAuto').textContent = '◎ AUTO ' + Math.round(AUTO_DURATION) + 's';
+// The state each segment starts from = where the previous one ended (computed once, deterministic).
+function segEnd(s, from) {
+  let P = from.P, sig = from.sig;
+  if (s.chroma !== undefined) P = Math.round(P / 12) * 12 + s.chroma;
+  if (s.sig !== undefined) sig = s.sig;
+  P += s.steps + s.glide * s.duration;
+  return { P, sig };
+}
+const TOUR_START = []; { let st = { P: 0, sig: L.SIG_WIDE }; TOUR.forEach(s => { TOUR_START.push(st); st = segEnd(s, st); }); }
+function startAuto() {
+  stopAuto(); setProof(false); stopHold(); setGlide(false); if (S.ear) quitEar();
+  if (S.follow) setFollow(false);
+  S.auto = { elapsed: 0, i: -1, fired: new Set() }; $('bAuto').classList.add('on'); $('prompt').classList.add('auto');
+  tickAuto(0);
+  if (!S.sound) toast('SOUND を押すと音も一緒に。操作すると AUTO は止まります');
+}
+function tickAuto(dt) {
+  const a = S.auto; a.elapsed = Math.min(AUTO_DURATION, a.elapsed + dt);
+  const i = TOUR.findIndex(segment => a.elapsed < segment.end - 1e-9);
+  if (i < 0 || a.elapsed >= AUTO_DURATION - 1e-9) { const e = segEnd(TOUR[TOUR.length - 1], TOUR_START[TOUR.length - 1]); setSigma(e.sig); setP(e.P); setProof(false); stopAuto(); return; }
+  const s = TOUR[i], from = TOUR_START[i], el = a.elapsed - s.at;
+  const ur = s.ramp > 0 ? clamp(el / s.ramp, 0, 1) : 1;
+  const sig = s.sig !== undefined ? Math.exp(Math.log(from.sig) + (Math.log(s.sig) - Math.log(from.sig)) * ur) : from.sig;
+  let P0 = from.P; if (s.chroma !== undefined) P0 = Math.round(P0 / 12) * 12 + s.chroma;
+  const P = P0 + (s.steps ? Math.min(s.steps, Math.floor(el / s.iv + 1e-9)) : 0) + s.glide * el;
+  setSigma(sig);
+  const dP = P - S.P;
+  if (s.steps && Math.abs(dP - Math.round(dP)) < 1e-9 && Math.round(dP) !== 0 && i === a.i) moveP(dP, true); else setP(P);
+  a.i = i;
+  if (S.proof !== s.proof) setProof(s.proof);
+  s.pairs.forEach((off, k) => {
+    const id = i + ':' + k;
+    if (!a.fired.has(id) && el >= off - 1e-9) { a.fired.add(id); playPair(S.P, S.sigma, S.mu, true); }
+  });
+  $('pj').textContent = 'AUTO ' + String(Math.floor(a.elapsed)).padStart(2, '0') + 's ⁄ ' + s.say;
+}
+
+// EAR TEST: 12 pairs (A = 0..11, shuffled) at the wide envelope. The fit is L.earFit (a model of the shape of Deutsch's result).
+function startEar() {
+  stopAuto(); stopHold(); setGlide(false);
+  const order = [...Array(12).keys()];
+  for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+  S.ear = { order, i: 0, answers: [], done: false, result: null };
+  $('earBox').hidden = false; $('bEar').classList.add('on');
+  updateAudio(); earAsk();
+}
+function earAsk() {
+  const e = S.ear; if (!e) return;
+  if (e.i >= e.order.length) {
+    e.done = true; e.result = L.earFit(e.answers);
+    drawEar(); renderEar(); return;
+  }
+  renderEar(); drawEar();
+  playPair(e.order[e.i], L.SIG_WIDE, L.MU, false);
+}
+function earAnswer(up) {
+  const e = S.ear; if (!e || e.done) return;
+  e.answers.push({ a: e.order[e.i], up: !!up }); e.i++;
+  clearTimeout(earAnswer.t); earAnswer.t = setTimeout(earAsk, 450);
+  renderEar(); drawEar();
+}
+function quitEar() { S.ear = null; $('earBox').hidden = true; $('bEar').classList.remove('on'); updateAudio(); }
+function renderEar() {
+  const e = S.ear; if (!e) return;
+  const done = e.done;
+  $('bEarUp').disabled = done; $('bEarDown').disabled = done;
+  $('bEarAgain').textContent = done ? '↻ もう一度テスト' : '▶ もう一度（Enter）';
+  if (!done) {
+    const a = e.order[e.i];
+    $('earQ').innerHTML = (e.i + 1) + ' ⁄ 12 組目：<b>' + L.NAMES[a] + ' → ' + L.NAMES[mod(a + 6, 12)] + '</b>。2 つ目の音は、上がった？ 下がった？';
+    $('earRes').textContent = '音の中に答えは無い（広い山）。迷ったら、最初に感じた方で。';
+  } else {
+    const r = e.result, nm = L.NAMES[mod(Math.round(r.top), 12)], pct = Math.round(r.rate * 100);
+    $('earQ').innerHTML = '12 組おわり。<b>上がった ' + r.ups + '・下がった ' + (r.n - r.ups) + '</b>';
+    $('earRes').innerHTML = r.consistent
+      ? 'あなたの耳の輪の「上」は <b>' + nm + ' のあたり</b>（答えの ' + pct + '% がこの向きで説明できる）。<br>その近くの音名を高く聞き、遠い半分から 6 半音進むと「上がった」と聞いている。別の人は別の所に「上」を持っている。'
+      : '答えを 1 つの向きでは説明しきれなかった（いちばん合う向きでも ' + pct + '%）。<br>耳がまだ向きを決めていないか、どちらにも聞こえている。もう一度やると変わることもある。';
+  }
+}
+// EAR circle: A's chroma around the ring, the answer as a mark, the fitted "top".
+function drawEar() {
+  const cv = $('earCv'); if (!S.ear || $('earBox').hidden) return;
+  const [g, w, h] = fit(cv), cx = w / 2, cy = h / 2 + 4, R = Math.min(w, h) / 2 - 22, e = S.ear;
+  g.strokeStyle = C.line; g.lineWidth = 1; g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.stroke();
+  const P = c => { const th = 2 * Math.PI * c / 12 - Math.PI / 2; return [cx + R * Math.cos(th), cy + R * Math.sin(th)]; };
+  g.font = '9px ' + C.mono; g.textAlign = 'center'; g.textBaseline = 'middle';
+  for (let c = 0; c < 12; c++) { const th = 2 * Math.PI * c / 12 - Math.PI / 2; g.fillStyle = C.mute; g.fillText(L.NAMES[c], cx + (R + 13) * Math.cos(th), cy + (R + 13) * Math.sin(th)); }
+  if (e.done && e.result && e.result.consistent) {
+    const top = e.result.top, [tx, ty] = P(top), [bx, by] = P(top + 6);
+    g.strokeStyle = C.acc; g.setLineDash([3, 3]); g.beginPath(); g.moveTo(bx, by); g.lineTo(tx, ty); g.stroke(); g.setLineDash([]);
+    g.fillStyle = C.acc; g.beginPath(); g.arc(tx, ty, 4, 0, Math.PI * 2); g.fill();
+    g.font = '10px ' + C.jp; g.fillText('上', tx + (tx - cx) * .001, ty + (ty < cy ? 14 : -14));
+  }
+  e.answers.forEach(r => {
+    const [x, y] = P(r.a);
+    g.fillStyle = r.up ? C.ink : C.warn; g.font = '11px ' + C.mono; g.fillText(r.up ? '▲' : '▼', x + (cx - x) * .18, y + (cy - y) * .18);
+  });
+  if (!e.done) { const [x, y] = P(e.order[e.i]); g.strokeStyle = C.acc; g.beginPath(); g.arc(x, y, 6, 0, Math.PI * 2); g.stroke(); }
+  g.textBaseline = 'alphabetic';
+}
+
+// Drawing constants below are display resolution, colors and line widths only.
+function fit(cv) {
+  const d = Math.min(devicePixelRatio || 1, 2), w = cv.clientWidth, h = cv.clientHeight;
+  const pw = Math.max(1, Math.round(w * d)), ph = Math.max(1, Math.round(h * d));
+  if (cv.width !== pw || cv.height !== ph) { cv.width = pw; cv.height = ph; }
+  const g = cv.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, w, h);
+  return [g, w, h, d];
+}
+// HELIX geometry: a point (x octaves, chroma c) → angle 2πc/12 (C in front), height x. Oblique view with tilt TILT.
+function helixGeom(w, h) {
+  const left = Math.min(92, w * .2), right = Math.min(86, w * .18);
+  const cx = (left + w - right) / 2, R = Math.max(30, Math.min((w - left - right) / 2 - 24, 170));
+  const top = 50 + R * TILT, bottom = h - 26 - R * TILT;
+  const Y = x => bottom - x / K * (bottom - top);
+  const pt = (x, c) => { const th = 2 * Math.PI * c / 12; return { X: cx + R * Math.sin(th), Y: Y(x) + R * TILT * Math.cos(th), depth: Math.cos(th) }; };
+  return { left, right, cx, R, top, bottom, Y, pt };
+}
+// The tone currently shown: during a pair, A then B.
+function shownTone() {
+  const pv = S.pairVis;
+  if (pv) {
+    const el = S.time - pv.at;
+    if (el < pv.total + .1) return el < L.PAIR_DUR + L.PAIR_GAP / 2 ? { P: pv.a, sigma: pv.sigma, mu: pv.muA, pair: 'A' } : { P: pv.a + 6, sigma: pv.sigma, mu: pv.muB, pair: 'B' };
+    S.pairVis = null;
+  }
+  return { P: S.P, sigma: S.sigma, mu: S.mu, pair: null };
+}
+function drawHelix() {
+  const [g, w, h] = fit($('cvHelix'));
+  if (w < 160 || h < 160) return;
+  ensureLaw();
+  const G = helixGeom(w, h), tone = shownTone(), parts = L.partials(tone.P, tone.sigma, tone.mu), ht = L.height(tone.P, tone.sigma, tone.mu);
+  let emax = 1e-9; for (let x = 0; x <= K; x += .02) emax = Math.max(emax, L.env(x, tone.sigma, tone.mu));
+  // envelope on the left: a vertical profile along the height axis
+  const ex0 = 14, ew = G.left - 34;
+  g.strokeStyle = C.line; g.lineWidth = 1; g.beginPath(); g.moveTo(ex0, G.Y(0)); g.lineTo(ex0, G.Y(K)); g.stroke();
+  g.fillStyle = 'rgba(255,212,0,.10)'; g.strokeStyle = C.acc; g.beginPath(); g.moveTo(ex0, G.Y(0));
+  for (let x = 0; x <= K + 1e-9; x += .02) g.lineTo(ex0 + L.env(x, tone.sigma, tone.mu) / emax * ew, G.Y(x));
+  g.lineTo(ex0, G.Y(K)); g.closePath(); g.fill(); g.stroke();
+  g.font = '9px ' + C.mono; g.fillStyle = C.mute; g.textAlign = 'left';
+  for (let k = 0; k <= K; k++) g.fillText('C' + (k + 1), ex0 + 3, G.Y(k) - 2);
+  g.fillText('山', ex0 + 3, G.Y(K) - 14);
+  // helix line: brightness = envelope (the lit part is the mountain), back half dimmer
+  const segs = [];
+  for (let x = 0; x < K; x += 1 / 72) {
+    const c1 = 12 * (x % 1), a = G.pt(x, c1), b = G.pt(x + 1 / 72, 12 * ((x + 1 / 72) % 1));
+    segs.push({ a, b, depth: (a.depth + b.depth) / 2, e: L.env(x, tone.sigma, tone.mu) / emax });
+  }
+  const drawSegs = front => {
+    for (const s of segs) {
+      if ((s.depth >= 0) !== front) continue;
+      g.strokeStyle = front ? C.ink2 : C.mute2; g.globalAlpha = (front ? .25 : .18) + s.e * (front ? .75 : .45);
+      g.lineWidth = 1 + 2.4 * s.e; g.beginPath(); g.moveTo(s.a.X, s.a.Y); g.lineTo(s.b.X, s.b.Y); g.stroke();
+    }
+    g.globalAlpha = 1;
+  };
+  const drawDots = front => {
+    for (const q of parts) {
+      const p = G.pt(q.x, mod(tone.P, 12));
+      if ((p.depth >= 0) !== front || q.a / emax < .004) continue;
+      const r = 2 + 7 * q.a / emax;
+      g.fillStyle = tone.pair ? C.acc : C.ink; g.globalAlpha = .35 + .65 * q.a / emax;
+      g.beginPath(); g.arc(p.X, p.Y, r, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1;
+      if (S.proof && !tone.pair) { g.strokeStyle = C.acc; g.setLineDash([2, 2]); g.beginPath(); g.arc(p.X, p.Y, r + 4, 0, Math.PI * 2); g.stroke(); g.setLineDash([]); }
+    }
+  };
+  drawSegs(false); drawDots(false);
+  // the ring of the heard height + chroma names around it
+  const yH = G.Y(ht.h);
+  g.strokeStyle = C.acc; g.globalAlpha = .35; g.lineWidth = 1; g.beginPath(); g.ellipse(G.cx, yH, G.R, G.R * TILT, 0, 0, Math.PI * 2); g.stroke(); g.globalAlpha = 1;
+  // footprint: heard height over one full turn of the chroma (narrow = a climb with a drop; wide = a flat ring)
+  g.strokeStyle = C.acc; g.lineWidth = S.proof ? 2.2 : 1.4; g.globalAlpha = S.proof ? 1 : .8; g.beginPath();
+  const c0 = mod(tone.P, 12);
+  for (let k = 0; k <= 240; k++) {
+    const c = c0 + k / 20, th = 2 * Math.PI * c / 12, y = G.Y(L.height(c, tone.sigma, tone.mu).h) + G.R * TILT * Math.cos(th), x = G.cx + G.R * Math.sin(th);
+    k ? g.lineTo(x, y) : g.moveTo(x, y);
+  }
+  g.stroke(); g.globalAlpha = 1;
+  drawSegs(true); drawDots(true);
+  // current heard point on the ring
+  const hp = G.pt(ht.h, c0);
+  g.strokeStyle = C.acc; g.lineWidth = 2; g.beginPath(); g.arc(hp.X, hp.Y, 7, 0, Math.PI * 2); g.stroke();
+  g.font = '10px ' + C.mono; g.textAlign = 'center';
+  for (let c = 0; c < 12; c++) {
+    const th = 2 * Math.PI * c / 12, x = G.cx + (G.R + 16) * Math.sin(th), y = yH + (G.R * TILT + 10) * Math.cos(th) + 3;
+    const cur = Math.round(c0) % 12 === c;
+    g.fillStyle = cur ? C.acc : C.mute; g.fillText(L.NAMES[c], x, y);
+  }
+  // gauge on the right: the heard height on the up–down line
+  const gx = w - G.right + 34;
+  g.strokeStyle = C.mute2; g.lineWidth = 1; g.beginPath(); g.moveTo(gx, G.Y(0)); g.lineTo(gx, G.Y(K)); g.stroke();
+  g.fillStyle = C.mute; g.font = '10px ' + C.jp; g.textAlign = 'center'; g.fillText('上 ↑', gx, G.Y(K) - 14);
+  g.fillText('下', gx, G.Y(0) + 16);
+  for (let k = 0; k <= K; k++) { g.beginPath(); g.moveTo(gx - 3, G.Y(k)); g.lineTo(gx + 3, G.Y(k)); g.stroke(); }
+  g.fillStyle = C.acc; g.beginPath(); g.moveTo(gx - 4, yH); g.lineTo(gx - 13, yH - 6); g.lineTo(gx - 13, yH + 6); g.closePath(); g.fill();
+  g.strokeStyle = C.acc; g.setLineDash([2, 4]); g.beginPath(); g.moveTo(G.cx + G.R + 30, yH); g.lineTo(gx - 15, yH); g.stroke(); g.setLineDash([]);
+  g.font = '9px ' + C.mono; g.fillText(fmtHz(ht.f), gx, yH - 10 > G.Y(K) ? yH - 10 : yH + 18);
+  g.fillStyle = C.mute; g.fillText('聞こえる高さ', gx, G.Y(0) + 30 < h - 2 ? G.Y(0) + 30 : h - 2);
+  if (tone.pair) { g.fillStyle = C.acc; g.font = '11px ' + C.jp; g.textAlign = 'left'; g.fillText('三全音 ' + (tone.pair === 'A' ? '1 つ目' : '2 つ目（6 半音上）') + '：' + L.NAMES[mod(Math.round(tone.P), 12)], G.left, 40); }
+  $('proofCap').hidden = !S.proof;
+}
+
+// SPECTRUM: partials on a log-frequency axis (octaves), the envelope, the heard height (centroid).
+function drawSpec() {
+  const [g, w, h] = fit($('cvSpec')), l = 18, r = 18, top = 42, bottom = h - 22;
+  if (w - l - r < 80 || bottom - top < 30) return;
+  const tone = shownTone(), parts = L.partials(tone.P, tone.sigma, tone.mu), ht = L.height(tone.P, tone.sigma, tone.mu);
+  const X = x => l + x / K * (w - l - r), H = bottom - top;
+  let emax = 1e-9; for (let x = 0; x <= K; x += .02) emax = Math.max(emax, L.env(x, tone.sigma, tone.mu));
+  g.strokeStyle = C.line; g.lineWidth = 1; g.beginPath(); g.moveTo(l, bottom); g.lineTo(w - r, bottom); g.stroke();
+  g.font = '9px ' + C.mono; g.fillStyle = C.mute; g.textAlign = 'center';
+  for (let k = 0; k <= K; k++) { g.beginPath(); g.moveTo(X(k), bottom); g.lineTo(X(k), bottom + 3); g.stroke(); g.fillText('C' + (k + 1) + (k % 2 === 0 ? ' ' + Math.round(L.freq(k)) : ''), X(k), h - 6); }
+  g.strokeStyle = C.acc; g.globalAlpha = .7; g.beginPath();
+  for (let x = 0; x <= K + 1e-9; x += .02) { const y = bottom - L.env(x, tone.sigma, tone.mu) / emax * H; x ? g.lineTo(X(x), y) : g.moveTo(X(x), y); }
+  g.stroke(); g.globalAlpha = 1;
+  for (const q of parts) {
+    const x = X(q.x), hh = q.a / emax * H;
+    g.fillStyle = tone.pair ? C.acc : C.ink2; g.fillRect(x - 2, bottom - hh, 4, hh);
+    if (S.proof && !tone.pair) { g.strokeStyle = C.acc; g.setLineDash([2, 2]); g.strokeRect(x - 5, bottom - hh - 3, 10, hh + 3); g.setLineDash([]); }
+  }
+  g.strokeStyle = C.acc; g.setLineDash([3, 3]); g.beginPath(); g.moveTo(X(ht.h), top - 6); g.lineTo(X(ht.h), bottom); g.stroke(); g.setLineDash([]);
+  g.fillStyle = C.acc; g.textAlign = 'center'; g.fillText('重心 ' + fmtHz(ht.f), clamp(X(ht.h), l + 50, w - r - 50), top - 10);
+  $('specCapR').textContent = S.proof ? '点線の枠＝12 半音上げた音の部品' : '棒＝部品 · 曲線＝山';
+}
+
+// STAIRS: the heard height over the last TRACE_SEC seconds; each step marked with its verdict.
+function drawTrace() {
+  const [g, w, h] = fit($('cvTrace')), l = 40, r = 10, top = 30, bottom = h - 16;
+  if (w - l - r < 60 || bottom - top < 30) return;
+  const span = S.follow || Math.abs(S.mu - L.MU) > 1e-6 ? L.MU_RANGE + .6 : 1;
+  const X = t => l + (1 - (S.time - t) / TRACE_SEC) * (w - l - r), Y = hh => bottom - (hh - (L.MU - span)) / (2 * span) * (bottom - top);
+  g.strokeStyle = C.line; g.lineWidth = 1;
+  g.font = '9px ' + C.mono; g.fillStyle = C.mute; g.textAlign = 'right';
+  for (const k of [-span, 0, span]) { const y = Y(L.MU + k); g.beginPath(); g.moveTo(l, y); g.lineTo(w - r, y); g.stroke(); g.fillText(fmtHz(L.freq(L.MU + k)).replace(' Hz', ''), l - 4, y + 3); }
+  g.save(); g.beginPath(); g.rect(l, top - 4, w - l - r, bottom - top + 8); g.clip();
+  g.strokeStyle = C.acc; g.lineWidth = 1.5; g.beginPath();
+  trace.forEach((p, i) => { const x = X(p.t), y = Y(p.h); i ? g.lineTo(x, y) : g.moveTo(x, y); });
+  g.stroke();
+  g.font = '10px ' + C.mono; g.textAlign = 'center';
+  marks.forEach(m => { g.fillStyle = m.dir === 'UP' ? C.ink : m.dir === 'DOWN' ? C.warn : C.acc; g.fillText(m.dir === 'UP' ? '▲' : m.dir === 'DOWN' ? '▼' : '◆', X(m.t), Y(m.h) - 6); });
+  g.restore();
+  g.fillStyle = C.mute; g.textAlign = 'right'; g.font = '9px ' + C.mono; g.fillText('▲ 上がって聞こえる · ▼ 下がって', w - r, h - 3);
+}
+
+let readKey = '';
+function drawRead() {
+  ensureLaw();
+  const ls = S.lastStep, key = [lawKey, S.proof, ls ? ls.at : -1, S.glide, S.speed].join('|');
+  if (key === readKey) return;
+  readKey = key;
+  const nm = nameOf(S.P);
+  $('rName').textContent = nm.n; $('rNameSub').textContent = nm.jp + (nm.ct ? ' ' + (nm.ct > 0 ? '+' : '') + nm.ct + '¢' : '') + ' · 何周目 ' + Math.floor(S.P / 12);
+  $('selName').textContent = nm.n + (nm.ct ? (nm.ct > 0 ? '+' : '') + nm.ct + '¢' : '');
+  $('rZone').className = 'zone ' + Z.id; $('rZone').textContent = Z.id + ' ' + Z.jp;
+  $('mH').textContent = Z.H.toFixed(2); $('fH').style.width = Z.H * 100 + '%';
+  $('mHt').textContent = fmtHz(HT.f); $('fHt').style.width = clamp(HT.h / K, 0, 1) * 100 + '%';
+  $('rSig').innerHTML = '山の幅 <b>σ ' + S.sigma.toFixed(2) + ' oct</b> <span>半値幅 ' + (2.355 * S.sigma).toFixed(1) + ' oct' + (S.follow ? '・FOLLOW 山の真ん中 ' + fmtHz(L.freq(S.mu)) : '') + '</span>';
+  $('rStep').innerHTML = ls ? '最後の 1 歩 ' + L.name(ls.from) + '→' + L.name(ls.to) + ' <b class="' + ls.dir + '">' + ls.dir + '</b> <span>輪 ' + ls.ring.toFixed(2) + '・高さの重み ' + ls.w.toFixed(2) + '</span>' : '<span>最後の 1 歩 —（← → か HOLD で動かす）</span>';
+  $('rTri').innerHTML = '三全音 ' + L.name(S.P) + '→' + L.name(S.P + 6) + ' <b class="' + TRI.dir + '">' + TRI.dir + '</b> <span>' + (TRI.dir === 'EITHER' ? '音の中に答えが無い' : '高さで決まる（Δ ' + (TRI.dh * 12).toFixed(2) + ' 半音）') + '</span>';
+  document.querySelectorAll('#segSig button').forEach(b => b.classList.toggle('on', Math.abs(+b.dataset.v - S.sigma) < 1e-6));
+  $('sig').value = sigToV(S.sigma); $('vSig').textContent = S.sigma.toFixed(2) + ' oct';
+  $('bFollow').classList.toggle('on', S.follow); $('bFollow').textContent = S.follow ? '■ FOLLOW（F）— 山がついていく・外す' : 'FOLLOW（F）— 山が音についていく';
+  $('vSpeed').textContent = (S.speed >= 0 ? '+' : '−') + Math.abs(S.speed).toFixed(1) + ' 半音/秒';
+  $('params').textContent = paramsText();
+  const rows = [['音名 c', mod(S.P, 12).toFixed(2) + '（' + nm.n + '）'], ['通しの値 P', S.P.toFixed(2)], ['山の幅 σ', S.sigma.toFixed(3) + ' oct'], ['山の真ん中', fmtHz(L.freq(S.mu))],
+    ['高さの成分 H', Z.H.toFixed(3)], ['境界の読み', Z.id], ['聞こえる高さ', fmtHz(HT.f) + '（' + HT.h.toFixed(3) + ' oct）'], ['重心の広がり', HT.spread.toFixed(2) + ' oct'],
+    ['三全音の向き', TRI.dir + '（' + TRI.score.toFixed(3) + '）'], ['最後の 1 歩', ls ? ls.dir + '（' + ls.score.toFixed(2) + '）' : '—'],
+    ['いちばん強い部品', (() => { const ps = L.partials(S.P, S.sigma, S.mu); const q = ps.reduce((a, b) => b.a > a.a ? b : a); return fmtHz(q.f); })()]];
+  $('kv').innerHTML = rows.map(([a, v]) => '<tr><th>' + a + '</th><td>' + v + '</td></tr>').join('');
+  $('botInfo').textContent = nm.n + ' · σ ' + S.sigma.toFixed(2) + ' · ' + Z.id + ' · H ' + Z.H.toFixed(2);
+  if (!S.auto) $('pj').textContent = S.ear ? 'EAR TEST — 2 つ目の音が上がったか下がったかを答える（U ／ D）'
+    : Z.id === 'CIRCLE' ? '広い山：▲ HOLD で上げ続けても、聞こえる高さ（横線）は動かない＝輪だけが回る'
+    : Z.id === 'LINE' ? (S.follow ? 'FOLLOW：山ごと上がる＝ふつうの音。いつか天井にぶつかる' : '狭い山：上げ続けると、F♯ のあたりでストンと落ちる＝高さがある')
+    : 'どっちつかずの幅。山を広げる ⇄ 狭める と、足あと（黄）が輪 ⇄ 螺旋に変わる';
+}
+const round4 = v => Math.round(v * 1e4) / 1e4;
+const paramsText = () => JSON.stringify({ P: round4(S.P), sigma: round4(S.sigma), follow: S.follow, mu: round4(S.mu), speed: round4(S.speed) });
+function draw() { ensureLaw(); drawHelix(); drawSpec(); drawTrace(); drawRead(); if (S.ear) drawEar(); }
+function advance(dt) {
+  S.time += dt;
+  if (S.auto) tickAuto(dt);
+  if (hold && S.time >= hold.next - 1e-9) { hold.next += HOLD_IV; if (!moveP(hold.dir, true)) stopHold(); }
+  if (S.glide && !S.auto) {
+    const d = S.speed * dt;
+    if (!moveP(d, false)) setGlide(false);
+    else { glideAcc += d; if (Math.abs(glideAcc) >= 1) { const r = L.step(S.P - glideAcc, S.P, S.sigma, S.mu - (S.follow ? glideAcc / 12 : 0), S.mu); marks.push({ t: S.time, h: r.hB, dir: r.dir }); glideAcc = 0; } }
+  }
+  pushTrace();
+}
+let manual = false, lastT = null;
+function frame(now) {
+  if (!manual) {
+    const dt = lastT === null ? 0 : clamp((now - lastT) / 1000, 0, .05);
+    lastT = now; advance(dt); draw();
+  }
+  requestAnimationFrame(frame);
+}
+
+// Every deliberate control touch stops the tour.
+$('app').addEventListener('pointerdown', e => { if (!e.target.closest('#bAuto')) stopAuto(); }, true);
+$('sig').oninput = e => { stopAuto(); setSigma(vToSig(+e.target.value)); };
+document.querySelectorAll('#segSig button').forEach(b => b.onclick = () => setSigma(+b.dataset.v));
+$('bFollow').onclick = () => setFollow(!S.follow);
+$('bUp1').onclick = () => { stopGlide(); moveP(1, true); };
+$('bDown1').onclick = () => { stopGlide(); moveP(-1, true); };
+for (const [id, dir] of [['bHoldUp', 1], ['bHoldDown', -1]]) {
+  const b = $(id);
+  b.addEventListener('pointerdown', e => { if (e.button !== 0) return; e.preventDefault(); b.setPointerCapture(e.pointerId); startHold(dir); });
+  b.addEventListener('pointerup', stopHold); b.addEventListener('pointercancel', stopHold); b.addEventListener('lostpointercapture', stopHold);
+}
+$('bGlide').onclick = () => { stopHold(); setGlide(!S.glide); };
+$('speed').oninput = e => { S.speed = +e.target.value / 10; if (!S.speed) S.speed = .1; };
+$('bPair').onclick = () => { stopHold(); stopGlide(); if (S.ear) return; void playPair(S.P, S.sigma, S.mu, false); };
+$('bEar').onclick = () => S.ear ? quitEar() : startEar();
+$('bEarUp').onclick = () => earAnswer(true); $('bEarDown').onclick = () => earAnswer(false);
+$('bEarAgain').onclick = () => { if (!S.ear) return; if (S.ear.done) startEar(); else playPair(S.ear.order[S.ear.i], L.SIG_WIDE, L.MU, false); };
+$('bEarQuit').onclick = quitEar;
+$('bSound').onclick = () => void setSound(!S.sound);
+$('bAuto').onclick = () => S.auto ? stopAuto() : startAuto();
+$('bProof').onclick = () => setProof(!S.proof);
+$('vol').oninput = e => { stopAuto(); S.vol = +e.target.value / 100; $('vVol').textContent = e.target.value; updateAudio(); };
+
+function applyParams(o) {
+  if (!o || typeof o !== 'object' || !Number.isFinite(o.P) || !Number.isFinite(o.sigma)) throw new Error('Invalid PARAMS');
+  stopAuto(); stopHold(); setGlide(false);
+  S.follow = !!o.follow;
+  S.mu = S.follow && Number.isFinite(o.mu) ? clamp(o.mu, L.MU - L.MU_RANGE, L.MU + L.MU_RANGE) : L.MU;
+  if (Number.isFinite(o.speed) && o.speed) { S.speed = clamp(o.speed, -3, 3); $('speed').value = Math.round(S.speed * 10); }
+  S.P = o.P; setSigma(o.sigma); updateAudio(); draw();
+}
+async function copyParams() {
+  stopAuto();
+  const value = paramsText();
+  try { await navigator.clipboard.writeText(value); toast('COPIED'); }
+  catch (err) { window.prompt('PARAMS をコピー', value); }
+}
+$('params').onclick = copyParams; $('bCopy').onclick = copyParams;
+$('params').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); void copyParams(); } };
+$('bPaste').onclick = async () => {
+  stopAuto(); let value;
+  try { value = await navigator.clipboard.readText(); }
+  catch (err) { value = window.prompt('PARAMS を貼り付け'); }
+  if (!value) return;
+  try { applyParams(JSON.parse(value)); toast('PASTED'); } catch (err) { toast('読めない PARAMS'); }
+};
+addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey || e.target.isContentEditable || /^(TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+  if (e.target.tagName === 'INPUT' && e.target.type !== 'range') return;
+  const k = e.key, lower = k.toLowerCase();
+  if (S.ear && !S.ear.done && (lower === 'u' || lower === 'd')) { e.preventDefault(); if (!e.repeat) earAnswer(lower === 'u'); return; }
+  if (S.ear && k === 'Enter') { e.preventDefault(); $('bEarAgain').click(); return; }
+  if (k === 'ArrowLeft' || k === 'ArrowRight') {
+    if (e.target.tagName === 'INPUT') { stopAuto(); return; }
+    e.preventDefault(); stopAuto(); stopGlide(); if (!S.ear) moveP(k === 'ArrowRight' ? 1 : -1, true);
+  } else if (k === 'ArrowUp' || k === 'ArrowDown') {
+    e.preventDefault(); if (!e.repeat) startHold(k === 'ArrowUp' ? 1 : -1);
+  } else if (k === ' ') { e.preventDefault(); if (!e.repeat) { stopAuto(); void setSound(!S.sound); } }
+  else if (!e.repeat && ['f', 'g', 't', 'e', 'a', 'p'].includes(lower)) {
+    e.preventDefault(); if (lower !== 'a') stopAuto();
+    $({ f: 'bFollow', g: 'bGlide', t: 'bPair', e: 'bEar', a: 'bAuto', p: 'bProof' }[lower]).click();
+  } else if (k === 'Escape') { stopAuto(); stopHold(); setGlide(false); if (S.ear) quitEar(); void setSound(false); }
+  else if (k === 'Enter' && e.target.tagName === 'BUTTON' && e.target.id !== 'bAuto') stopAuto();
+});
+addEventListener('keyup', e => { if (e.key === 'ArrowUp' || e.key === 'ArrowDown') stopHold(); });
+addEventListener('blur', stopHold);
+addEventListener('pagehide', () => { S.sound = false; stopHold(); updateAudio(); if (AC) void AC.suspend(); });
+
+readColors(); draw();
+document.fonts && document.fonts.ready.then(() => { readColors(); readKey = ''; draw(); });
+requestAnimationFrame(frame);
+window.__SP = {
+  L, law: L, state: S, tour: TOUR, tourStart: TOUR_START, duration: AUTO_DURATION, trace, marks,
+  manual: on => { manual = !!on; lastT = null; },
+  step: (sec = 1 / 60, fps = 60) => {
+    if (!manual) throw new Error('Call __SP.manual(true) before step');
+    if (!Number.isFinite(sec) || sec < 0 || !Number.isFinite(fps) || fps <= 0) throw new RangeError('Invalid step duration/fps');
+    const h = Math.min(.05, 1 / fps), n = Math.ceil(sec / h - 1e-9);
+    for (let i = 0; i < n; i++) advance(Math.min(h, sec - i * h));
+    draw();
+  },
+  sigma: s => { stopAuto(); setSigma(s); draw(); return S.sigma; },
+  move: d => { stopAuto(); const ok = moveP(d, true); draw(); return ok && S.lastStep; },
+  follow: on => { setFollow(on); draw(); return S.follow; },
+  hold: dir => dir ? startHold(dir) : stopHold(),
+  glide: (on, speed) => { if (speed) S.speed = speed; setGlide(on); return S.glide; },
+  pair: () => playPair(S.P, S.sigma, S.mu, false),
+  ear: { start: startEar, answer: earAnswer, quit: quitEar, state: () => S.ear },
+  zone: () => (ensureLaw(), Z), height: () => (ensureLaw(), HT), tritone: () => (ensureLaw(), TRI),
+  audio: () => AC && ({ state: AC.state, master: master.gain.value, bus: toneBus.gain.value, pairing: pairing(),
+    f: oscs.map(o => o.frequency.value), gain: ogains.map(g => g.gain.value), target: L.slots(S.P, S.sigma, S.mu),
+    limiter: { threshold: limiter.threshold.value, ratio: limiter.ratio.value, attack: limiter.attack.value, release: limiter.release.value } }),
+  startAuto, stopAuto, setSound, applyParams, params: paramsText
+};
+})();
+</script>
+</body>
+</html>
