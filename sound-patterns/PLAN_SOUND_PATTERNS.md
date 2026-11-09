@@ -1,6 +1,6 @@
 ---
 tags: [design, gen-ex, L1d, sound]
-status: 設計 v0（2026-10-31）・§0 訂正（11-02）・SP-03 本体 03_consonance.html・SP-02 本体 02_beats.html（11-03）・SP-05 本体 05_chladni.html・SP-04 本体 04_standing_wave.html（11-05）・SP-01 本体 01_harmonic_ladder.html（11-09）・見た目は NATURAL に決定
+status: 設計 v0（2026-10-31）・§0 訂正（11-02）・SP-03 本体 03_consonance.html・SP-02 本体 02_beats.html（11-03）・SP-05 本体 05_chladni.html・SP-04 本体 04_standing_wave.html（11-05）・SP-01 本体 01_harmonic_ladder.html＋解説 LP（11-09）・見た目は NATURAL に決定
 ---
 
 # SOUND PATTERNS — L1d 音響の教材（設計 v0）
@@ -78,7 +78,7 @@ SP-03 のスタイルフレームで、ユーザーの耳と目で確かめて�
 - **SL-02 へ**：「音色＝倍音の配分」が分かる。§0 の話（倍音が少ないと協和の谷が無い）の手前の基礎。
 - ✅ 11-09 実装：法則 `_law/sp01_law.js`（F0 220・倍音 12 本・ずれ ±8 %・聞こえる高さ＝波形の自己相関の山・間隔＝ずれていない倍音の番号の最大公約数 × 220）／本体 `01_harmonic_ladder.html`。
   境界は 3 つの読み：FUSED（整数倍）→ WOBBLE（ずれ < 目安・形が nF0|d| Hz でうねる）→ POP（目安を超える）。目安は Moore ほか (1986) の傾向をなぞった仮の線（n ≤ 6 で 2 %・上は (n/6)² 倍）。
-  全体の音量（2 乗和の平方根）をそろえる＝基音を消しても音量は落ちない。HEAR OUT＝選んだ 1 本だけを先に鳴らす（Helmholtz の共鳴器の代わり）。横のずれは √ 目盛りで拡大表示（本当のずれは数 Hz）。実測は [[2026-11-09]]
+  全体の音量（2 乗和の平方根）をそろえる＝基音を消しても音量は落ちない。HEAR OUT＝選んだ 1 本だけを先に鳴らす（Helmholtz の共鳴器の代わり）。横のずれは √ 目盛りで拡大表示（本当のずれは数 Hz）。実測は [[2026-11-09]]。解説 LP `scroll/SCROLL_HARMONIC_LP.html`（11 章・同日）
 
 ### SP-02 BEATS — うなり
 

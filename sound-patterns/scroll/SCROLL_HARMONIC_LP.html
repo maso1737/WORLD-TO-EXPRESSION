@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HARMONIC LADDER — スクロール解説 (SP-01)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=IBM+Plex+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:"Bank Gothic";src:url("../../cognitive/fonts/bank-gothic-light-bt.ttf") format("truetype");font-weight:300 600;font-display:swap}
+@font-face{font-family:"Square 721";src:url("../../cognitive/fonts/Square_721_BT.ttf") format("truetype");font-weight:400 700;font-display:swap}
+:root{
+  --bg:#0a0a0a;--bg-2:#121212;--ink:#f2f2ef;--ink-2:#cfcfca;--mute:#9a9a93;--mute-2:#3a3a37;
+  --line:#2a2a27;--acc:#ffd400;--acc-ink:#0a0a0a;--warn:#ff6a3d;--fill:rgba(242,242,239,.06);
+  --grid:rgba(242,242,239,0.035);--ez:cubic-bezier(0.2,0,0,1);
+  --mono:"JetBrains Mono","IBM Plex Mono",ui-monospace,monospace;
+  --display:"Bank Gothic","Square 721","Space Grotesk",system-ui,sans-serif;
+  --sans:"Square 721","Bank Gothic","Helvetica Neue",system-ui,sans-serif;
+  --jp:"IBM Plex Sans JP","Noto Sans JP",system-ui,sans-serif;
+  --col:400px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg)}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-feature-settings:"tnum"}
+/* 背景：方眼と描画キャンバス（固定）。sticky を殺さないよう body に overflow は付けない */
+#grid{position:fixed;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;pointer-events:none}
+#cv{position:fixed;inset:0;width:100vw;height:100vh;display:block;pointer-events:none}
+
+/* HUD */
+.hud{position:fixed;left:0;right:0;top:0;height:46px;display:flex;align-items:center;gap:16px;padding:0 16px;border-bottom:1px solid var(--line);background:rgba(10,10,10,.92);z-index:5}
+.brand{display:flex;align-items:baseline;gap:8px;white-space:nowrap}
+.mark{font-family:var(--display);font-weight:600;letter-spacing:.14em;font-size:14px}
+.tag{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.16em}
+.chl{flex:1;font-family:var(--mono);font-size:11px;color:var(--ink-2);letter-spacing:.16em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chl b{color:var(--acc);font-weight:400}
+.rd{display:flex;align-items:baseline;gap:6px;white-space:nowrap}
+.rd .n{font-family:var(--display);font-weight:600;font-size:20px;letter-spacing:.04em;min-width:72px;text-align:right}
+.rd .u{font-family:var(--mono);font-size:10px;color:var(--mute)}
+.zone{font-family:var(--display);font-weight:600;font-size:11px;letter-spacing:.16em;padding:3px 8px;border:1px solid var(--line);white-space:nowrap;min-width:64px;text-align:center}
+.zone.FUSED{color:var(--ink-2);border-color:var(--mute)}
+.zone.WOBBLE{color:var(--warn);border-color:var(--warn)}
+.zone.POP{color:var(--acc-ink);background:var(--acc);border-color:var(--acc)}
+.zone.SOLO{color:var(--acc);border-color:var(--acc)}
+.seg{display:flex;gap:3px}
+.seg button,.lnk{font-family:var(--mono);font-size:10px;letter-spacing:.08em;background:transparent;color:var(--ink-2);border:1px solid var(--line);padding:5px 8px;cursor:pointer;text-decoration:none;white-space:nowrap}
+.seg button:hover,.lnk:hover{border-color:var(--acc);color:var(--acc)}
+.seg button.on{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.vol{width:70px;-webkit-appearance:none;appearance:none;height:2px;background:var(--mute-2);outline:none;cursor:pointer}
+.vol::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;background:var(--acc);border:1px solid var(--acc-ink);border-radius:0}
+.vol::-moz-range-thumb{width:11px;height:11px;background:var(--acc);border:1px solid var(--acc-ink);border-radius:0}
+.prog{position:fixed;left:0;top:46px;height:2px;width:0;background:var(--acc);z-index:5}
+.ticks{position:fixed;left:0;right:0;top:46px;height:6px;z-index:4;pointer-events:none}
+.ticks i{position:absolute;top:0;width:1px;height:6px;background:var(--mute-2)}
+
+/* 章（縦長のトラック）＋ sticky のカード */
+main{position:relative;z-index:2}
+.ch{position:relative}
+.card{position:sticky;top:76px;width:var(--col);margin-left:40px;padding:20px 22px 22px;background:rgba(10,10,10,.88);border:1px solid var(--line);border-left:2px solid var(--acc)}
+.card .no{font-family:var(--mono);font-size:10px;color:var(--acc);letter-spacing:.18em;margin-bottom:8px}
+.card h2{font-family:var(--display);font-weight:600;font-size:22px;letter-spacing:.06em;line-height:1.2;margin-bottom:4px}
+.card .jh{font-family:var(--jp);font-weight:500;font-size:15px;color:var(--ink);margin-bottom:12px;line-height:1.5}
+.card p{font-family:var(--jp);font-size:13px;line-height:1.85;color:var(--ink-2);margin-bottom:10px}
+.card p b{color:var(--acc);font-weight:500}
+.card p em{font-style:normal;color:var(--warn)}
+.card .note{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.04em;line-height:1.6;border-top:1px solid var(--line);padding-top:8px;margin-top:4px}
+.card .live{font-family:var(--mono);color:var(--acc);font-weight:400}
+.hero h1{font-family:var(--display);font-weight:600;font-size:40px;letter-spacing:.06em;line-height:1;margin:2px 0 10px}
+.hero .jh{font-size:18px}
+.btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.btn{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;background:transparent;color:var(--ink-2);border:1px solid var(--line);padding:8px 10px;cursor:pointer;text-decoration:none}
+.btn:hover{border-color:var(--acc);color:var(--acc)}
+.btn.pri{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.scrollcue{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.2em;margin-top:14px}
+
+/* FORMULA RAIL（左下・固定）：いま絵で動いている項だけが光る */
+#rail{position:fixed;left:40px;bottom:18px;width:var(--col);z-index:3;background:rgba(10,10,10,.9);border:1px solid var(--line);padding:9px 12px 8px;pointer-events:none}
+#rail .rh{font-family:var(--mono);font-size:9px;color:var(--mute);letter-spacing:.16em;margin-bottom:5px;display:flex;justify-content:space-between}
+.fr{display:flex;justify-content:space-between;gap:10px;font-family:var(--mono);font-size:10.5px;line-height:1.75;color:var(--mute-2);transition:color .25s}
+.fr.on{color:var(--mute)}
+.fr .fv{color:inherit;text-align:right;white-space:nowrap}
+.fr.on .fv{color:var(--ink-2)}
+.fr .fx{white-space:nowrap}
+.t{transition:color .25s,background .25s;padding:0 1px}
+.t.on{color:var(--acc-ink);background:var(--acc)}
+
+@media (max-width:880px){
+  :root{--col:auto}
+  .hud{gap:8px;padding:0 10px}
+  .brand,.chl,.vol,.lnk.app{display:none}
+  .rd .n{font-size:16px;min-width:56px}
+  .rd .u{display:none}
+  .zone{min-width:0;padding:3px 6px}
+  .seg button,.lnk{padding:5px 6px}
+  /* スマホ：上から 図（36vh まで）→ 式の帯 → カード の順に積む */
+  .card{margin:0 12px;width:auto;top:calc(36vh + 62px);padding:14px 16px 14px}
+  .card p{font-size:12px;line-height:1.75;margin-bottom:8px}
+  .card .jh{margin-bottom:8px}
+  .hero h1{font-size:30px}
+  .scrollcue{display:none}
+  #rail{left:12px;right:12px;width:auto;top:calc(36vh + 2px);bottom:auto;padding:6px 10px}
+  #rail .rh{display:none}
+  .fr:not(.lit){display:none}
+  .fr .fv{display:none}
+}
+@media (prefers-reduced-motion:reduce){.t,.fr{transition:none}}
+</style>
+</head>
+<body>
+<div id="grid"></div>
+<canvas id="cv"></canvas>
+
+<div class="hud">
+  <div class="brand"><span class="mark">GEN-EX</span><span class="tag">L1d ⁄ SP-01 SCROLL</span></div>
+  <div class="chl" id="chl">00 ⁄ 10 <b>HARMONIC LADDER</b></div>
+  <div class="rd"><span class="n" id="hF">—</span><span class="u" id="hMode">Hz</span></div>
+  <div class="zone FUSED" id="hZone">FUSED</div>
+  <div class="seg" id="segSnd" title="S キーでも切り替え"><button data-v="off" class="on">OFF</button><button data-v="bow">BOW</button><button data-v="on">♪ ON</button></div>
+  <input class="vol" id="vol" type="range" min="0" max="100" value="35" title="MASTER">
+  <a class="lnk app" href="../01_harmonic_ladder.html">APP →</a>
+  <a class="lnk" href="../index.html">INDEX</a>
+</div>
+<div class="prog" id="prog"></div>
+<div class="ticks" id="ticks"></div>
+
+<main id="main">
+  <section class="ch" data-ch="0" style="height:150vh">
+    <div class="card hero">
+      <div class="no">SOUND PATTERNS ⁄ SP-01 ⁄ SCROLL EXPLAINER</div>
+      <h1>HARMONIC LADDER</h1>
+      <div class="jh">1 つの音の中には、何本の音が重なっている？</div>
+      <p><b>これは何か</b>：楽器の 1 つの音は、<b>220 Hz の整数倍</b>の正弦波（倍音）が何本も重なってできている。梯子の段＝整数倍、棒の高さ＝その倍音の強さ。このページは、それでも<b>1 つの音に聞こえるのはなぜか</b>を、スクロールで順に見る。</p>
+      <p>いま聞こえる高さ（目安）は <span class="live" data-live="pitch">—</span> Hz・<span class="live" data-live="zone">—</span>。</p>
+      <p>音は <b>BOW</b>：スクロールしている間だけ鳴る（ヘッドホン推奨・どこかを 1 回クリックで入る）。うねりを聴く章は、右上の <b>♪ ON</b>（鳴りっぱなし）が聴きやすい。</p>
+      <div class="btns"><button class="btn pri" id="bStart">♪ 音を出して読む（BOW）</button><a class="btn" href="../01_harmonic_ladder.html">アプリで触る →</a><a class="btn" href="SCROLL_BEATS_LP.html">SP-02 の解説</a></div>
+      <div class="scrollcue">↓ SCROLL</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="1" style="height:220vh">
+    <div class="card">
+      <div class="no">01 ⁄ 10</div>
+      <h2>ONE</h2>
+      <div class="jh">純音＝梯子の 1 段目だけ</div>
+      <p>倍音を 1 本（n＝1・220 Hz）だけにする。波形はなめらかな正弦波で、<b>4.55 ms</b> ごとに同じ形をくり返す（1 秒に 220 回）。</p>
+      <p>右下の PERIOD＝波形をずらして元の波形と重ねたときの重なり方。ずらす幅が <b>4.55 ms</b> のとき、ぴったり重なる（山の高さ 1）。この山の位置を<b>聞こえる高さ</b>の目安にする：1 ÷ 4.55 ms ＝ <span class="live" data-live="pitch">—</span> Hz。</p>
+      <div class="note">上＝LADDER（横＝高さ・点線の段＝220 Hz の整数倍・棒＝強さ）。左下＝WAVE（220 Hz に合わせて止めた 3 周期）。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="2" style="height:360vh">
+    <div class="card">
+      <div class="no">02 ⁄ 10</div>
+      <h2>STACK</h2>
+      <div class="jh">段の上に足していくと、音色だけが変わる</div>
+      <p>2 倍（440 Hz）、3 倍（660 Hz）… と、倍音を 1 本ずつ足す（いま <span class="live" data-live="count">—</span>）。強さは n 本目を 1/n に。12 本そろうと<b>のこぎり波</b>。</p>
+      <p>波形はとがっていき、音は明るく・ざらっとしていく。でも<b>聞こえる高さは 220 Hz のまま</b>（いま <span class="live" data-live="pitch">—</span> Hz）。どの倍音も 4.55 ms のあいだにちょうど整数回まわるので、周期は変わらない。</p>
+      <div class="note">12 本は 1 本ずつではなく、1 つの音（音色）として聞こえる。音量は全体の強さをそろえてある。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="3" style="height:260vh">
+    <div class="card">
+      <div class="no">03 ⁄ 10</div>
+      <h2>REPEAT</h2>
+      <div class="jh">全部が同じ周期でそろう＝1 つに溶ける</div>
+      <p>のこぎり波の 1 周期目（4.55 ms）を写して、2・3 周期目に重ねる（黄の点線）。<b>ぴったり重なる</b>。</p>
+      <p>n 本目の倍音は 4.55 ms のあいだに <b>n 回</b>まわって、また同じ所に戻る。だから 12 本の和も 4.55 ms ごとに同じ形になる。梯子の上の弧＝隣どうしの<b>間隔</b>で、どれも 220 Hz。</p>
+      <p>耳は、全部の倍音がそろってくり返すこの周期を<b>1 つの音の高さ</b>として聞く。</p>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="4" style="height:280vh">
+    <div class="card">
+      <div class="no">04 ⁄ 10</div>
+      <h2>HEAR OUT</h2>
+      <div class="jh">溶けていても、中に 1 本ずつ居る</div>
+      <p>まず 3 倍音（<b>660 Hz</b>）だけを鳴らす。そこから、ほかの 11 本をゆっくり戻す（いま <span class="live" data-live="solo">—</span>）。</p>
+      <p>先に 660 Hz を聞いておくと、全体の音に戻っても、その中に 660 Hz が<b>まだ聞こえる</b>。Helmholtz は共鳴器（筒を耳に当てる）で同じことをした。</p>
+      <div class="note">BOW ではスクロールの速さで鳴る。ゆっくり下げると、1 本 → 全体への移り変わりを追える。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="5" style="height:320vh">
+    <div class="card">
+      <div class="no">05 ⁄ 10</div>
+      <h2>WOBBLE</h2>
+      <div class="jh">1 本だけ段からずらす — まず、うねる</div>
+      <p>3 倍音を、660 Hz から少しずつ上へずらす（いま <span class="live" data-live="shift">—</span>）。ずれは小さい：1 % で 6.6 Hz。</p>
+      <p>ずれた 1 本だけが、ほかとそろわなくなる。波形の形が <b>n·220·|d| Hz</b> の速さで変わり続け（いま <span class="live" data-live="drift">—</span>）、音色が<em>うねる</em>。梯子の上のダイヤル＝段に対する位相で、ずれた 1 本だけが回る。</p>
+      <p>でも、まだ<b>1 つの音</b>に聞こえる。</p>
+      <div class="note">下の右＝POP MAP（横＝何本目か・縦＝ずれ）。線より下＝うねる・上＝浮き出る。表示のずれは見やすく拡大してある（本当は段の間隔のごく一部）。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="6" style="height:300vh">
+    <div class="card">
+      <div class="no">06 ⁄ 10</div>
+      <h2>POP</h2>
+      <div class="jh">2 % を超えると、その 1 本が浮き出る</div>
+      <p>さらに 2 % → 4 % へ（いま <span class="live" data-live="shift">—</span>・<span class="live" data-live="zone">—</span>）。</p>
+      <p>あるところで、ずれた 1 本が<b>別の音</b>として聞こえ始める。全体の音（220 Hz）とは別に、高い音が 1 本、上に浮いて鳴る。低い倍音（n ≤ 6）では、およそ <b>2 %</b> が境目の目安。高い倍音ほど聞き分けにくく、10 本目は 5.6 %、12 本目は 8 %。</p>
+      <p>聞こえる高さの目安はほとんど動かない（4 % で <span class="live" data-live="pitch">—</span> Hz）。ずれた向きに、少し引っぱられるだけ。</p>
+      <div class="note">境目の目安は Moore, Glasberg &amp; Peters (1986) の傾向をなぞった仮の線。人や音の長さで変わる。最後は耳で確かめる。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="7" style="height:300vh">
+    <div class="card">
+      <div class="no">07 ⁄ 10</div>
+      <h2>MISSING</h2>
+      <div class="jh">基音を消しても、高さは下がらない</div>
+      <p>ずれを戻して、1 段目の基音（220 Hz）を消す（いま 1 段目の強さ <span class="live" data-live="a1">—</span>）。</p>
+      <p>220 Hz の音は、もうどこにも鳴っていない。なのに<b>聞こえる高さは 220 Hz のまま</b>（いま <span class="live" data-live="pitch">—</span> Hz）。音色は細く・軽くなるが、1 段下がって 440 Hz に聞こえたりはしない。</p>
+      <p>波形も PERIOD の山も、<b>4.55 ms</b> のまま。残った 440・660・880 … Hz も、4.55 ms でちょうど整数回まわるから。これが<b>基音の欠落</b>。</p>
+      <div class="note">音量は全体の強さをそろえてあるので、消しても小さくならない（音量の差で高さを判断しないように）。</div>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="8" style="height:280vh">
+    <div class="card">
+      <div class="no">08 ⁄ 10</div>
+      <h2>SPACING</h2>
+      <div class="jh">耳が聞いているのは「間隔」</div>
+      <p>2 倍・3 倍も消して、880 Hz から上だけにする。それでも <span class="live" data-live="pitch">—</span> Hz。</p>
+      <p>梯子の上の弧＝残った倍音どうしの間隔。<b>どれも 220 Hz</b>。0 からこの間隔を 1 歩ぶん置くと、音の無い 1 段目（点線の棒）に着く。耳はこの<b>間隔</b>を高さとして聞いている。</p>
+      <p>電話の声（300 Hz より下は届かない）でも男性の声が低く聞こえるのは、このしくみ。</p>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="9" style="height:380vh">
+    <div class="card">
+      <div class="no">09 ⁄ 10</div>
+      <h2>OCTAVE</h2>
+      <div class="jh">間隔を変えると、高さが変わる</div>
+      <p>偶数番（2・4・6 … 12）だけにする。間隔は <b>440 Hz</b> になり、聞こえる高さは<b>1 オクターブ上</b>の 440 Hz に上がる（いま <span class="live" data-live="pitch">—</span> Hz）。</p>
+      <p>次に 3 の倍数（3・6・9・12）だけにする。間隔 660 Hz → 高さ <b>660 Hz</b>。入れ替えの途中は 2 と 3 が両方鳴るので、間隔は 220 Hz に戻る（いま 間隔 <span class="live" data-live="spacing">—</span>）。</p>
+      <p>聞こえる高さ＝鳴っている倍音の番号の<b>最大公約数 × 220 Hz</b>。</p>
+    </div>
+  </section>
+
+  <section class="ch" data-ch="10" style="height:230vh">
+    <div class="card">
+      <div class="no">10 ⁄ 10</div>
+      <h2>BLUEPRINT</h2>
+      <div class="jh">1 つの音＝間隔のそろった倍音の束</div>
+      <p>このページで立ち寄った音を並べた。高さを決めたのは、一番下の倍音でも一番強い倍音でもなく、<b>倍音どうしの間隔</b>。</p>
+      <p><b>段の上にそろっている間は 1 つに溶ける。1 本だけ外れると、うねり、やがて浮き出る</b>。</p>
+      <div class="btns"><button class="btn" id="bRewind">◀◀ REWIND</button><a class="btn pri" href="../01_harmonic_ladder.html">アプリで自分で描く →</a><a class="btn" href="SCROLL_BEATS_LP.html">SP-02：近い 2 音はなぜ揺れる</a><a class="btn" href="../index.html">INDEX</a></div>
+      <div class="note">聞こえる高さは波形の自己相関（周期の山）で読んだ目安。浮き出る境目は仮の線（n ≤ 6 で 2 %）。音量は全体の強さをそろえている。REWIND はスクロールを巻き戻すだけ。</div>
+    </div>
+  </section>
+</main>
+
+<div id="rail">
+  <div class="rh"><span>FORMULA RAIL</span><span>いま動いている項が光る</span></div>
+  <div class="fr" data-row="a"><span class="fx">x(t) = <span class="t" data-t="sum">Σ aₙ · sin(2π fₙ t)</span>,  n = 1..12</span><span class="fv" id="fvA">—</span></div>
+  <div class="fr" data-row="b"><span class="fx"><span class="t" data-t="fn">fₙ = n · F0</span> · (1 + <span class="t" data-t="d">dₙ</span>),  F0 = 220 Hz</span><span class="fv" id="fvB">—</span></div>
+  <div class="fr" data-row="c"><span class="fx"><span class="t" data-t="period">T = 1/F0 = 4.55 ms：fₙ·T = n 回</span></span><span class="fv" id="fvC">—</span></div>
+  <div class="fr" data-row="d"><span class="fx">うねり：<span class="t" data-t="drift">n · F0 · |dₙ|</span> Hz</span><span class="fv" id="fvD">—</span></div>
+  <div class="fr" data-row="e"><span class="fx">浮き出る：<span class="t" data-t="pop">|dₙ| ≥ 2 %</span>（n ≤ 6・目安）</span><span class="fv" id="fvE">—</span></div>
+  <div class="fr" data-row="f"><span class="fx">高さ：<span class="t" data-t="ac">r(τ) = Σ aₙ² cos(2π fₙ τ) / Σ aₙ²</span> の山</span><span class="fv" id="fvF">—</span></div>
+  <div class="fr" data-row="g"><span class="fx">間隔 = <span class="t" data-t="gcd">gcd(n) · F0</span></span><span class="fv" id="fvG">—</span></div>
+</div>
+
+<script src="../_law/sp01_law.js"></script>
+<script>
+(() => {
+'use strict';
+const L = window.SP01, N = L.N, $ = id => document.getElementById(id);
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+const seg = (u, a, b) => clamp((u - a) / (b - a));
+const sm = t => t * t * (3 - 2 * t);
+const lerp = (a, b, t) => a + (b - a) * t;
+const lerpArr = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
+const pct = d => (d >= 0 ? '+' : '−') + Math.abs(d * 100).toFixed(2) + '%';
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let C = {};
+const readColors = () => { C = { ink: css('--ink'), ink2: css('--ink-2'), mute: css('--mute'), mute2: css('--mute-2'), line: css('--line'), acc: css('--acc'), warn: css('--warn'), bg: css('--bg'), bg2: css('--bg-2'), mono: css('--mono'), display: css('--display'), jp: css('--jp') }; };
+
+// 表示と台本の定数だけ（倍音の法則は law）：波形・ダイヤルの速さ（実時間の 1/4・アプリと同じ）・ずれの拡大表示（アプリと同じ）・取り出す倍音
+const SHOW = .25, SHIFT_VIS = .45, SOLO_N = 3;
+const P = L.PRESETS, SAW = P.SAW, Z0 = L.zeros();
+const only = ns => SAW.map((a, i) => ns.includes(i + 1) ? a : 0);
+const sh3 = d => Z0.map((_, i) => i === SOLO_N - 1 ? d : 0);
+const NOFUND = only([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]), HIGH = only([4, 5, 6, 7, 8, 9, 10, 11, 12]), EVENS = only([2, 4, 6, 8, 10, 12]), THREES = only([3, 6, 9, 12]);
+const D_WOB = .019, D_POP = .04;
+
+// ── 台本：章の中の u → 状態 { amps[12], shifts[12], proof（0..1）, solo（0..1・3 倍音だけを鳴らす重み） }
+const ST = (amps, o = {}) => Object.assign({ amps: amps.slice(), shifts: Z0.slice(), proof: 0, solo: 0 }, o);
+// 章 2：倍音を 1 本ずつ足す（アプリの AUTO と同じ足し方）
+const stackAt = u => SAW.map((a, i) => i === 0 ? 1 : a * clamp(u * (N - 1) - (i - 1)));
+const CH = [
+  { id: 'HARMONIC LADDER', at: () => ST(SAW), P: { LADDER: [0, .04, 1, .62], WAVE: [0, .7, 1, .3] }, lit: ['fn'], rows: 'ab' },
+  { id: 'ONE', at: () => ST(P.SINE), P: { LADDER: [0, 0, 1, .52], WAVE: [0, .56, .58, .44], PERIOD: [.6, .56, .4, .44] }, lit: ['sum', 'ac'], rows: 'abf' },
+  { id: 'STACK', at: u => ST(stackAt(seg(u, .03, .9))), P: { LADDER: [0, 0, 1, .52], WAVE: [0, .56, .58, .44], PERIOD: [.6, .56, .4, .44] }, lit: ['sum'], rows: 'abf' },
+  { id: 'REPEAT', at: u => ST(SAW, { proof: sm(seg(u, .05, .4)) }), P: { LADDER: [0, 0, 1, .52], WAVE: [0, .56, .58, .44], PERIOD: [.6, .56, .4, .44] }, lit: ['period', 'fn'], rows: 'bcf' },
+  { id: 'HEAR OUT', at: u => ST(SAW, { solo: 1 - sm(seg(u, .28, .62)) }), P: { LADDER: [0, 0, 1, .62], WAVE: [0, .66, 1, .34] }, lit: ['fn'], rows: 'ab' },
+  { id: 'WOBBLE', at: u => ST(SAW, { shifts: sh3(D_WOB * sm(seg(u, .05, .88))) }), P: { LADDER: [0, 0, 1, .52], WAVE: [0, .56, .5, .44], POPMAP: [.52, .56, .48, .44] }, lit: ['d', 'drift'], rows: 'bd' },
+  { id: 'POP', at: u => ST(SAW, { shifts: sh3(lerp(D_WOB, D_POP, sm(seg(u, .05, .6)))) }), P: { LADDER: [0, 0, 1, .52], WAVE: [0, .56, .5, .44], POPMAP: [.52, .56, .48, .44] }, lit: ['pop'], rows: 'bde' },
+  { id: 'MISSING', at: u => ST(lerpArr(SAW, NOFUND, sm(seg(u, .1, .55)))), P: { LADDER: [0, 0, 1, .52], WAVE: [0, .56, .58, .44], PERIOD: [.6, .56, .4, .44] }, lit: ['ac'], rows: 'cf' },
+  { id: 'SPACING', at: u => ST(lerpArr(NOFUND, HIGH, sm(seg(u, .08, .42))), { proof: sm(seg(u, .4, .62)) }), P: { LADDER: [0, 0, 1, .58], PERIOD: [0, .62, 1, .38] }, lit: ['gcd'], rows: 'fg' },
+  { id: 'OCTAVE', at: u => { const a = u < .5 ? lerpArr(HIGH, EVENS, sm(seg(u, .05, .32))) : lerpArr(EVENS, THREES, sm(seg(u, .58, .85))); return ST(a, { proof: 1 }); },
+    P: { LADDER: [0, 0, 1, .58], PERIOD: [0, .62, 1, .38] }, lit: ['gcd'], rows: 'fg' },
+  { id: 'BLUEPRINT', at: () => ST(SAW), P: { LADDER: [0, 0, 1, .36], MAP: [0, .4, 1, .6] }, lit: [], rows: 'abcdefg' },
+];
+// スマホ：梯子（上）＋ 図 1 枚（下）
+const PM = [{ LADDER: [0, 0, 1, 1] }, { LADDER: [0, 0, 1, .56], PERIOD: [0, .6, 1, .4] }, { LADDER: [0, 0, 1, .56], WAVE: [0, .6, 1, .4] }, { LADDER: [0, 0, 1, .56], WAVE: [0, .6, 1, .4] },
+  { LADDER: [0, 0, 1, 1] }, { LADDER: [0, 0, 1, .56], POPMAP: [0, .6, 1, .4] }, { LADDER: [0, 0, 1, .56], POPMAP: [0, .6, 1, .4] }, { LADDER: [0, 0, 1, .56], PERIOD: [0, .6, 1, .4] },
+  { LADDER: [0, 0, 1, .56], PERIOD: [0, .6, 1, .4] }, { LADDER: [0, 0, 1, .56], PERIOD: [0, .6, 1, .4] }, { MAP: [0, 0, 1, 1] }];
+CH.forEach((c, i) => { c.PM = PM[i]; });
+const optAt = (i, u) => ({ stops: i === 10 ? sm(seg(u, 0, .6)) : 0 });
+// BLUEPRINT：立ち寄った音（各章が止まっている所を CH.at で評価）。読みは law から
+const STOPS = [[1, .5, '純音'], [2, 1, 'のこぎり波'], [5, .6, null], [6, 1, null], [7, 1, '基音なし'], [8, 1, '4〜12 倍だけ'], [9, .45, '偶数番だけ'], [9, 1, '3 の倍数だけ']]
+  .map(([ch, u, label]) => { const s = CH[ch].at(u), d = s.shifts[SOLO_N - 1];
+    return { ch, label: label || `${SOLO_N} 倍音 +${(d * 100).toFixed(1)} %`, amps: s.amps, shifts: s.shifts, pitch: L.pitch(s.amps, s.shifts), zone: L.zone(s.amps, s.shifts), spacing: L.spacing(s.amps, s.shifts) }; });
+
+// ── スクロールの採寸（SP-02〜05 の LP と同じ）
+const chEls = [...document.querySelectorAll('.ch')];
+let M = [], VH = innerHeight, MAXY = 1;
+function measure() {
+  VH = innerHeight; M = chEls.map(el => ({ top: el.offsetTop, h: el.offsetHeight }));
+  MAXY = Math.max(1, document.documentElement.scrollHeight - VH);
+  $('ticks').innerHTML = M.slice(1).map(m => `<i style="left:${(m.top / MAXY * 100).toFixed(2)}%"></i>`).join('');
+}
+function locate(y) {
+  let i = 0; while (i < M.length - 1 && y >= M[i + 1].top) i++;
+  const m = M[i], dwell = Math.max(1, m.h - VH);
+  const u = clamp((y - m.top) / dwell), k = i < M.length - 1 ? sm(clamp((y - m.top - dwell) / VH)) : 0;
+  return { i, u, k };
+}
+// 状態はスクロール位置の純関数。章のあいだ（k）は強さ・ずれ・proof・solo を要素ごとに線形で混ぜる
+function stateAt(loc) {
+  const a = CH[loc.i].at(loc.u); if (!loc.k) return a;
+  const b = CH[loc.i + 1].at(0), k = loc.k;
+  return { amps: lerpArr(a.amps, b.amps, k), shifts: lerpArr(a.shifts, b.shifts, k), proof: lerp(a.proof, b.proof, k), solo: lerp(a.solo, b.solo, k) };
+}
+
+// ── 読み（強さ・ずれが変わったときだけ law を呼び直す）
+const S = { amps: SAW.slice(), shifts: Z0.slice(), proof: 0, solo: 0, mode: 'off', vol: .35 };
+let R = { ci: 0 }, T = 0, lawKey = '';
+const r6 = v => Math.round(v * 1e6) / 1e6;
+function readState(loc) {
+  S.amps = S.amps.map(r6); S.shifts = S.shifts.map(r6);
+  const key = S.amps.join(',') + '|' + S.shifts.join(',');
+  if (key !== lawKey) { lawKey = key; R.Z = L.zone(S.amps, S.shifts); R.PI = L.pitch(S.amps, S.shifts); R.SP = L.spacing(S.amps, S.shifts); R.G = L.gains(S.amps, S.shifts);
+    R.live = S.amps.filter((_, i) => L.audible(S.amps, i + 1)).length; }
+  R.ci = loc.k > .5 ? loc.i + 1 : loc.i;
+}
+const soloOn = () => S.solo >= .5;
+const zid = () => soloOn() ? 'SOLO' : R.Z.id;
+
+// ── 描画
+const cvs = $('cv'); let g = null, W = 0, H = 0, DPR = 1;
+function fitAll() {
+  DPR = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight;
+  if (cvs.width !== Math.round(W * DPR) || cvs.height !== Math.round(H * DPR)) { cvs.width = Math.round(W * DPR); cvs.height = Math.round(H * DPR); }
+  g = cvs.getContext('2d'); g.setTransform(DPR, 0, 0, DPR, 0, 0); g.clearRect(0, 0, W, H);
+}
+const MOBILE = () => W < 880;
+function stageRect() {
+  if (MOBILE()) return { x: 12, y: 54, w: W - 24, h: H * .36 - 58 };
+  const x = Math.min(40 + 400 + 36, W * .44); return { x, y: 68, w: W - x - 24, h: H - 68 - 22 };
+}
+function frameBox(x, y, w, h, cap) {
+  g.strokeStyle = C.line; g.lineWidth = 1; g.strokeRect(Math.round(x) + .5, Math.round(y) + .5, Math.round(w) - 1, Math.round(h) - 1);
+  g.fillStyle = 'rgba(10,10,10,.55)'; g.fillRect(x + 1, y + 1, w - 2, h - 2);
+  g.font = `10px ${C.mono}`; g.fillStyle = C.mute; g.textAlign = 'left'; g.textBaseline = 'alphabetic'; g.fillText(fitText(cap, w - 20), x + 10, y + 16);
+}
+// 幅に入らない文字は末尾を「…」で切る（スマホの狭い枠で隣と重ならないように）
+function fitText(t, mw) {
+  if (mw <= 0) return '';
+  if (g.measureText(t).width <= mw) return t;
+  let lo = 0, hi = t.length;
+  while (lo < hi) { const m = (lo + hi + 1) >> 1; if (g.measureText(t.slice(0, m) + '…').width <= mw) lo = m; else hi = m - 1; }
+  return t.slice(0, lo) + '…';
+}
+// 右上の数値（見出しと重なる幅では出さない）
+function capRight(x, y, w, cap, t) {
+  g.font = `10px ${C.mono}`; const rw = g.measureText(t).width;
+  if (w - 20 - rw - 16 > g.measureText(cap).width) { g.fillStyle = 'rgba(10,10,10,.9)'; g.fillRect(x + w - 14 - rw, y + 5, rw + 6, 14); g.textAlign = 'right'; g.fillStyle = C.ink2; g.fillText(t, x + w - 10, y + 16); g.textAlign = 'left'; }
+}
+const pad = n => String(n).padStart(2, '0');
+// ずれの拡大表示（アプリと同じ √ 目盛り：±SHIFT_MAX ＝ 段の間隔の SHIFT_VIS）
+const visOff = d => Math.sign(d) * Math.sqrt(Math.abs(d) / L.SHIFT_MAX) * SHIFT_VIS;
+const diamond = (x, y, r) => { g.beginPath(); g.moveTo(x, y - r - 1); g.lineTo(x + r, y); g.lineTo(x, y + r + 1); g.lineTo(x - r, y); g.closePath(); g.fill(); };
+
+const PANELS = {
+  // 梯子：段＝n·F0、棒＝強さ aₙ、◆＝ずれ（拡大表示）、ダイヤル＝段に対する位相（n·F0·|d| Hz・実時間の 1/4）
+  LADDER(x, y, w, h) {
+    const cap = 'LADDER ⁄ 倍音の梯子（段＝220 Hz の整数倍・棒＝強さ）'; frameBox(x, y, w, h, cap);
+    const Z = R.Z, SP = R.SP, pr = S.proof, so = S.solo;
+    capRight(x, y, w, cap, `鳴っている倍音 ${R.live} 本`);
+    // 低い枠（スマホ）では上下の余白を詰める
+    const cmp = h < 230, l = x + 22, r = x + w - 16, width = r - l, rung = width / (N + .6), top = y + (cmp ? 46 : 62), axis = y + h - (cmp ? 26 : 44), Hh = axis - top;
+    if (width < 120 || Hh < 24) return;
+    const X0 = n => l + n * rung, bw = Math.max(3, rung * .42), Ts = T * SHOW, A0 = g.globalAlpha;
+    g.font = `9px ${C.mono}`; g.textAlign = 'center';
+    for (let n = 1; n <= N; n++) {
+      const xx = X0(n); g.strokeStyle = C.line; g.lineWidth = 1; g.setLineDash([2, 4]); g.beginPath(); g.moveTo(xx, top - 20); g.lineTo(xx, axis); g.stroke(); g.setLineDash([]);
+      g.fillStyle = C.mute; g.fillText(n, xx, axis + 12); if (rung > 30 && !cmp) { g.fillStyle = C.mute2; g.fillText(L.fn(n), xx, axis + 23); }
+    }
+    g.strokeStyle = C.mute2; g.beginPath(); g.moveTo(l - 8, axis); g.lineTo(r, axis); g.stroke();
+    g.fillStyle = C.mute; g.textAlign = 'left'; g.fillText('0', l - 8, axis + 12);
+    for (let n = 1; n <= N; n++) {
+      const a = S.amps[n - 1], d = S.shifts[n - 1], xx = X0(n) + visOff(d) * rung, hh = a * Hh;
+      const aud = L.audible(S.amps, n), pop = Z.id === 'POP' && Z.n === n, wob = Z.id === 'WOBBLE' && Z.n === n, isSolo = n === SOLO_N;
+      // HEAR OUT：取り出した 1 本以外は薄く
+      g.globalAlpha = A0 * (isSolo ? 1 : 1 - .82 * so);
+      g.fillStyle = pop ? C.acc : wob ? C.warn : (isSolo && so > .02) ? C.acc : aud ? C.ink2 : C.mute2;
+      if (a > 0) g.fillRect(xx - bw / 2, axis - hh, bw, hh);
+      if (a > 0) {   // ダイヤル
+        const cy = top - (cmp ? 18 : 30), rr = Math.min(cmp ? 5 : 7, bw / 2 + 2), ang = -Math.PI / 2 + 2 * Math.PI * n * L.F0 * d * Ts;
+        g.strokeStyle = d ? (pop ? C.acc : C.warn) : C.mute2; g.lineWidth = 1; g.beginPath(); g.arc(xx, cy, rr, 0, Math.PI * 2); g.stroke();
+        g.beginPath(); g.moveTo(xx, cy); g.lineTo(xx + rr * Math.cos(ang), cy + rr * Math.sin(ang)); g.stroke();
+      }
+      if (d) { const hy = axis + (cmp ? 19 : 32); g.fillStyle = pop ? C.acc : C.warn; diamond(xx, hy, cmp ? 4 : 5); g.strokeStyle = g.fillStyle; g.beginPath(); g.moveTo(X0(n), hy); g.lineTo(xx, hy); g.stroke(); }
+    }
+    g.globalAlpha = A0;
+    // 取り出した 1 本／ずれた 1 本のラベル
+    const nL = so > .02 ? SOLO_N : (Z.id !== 'FUSED' ? Z.n : 0);
+    if (nL) { const d = S.shifts[nL - 1], xx = X0(nL) + visOff(d) * rung, a = S.amps[nL - 1];
+      g.font = `10px ${C.mono}`; g.textAlign = 'center'; g.fillStyle = Z.id === 'WOBBLE' && !so ? C.warn : C.acc;
+      g.fillText(L.fn(nL, d).toFixed(1) + ' Hz' + (d ? ' ' + pct(d) : '') + (so > .5 ? ' だけ' : ''), clamp(xx, l + 60, r - 60), Math.max(cmp ? top + 8 : top - 44, axis - a * Hh - 10)); }
+    // PROOF：隣どうしの間隔の弧と、0 から間隔を 1 歩置いた所（音が無ければ点線の棒）
+    if (pr > .01 && SP) {
+      g.globalAlpha = A0 * pr; const m = SP.members, yArc = top - 6;
+      g.strokeStyle = C.acc; g.fillStyle = C.acc; g.lineWidth = 1; g.font = `9px ${C.mono}`; g.textAlign = 'center';
+      for (let k = 1; k < m.length; k++) {
+        const x1 = X0(m[k - 1]), x2 = X0(m[k]), mx = (x1 + x2) / 2;
+        g.beginPath(); g.moveTo(x1, yArc + 8); g.quadraticCurveTo(mx, yArc - 10, x2, yArc + 8); g.stroke();
+        if (x2 - x1 > 22) g.fillText((m[k] - m[k - 1]) * L.F0, mx, yArc - 6);
+      }
+      const kx = X0(SP.k), y0 = axis;
+      g.setLineDash([4, 3]); g.beginPath(); g.moveTo(X0(0), y0 - 4); g.quadraticCurveTo((X0(0) + kx) / 2, y0 - 34, kx, y0 - 4); g.stroke();
+      if (!SP.fundPresent) g.strokeRect(kx - bw / 2, top + Hh * .35, bw, Hh * .65 - 1);
+      g.setLineDash([]); g.font = `10px ${C.jp}`;
+      // 一番下の段にも音があるときは、弧の数字だけで足りる（棒の上に文字を重ねない）
+      if (!SP.fundPresent) g.fillText(fitText(`間隔 ${SP.f} Hz（ここには音が無い）`, width), clamp(kx, l + 90, r - 90), top + Hh * .35 - 8);
+      g.globalAlpha = A0;
+    }
+    g.textAlign = 'left';
+  },
+  // 波形：220 Hz に合わせて止めた 3 周期（law.wave）。ずれた倍音があると形が n·F0·|d| Hz で変わる（実時間の 1/4）
+  WAVE(x, y, w, h) {
+    const cap = 'WAVE ⁄ 波形（220 Hz に合わせて止めた 3 周期）'; frameBox(x, y, w, h, cap);
+    const left = x + 14, right = x + w - 14, top = y + 30, bottom = y + h - 22;
+    if (right - left < 60 || bottom - top < 30) return;
+    // HEAR OUT のときは取り出した 1 本の正弦波へ寄せる
+    const so = S.solo, solo = Z0.map((_, i) => i === SOLO_N - 1 ? 1 : 0);
+    const Mp = Math.max(120, Math.round(right - left)), span = 3 / L.F0, Ts = T * SHOW, ys = new Float64Array(Mp + 1), y1 = new Float64Array(Mp + 1);
+    let pk = 1e-9, pk1 = 1e-9;
+    for (let j = 0; j <= Mp; j++) { ys[j] = L.wave(S.amps, S.shifts, j / Mp * span, Ts); pk = Math.max(pk, Math.abs(ys[j])); if (so > .01) { y1[j] = L.wave(solo, S.shifts, j / Mp * span, Ts); pk1 = Math.max(pk1, Math.abs(y1[j])); } }
+    const cy = (top + bottom) / 2, sc = (bottom - top) / 2 * .92, X = j => left + j / Mp * (right - left);
+    const val = j => so > .01 ? lerp(ys[j] / pk, y1[j] / pk1, so) : ys[j] / pk;
+    g.strokeStyle = C.line; g.lineWidth = 1; g.beginPath(); g.moveTo(left, cy); g.lineTo(right, cy); g.stroke();
+    g.font = `9px ${C.mono}`; g.textAlign = 'center';
+    for (let k = 0; k <= 3; k++) { const xx = left + k / 3 * (right - left); g.strokeStyle = S.proof > .5 ? C.acc : C.line; g.beginPath(); g.moveTo(xx, top - 4); g.lineTo(xx, bottom); g.stroke(); if (k) { g.fillStyle = C.mute; g.fillText((k / L.F0 * 1000).toFixed(2) + ' ms', clamp(xx, left + 24, right - 24), y + h - 7); } }
+    if (S.proof > .01) {   // 1 周期目を 2・3 周期目に写す。1/F0 ごとにくり返すときだけ重なる
+      g.save(); g.globalAlpha *= .75 * S.proof; g.setLineDash([3, 3]); g.strokeStyle = C.acc; g.lineWidth = 1.2; g.beginPath();
+      const Pp = Math.round(Mp / 3);
+      for (let k = 1; k < 3; k++) for (let j = 0; j <= Pp; j++) { const xx = X(k * Pp + j), yy = cy - val(j) * sc; j ? g.lineTo(xx, yy) : g.moveTo(xx, yy); }
+      g.stroke(); g.restore();
+    }
+    g.strokeStyle = C.ink; g.lineWidth = 1.5; g.beginPath();
+    for (let j = 0; j <= Mp; j++) { const xx = X(j), yy = cy - val(j) * sc; j ? g.lineTo(xx, yy) : g.moveTo(xx, yy); }
+    g.stroke(); g.textAlign = 'left';
+  },
+  // 周期の山：r(τ)（law.autocorr）を 0..3/F0 で。選ばれた山（law.pitch）＝聞こえる高さの目安
+  PERIOD(x, y, w, h) {
+    const cap = 'PERIOD ⁄ 周期の山 r(τ)'; frameBox(x, y, w, h, cap);
+    const left = x + 14, right = x + w - 14, top = y + 44, bottom = y + h - 22;
+    if (right - left < 60 || bottom - top < 24) return;
+    const span = 3 / L.F0, Mp = 300, X = tau => left + tau / span * (right - left), Y = v => bottom - (v + 1) / 2 * (bottom - top);
+    g.strokeStyle = C.line; g.lineWidth = 1; g.beginPath(); g.moveTo(left, Y(0)); g.lineTo(right, Y(0)); g.stroke();
+    g.setLineDash([2, 4]); g.beginPath(); for (let k = 1; k <= 3; k++) { const xx = X(k / L.F0); g.moveTo(xx, top); g.lineTo(xx, bottom); } g.stroke(); g.setLineDash([]);
+    g.strokeStyle = C.mute; g.lineWidth = 1.2; g.beginPath();
+    for (let j = 0; j <= Mp; j++) { const tau = j / Mp * span, xx = X(tau), yy = Y(L.autocorr(S.amps, S.shifts, tau)); j ? g.lineTo(xx, yy) : g.moveTo(xx, yy); }
+    g.stroke();
+    g.font = `10px ${C.mono}`; g.textAlign = 'center';
+    const PI = R.PI;
+    if (PI && PI.tau <= span) {
+      const xx = X(PI.tau), yy = Y(PI.strength);
+      g.strokeStyle = C.acc; g.beginPath(); g.moveTo(xx, yy); g.lineTo(xx, bottom); g.stroke();
+      g.fillStyle = C.acc; g.beginPath(); g.arc(xx, yy, 3.5, 0, Math.PI * 2); g.fill();
+      const t = fitText(`${(PI.tau * 1000).toFixed(2)} ms → ${PI.f.toFixed(1)} Hz`, right - left), tw = g.measureText(t).width;
+      g.fillText(t, clamp(xx, left + tw / 2, right - tw / 2), top - 10);
+    }
+    g.fillStyle = C.mute; g.textAlign = 'left'; g.fillText('0', left, y + h - 7); g.textAlign = 'right'; g.fillText((span * 1000).toFixed(1) + ' ms', right, y + h - 7);
+    g.textAlign = 'left';
+  },
+  // 浮き出る目安（law.popThreshold）：横＝何本目か・縦＝ずれ |d|。点＝いまずれている倍音
+  POPMAP(x, y, w, h) {
+    const cap = 'POP MAP ⁄ 浮き出るずれの目安'; frameBox(x, y, w, h, cap);
+    const Z = R.Z; if (Z.n) capRight(x, y, w, cap, `n=${Z.n} · ${pct(Z.shift)} · 目安 ${(L.popThreshold(Z.n) * 100).toFixed(1)}%`);
+    const pl = x + 40, pr = x + w - 14, pt = y + 30, pb = y + h - 24, DM = L.SHIFT_MAX;
+    if (pr - pl < 80 || pb - pt < 30) return;
+    const X = n => pl + (n - .5) / N * (pr - pl), Y = d => pb - (pb - pt) * clamp(d / DM);
+    // 線より上＝POP（黄の淡い面）
+    g.fillStyle = 'rgba(255,212,0,.10)'; g.beginPath(); g.moveTo(pl, pt);
+    for (let n = 1; n <= N; n++) { const th = L.popThreshold(n); g.lineTo(pl + (n - 1) / N * (pr - pl), Y(th)); g.lineTo(pl + n / N * (pr - pl), Y(th)); }
+    g.lineTo(pr, pt); g.closePath(); g.fill();
+    g.strokeStyle = C.acc; g.lineWidth = 1.2; g.beginPath();
+    for (let n = 1; n <= N; n++) { const th = L.popThreshold(n), x1 = pl + (n - 1) / N * (pr - pl), x2 = pl + n / N * (pr - pl); n === 1 ? g.moveTo(x1, Y(th)) : g.lineTo(x1, Y(th)); g.lineTo(x2, Y(th)); }
+    g.stroke();
+    g.strokeStyle = C.line; g.lineWidth = 1; g.strokeRect(pl + .5, pt + .5, pr - pl, pb - pt);
+    g.font = `10px ${C.mono}`; g.fillStyle = C.mute; g.textAlign = 'right';
+    [0, .02, .04, .06, .08].forEach(d => g.fillText((d * 100).toFixed(0) + '%', pl - 5, Y(d) + 3));
+    g.textAlign = 'center'; for (let n = 1; n <= N; n++) if (n === 1 || n % 3 === 0 || n === SOLO_N) g.fillText(n, X(n), pb + 13);
+    g.font = `10px ${C.jp}`; g.textAlign = 'left'; g.fillStyle = C.acc; g.fillText('POP 浮き出る', pl + 6, pt + 13);
+    g.fillStyle = C.warn; g.textAlign = 'right'; g.fillText('WOBBLE うねる（線より下）', pr - 6, pb - 6); g.textAlign = 'left';
+    // いまずれている倍音
+    for (let n = 1; n <= N; n++) { const d = Math.abs(S.shifts[n - 1]); if (!d || !L.audible(S.amps, n)) continue;
+      const pop = L.popScore(S.amps, S.shifts, n) >= 1, col = pop ? C.acc : C.warn;
+      g.strokeStyle = col; g.setLineDash([3, 3]); g.beginPath(); g.moveTo(X(n), pb); g.lineTo(X(n), Y(d)); g.stroke(); g.setLineDash([]);
+      g.fillStyle = col; g.fillRect(X(n) - 5, Y(d) - 5, 10, 10); g.strokeStyle = C.bg; g.strokeRect(X(n) - 5, Y(d) - 5, 10, 10); }
+    g.textAlign = 'left';
+  },
+  // BLUEPRINT：立ち寄った音の一覧（小さな梯子・聞こえる高さ・間隔・読み）。数値はすべて law
+  MAP(x, y, w, h, o) {
+    frameBox(x, y, w, h, 'BLUEPRINT ⁄ 立ち寄った音（聞こえる高さ＝間隔）');
+    const n = Math.round(STOPS.length * o.stops); if (!n) return;
+    const pl = x + 12, pr = x + w - 12, pt = y + 28, rowH = Math.min(46, (y + h - 10 - pt) / STOPS.length);
+    if (pr - pl < 160 || rowH < 18) return;
+    const narrow = pr - pl < 360, lw = narrow ? 0 : Math.min(130, (pr - pl) * .26), ladW = Math.min(170, (pr - pl) * (narrow ? .42 : .34));
+    STOPS.slice(0, n).forEach((s, j) => {
+      const ry = pt + j * rowH, mid = ry + rowH / 2;
+      g.strokeStyle = C.line; g.beginPath(); g.moveTo(pl, ry + rowH - .5); g.lineTo(pr, ry + rowH - .5); g.stroke();
+      g.font = `600 11px ${C.display}`; g.fillStyle = C.acc; g.textAlign = 'left'; g.textBaseline = 'middle'; g.fillText(pad(s.ch), pl, mid);
+      let cx = pl + 30;
+      if (!narrow) { g.font = `11px ${C.jp}`; g.fillStyle = C.ink2; g.fillText(fitText(s.label, lw - 8), cx, mid); cx += lw; }
+      // 小さな梯子
+      const bwm = ladW / N, bh = rowH - 12;
+      for (let k = 1; k <= N; k++) { const a = s.amps[k - 1], d = s.shifts[k - 1], xx = cx + (k - 1) * bwm + visOff(d) * bwm;
+        const pop = s.zone.id === 'POP' && s.zone.n === k, wob = s.zone.id === 'WOBBLE' && s.zone.n === k;
+        g.fillStyle = C.line; g.fillRect(cx + (k - 1) * bwm + bwm / 2 - .5, ry + 6, 1, bh);
+        if (a > 0) { g.fillStyle = pop ? C.acc : wob ? C.warn : C.ink2; const hh = Math.max(1, a * bh); g.fillRect(xx + bwm * .2, ry + 6 + bh - hh, Math.max(1.5, bwm * .6), hh); } }
+      if (s.spacing && !s.spacing.fundPresent) { g.strokeStyle = C.acc; g.setLineDash([2, 2]); g.strokeRect(cx + (s.spacing.k - 1) * bwm + bwm * .2 + .5, ry + 6 + .5, Math.max(1.5, bwm * .6), bh - 1); g.setLineDash([]); }
+      cx += ladW + 14;
+      g.font = `600 14px ${C.display}`; g.fillStyle = C.ink; g.fillText(s.pitch.f.toFixed(1), cx, mid); cx += 52;
+      g.font = `10px ${C.mono}`; g.fillStyle = C.mute; g.fillText('Hz', cx, mid); cx += 22;
+      const zt = s.zone.id, zc = zt === 'POP' ? C.acc : zt === 'WOBBLE' ? C.warn : C.mute;
+      const rest = s.spacing ? `間隔 ${s.spacing.f}${s.spacing.fundPresent ? '' : '（音なし）'}` : '';
+      g.fillStyle = zc; g.fillText(zt, cx, mid); g.fillStyle = C.mute; g.fillText(fitText(rest, pr - cx - 60), cx + 58, mid);
+      g.textBaseline = 'alphabetic';
+    });
+    g.textAlign = 'left';
+  },
+};
+
+function draw(loc) {
+  fitAll();
+  const st = stageRect(), key = MOBILE() ? 'PM' : 'P', A = CH[loc.i][key], B = loc.k > 0 ? CH[loc.i + 1][key] : {};
+  const names = new Set([...Object.keys(A), ...Object.keys(B)]);
+  const oa = optAt(loc.i, loc.u), ob = loc.k > 0 ? optAt(loc.i + 1, 0) : oa;
+  const opt = { stops: lerp(oa.stops, ob.stops, loc.k) };
+  for (const n of names) {
+    let r, al;
+    if (A[n] && B[n]) { r = A[n].map((v, j) => lerp(v, B[n][j], loc.k)); al = 1; }
+    else if (A[n]) { r = A[n]; al = 1 - loc.k; } else { r = B[n]; al = loc.k; }
+    if (al < .01) continue;
+    const px = st.x + r[0] * st.w, py = st.y + r[1] * st.h, pw = r[2] * st.w, ph = r[3] * st.h;
+    if (pw < 40 || ph < 40) continue;
+    g.save(); g.globalAlpha = al; g.beginPath(); g.rect(px, py, pw, ph); g.clip();
+    PANELS[n](px, py, pw, ph, opt); g.restore();
+  }
+}
+
+// ── HUD と FORMULA RAIL
+let lastHud = '';
+function hud(loc, y) {
+  const ci = R.ci, Z = R.Z, PI = R.PI, SP = R.SP;
+  const key = [lawKey, ci, soloOn(), S.solo.toFixed(2)].join('|');
+  $('prog').style.width = (clamp(y / MAXY) * 100).toFixed(2) + '%';
+  if (key === lastHud) return; lastHud = key;
+  $('chl').innerHTML = `${pad(ci)} ⁄ 10 <b>${CH[ci].id}</b>`;
+  $('hF').textContent = soloOn() ? L.fn(SOLO_N).toFixed(1) : PI ? PI.f.toFixed(1) : '—';
+  $('hMode').textContent = soloOn() ? `Hz · ${SOLO_N} 倍音だけ` : 'Hz · 聞こえる高さ（目安）';
+  const zl = $('hZone'), z = zid(); zl.className = 'zone ' + z; zl.textContent = z;
+  const lit = new Set(CH[ci].lit), rows = CH[ci].rows;
+  document.querySelectorAll('#rail .t').forEach(e => e.classList.toggle('on', lit.has(e.dataset.t)));
+  document.querySelectorAll('#rail .fr').forEach(e => { e.classList.toggle('on', rows.includes(e.dataset.row)); e.classList.toggle('lit', !!e.querySelector('.t.on')); });
+  const d3 = S.shifts[SOLO_N - 1];
+  $('fvA').textContent = `${R.live} 本`;
+  $('fvB').textContent = `n=${SOLO_N} → ${L.fn(SOLO_N, d3).toFixed(1)} Hz${d3 ? ' ' + pct(d3) : ''}`;
+  $('fvC').textContent = PI ? `τ ${(PI.tau * 1000).toFixed(3)} ms` : '—';
+  $('fvD').textContent = Z.n ? `${Z.drift.toFixed(2)} Hz` : '0 Hz（止まる）';
+  $('fvE').textContent = Z.n ? `${(Math.abs(Z.shift) * 100).toFixed(2)} ÷ ${(L.popThreshold(Z.n) * 100).toFixed(1)} = ${Z.score.toFixed(2)}` : '—';
+  $('fvF').textContent = PI ? `${PI.f.toFixed(1)} Hz · 山 ${PI.strength.toFixed(3)}` : '—';
+  $('fvG').textContent = SP ? `gcd(${SP.members.length > 5 ? SP.members.slice(0, 4).join(',') + ',…' : SP.members.join(',')}) = ${SP.k} → ${SP.f} Hz` : '—';
+  document.querySelectorAll('[data-live]').forEach(e => { const k = e.dataset.live;
+    e.textContent = k === 'pitch' ? (PI ? PI.f.toFixed(1) : '—') : k === 'zone' ? z : k === 'count' ? `${R.live} 本` : k === 'shift' ? `${pct(d3)}・${L.fn(SOLO_N, d3).toFixed(1)} Hz`
+      : k === 'drift' ? `${L.drift(SOLO_N, d3).toFixed(2)} Hz` : k === 'a1' ? S.amps[0].toFixed(2) : k === 'spacing' ? (SP ? SP.f + ' Hz' : '—')
+      : k === 'solo' ? (S.solo > .98 ? `${SOLO_N} 倍音だけ` : S.solo < .02 ? '全体の音' : `ほかの 11 本 ${Math.round((1 - S.solo) * 100)}%`) : ''; });
+}
+
+// ── 音：倍音 12 本の正弦波（強さは law の gains＝全体の強さをそろえる）＋ HEAR OUT 用の 3 倍音 1 本（law の playPing と同じ音量）。
+//    solo で 2 つを入れ替える。BOW（既定）＝スクロールの速さで鳴る／♪ ON＝鳴りっぱなし
+let AC = null, master = null, soloOsc = null, soloG = null; const oscs = [], ogains = [];
+function ensureAudio() {
+  if (!AC) {
+    AC = new AudioContext(); master = AC.createGain(); master.gain.value = 0;
+    const lim = AC.createDynamicsCompressor(); lim.threshold.value = -10; lim.ratio.value = 20; lim.attack.value = .003; lim.release.value = .15;
+    master.connect(lim).connect(AC.destination);
+    for (let n = 1; n <= N; n++) { const o = AC.createOscillator(), gg = AC.createGain(); o.type = 'sine'; o.frequency.value = L.fn(n, S.shifts[n - 1]); gg.gain.value = 0; o.connect(gg).connect(master); o.start(); oscs.push(o); ogains.push(gg); }
+    soloOsc = AC.createOscillator(); soloOsc.type = 'sine'; soloOsc.frequency.value = L.fn(SOLO_N); soloG = AC.createGain(); soloG.gain.value = 0; soloOsc.connect(soloG).connect(master); soloOsc.start();
+  }
+  if (AC.state === 'suspended') AC.resume();
+}
+const soloLevel = () => L.PING_LEVEL * L.hfAtt(L.fn(SOLO_N, S.shifts[SOLO_N - 1]));
+let vel = 0, bowG = 0;
+function updateAudio() {
+  if (!AC) return;
+  const t = AC.currentTime, G = R.G;
+  for (let n = 1; n <= N; n++) { oscs[n - 1].frequency.setTargetAtTime(L.fn(n, S.shifts[n - 1]), t, .02); ogains[n - 1].gain.setTargetAtTime(G[n - 1] * (1 - S.solo), t, .03); }
+  soloOsc.frequency.setTargetAtTime(L.fn(SOLO_N, S.shifts[SOLO_N - 1]), t, .02); soloG.gain.setTargetAtTime(soloLevel() * S.solo, t, .03);
+  let target = 0, tc = .12;
+  if (S.mode === 'on') target = S.vol;
+  else if (S.mode === 'bow') { target = S.vol * clamp(vel / 900); tc = target > bowG ? .06 : .55; }
+  bowG = target;
+  master.gain.setTargetAtTime(target, t, tc);
+}
+let autoArm = true;
+function setMode(m) {
+  S.mode = m; autoArm = false; if (m !== 'off') ensureAudio();
+  document.querySelectorAll('#segSnd button').forEach(b => b.classList.toggle('on', b.dataset.v === m));
+  updateAudio();
+}
+
+// ── なめらかな慣性（SP-02〜05 の LP と同じ）
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let tY = scrollY, cY = scrollY, smoothing = false, rewind = null;
+addEventListener('wheel', e => {
+  if (e.ctrlKey || REDUCED) return;
+  e.preventDefault(); rewind = null;
+  if (!smoothing) { tY = cY = scrollY; }
+  const d = e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? VH : 1);
+  tY = clamp(tY + d, 0, MAXY); smoothing = true;
+}, { passive: false });
+const stopRewind = () => { rewind = null; };
+addEventListener('keydown', stopRewind); addEventListener('touchstart', stopRewind, { passive: true }); addEventListener('mousedown', e => { if (e.target.id !== 'bRewind') stopRewind(); });
+function scrollStep(dt) {
+  if (rewind) {
+    const k = clamp((NOW - rewind.t0) / rewind.d), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    window.scrollTo(0, rewind.y0 * (1 - e)); if (k >= 1) rewind = null; return;
+  }
+  if (!smoothing) return;
+  cY += (tY - cY) * (1 - Math.exp(-dt * 6));
+  if (Math.abs(tY - cY) < .5) { cY = tY; smoothing = false; }
+  window.scrollTo(0, cY);
+}
+function startRewind() { smoothing = false; rewind = { y0: scrollY, t0: NOW, d: clamp(scrollY / 2400, 3, 9) * 1000 }; }
+
+// ── ループ（時間で進むのは波形・ダイヤルの位相 T だけ）
+let NOW = performance.now(), lastY = scrollY, LOC = { i: 0, u: 0, k: 0 };
+function tick(now, dt) {
+  NOW = now; T += dt;
+  scrollStep(dt);
+  const y = scrollY;
+  vel = lerp(vel, Math.abs(y - lastY) / Math.max(dt, 1e-3), .25); lastY = y;
+  LOC = locate(y); Object.assign(S, stateAt(LOC));
+  readState(LOC); updateAudio(); draw(LOC); hud(LOC, y);
+}
+let manual = false, lastT = 0;
+function frame(now) {
+  if (!manual) { const t = now / 1000, dt = Math.min(.05, t - (lastT || t)); lastT = t; tick(now, dt); }
+  requestAnimationFrame(frame);
+}
+
+// ── 入力
+document.querySelectorAll('#segSnd button').forEach(b => b.onclick = () => setMode(b.dataset.v));
+$('bStart').onclick = () => setMode('bow');
+// 既定は BOW：ブラウザは操作なしに音を出せないので、最初のクリックで BOW を入れる（自分で OFF を選んだら入れない）
+addEventListener('pointerdown', e => { if (!autoArm) return; autoArm = false; if (S.mode === 'off' && !e.target.closest('#segSnd')) setMode('bow'); }, true);
+$('bRewind').onclick = startRewind;
+$('vol').oninput = e => { S.vol = e.target.value / 100; updateAudio(); };
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === 's' || e.key === 'S') { const order = ['off', 'bow', 'on']; setMode(order[(order.indexOf(S.mode) + 1) % 3]); }
+});
+addEventListener('resize', () => { measure(); lastHud = ''; });
+readColors(); measure();
+document.fonts && document.fonts.ready.then(() => { readColors(); measure(); lastHud = ''; });
+requestAnimationFrame(frame);
+// ?ch=章&u=0..1 でその場面から開く（共有・検証用）
+(() => { const q = new URLSearchParams(location.search), ch = q.get('ch'); if (ch == null) return;
+  const go = () => { measure(); const i = clamp(+ch | 0, 0, M.length - 1), m = M[i]; window.scrollTo(0, m.top + clamp(+(q.get('u') || 0)) * Math.max(1, m.h - VH)); tY = cY = scrollY; };
+  go(); document.fonts && document.fonts.ready.then(go); })();
+
+// ── 検証フック（Claude 側）
+const r4 = v => +v.toFixed(4);
+window.__LP = {
+  law: L, CH, STOPS, locate, stateAt, measure, read: () => R, S,
+  loc: () => LOC, maxY: () => MAXY, metrics: () => M,
+  goto: (i, u = 0) => { smoothing = false; rewind = null; const m = M[i], y = m.top + u * Math.max(1, m.h - VH); window.scrollTo(0, y); tY = cY = scrollY; return scrollY; },
+  setMode, rewind: startRewind, rewinding: () => !!rewind,
+  audio: () => AC && { state: AC.state, master: +master.gain.value.toFixed(3), f: oscs.map(o => +o.frequency.value.toFixed(2)), gain: ogains.map(gg => r4(gg.gain.value)),
+    target: R.G.map(v => r4(v * (1 - S.solo))), solo: { f: +soloOsc.frequency.value.toFixed(2), gain: r4(soloG.gain.value), target: r4(soloLevel() * S.solo) } },
+  vel: () => vel, autoArm: () => autoArm,
+  manual: on => { manual = on; },
+  step: (sec = 1 / 60, fps = 60) => { for (let i = 0, n = Math.max(1, Math.round(sec * fps)); i < n; i++) tick(NOW + 1000 / fps, 1 / fps); },
+  wheel: dy => { if (!smoothing) tY = cY = scrollY; tY = clamp(tY + dy, 0, MAXY); smoothing = true; },
+  // いまの状態と読み（すべて law から）
+  state: () => ({ ch: R.ci, id: CH[R.ci].id, i: LOC.i, u: r4(LOC.u), k: r4(LOC.k), amps: S.amps.map(r4), shifts: S.shifts.map(r4), proof: r4(S.proof), solo: r4(S.solo),
+    zone: zid(), zoneLaw: R.Z.id, zn: R.Z.n, score: r4(R.Z.score), drift: r4(R.Z.drift), pitch: R.PI && +R.PI.f.toFixed(2), tau: R.PI && +(R.PI.tau * 1000).toFixed(3),
+    spacing: R.SP && { f: R.SP.f, k: R.SP.k, members: R.SP.members, fundPresent: R.SP.fundPresent }, live: R.live }),
+};
+})();
+</script>
+</body>
+</html>
