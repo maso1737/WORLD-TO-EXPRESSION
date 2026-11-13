@@ -97,7 +97,8 @@ const WORKS = [
     truth:'Lenia — なめらかなライフゲーム（Chan 2019）', draw:'lenia' },
   { n:'06', en:'Turing', jp:'誰も模様を描いていない', url:'06_turing.html', scroll:'scroll/SCROLL_TURING_LP.html', rule:'二つの薬品がにじみ、片方がもう片方を食べて増える。片方は注がれ、片方は取り除かれる。', truth:'反応拡散 — Gray-Scott モデル（Pearson 1993）', draw:'turing' },
   { n:'07', en:'Sandpile', jp:'誰も崩れ方を決めていない', url:'07_sandpile.html', scroll:'scroll/SCROLL_SANDPILE_LP.html', rule:'一粒ずつ落とす。4つたまったら崩れて、となりに1粒ずつ配る。端から落ちた粒は消える。', truth:'砂山モデル — 自己組織化臨界（Bak–Tang–Wiesenfeld 1987）', draw:'sandpile' },
-  { n:'08', en:'Sync', jp:'誰も合図していない', url:'08_sync.html', scroll:'scroll/SCROLL_SYNC_LP.html', isNew:true, rule:'自分の時計で光る。見える距離の仲間が進めば急ぎ、遅れていれば少し待つ。', truth:'同期 — 結合振動子（Kuramoto 1975）', draw:'sync' },
+  { n:'08', en:'Sync', jp:'誰も合図していない', url:'08_sync.html', scroll:'scroll/SCROLL_SYNC_LP.html', rule:'自分の時計で光る。見える距離の仲間が進めば急ぎ、遅れていれば少し待つ。', truth:'同期 — 結合振動子（Kuramoto 1975）', draw:'sync' },
+  { n:'09', en:'Growth', jp:'誰も枝を描いていない', url:'09_growth.html', isNew:true, rule:'でたらめに歩き、塊のとなりに来たら、そこで止まる。次の粒がまた遠くから。', truth:'拡散律速凝集 DLA（Witten–Sander 1981）', draw:'dla' },
 ];
 
 const host = document.getElementById('works');
@@ -151,6 +152,22 @@ function poster(cv, kind){
         g.beginPath(); g.moveTo(x - Math.cos(a)*7, y - Math.sin(a)*7); g.lineTo(x + Math.cos(a)*2, y + Math.sin(a)*2); g.stroke();
       }
     }
+  } else if (kind === 'dla'){
+    // a real little DLA: walkers released on a circle, stick on touching (8 neighbours), cell = 3 px
+    const cs = 3, gw = Math.ceil(W/cs), gh = Math.ceil(H/cs), occ = new Uint8Array(gw*gh), age = new Int32Array(gw*gh);
+    let rs = 9; const rnd = ()=>{ rs = (rs*1664525+1013904223)>>>0; return rs/4294967296; };
+    const cx = gw>>1, cy = gh>>1; occ[cy*gw+cx] = 1; let rmax = 1, n = 1;
+    const touch = (x,y)=>{ for (let dy=-1;dy<=1;dy++) for (let dx=-1;dx<=1;dx++){ const u=x+dx,v=y+dy; if (u>=0&&v>=0&&u<gw&&v<gh&&occ[v*gw+u]) return true; } return false; };
+    while (n < 6000 && rmax < Math.min(gw,gh)/2-4){
+      const a = rnd()*6.2832; let x = Math.round(cx+Math.cos(a)*(rmax+4)), y = Math.round(cy+Math.sin(a)*(rmax+4));
+      for (let s=0; s<4000; s++){
+        const d = (rnd()*4)|0; x += [1,-1,0,0][d]; y += [0,0,1,-1][d];
+        if ((x-cx)**2+(y-cy)**2 > (rmax+12)**2) break;
+        if (touch(x,y)){ occ[y*gw+x] = 1; age[y*gw+x] = ++n; rmax = Math.max(rmax, Math.hypot(x-cx,y-cy)); break; }
+      }
+    }
+    for (let j=0;j<gh;j++) for (let i=0;i<gw;i++){ const k=j*gw+i; if (!occ[k]) continue; const t = age[k]/n;
+      g.fillStyle = `rgb(${40+196*t|0},${14+234*t|0},${92+163*t|0})`; g.fillRect(i*cs, j*cs, cs, cs); }
   } else if (kind === 'sync'){
     // Actual WAVES rule: random independent phases, 4-neighbour torus, alpha=.35.
     // Compute once; resize only redraws the resulting phase field. No planted spirals.

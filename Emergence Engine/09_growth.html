@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>EE_09 // GROWTH</title>
+<style>
+/* ══════════════════════════════════════════════════════════════
+   EMERGENCE ENGINE // EE_09 — GROWTH (diffusion-limited aggregation, Witten–Sander 1981)
+   KINETIC STAGE design system + EE overrides (SPEC EE-01 §2)
+   NOIR base · ice=data · gold=labels & the world's edge · rouge=here&now (your hand)
+   ══════════════════════════════════════════════════════════════ */
+:root{
+  --rouge:#FF4FA8; --ice:#5AE9FF; --gold:#FFD27A; --lavender:#B58EFF;
+  --white:#F8EFFF; --noir:#070707;
+  --mono:'IBM Plex Mono',monospace;
+  --disp:'Barlow Condensed',sans-serif;
+  --orn:'Cormorant Garamond',serif;
+  --jp:'Noto Sans JP',sans-serif;
+  --jp-serif:'Noto Serif JP',serif;
+  --mute:rgba(181,142,255,0.62);      /* 二次テキスト下限（既存規約） */
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;background:var(--noir);color:var(--white);
+  font-family:var(--mono);overflow:hidden;-webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;}
+
+#app{display:grid;height:100vh;width:100vw;}
+body.naked #app{grid-template-rows:1fr;grid-template-columns:1fr;}
+body.naked #topbar,body.naked #side,body.naked #graphwrap,body.naked #bottombar{display:none;}
+body.naked #stage{grid-column:1/-1;grid-row:1/-1;}
+body.naked .stage-deco{opacity:0;}
+body.revealed #app{grid-template-rows:44px 1fr 130px 44px;grid-template-columns:1fr 300px;}
+body.revealed #topbar{grid-area:1/1/2/-1;}
+body.revealed #stage {grid-area:2/1/3/2;}
+body.revealed #graphwrap{grid-area:3/1/4/2;}
+body.revealed #side  {grid-area:2/2/4/3;}
+body.revealed #bottombar{grid-area:4/1/5/-1;}
+
+#stage{position:relative;overflow:hidden;background:var(--noir);touch-action:none;cursor:crosshair;}
+#world{display:block;width:100%;height:100%;}
+#over{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+
+.stage-deco{position:absolute;inset:0;pointer-events:none;transition:opacity .4s ease;z-index:3;}
+.corner{position:absolute;width:14px;height:14px;}
+.corner::before,.corner::after{content:'';position:absolute;background:linear-gradient(90deg,var(--gold),var(--rouge));box-shadow:0 0 6px rgba(255,79,168,.4);}
+.corner::before{width:100%;height:1px;} .corner::after{width:1px;height:100%;}
+.corner.tl{top:10px;left:10px;} .corner.tr{top:10px;right:10px;transform:scaleX(-1);}
+.corner.bl{bottom:10px;left:10px;transform:scaleY(-1);} .corner.br{bottom:10px;right:10px;transform:scale(-1);}
+.po{position:absolute;top:12px;right:16px;text-align:right;}
+.po-num{font-family:var(--orn);font-style:italic;font-weight:700;font-size:clamp(40px,6vw,72px);line-height:1;letter-spacing:-.03em;
+  color:var(--ice);filter:drop-shadow(0 0 16px rgba(90,233,255,.35));}
+.po-en{font-family:var(--orn);font-style:italic;font-weight:700;font-size:clamp(14px,2vw,22px);color:var(--gold);line-height:1;}
+.po-jp{font-family:var(--jp-serif);font-size:11px;color:var(--mute);margin-top:5px;letter-spacing:.22em;}
+.stage-bignum{position:absolute;bottom:-38px;left:-8px;font-family:var(--orn);font-style:italic;font-weight:700;
+  font-size:clamp(160px,26vw,340px);color:transparent;-webkit-text-stroke:1.5px rgba(90,233,255,.10);line-height:1;}
+
+#topbar{border-bottom:1px solid rgba(255,210,122,.12);display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;font-size:10px;color:rgba(248,239,255,.5);letter-spacing:.22em;background:rgba(255,255,255,.012);}
+#topbar a{border:1px solid rgba(255,210,122,.3);color:var(--gold);text-decoration:none;padding:2px 8px;letter-spacing:.2em;}
+#topbar a:hover{background:rgba(255,210,122,.1);}
+#bottombar{border-top:1px solid rgba(255,210,122,.12);display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;font-size:9px;color:var(--mute);letter-spacing:.18em;}
+#bottombar #status.hot{color:var(--rouge);text-shadow:0 0 6px rgba(255,79,168,.4);}
+.kbd{background:rgba(255,79,168,.08);border:1px solid rgba(255,79,168,.35);color:var(--rouge);
+  font-family:var(--mono);font-size:8px;padding:1px 5px;border-radius:2px;letter-spacing:.1em;}
+#sc-open-btn{cursor:pointer;color:var(--mute);font-size:9px;letter-spacing:.25em;padding:2px 8px;
+  border:1px solid rgba(255,210,122,.25);border-radius:2px;transition:all .15s;}
+#sc-open-btn:hover{color:var(--gold);border-color:var(--gold);background:rgba(255,210,122,.06);}
+
+#graphwrap{position:relative;border-top:1px solid rgba(255,210,122,.1);background:var(--noir);overflow:hidden;}
+#graph{position:absolute;inset:0;width:100%;height:100%;display:block;}
+#graph-lbl{position:absolute;top:4px;left:8px;font-size:8px;letter-spacing:.32em;color:var(--mute);pointer-events:none;}
+
+#side{display:flex;flex-direction:column;overflow-y:auto;background:rgba(255,255,255,.015);border-left:1px solid rgba(255,210,122,.08);}
+#side::-webkit-scrollbar{width:2px;} #side::-webkit-scrollbar-thumb{background:var(--rouge);}
+.sp{border-bottom:1px solid rgba(181,142,255,.08);padding:13px 15px;flex-shrink:0;}
+.spl{font-size:9px;letter-spacing:.4em;color:var(--mute);margin-bottom:10px;}
+.tr{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;font-size:10px;color:rgba(248,239,255,.72);letter-spacing:.05em;gap:8px;}
+.tr:last-child{margin-bottom:0;}
+.tr > span:first-child{min-width:62px;}
+.sl{font-size:9px;color:var(--mute);letter-spacing:.12em;white-space:nowrap;min-width:44px;text-align:right;}
+input[type=range]{-webkit-appearance:none;flex:1;height:2px;background:rgba(255,255,255,.12);outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),var(--rouge));box-shadow:0 0 8px rgba(255,79,168,.5);cursor:pointer;}
+input[type=range]:disabled{opacity:.3;}
+.data-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(181,142,255,.08);font-size:10px;}
+.data-row:last-child{border-bottom:none;}
+.dk{color:var(--mute);letter-spacing:.05em;}
+.dv{color:var(--gold);font-weight:600;font-variant-numeric:tabular-nums;}
+.dv.neon{color:var(--ice);text-shadow:0 0 6px rgba(90,233,255,.45);}
+#badge{font-size:9px;letter-spacing:.2em;padding:2px 8px;border-radius:2px;border:1px solid;}
+#badge.gas{color:var(--gold);border-color:rgba(255,210,122,.4);}
+#badge.edge{color:var(--rouge);border-color:rgba(255,79,168,.45);}
+#badge.mill{color:var(--gold);border-color:rgba(255,210,122,.6);box-shadow:0 0 10px rgba(255,210,122,.3);}
+#badge.flock{color:var(--ice);border-color:rgba(90,233,255,.5);box-shadow:0 0 10px rgba(90,233,255,.3);}
+/* the three rules */
+.rule{border:1px solid rgba(181,142,255,.14);border-radius:2px;padding:8px 9px 7px;margin-bottom:7px;}
+.rule:last-of-type{margin-bottom:0;}
+.rule.off{opacity:.45;}
+.rule-h{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.rule-h .n{font-family:var(--orn);font-style:italic;font-weight:700;font-size:18px;line-height:1;width:12px;}
+.rule-h .nm{font-size:10px;letter-spacing:.2em;flex:1;}
+.rule-h .jp{display:block;font-family:var(--jp);font-size:9px;letter-spacing:.06em;color:var(--mute);margin-top:2px;}
+.rule .tr{margin:0;}
+.rule.sep .n,.rule.sep .nm{color:var(--gold);}
+.rule.ali .n,.rule.ali .nm{color:var(--ice);}
+.rule.coh .n,.rule.coh .nm{color:var(--lavender);}
+.rule-cap{font-family:var(--jp);font-size:9px;color:var(--mute);letter-spacing:.08em;line-height:1.7;margin-top:9px;}
+.rule-cap b{color:var(--gold);font-family:var(--mono);font-weight:600;}
+/* presets */
+.walkgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.wb{font-size:8.5px;letter-spacing:.12em;padding:7px 4px;border:1px solid rgba(90,233,255,.25);color:var(--ice);
+  background:rgba(90,233,255,.04);cursor:pointer;border-radius:2px;transition:all .15s;text-align:center;}
+.wb:hover{background:rgba(90,233,255,.14);box-shadow:0 0 8px rgba(90,233,255,.25);}
+.wb i{display:block;font-style:normal;font-family:var(--jp);color:var(--mute);font-size:8px;margin-top:3px;letter-spacing:.04em;}
+.wb.on{border-color:var(--rouge);box-shadow:0 0 8px rgba(255,79,168,.3);}
+.tg{width:34px;height:17px;background:rgba(255,255,255,.07);border-radius:9px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;}
+.tg.on{background:linear-gradient(90deg,var(--rouge),#B850FF);box-shadow:0 0 10px rgba(255,79,168,.45);}
+.tg::after{content:'';position:absolute;width:13px;height:13px;border-radius:50%;background:#fff;top:2px;left:2px;transition:left .2s;}
+.tg.on::after{left:19px;}
+.hand-cap{font-family:var(--jp);font-size:9px;color:var(--mute);letter-spacing:.08em;line-height:1.7;}
+.hand-cap b{color:var(--rouge);font-weight:500;} .hand-cap em{color:var(--gold);font-style:normal;}
+.cpg{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.ed-btn{background:rgba(255,79,168,.05);border:1px solid rgba(255,79,168,.3);color:var(--rouge);font-family:var(--mono);
+  font-size:9px;letter-spacing:.15em;padding:8px;cursor:pointer;border-radius:2px;transition:all .15s;text-align:center;}
+.ed-btn:hover{background:rgba(255,79,168,.14);box-shadow:0 0 8px rgba(255,79,168,.25);}
+.ed-btn.ok{background:rgba(90,233,255,.18);border-color:var(--ice);color:var(--ice);}
+.ed-btn.err{background:rgba(255,79,168,.22);border-color:var(--rouge);color:#fff;}
+
+#naked-hint{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);font-size:8px;letter-spacing:.5em;
+  color:rgba(90,233,255,.9);opacity:0;transition:opacity 1.2s ease;pointer-events:none;z-index:20;}
+#naked-hint.show{opacity:.25;}
+
+#shortcut-modal{display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.85);align-items:center;justify-content:center;}
+#shortcut-modal.open{display:flex;}
+#shortcut-box{background:linear-gradient(180deg,#0d0d0d,#050505);border:1px solid rgba(255,210,122,.4);border-radius:6px;
+  width:min(520px,92vw);max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.7),0 0 60px rgba(90,233,255,.1);}
+.sc-header{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid rgba(255,210,122,.18);
+  font-size:10px;letter-spacing:.4em;color:var(--gold);}
+.sc-header span{cursor:pointer;color:var(--mute);} .sc-header span:hover{color:var(--rouge);}
+.sc-body{padding:14px 18px;}
+.sc-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(181,142,255,.06);font-size:10px;}
+.sc-row:last-child{border-bottom:none;}
+.sc-key{background:#141414;border:1px solid rgba(181,142,255,.3);color:var(--white);font-family:var(--mono);font-size:9px;
+  padding:2px 8px;min-width:30px;text-align:center;border-radius:3px;letter-spacing:.05em;}
+.sc-desc{color:rgba(248,239,255,.7);letter-spacing:.04em;}
+.sc-desc .jp{display:block;font-family:var(--jp);font-size:9px;color:var(--mute);margin-top:1px;letter-spacing:.1em;}
+
+/* ── VJ panel (vj-audio-export-kit) ── */
+.vj-row{display:flex;gap:6px;margin-bottom:8px;align-items:center;}
+.vj-btn{flex:1;background:rgba(90,233,255,.05);border:1px solid rgba(90,233,255,.3);color:var(--ice);font-family:var(--mono);
+  font-size:9px;letter-spacing:.14em;padding:7px 6px;cursor:pointer;border-radius:2px;transition:all .15s;text-align:center;user-select:none;}
+.vj-btn:hover{background:rgba(90,233,255,.14);box-shadow:0 0 8px rgba(90,233,255,.25);}
+.vj-btn.off{opacity:.35;pointer-events:none;}
+.vj-btn.sm{flex:0 0 auto;padding:4px 10px;}
+.vj-btn.rec{border-color:rgba(255,79,168,.4);color:var(--rouge);background:rgba(255,79,168,.05);}
+.vj-btn.rec.on{background:rgba(255,79,168,.25);color:#fff;border-color:var(--rouge);animation:vjblink 1s steps(2) infinite;}
+@keyframes vjblink{50%{box-shadow:0 0 14px rgba(255,79,168,.6);}}
+#vj-file-name{font-size:8px;color:var(--mute);letter-spacing:.08em;margin:-3px 0 6px;min-height:10px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.meters{display:flex;gap:4px;height:6px;margin:2px 0 3px;}
+.meter{flex:1;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;}
+.meter i{display:block;height:100%;width:0;}
+#vj-mLow i{background:var(--rouge);} #vj-mMid i{background:var(--gold);} #vj-mHigh i{background:var(--ice);}
+.meter.hit i{background:#fff !important;}
+.meter-lbl{display:flex;justify-content:space-between;font-size:7.5px;letter-spacing:.2em;color:var(--mute);margin-bottom:10px;}
+#side select,#side input[type=number]{background:#101010;border:1px solid rgba(181,142,255,.3);color:var(--white);font-family:var(--mono);
+  font-size:9px;padding:3px 4px;border-radius:2px;flex:1;min-width:0;outline:none;}
+#side input[type=number]{flex:0 0 52px;text-align:center;}
+#vj-led{color:var(--rouge);font-size:11px;opacity:.15;display:inline-block;margin-left:3px;}
+.tr.dim{opacity:.32;}
+.tr small{font-size:7.5px;color:var(--mute);letter-spacing:.04em;display:block;font-family:var(--jp);}
+.vj-cap{font-family:var(--jp);font-size:9px;color:var(--mute);line-height:1.7;letter-spacing:.06em;margin:4px 0 0;}
+.vj-cap b{color:var(--gold);font-weight:500;}
+
+@media(max-width:720px){
+  body.revealed #app{grid-template-columns:1fr;grid-template-rows:44px 1fr 110px 44px;}
+  body.revealed #side{position:fixed;right:0;top:44px;bottom:44px;width:min(300px,84vw);z-index:40;
+    background:#0b0b0b;box-shadow:-10px 0 40px rgba(0,0,0,.6);}   /* opaque: it sits over the stage here */
+  body.revealed #stage{grid-area:2/1/3/-1;} body.revealed #graphwrap{grid-area:3/1/4/-1;}
+}
+/* EE-09: the rule's three little pictures (walk · stick · again) */
+.rule .mini{display:block;width:100%;height:46px;margin:6px 0 2px;background:rgba(255,255,255,.02);border-radius:2px;}
+.rule.look .n,.rule.look .nm{color:var(--ice);}
+.rule.grow .n,.rule.grow .nm{color:var(--gold);}
+.rule.step .n,.rule.step .nm{color:var(--lavender);}
+#badge.empty{color:var(--mute);border-color:rgba(181,142,255,.35);}
+#badge.life{color:var(--ice);border-color:rgba(90,233,255,.5);box-shadow:0 0 10px rgba(90,233,255,.3);}
+#badge.sea{color:var(--gold);border-color:rgba(255,210,122,.6);box-shadow:0 0 10px rgba(255,210,122,.3);}
+#badge.few{color:var(--rouge);border-color:rgba(255,79,168,.45);}
+/* 09 uses the same HUD skeleton as 06/07, with RULE at the left of the stage. */
+body.revealed #app{grid-template-columns:280px 1fr 300px;}
+body.revealed #stage{grid-area:2/2/3/3;} body.revealed #graphwrap{grid-area:3/2/4/3;}
+body.revealed #side{grid-area:2/3/4/4;}
+body.naked #rules{display:none;}
+body.revealed #rules{grid-area:2/1/4/2;overflow-y:auto;border-right:1px solid rgba(255,210,122,.12);padding:13px 12px;}
+.truth{font-size:8px;color:var(--gold);letter-spacing:.13em;line-height:1.8;margin-top:12px;}
+.truth span{font-family:var(--jp);color:var(--mute);letter-spacing:.03em;}
+#caption{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);width:94%;text-align:center;font-family:var(--jp);font-size:12px;color:rgba(248,239,255,.8);pointer-events:none;text-shadow:0 2px 8px #000;z-index:4;}
+#aval{position:absolute;bottom:48px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:13px;letter-spacing:.32em;color:var(--gold);
+  text-shadow:0 0 10px rgba(255,210,122,.55),0 2px 8px #000;pointer-events:none;z-index:4;opacity:0;transition:opacity .5s ease;white-space:nowrap;}
+#aval.on{opacity:1;transition:none;}
+.stage-deco.quake{animation:quake .32s linear;}
+@keyframes quake{0%{transform:translate(0,0);}20%{transform:translate(2px,-1px);}40%{transform:translate(-2px,1px);}60%{transform:translate(1px,2px);}80%{transform:translate(-1px,-2px);}100%{transform:translate(0,0);}}
+.vj-btn.on{border-color:var(--rouge);color:var(--rouge);box-shadow:0 0 8px rgba(255,79,168,.3);}
+.vj-btn.dis{opacity:.32;pointer-events:none;}
+@media(max-width:1000px){body.revealed #app{grid-template-columns:245px 1fr 260px;} }
+@media(max-width:720px){body.revealed #app{grid-template-columns:1fr;grid-template-rows:44px 1fr 110px 44px;} body.revealed #stage{grid-area:2/1/3/2;} body.revealed #graphwrap{grid-area:3/1/4/2;} body.revealed #rules{display:none;} body.revealed #side #rules{display:block;overflow:visible;border:0;padding:13px 15px;} }
+</style>
+</head>
+<body class="naked">
+<div id="app">
+
+  <div id="topbar">
+    <span>EMERGENCE_ENGINE // EE_09</span>
+    <a href="#" id="esc-link">[ESC] INDEX</a>
+  </div>
+
+  <div id="stage">
+    <canvas id="world"></canvas>
+    <canvas id="over"></canvas>
+    <div id="aval"></div>
+    <div id="caption"></div>
+    <div class="stage-deco">
+      <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+      <div class="stage-bignum">09</div>
+      <div class="po">
+        <div class="po-num">09</div>
+        <div class="po-en">Growth</div>
+        <div class="po-jp">誰も枝を描いていない</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="graphwrap">
+    <canvas id="graph"></canvas>
+    <div id="graph-lbl">DIMENSION — シアン＝形の次元（1＝線・2＝面）· 金＝1秒にくっついた粒<span id="graph-lbl-proof"></span></div>
+  </div>
+
+  <div id="side">
+    <div class="sp">
+      <div class="spl">READOUT</div>
+      <div class="data-row"><span class="dk">PARTICLES</span><span class="dv neon" id="ro-count">0</span></div>
+      <div class="data-row"><span class="dk">STATE</span><span id="badge" class="empty">EMPTY</span></div>
+      <div class="data-row"><span class="dk">DIMENSION</span><span class="dv" id="ro-dim">—</span></div>
+      <div class="data-row"><span class="dk" id="ro-reach-k">REACH</span><span class="dv" id="ro-reach">—</span></div>
+      <div class="data-row"><span class="dk">JOINS / s</span><span class="dv" id="ro-jps">0</span></div>
+      <div class="data-row"><span class="dk">WALKERS</span><span class="dv" id="ro-walk">0</span></div>
+      <div class="data-row"><span class="dk">SEEDS</span><span class="dv" id="ro-seeds">0</span></div>
+      <div class="data-row"><span class="dk">GRID</span><span class="dv" id="ro-grid">—</span></div>
+    </div>
+    <div class="sp" id="rules">
+      <div class="spl">RULE — THE PROTAGONIST</div>
+      <div class="rule look"><div class="rule-h"><span class="n">1</span><span class="nm">WALK<span class="jp">歩く — 粒は、でたらめな方向へ1マスずつ</span></span></div>
+        <canvas class="mini" id="mini-w"></canvas><div class="rule-cap" id="rule-walk-cap">行き先は毎回サイコロ。どこへ向かうという意志はない。</div></div>
+      <div class="rule grow"><div class="rule-h"><span class="n">2</span><span class="nm">STICK<span class="jp" id="rule-stick-jp">くっつく — 塊のとなりに来たら、そこで止まる</span></span></div>
+        <canvas class="mini" id="mini-s"></canvas><div class="rule-cap" id="rule-stick-cap">止まった粒は、もう動かない。塊の一部になる。</div></div>
+      <div class="rule step"><div class="rule-h"><span class="n">3</span><span class="nm">AGAIN<span class="jp">また — 遠くから次の粒</span></span></div>
+        <canvas class="mini" id="mini-a"></canvas><div class="rule-cap" id="rule-again-cap">粒は塊から離れた所で生まれる。形の設計図はどこにもない。</div></div>
+      <div class="rule-cap" id="rule-formula">となり（8方向）に塊 → 確率 1 で止まる<br>それ以外 → 上下左右へ1マス · くり返す</div>
+      <div class="truth">WAS ACTUALLY<br><span>拡散律速凝集 DLA<br>（Witten–Sander 1981）· 雷・珊瑚・霜・都市の輪郭</span></div>
+    </div>
+    <div class="sp"><div class="spl">SPECIES — 同じルール、違う始まり／違う止まり方</div><div class="walkgrid" id="presets"></div></div>
+    <div class="sp"><div class="spl">HAND — 指は何になるか</div><div class="hand-cap">押す＝<em>そこに核を置く</em>（なぞると線が核になる＝描いた線から育つ）。<br>Shift＋押す＝<b>枝を切る</b>（まわりの粒を消す。また伸びてくる）。</div></div>
+    <div class="sp"><div class="spl">PARAMS</div>
+      <div class="tr"><span>SPEED<small>1コマにくっつく粒の上限</small></span><input type="range" id="c-speed" min="1" max="10" step="1"><span class="sl" id="v-speed"></span></div>
+      <div class="tr" id="r-stick"><span>STICK<small>となりに来たとき<br>止まる確率</small></span><input type="range" id="c-stick" min="0.02" max="1" step="0.02"><span class="sl" id="v-stick"></span></div>
+      <div class="tr" id="r-noise"><span>NOISE<small>同じマスに何回<br>来たら固まるか</small></span><input type="range" id="c-noise" min="1" max="12" step="1"><span class="sl" id="v-noise"></span></div>
+      <div class="tr" id="r-wind"><span>WIND<small>上から吹く風<br>（粒は風上から来る）</small></span><input type="range" id="c-wind" min="0" max="0.3" step="0.02"><span class="sl" id="v-wind"></span></div>
+      <div class="tr" id="r-touch"><span>TOUCH<small>どこを「となり」<br>と数えるか</small></span><select id="c-touch"><option value="8">8 — 斜めも</option><option value="4">4 — 上下左右だけ</option></select></div>
+      <div class="tr" id="r-walkers"><span>WALKERS<small>同時に歩く粒の数</small></span><input type="range" id="c-walkers" min="20" max="2000" step="20"><span class="sl" id="v-walkers"></span></div>
+      <div class="tr"><span>SIZE<small>変えると世界が<br>作り直される</small></span><input type="range" id="c-size" min="2" max="8" step="1"><span class="sl" id="v-size"></span></div>
+      <div class="tr"><span>GLOW<small>くっついた瞬間の光</small></span><input type="range" id="c-glow" min="0" max="2" step="0.05"><span class="sl" id="v-glow"></span></div>
+      <div class="tr"><span>TRAIL<small>光の残り時間</small></span><input type="range" id="c-trail" min="0.05" max="3" step="0.05"><span class="sl" id="v-trail"></span></div>
+      <div class="tr"><span>LOOK</span><select id="c-look"><option value="bolt">BOLT — 紫〜氷〜白</option><option value="coral">CORAL — 深紅〜珊瑚〜象牙</option><option value="frost">FROST — 群青〜白</option><option value="city">CITY — 夜の街の灯</option></select></div>
+      <div class="tr" id="r-color"><span>COLOR<small>色が表すもの</small></span><select id="c-color"><option value="time">TIME — 古い＝暗い・新しい＝明るい</option><option value="town">TERRITORY — どの核から育ったか</option></select></div>
+      <div class="tr"><span>LIGHT<small>光り方</small></span><select id="c-light"><option value="dot">DOT — 点で光る（ランプの粒）</option><option value="soft">SOFT — なめらか</option></select></div>
+      <div class="tr"><span>SHOW WALKERS<small>歩いている粒を見せる</small></span><div class="tg" id="tg-walk"></div></div>
+      <div class="vj-row"><div class="vj-btn" id="btn-seed">✣ RESTART<br><small>この種族を最初から</small></div><div class="vj-btn" id="btn-nucleus">＋ NEW SEED<br><small>空いた所に核を1つ</small></div></div>
+    </div>
+    <div class="sp"><div class="spl">PROOF</div><div class="tr"><span>BOX COUNTING <small>G · 箱の大きさを半分にすると、<br>塊にかかる箱は何倍になるか（両対数）。<br>傾き＝次元。線は 1、面は 2、DLA は約 1.7。</small></span><div class="tg" id="tg-proof"></div></div></div>
+    <div class="sp" id="vj-sp">
+      <div class="spl">VJ — 音で動かす・素材にする</div>
+      <div class="vj-row">
+        <label class="vj-btn">♪ LOAD AUDIO<input type="file" id="vj-file" accept="audio/*" hidden></label>
+        <div class="vj-btn off" id="vj-play">▶ PLAY</div>
+      </div>
+      <div id="vj-file-name"></div>
+      <div class="meters"><div class="meter" id="vj-mLow"><i></i></div><div class="meter" id="vj-mMid"><i></i></div><div class="meter" id="vj-mHigh"><i></i></div></div>
+      <div class="meter-lbl"><span>LOW · KICK</span><span>MID</span><span>HIGH</span></div>
+      <div class="tr" id="vj-r-sens"><span>SENS<small>MP3 再生中のみ</small></span><input type="range" id="vj-sens" min="0" max="100" step="1" value="55"><span class="sl" id="vj-v-sens">55</span></div>
+      <div class="tr"><span>BPM<b id="vj-led">●</b></span><input type="number" id="vj-bpm" min="40" max="240" step="1" value="120"><div class="vj-btn sm" id="vj-tap">TAP</div></div>
+      <div class="tr"><span>BEAT FROM</span><select id="vj-src"><option value="off">OFF — 手で遊ぶ</option><option value="kick">MP3 KICK — 曲のキック</option><option value="clock">BPM CLOCK — 拍の時計</option></select></div>
+      <div class="tr" id="vj-r-act"><span>ON BEAT</span><select id="vj-act"></select></div>
+      <div class="tr" id="vj-r-every"><span id="vj-every-lbl">EVERY</span><select id="vj-every"><option value="0">なし</option><option value="2">2 拍ごと</option><option value="4">4 拍ごと</option><option value="8">8 拍ごと</option><option value="16" selected>16 拍ごと</option><option value="32">32 拍ごと</option></select></div>
+      <div class="tr" id="vj-r-mid"><span>MID →<small id="vj-mid-lbl"></small></span><input type="range" id="vj-mid" min="0" max="1" step="0.05" value="0.5"><span class="sl" id="vj-v-mid">0.50</span></div>
+      <div class="tr" id="vj-r-high"><span>HIGH →<small id="vj-high-lbl"></small></span><input type="range" id="vj-high" min="0" max="1" step="0.05" value="0.5"><span class="sl" id="vj-v-high">0.50</span></div>
+      <div class="vj-cap">TAP（<b>T</b> キー）を曲に合わせて叩くと BPM が決まり、● が拍で点滅。BEAT FROM で「拍の出どころ」を選ぶ。MID / HIGH は MP3 再生中だけ効く。</div>
+      <div class="spl" style="margin-top:14px">EXPORT</div>
+      <div class="vj-row"><div class="vj-btn rec" id="vj-rec">● REC WebM</div></div>
+      <div class="tr"><span>PNG SEQ</span><select id="vj-bars"><option value="4">4 小節</option><option value="8" selected>8 小節</option><option value="16">16 小節</option><option value="32">32 小節</option></select><select id="vj-fps"><option value="30">30 fps</option><option value="60">60 fps</option></select></div>
+      <div class="tr"><span>SIZE</span><select id="vj-res"><option value="1920x1080">1920×1080</option><option value="3840x2160">3840×2160 (4K)</option></select></div>
+      <div class="vj-row"><div class="vj-btn" id="vj-seq">⇩ 連番PNG を書き出す</div></div>
+      <div class="vj-cap">REC＝いまの画面を<b>音つき</b>で録画（曲のキックに合った素材）。連番PNG＝BPM の拍ぴったりにオフラインで描く（コマ落ちなし・4K 可・Chrome / Edge）。画面の中央を 16:9 で切り抜くので、横長のウィンドウで。</div>
+    </div>
+    <div class="sp">
+      <div class="spl">PARAMS</div>
+      <div class="cpg">
+        <div class="ed-btn" id="btn-copy">⧉ COPY</div>
+        <div class="ed-btn" id="btn-paste">▣ PASTE</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="bottombar">
+    <span id="status">EE_09 // GROWTH</span>
+    <span><span id="sc-open-btn">⌨ SHORTCUTS</span> <span class="kbd">?</span></span>
+  </div>
+</div>
+
+<div id="naked-hint">TAB — REVEAL</div>
+
+<div id="shortcut-modal">
+  <div id="shortcut-box">
+    <div class="sc-header">⌨ KEYBOARD SHORTCUTS <span id="sc-close">✕</span></div>
+    <div class="sc-body">
+      <div class="sc-row"><span class="sc-key">HOLD</span><span class="sc-desc">Seed — そこに核（なぞると線が核になる）</span></div>
+      <div class="sc-row"><span class="sc-key">⇧ HOLD</span><span class="sc-desc">Cut — 枝を切る</span></div>
+      <div class="sc-row"><span class="sc-key">1–6</span><span class="sc-desc">Species — 始まり方を選んで最初から</span></div>
+      <div class="sc-row"><span class="sc-key">← →</span><span class="sc-desc">Speed — 育つのを遅く / 速く</span></div>
+      <div class="sc-row"><span class="sc-key">↑ ↓</span><span class="sc-desc">Stick — 止まる確率を上げる / 下げる</span></div>
+      <div class="sc-row"><span class="sc-key">N</span><span class="sc-desc">New seed — 空いた所に核を1つ</span></div>
+      <div class="sc-row"><span class="sc-key">W</span><span class="sc-desc">Show walkers — 歩いている粒の表示</span></div>
+      <div class="sc-row"><span class="sc-key">R</span><span class="sc-desc">Restart — この種族を最初から</span></div>
+      <div class="sc-row"><span class="sc-key">G</span><span class="sc-desc">Proof — 箱数え（両対数）で次元を測る</span></div>
+      <div class="sc-row"><span class="sc-key">Space</span><span class="sc-desc">Pause / Resume — 時間停止</span></div>
+      <div class="sc-row"><span class="sc-key">Tab</span><span class="sc-desc">Reveal — HUD と証明ストリップの表示切替</span></div>
+      <div class="sc-row"><span class="sc-key">T</span><span class="sc-desc">Tap tempo — 曲に合わせて叩くと BPM<span class="jp">BEAT FROM が OFF なら BPM CLOCK に切り替わる</span></span></div>
+      <div class="sc-row"><span class="sc-key">?</span><span class="sc-desc">This panel</span></div>
+      <div class="sc-row"><span class="sc-key">Esc</span><span class="sc-desc">Modal → NAKED → Index</span></div>
+    </div>
+  </div>
+</div>
+
+<script src="_law/ee09_growth.js"></script>
+<script>
+"use strict";
+/* SIM (makeWorld, grow, join, cut, boxDim, …) lives in _law/ee09_growth.js */
+
+const $=id=>document.getElementById(id);
+const clamp=(v,lo=0,hi=1)=>Math.max(lo,Math.min(hi,v));
+const reduceMotion=matchMedia('(prefers-reduced-motion:reduce)').matches;
+/* SPEED → joins per frame. 10 = 一瞬（満ちるまで） */
+const JPF=[0,1,2,3,5,8,12,20,32,60,1e9];
+const EVENT_CAP=80000;                          // walker moves per frame, at most (keeps the frame rate)
+const LOOKS={ // three stops: oldest → middle → newest (tips), glow = the flash of joining, walker = the dust
+  bolt:{st:[[40,14,92],[70,150,255],[236,248,255]],glow:[255,255,255],walk:[120,110,190],bg:'#05040b'},
+  coral:{st:[[70,6,20],[236,84,92],[255,236,206]],glow:[255,250,230],walk:[150,90,90],bg:'#070304'},
+  frost:{st:[[8,20,60],[96,160,230],[248,252,255]],glow:[220,250,255],walk:[90,120,170],bg:'#03050b'},
+  city:{st:[[60,24,4],[230,140,40],[255,240,190]],glow:[255,255,230],walk:[120,100,70],bg:'#050403'}
+};
+/* territory hues (TOWNS / your seeds) */
+const TOWN=[[90,233,255],[255,79,168],[255,210,122],[181,142,255],[120,255,170],[255,140,80],[150,180,255],[255,255,255]];
+const state={mode:0,size:clamp(Math.round(Math.sqrt(innerWidth*innerHeight/57600)),2,8),speed:6,stick:1,noise:1,wind:0,touch:8,walkers:600,glow:1,trail:.8,
+  look:'bolt',color:'time',light:'dot',walk:true,proof:false,revealed:false,paused:reduceMotion,idle:!reduceMotion};
+let rnd=makeRng((Math.random()*2**32)>>>0);
+const stage=$('stage'),worldC=$('world'),overC=$('over'),wctx=worldC.getContext('2d'),octx=overC.getContext('2d');
+let W=0,H=0,DPR=Math.min(devicePixelRatio||1,2),GW=0,GH=0;
+let g=null,lut=null,img=null,img32=null,imgC=document.createElement('canvas'),imgX=imgC.getContext('2d');
+function resizeWorld(){const r=stage.getBoundingClientRect();W=Math.max(1,r.width|0);H=Math.max(1,r.height|0);worldC.width=overC.width=Math.round(W*DPR);worldC.height=overC.height=Math.round(H*DPR);octx.setTransform(DPR,0,0,DPR,0,0);}
+function fit(){const cw=worldC.width,ch=worldC.height,sc=VJ.exporting?Math.max(cw/GW,ch/GH):Math.min(cw/GW,ch/GH);return{sc,ox:(cw-GW*sc)/2,oy:(ch-GH*sc)/2,dw:GW*sc,dh:GH*sc};}
+function dims(){return[Math.max(48,Math.round(innerWidth/state.size)),Math.max(32,Math.round(innerHeight/state.size))];}
+
+/* ── modes ── */
+function startMode(i){
+  state.mode=i;const M=GMODES[i];[GW,GH]=dims();
+  state.stick=M.stick;state.noise=M.m;state.wind=M.wind;state.touch=M.nb;state.color=M.seed==='towns'?'town':'time';
+  g=makeWorld(GW,GH,i,rnd);applyRule();setWalkers(g,M.spawn==='eden'?0:state.walkers);
+  allocImg();buildLut();hist.length=0;joinMark=g.count;fullShown=false;
+  syncControls();drawRules();
+}
+function applyRule(){if(!g)return;g.stick=state.stick;g.m=state.noise;g.wind=state.wind;g.nb=state.touch;}
+function restart(){rnd=makeRng((rnd()*2**32)>>>0);startMode(state.mode);}
+/* a new nucleus somewhere in the open; if the world was "full", it gets room to grow again */
+function newSeed(){for(let t=0;t<400;t++){const x=(rnd()*GW)|0,y=(rnd()*GH)|0;if(g.dist[y*GW+x]>=12){plantAt(x,y,true);return true;}}return false;}
+function reopen(){if(!rains(g)||g.top>2){g.cap=Math.max(g.cap,g.count+Math.floor(GW*GH*.05));g.full=false;}}
+function plantAt(x,y,fresh){if(fresh)addSeed(g,x,y);else join(g,x,y,g.seeds);reopen();ghosts.push({x,y,cut:false,t:1});if(ghosts.length>14)ghosts.shift();}
+
+/* ── one fixed tick = 1/60 s of the world ── */
+let tickAcc=0,simTime=0,joinMark=0,fullShown=false,beatFlash=0,frameNo=0,idleJPF=0;
+function jpfNow(){const base=state.idle&&idleJPF?idleJPF:JPF[state.speed];return base>=1e9?base:Math.max(1,Math.round(base*(1+vjAmt('vj-mid')*VJ.mid*3)));}
+function tick(){
+  handFeed();
+  if(state.paused)return;
+  if(!g.full){const j=jpfNow();grow(g,j>=1e9?EVENT_CAP*8:EVENT_CAP,j);}
+  if(g.full&&!fullShown){fullShown=true;syncControls();}
+  const f=Math.exp(-1/60/state.trail),gl=g.glow;for(const i of g.cells)if(gl[i]!==0){gl[i]*=f;if(gl[i]<.004)gl[i]=0;}
+  beatFlash*=Math.exp(-1/60/.18);if(beatFlash<.02)beatFlash=0;frameNo++;
+}
+
+/* ── hand: press = a nucleus (drag = a line of nuclei), Shift = cut ── */
+const hand={on:false,x:0,y:0,cut:false,lx:-1,ly:-1},ghosts=[];
+function cellAt(e){const b=stage.getBoundingClientRect(),{sc,ox,oy}=fit();return{x:clamp(Math.floor(((e.clientX-b.left)*DPR-ox)/sc),0,GW-1),y:clamp(Math.floor(((e.clientY-b.top)*DPR-oy)/sc),0,GH-1)};}
+const CUT_R=()=>Math.max(4,Math.round(Math.min(GW,GH)*.035));
+function strokeTo(x,y){ // a line of seed cells from the last point, so a drawn stroke is one connected nucleus
+  const x0=hand.lx<0?x:hand.lx,y0=hand.ly<0?y:hand.ly,n=Math.max(Math.abs(x-x0),Math.abs(y-y0));
+  for(let k=0;k<=n;k++){const u=Math.round(x0+(x-x0)*k/(n||1)),v=Math.round(y0+(y-y0)*k/(n||1));if(!g.occ[v*GW+u])join(g,u,v,g.seeds);}
+  hand.lx=x;hand.ly=y;reopen();
+}
+function handFeed(){if(!hand.on)return;if(hand.cut){cut(g,hand.x,hand.y,CUT_R());reopen();}else strokeTo(hand.x,hand.y);}
+stage.addEventListener('pointerdown',e=>{stopIdle();const c=cellAt(e);hand.on=true;hand.x=c.x;hand.y=c.y;hand.cut=e.shiftKey;hand.lx=hand.ly=-1;stage.setPointerCapture(e.pointerId);
+  if(hand.cut){cut(g,c.x,c.y,CUT_R());reopen();}else{addSeed(g,c.x,c.y);hand.lx=c.x;hand.ly=c.y;reopen();}
+  ghosts.push({x:c.x,y:c.y,cut:hand.cut,t:1});if(ghosts.length>14)ghosts.shift();});
+stage.addEventListener('pointermove',e=>{if(!hand.on)return;const c=cellAt(e);hand.x=c.x;hand.y=c.y;hand.cut=e.shiftKey;});
+for(const type of['pointerup','pointercancel'])stage.addEventListener(type,()=>{hand.on=false;});
+
+/* ── auto performance (≈75 s) ── */
+const IDLE_LEN=75;let idleT=0,idleNext=0,quietFor=0;
+/* each act gets a joins-per-frame that fills its world in about `sec` seconds, whatever the window size */
+function idleAct(mode,sec){state.walk=true;startMode(mode);idleJPF=Math.max(1,Math.ceil(g.cap/(sec*60)));}
+const IDLE_SCRIPT=[
+  [0,()=>idleAct(0,24)],
+  [26,()=>idleAct(1,13)],
+  [40,()=>idleAct(3,13)],
+  [54,()=>idleAct(2,9)],
+  [64,()=>idleAct(5,9)]
+];
+let idleSaved=null;
+function startIdle(){idleSaved={speed:state.speed,walk:state.walk};state.idle=true;idleT=0;idleNext=0;stepIdle(0);}
+function stopIdle(){quietFor=0;if(state.idle){state.idle=false;idleJPF=0;if(idleSaved)Object.assign(state,idleSaved);idleSaved=null;$('caption').textContent='';syncControls();}}
+function stepIdle(dt){
+  if(!state.idle)return;idleT+=dt;if(idleT>=IDLE_LEN){idleT%=IDLE_LEN;idleNext=0;}
+  while(idleNext<IDLE_SCRIPT.length&&idleT>=IDLE_SCRIPT[idleNext][0])IDLE_SCRIPT[idleNext++][1]();
+  $('caption').textContent=idleT<7?'粒がでたらめに歩く。塊のとなりに来たら、そこで止まる。ルールはそれだけ。':idleT<15?'突き出た枝の先ほど、次の粒に出会いやすい。だから枝が枝を生む。':idleT<26?'枝と枝のすき間の奥には、粒がたどり着く前に枝に捕まる。誰も枝を描いていない。':idleT<40?'地面から。粒は上から降ってくる。森・霜・鉱物の樹枝と同じ形。':idleT<54?'七つの町。となりの町との間は食い合って伸びない。縄張りの境ができる。':idleT<64?'同じマスに六回来ないと固まらない、にすると……四本の腕の結晶。':'歩かずに、ただ隣に貼ると……枝は生まれない。枝を作っていたのは「歩く」だった。';
+  if(state.revealed&&Math.floor(idleT*2)!==Math.floor((idleT-dt)*2))syncControls();
+}
+function advance(dt){tickAcc+=dt*60;const ticks=Math.floor(tickAcc+1e-8);tickAcc-=ticks;for(let i=0;i<ticks;i++){simTime+=1/60;if(!state.paused)stepIdle(1/60);tick();}}
+
+/* ── drawing: one cell = one lamp (DOT) or one pixel (SOFT), scaled up with smoothing off ── */
+function buildLut(){
+  const L=LOOKS[state.look],a=new Uint8ClampedArray(256*3);
+  for(let k=0;k<256;k++){const t=k/255*2,j=Math.min(1,Math.floor(t)),f=t-j;for(let c=0;c<3;c++)a[k*3+c]=L.st[j][c]+(L.st[j+1][c]-L.st[j][c])*f;}
+  const bg=[parseInt(L.bg.slice(1,3),16),parseInt(L.bg.slice(3,5),16),parseInt(L.bg.slice(5,7),16)];
+  lut={a,glow:L.glow,walk:L.walk,bg:L.bg,bgc:bg};
+}
+const dotK=()=>state.light==='dot'?(state.size>=4?4:state.size>=3?3:2):1;
+function allocImg(){const K=dotK();imgC.width=GW*K;imgC.height=GH*K;img=imgX.createImageData(imgC.width,imgC.height);img32=new Uint32Array(img.data.buffer);}
+const rgb32=(r,gg,b)=>(255<<24|b<<16|gg<<8|r)>>>0;
+/* the colour of one cluster cell: time (age → palette) or territory (seed id → hue, newer = brighter) */
+function cellRGB(i,out){
+  const A=lut.a,n=g.count||1;
+  if(state.color==='town'){const c=TOWN[(Math.max(1,g.own[i])-1)%TOWN.length],v=.35+.65*Math.pow(g.age[i]/n,.6);out[0]=c[0]*v;out[1]=c[1]*v;out[2]=c[2]*v;}
+  else{const k=Math.min(255,Math.floor(Math.pow(g.age[i]/n,1.4)*255))*3;out[0]=A[k];out[1]=A[k+1];out[2]=A[k+2];}
+  /* light: the flash of joining (GLOW) + beat / HIGH on the youngest tips (display only) */
+  let t=g.glow[i]*(state.glow+vjAmt('vj-high')*VJ.high*1.2);
+  if(beatFlash>0||VJ.high>0){const young=g.age[i]>n-Math.max(60,n*.03);if(young){t=Math.max(t,beatFlash*.9);const hi=vjAmt('vj-high')*VJ.high;if(hi>0){let k=Math.imul(i^frameNo*0x9E3779B1,0x85EBCA6B);k^=k>>>13;if(((k>>>0)%1000)<hi*300)t=Math.max(t,1);}}}
+  out.t=t;if(t>0){t=Math.min(1,t);const G=lut.glow;out[0]+=(G[0]-out[0])*t;out[1]+=(G[1]-out[1])*t;out[2]+=(G[2]-out[2])*t;}
+}
+const tmp=[0,0,0];
+function paint(){
+  const K=dotK(),iw=imgC.width,P=img32,bg=lut.bgc,BG=rgb32(bg[0],bg[1],bg[2]),occ=g.occ;
+  P.fill(BG);
+  const lit=K===1?1:K-1;
+  for(const i of g.cells){if(!occ[i])continue;cellRGB(i,tmp);const c=rgb32(tmp[0]|0,tmp[1]|0,tmp[2]|0),x=i%GW,y=(i/GW)|0;
+    const sw=K>1&&tmp.t>.35?K:lit;   // a freshly joined cell swells to fill its gap — the flash reads as light, not as one more shade
+    for(let yy=0;yy<sw;yy++){const row=(y*K+yy)*iw+x*K;for(let xx=0;xx<sw;xx++)P[row+xx]=c;}}
+  if(state.walk&&g.nw){const w=lut.walk,WC=rgb32(w[0],w[1],w[2]),o=K>2?1:0;
+    for(let k=0;k<g.nw;k++){const x=g.wx[k],y=g.wy[k];P[(y*K+o)*iw+x*K+o]=WC;}}
+  imgX.putImageData(img,0,0);
+}
+function draw(){
+  paint();
+  const {ox,oy,dw,dh,sc}=fit();
+  wctx.setTransform(1,0,0,1,0,0);wctx.fillStyle=lut.bg;wctx.fillRect(0,0,worldC.width,worldC.height);
+  wctx.imageSmoothingEnabled=false;wctx.drawImage(imgC,ox,oy,dw,dh);
+  if(state.light==='soft'&&state.glow>0){ // a soft bloom: the same picture, blurred, added on top
+    wctx.save();wctx.globalCompositeOperation='lighter';wctx.globalAlpha=Math.min(.6,.25*state.glow);wctx.filter=`blur(${Math.max(2,sc*1.5)}px)`;wctx.imageSmoothingEnabled=true;wctx.drawImage(imgC,ox,oy,dw,dh);wctx.restore();}
+  if(VJ.exporting)return;
+  octx.clearRect(0,0,W,H);
+  const cell=(x,y)=>[(ox+(x+.5)*sc)/DPR,(oy+(y+.5)*sc)/DPR];
+  octx.strokeStyle='rgba(255,210,122,.16)';octx.lineWidth=1;octx.strokeRect(ox/DPR+.5,oy/DPR+.5,dw/DPR-1,dh/DPR-1);
+  if(g.spawn==='circle'&&!g.full&&g.rmax+6<Math.min(GW,GH)/2-3){const[cx,cy]=cell(g.cx,g.cy);octx.strokeStyle='rgba(181,142,255,.16)';octx.setLineDash([2,6]);octx.beginPath();octx.arc(cx,cy,(g.rmax+6)*sc/DPR,0,6.2832);octx.stroke();octx.setLineDash([]);}
+  if(hand.on){const[x,y]=cell(hand.x,hand.y),r=hand.cut?CUT_R()*sc/DPR:4;octx.strokeStyle=hand.cut?'rgba(255,79,168,0.85)':'rgba(90,233,255,0.8)';octx.lineWidth=1.3;octx.beginPath();octx.arc(x,y,r+3,0,6.2832);octx.stroke();}
+  for(const q of ghosts){const[x,y]=cell(q.x,q.y),r=(q.cut?CUT_R()*sc/DPR:6)*(1.3-.3*q.t);octx.strokeStyle=q.cut?`rgba(255,79,168,${.8*q.t})`:`rgba(90,233,255,${.7*q.t})`;octx.lineWidth=1.2;octx.beginPath();octx.arc(x,y,r,0,6.2832);octx.stroke();}
+  if(state.proof&&!state.revealed){const w=Math.min(300,W*.42),h=Math.min(170,H*.32);octx.fillStyle='rgba(5,5,5,.78)';octx.fillRect(14,H-h-60,w,h);drawBox(octx,14,H-h-60,w,h);}
+  const av=$('aval');if(g.full&&!state.idle){av.textContent=rains(g)&&g.top<=2?(g.M.seed==='floor'?'THE FOREST REACHED THE SKY':'IT GREW INTO THE WIND'):'FULL — '+g.cells.length.toLocaleString('en-US')+' PARTICLES';av.classList.add('on');}else av.classList.remove('on');
+  if(!state.idle){$('caption').textContent=g.full?'押して核を置くと、また育つ · R で最初から':'';}
+}
+
+/* ── proof: box counting, log–log ── */
+let boxCache=null,boxAt=-1;
+function box(){if(boxAt!==g.count){boxCache=boxDim(g);boxAt=g.count;}return boxCache;}
+function drawBox(c,x0,y0,w,h){
+  const B=box(),L=x0+34,R=x0+w-10,T=y0+20,Bt=y0+h-22;
+  c.save();c.font='8px IBM Plex Mono, monospace';c.fillStyle='rgba(181,142,255,.8)';c.textBaseline='top';c.fillText('N(箱) — 箱の大きさ s（両対数）',x0+8,y0+5);
+  c.strokeStyle='rgba(255,210,122,.25)';c.lineWidth=1;c.strokeRect(L+.5,T+.5,R-L,Bt-T);
+  if(!B.pts.length){c.fillStyle='rgba(248,239,255,.55)';c.fillText('粒が200を超えたら測る…',L+8,T+10);c.restore();return;}
+  const xs=B.pts.map(p=>p.x),ys=B.pts.map(p=>p.y),xa=Math.min(...xs),xb=Math.max(...xs),ya=Math.floor(Math.min(...ys)),yb=Math.ceil(Math.max(...ys,ya+1));
+  const X=v=>L+(v-xa)/(xb-xa||1)*(R-L),Y=v=>T+(yb-v)/(yb-ya||1)*(Bt-T);
+  c.fillStyle='rgba(255,210,122,.6)';c.textBaseline='top';c.textAlign='center';for(const p of B.pts)c.fillText(String(p.s),X(p.x),Bt+4);c.textAlign='left';
+  c.textAlign='right';c.textBaseline='middle';for(let k=ya;k<=yb;k++)c.fillText('1e'+k,L-4,Y(k));c.textAlign='left';
+  /* guides from the first point: slope 1 (a line) and 2 (a filled area) */
+  const p0=B.pts[0];c.setLineDash([2,4]);c.lineWidth=1;
+  for(const [sl,col] of [[1,'rgba(181,142,255,.45)'],[2,'rgba(181,142,255,.45)']]){c.strokeStyle=col;c.beginPath();c.moveTo(X(p0.x),Y(p0.y));c.lineTo(X(xa),Y(p0.y+sl*(xa-p0.x)));c.stroke();}
+  c.setLineDash([]);c.fillStyle='rgba(181,142,255,.7)';c.textBaseline='bottom';c.fillText('2 面',X(xa)+3,Math.max(T+10,Y(p0.y+2*(xa-p0.x))));c.textBaseline='top';c.fillText('1 線',X(xa)+3,Math.min(Bt-10,Y(p0.y+(xa-p0.x))));
+  if(Number.isFinite(B.D)){c.strokeStyle='rgba(255,79,168,.85)';c.setLineDash([4,3]);c.beginPath();c.moveTo(X(xa),Y(B.icpt+B.D*xa));c.lineTo(X(xb),Y(B.icpt+B.D*xb));c.stroke();c.setLineDash([]);}
+  for(const p of B.pts){c.fillStyle=p.s<=32?'#5AE9FF':'rgba(90,233,255,.35)';c.beginPath();c.arc(X(p.x),Y(p.y),2.6,0,6.2832);c.fill();}
+  c.fillStyle='#F8EFFF';c.textAlign='right';c.textBaseline='top';c.fillText(Number.isFinite(B.D)?`D = ${B.D.toFixed(2)}`:'—',R-4,T+4);
+  c.restore();
+}
+
+/* ── graph band ── */
+const graphC=$('graph'),gctx=graphC.getContext('2d');let GWp=0,GHp=0;
+const hist=[];
+function resizeGraph(){const r=$('graphwrap').getBoundingClientRect();GWp=Math.max(1,Math.floor(r.width));GHp=Math.max(1,Math.floor(r.height));graphC.width=GWp*DPR;graphC.height=GHp*DPR;gctx.setTransform(DPR,0,0,DPR,0,0);}
+function drawGraph(){
+  if(!GWp)return;
+  const c=gctx,split=state.proof?Math.round(GWp*.56):GWp,L=10,R=split-30,T=20,B=GHp-16;
+  c.clearRect(0,0,GWp,GHp);
+  const sx=i=>R-(hist.length-1-i)/119*(R-L),sy=v=>B-(clamp(v,1,2)-1)*(B-T);
+  let jmax=10;for(const h of hist)jmax=Math.max(jmax,h.jps);
+  for(let i=0;i<hist.length;i++){const h=hist[i];if(h.jps){c.fillStyle='rgba(255,210,122,0.45)';const y=B-h.jps/jmax*(B-T)*.9;c.fillRect(sx(i)-1,y,2,B-y);}if(h.hand){c.fillStyle='rgba(90,233,255,0.10)';c.fillRect(sx(i)-1,T,2,B-T);}if(h.beat){c.fillStyle='rgba(255,79,168,0.35)';c.fillRect(sx(i)-.5,B-6,1,6);}}
+  c.font='8px IBM Plex Mono';c.textBaseline='middle';c.lineWidth=1;
+  for(const [v,lab] of [[1,'1 線'],[1.71,'1.71 DLA'],[2,'2 面']]){c.strokeStyle=v===1.71?'rgba(255,79,168,0.35)':'rgba(255,210,122,0.18)';c.setLineDash(v===1.71?[3,4]:[]);c.beginPath();c.moveTo(L,sy(v)+.5);c.lineTo(R,sy(v)+.5);c.stroke();c.setLineDash([]);c.fillStyle=v===1.71?'rgba(255,79,168,0.75)':'rgba(255,210,122,0.5)';c.fillText(lab,R+3,sy(v));}
+  c.strokeStyle='rgba(90,233,255,0.95)';c.lineWidth=1.5;c.shadowColor='rgba(90,233,255,0.6)';c.shadowBlur=6;
+  c.beginPath();let on=false;hist.forEach((h,i)=>{if(!Number.isFinite(h.D)){on=false;return;}const X=sx(i),Y=sy(h.D);on?c.lineTo(X,Y):c.moveTo(X,Y);on=true;});c.stroke();c.shadowBlur=0;
+  c.fillStyle='rgba(255,210,122,0.6)';c.font='9px IBM Plex Mono';c.textBaseline='bottom';c.fillText('−60 s',L,GHp-3);c.textAlign='right';c.fillText('NOW',R,GHp-3);c.textAlign='left';
+  const last=hist[hist.length-1];if(last){c.fillStyle='#5AE9FF';c.fillText('D '+(Number.isFinite(last.D)?last.D.toFixed(3):'—'),L+50,GHp-3);c.fillStyle='rgba(255,210,122,.9)';c.fillText('MAX '+jmax+' /s',L+130,GHp-3);}
+  if(state.proof)drawBox(c,split,0,GWp-split,GHp);
+}
+
+/* ── readout ── */
+let roAcc=0,jpsAcc=0,jps=0;
+function measure(){
+  const B=box();hist.push({D:B.D,jps,hand:hand.on,beat:VJ.flash>.6});if(hist.length>120)hist.shift();
+  if(state.revealed){updateReadout();drawGraph();}
+}
+const fmt=n=>n.toLocaleString('en-US');
+function updateReadout(){
+  const B=box(),floor=g.M.seed==='floor';
+  $('ro-count').textContent=fmt(g.cells.length);$('ro-dim').textContent=Number.isFinite(B.D)?B.D.toFixed(3):'—';
+  $('ro-reach-k').textContent=floor?'HEIGHT':'REACH';$('ro-reach').textContent=floor?(GH-1-g.top)+' / '+(GH-1):Math.round(g.rmax)+' cells';
+  $('ro-jps').textContent=fmt(jps);$('ro-walk').textContent=g.spawn==='eden'?'0 (EDEN)':fmt(g.nw);$('ro-seeds').textContent=floor?'GROUND'+(g.seeds>1?' +'+(g.seeds-1):''):fmt(g.seeds);$('ro-grid').textContent=GW+'×'+GH;
+  const b=$('badge'),st=g.full?['sea','FULL']:g.count<4&&!floor?['empty','SEED']:['life','GROWING'];b.className=st[0];b.textContent=state.paused?'PAUSED':st[1];
+  $('status').textContent=(state.paused?'PAUSED':state.idle?'AUTO PERFORMANCE':'EE_09 // GROWTH')+' · '+GMODES[state.mode].name+' · STICK '+state.stick.toFixed(2)+(state.noise>1?' · NOISE '+state.noise:'')+(state.wind?' · WIND '+state.wind.toFixed(2):'');
+}
+
+/* ── the rule's pictures ── */
+function miniCtx(id){const c=$(id),r=c.getBoundingClientRect(),w=Math.max(1,r.width|0),h=Math.max(1,r.height|0);c.width=w*DPR;c.height=h*DPR;const x=c.getContext('2d');x.setTransform(DPR,0,0,DPR,0,0);return{g:x,w,h};}
+const css=c=>`rgb(${c[0]|0},${c[1]|0},${c[2]|0})`;
+function drawRules(){
+  if(!state.revealed||!g)return;
+  const L=LOOKS[state.look],r=makeRng(9);
+  { // WALK: one particle's drunken path on a little lattice
+    const{g:c,w,h}=miniCtx('mini-w');let x=w/2,y=h/2;c.strokeStyle='rgba(90,233,255,.75)';c.lineWidth=1;c.beginPath();c.moveTo(x,y);
+    for(let k=0;k<70;k++){const d=(r()*4)|0,s=4,b=state.wind;const dd=b&&r()<Math.abs(b)?(b>0?2:3):d;x+=[s,-s,0,0][dd];y+=[0,0,s,-s][dd];x=clamp(x,4,w-4);y=clamp(y,4,h-4);c.lineTo(x,y);}c.stroke();
+    c.fillStyle='#5AE9FF';c.beginPath();c.arc(x,y,2.6,0,6.2832);c.fill();c.fillStyle='rgba(90,233,255,.35)';c.beginPath();c.arc(w/2,h/2,2,0,6.2832);c.fill();}
+  { // STICK: a cluster cell, the neighbours that count, and a particle arriving
+    const{g:c,w,h}=miniCtx('mini-s');const s=9,cx=w/2-30,cy=h/2;
+    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;if(state.touch===4&&dx&&dy)continue;c.strokeStyle='rgba(255,210,122,.45)';c.strokeRect(cx+dx*s-s/2+.5,cy+dy*s-s/2+.5,s-1,s-1);}
+    c.fillStyle=css(L.st[1]);c.fillRect(cx-s/2,cy-s/2,s,s);c.fillStyle=css(L.st[2]);c.fillRect(cx+s/2,cy-s/2-s,s,s);
+    c.fillStyle='#ffd27a';c.font='10px monospace';c.textBaseline='middle';c.fillText('→',cx+28,cy);
+    c.fillStyle=css(L.st[1]);c.fillRect(cx+48,cy-s/2,s,s);c.fillStyle=css(L.glow);c.fillRect(cx+48+s,cy-s/2-s,s,s);
+    c.fillStyle='#b58eff';c.font='9px monospace';c.fillText('p='+state.stick.toFixed(2)+(state.noise>1?' ×'+state.noise:''),cx+76,cy);}
+  { // AGAIN: a new particle far away, the cluster small in the middle
+    const{g:c,w,h}=miniCtx('mini-a');c.fillStyle=css(L.st[1]);for(let k=0;k<6;k++){const a=k*1.05;c.fillRect(w/2+Math.cos(a)*5-1,h/2+Math.sin(a)*5-1,3,3);}c.fillRect(w/2-1.5,h/2-1.5,3,3);
+    c.strokeStyle='rgba(181,142,255,.4)';c.setLineDash([2,4]);c.beginPath();if(g.spawn==='top'){c.moveTo(8,6);c.lineTo(w-8,6);}else c.arc(w/2,h/2,18,0,6.2832);c.stroke();c.setLineDash([]);
+    c.fillStyle='#5AE9FF';c.beginPath();c.arc(g.spawn==='top'?w/2+30:w/2+18,g.spawn==='top'?6:h/2,2.6,0,6.2832);c.fill();}
+  const nbTxt=state.touch===4?'上下左右':'8方向';
+  $('rule-stick-jp').textContent=`くっつく — となり（${nbTxt}）に塊があったら、そこで止まる`;
+  $('rule-stick-cap').innerHTML=state.noise>1?`同じマスに <b>${state.noise}</b> 回来たら、やっと固まる（それまでは数えるだけ）。`:state.stick<1?`止まるのは <b>${Math.round(state.stick*100)}%</b> の確率。外れたら、また歩く。`:'止まった粒は、もう動かない。塊の一部になる。';
+  $('rule-again-cap').textContent=g.spawn==='top'?'次の粒は空の上から降ってくる。':g.spawn==='eden'?'EDEN では歩かない。塊のとなりの空きマスが、でたらめに1つ埋まるだけ。':'粒は塊から離れた所で生まれる。形の設計図はどこにもない。';
+  $('rule-walk-cap').textContent=g.spawn==='eden'?'EDEN では歩きを省く（比べるための対照）。':state.wind?`行き先はサイコロ。ただし ${Math.round(Math.abs(state.wind)*100)}% だけ${state.wind>0?'下':'上'}へ偏る。`:'行き先は毎回サイコロ。どこへ向かうという意志はない。';
+  $('rule-formula').innerHTML=g.spawn==='eden'?'塊のとなりの空き → でたらめに1つ埋める<br>歩きなし · 比べるための対照':`となり（${nbTxt}）に塊 → 確率 ${state.stick.toFixed(2)} で止まる${state.noise>1?'（'+state.noise+'回目で）':''}<br>それ以外 → 上下左右へ1マス · くり返す`;
+}
+
+/* ── controls ── */
+const CTRL=[['speed',v=>v>=10?'一瞬':JPF[v]+' /コマ'],['stick',v=>v.toFixed(2)],['noise',v=>v===1?'1（すぐ）':v+' 回'],['wind',v=>(v>0?'+':v<0?'−':'')+Math.abs(v).toFixed(2)],['walkers',v=>String(v)],['size',v=>v+' px'],['glow',v=>v.toFixed(2)],['trail',v=>v.toFixed(2)+' s']];
+function markModes(){document.querySelectorAll('#presets .wb').forEach(b=>b.classList.toggle('on',+b.dataset.i===state.mode));}
+function syncControls(){
+  for(const[k,lab]of CTRL){$('c-'+k).value=state[k];$('v-'+k).textContent=lab(state[k]);}
+  const eden=g&&g.spawn==='eden';
+  for(const id of['stick','noise','wind','walkers']){$('c-'+id).disabled=eden;$('r-'+id).classList.toggle('dim',eden);}
+  $('c-touch').value=String(state.touch);$('c-look').value=state.look;$('c-color').value=state.color;$('c-light').value=state.light;
+  $('tg-walk').classList.toggle('on',state.walk);$('tg-proof').classList.toggle('on',state.proof);$('graph-lbl-proof').textContent=state.proof?' · 右＝箱数え':'';
+  markModes();if(g){updateReadout();drawRules();}
+}
+for(const[k]of CTRL)$('c-'+k).addEventListener('input',e=>{const v=+e.target.value;stopIdle();state[k]=v;
+  if(k==='size')startMode(state.mode),allocImg();
+  else if(k==='walkers'){if(g.spawn!=='eden')setWalkers(g,v);}
+  else if(k==='stick'||k==='noise'||k==='wind')applyRule();
+  syncControls();});
+for(const[k]of CTRL)$('c-'+k).addEventListener('change',e=>e.target.blur());
+$('c-touch').addEventListener('change',e=>{stopIdle();state.touch=+e.target.value;applyRule();syncControls();e.target.blur();});
+$('c-look').addEventListener('change',e=>{stopIdle();state.look=e.target.value;buildLut();drawRules();e.target.blur();});
+$('c-color').addEventListener('change',e=>{stopIdle();state.color=e.target.value;e.target.blur();});
+$('c-light').addEventListener('change',e=>{stopIdle();state.light=e.target.value;allocImg();e.target.blur();});
+$('tg-walk').addEventListener('click',()=>{stopIdle();state.walk=!state.walk;syncControls();});
+$('presets').innerHTML=GMODES.map((s,i)=>'<div class="wb" data-i="'+i+'">'+(i+1)+' '+s.name+'<i>'+s.jp+'</i></div>').join('');
+$('presets').addEventListener('click',e=>{const b=e.target.closest('.wb');if(b){stopIdle();startMode(+b.dataset.i);}});
+$('btn-seed').addEventListener('click',()=>{stopIdle();restart();});$('btn-nucleus').addEventListener('click',()=>{stopIdle();newSeed();});
+function setProof(on){state.proof=on;syncControls();if(state.revealed)drawGraph();}
+$('tg-proof').addEventListener('click',()=>{stopIdle();setProof(!state.proof);});
+function nudge(k,d,lo,hi){stopIdle();if($('c-'+k).disabled)return;state[k]=Math.round(clamp(state[k]+d,lo,hi)*100)/100;applyRule();syncControls();}
+let everRevealed=false;
+function layoutRules(){if(innerWidth<=720)$('side').prepend($('rules'));else $('app').append($('rules'));}
+function setReveal(on){state.revealed=on;document.body.classList.toggle('revealed',on);document.body.classList.toggle('naked',!on);if(on){everRevealed=true;hideHint();requestAnimationFrame(()=>{resizeGraph();resizeWorld();syncControls();drawRules();measure();});}else requestAnimationFrame(resizeWorld);}
+const hintEl=$('naked-hint');let hintTimer=setTimeout(()=>{if(!everRevealed)hintEl.classList.add('show');},45000);
+function hideHint(){hintEl.classList.remove('show');clearTimeout(hintTimer);}
+function flash(btn,cls,txt){const t=btn.textContent;btn.textContent=txt;btn.classList.add(cls);setTimeout(()=>{btn.textContent=t;btn.classList.remove(cls);},1200);}
+$('btn-copy').addEventListener('click',async e=>{
+  const btn=e.currentTarget;
+  const payload={version:'EE09_growth',mode:GMODES[state.mode].name,speed:state.speed,stick:state.stick,noise:state.noise,wind:state.wind,touch:state.touch,walkers:state.walkers,size:state.size,glow:state.glow,trail:state.trail,look:state.look,color:state.color,light:state.light,walk:state.walk,proof:state.proof,revealed:state.revealed,paused:state.paused};
+  try{await navigator.clipboard.writeText(JSON.stringify(payload,null,2));flash(btn,'ok','✓ COPIED');}catch{flash(btn,'err','✗');}
+});
+$('btn-paste').addEventListener('click',async e=>{
+  const btn=e.currentTarget;
+  try{const j=JSON.parse(await navigator.clipboard.readText());if(!j||typeof j!=='object')throw Error('params');stopIdle();
+    const mi=GMODES.findIndex(m=>m.name===j.mode);const oldSize=state.size;
+    if(Number.isFinite(j.size))state.size=Math.round(clamp(j.size,2,8));
+    if(mi>=0&&(mi!==state.mode||oldSize!==state.size))startMode(mi);else if(oldSize!==state.size)startMode(state.mode);
+    for(const[k]of CTRL){if(k==='size')continue;const el=$('c-'+k);if(Number.isFinite(j[k]))state[k]=clamp(j[k],+el.min,+el.max);}for(const k of['speed','noise','walkers'])state[k]=Math.round(state[k]);
+    if(j.touch===4||j.touch===8)state.touch=j.touch;
+    if(Object.keys(LOOKS).includes(j.look)){state.look=j.look;buildLut();}if(j.color==='time'||j.color==='town')state.color=j.color;if(j.light==='dot'||j.light==='soft'){state.light=j.light;allocImg();}
+    for(const k of['walk','proof','paused'])if(typeof j[k]==='boolean')state[k]=j[k];
+    applyRule();if(g.spawn!=='eden')setWalkers(g,state.walkers);if(typeof j.revealed==='boolean')setReveal(j.revealed);syncControls();drawRules();flash(btn,'ok','✓ APPLIED');
+  }catch{flash(btn,'err','✗');}
+});
+const modal=$('shortcut-modal');
+function openSC(){if(!state.revealed)setReveal(true);modal.classList.add('open');}
+function closeSC(){modal.classList.remove('open');}
+$('sc-open-btn').addEventListener('click',openSC);$('sc-close').addEventListener('click',closeSC);modal.addEventListener('click',e=>{if(e.target===modal)closeSC();});
+function escape(){if(modal.classList.contains('open'))closeSC();else if(state.revealed)setReveal(false);else location.href='index.html';}
+window.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){e.preventDefault();escape();return;}
+  if(e.key==='Tab'){e.preventDefault();setReveal(!state.revealed);return;}
+  if(e.key==='?'){e.preventDefault();modal.classList.contains('open')?closeSC():openSC();return;}
+  const tag=document.activeElement?.tagName;if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA')return;
+  if(e.key==='t'||e.key==='T'){vjTap();return;}if(e.code==='Space'){e.preventDefault();stopIdle();state.paused=!state.paused;updateReadout();return;}
+  const k=e.key.toLowerCase();
+  if(k==='r'){stopIdle();restart();return;}if(k==='g'){stopIdle();setProof(!state.proof);return;}if(k==='n'){stopIdle();newSeed();return;}if(k==='w'){stopIdle();state.walk=!state.walk;syncControls();return;}
+  if(e.key.startsWith('Arrow')){e.preventDefault();if(e.key==='ArrowLeft')nudge('speed',-1,1,10);if(e.key==='ArrowRight')nudge('speed',1,1,10);if(e.key==='ArrowUp')nudge('stick',.02,.02,1);if(e.key==='ArrowDown')nudge('stick',-.02,.02,1);return;}
+  if(/^[1-6]$/.test(e.key)){stopIdle();startMode(+e.key-1);}
+});
+$('esc-link').addEventListener('click',e=>{e.preventDefault();escape();});
+// Browsing the HUD keeps the performance; changing a value or touching the world stops it.
+$('side').addEventListener('input',()=>stopIdle());$('side').addEventListener('change',()=>stopIdle());
+document.addEventListener('pointerdown',()=>{quietFor=0;});document.addEventListener('keydown',()=>{quietFor=0;});
+new ResizeObserver(()=>{if(!VJ.exporting){resizeWorld();if(state.revealed){resizeGraph();drawRules();}}}).observe(stage);
+let rebuildTimer=0;
+window.addEventListener('resize',()=>{if(VJ.exporting)return;layoutRules();resizeWorld();if(state.revealed){resizeGraph();drawRules();}
+  /* the grid follows the window: if it opened tiny (iframe / pane), rebuild once the size settles */
+  clearTimeout(rebuildTimer);rebuildTimer=setTimeout(()=>{const[nw,nh]=dims();if(!VJ.exporting&&(Math.abs(nw-GW)>GW*.15||Math.abs(nh-GH)>GH*.15))startMode(state.mode);},300);});
+
+let last=performance.now();
+function frame(now){if(VJ.exporting)return;const dt=Math.min(.05,(now-last)/1000);last=now;quietFor+=dt;if(!state.idle&&!state.paused&&!reduceMotion&&quietFor>45&&!hand.on&&!VJ.playing&&vjSrc()==='off'&&!VJ.recOn&&!modal.classList.contains('open'))startIdle();for(let i=ghosts.length-1;i>=0;i--){ghosts[i].t-=dt*.9;if(ghosts[i].t<=0)ghosts.splice(i,1);}vjTick(now,dt);advance(dt);draw();roAcc+=dt;jpsAcc+=dt;if(jpsAcc>=1){jps=Math.round((g.count-joinMark)/jpsAcc);joinMark=g.count;jpsAcc=0;}if(roAcc>=.5){roAcc=0;measure();}queueRaf();}
+/* ══════════════════════════════════════════════════════════════
+   VJ — audio / BPM / export   (vj-audio-export-kit · canon: Grid_System_Bauhaus/bauhaus.html)
+   beat sources: MP3 KICK = rise-onset on 30–150 Hz · BPM CLOCK = TAP sets tempo and the downbeat.
+   The piece supplies VJ_HOOKS { name, canvas, acts, everyLabel, midLabel, highLabel,
+                                 touch, onBeat, onEvery, advance, render, beginExport, endExport }.
+   ══════════════════════════════════════════════════════════════ */
+const VJ = { ctx:null, buf:null, src:null, analyser:null, dest:null, freq:null, playing:false,
+  low:0, mid:0, high:0, prevLow:0, lastKick:0, count:0, flash:0,
+  origin:performance.now(), lastIdx:0, taps:[],
+  rec:null, chunks:[], recOn:false, recT0:0, exporting:false };
+const vj$ = id => document.getElementById(id);
+const vjSrc = () => vj$('vj-src').value;
+const vjBpm = () => Math.max(40, Math.min(240, +vj$('vj-bpm').value || 120));
+const vjAmt = id => VJ.playing ? +vj$(id).value : 0;          // MID / HIGH act only while audio plays
+
+/* drive loop: rAF while visible, setInterval while the tab is hidden (rAF stops completely there) */
+let rafQueued = false, hiddenTimer = null;
+function queueRaf(){ if (!rafQueued){ rafQueued = true; requestAnimationFrame(t=>{ rafQueued = false; frame(t); }); } }
+function syncHiddenTimer(){
+  const want = document.hidden && !VJ.exporting;
+  if (want && !hiddenTimer) hiddenTimer = setInterval(()=>frame(performance.now()), 33);
+  if (!want && hiddenTimer){ clearInterval(hiddenTimer); hiddenTimer = null; }
+}
+document.addEventListener('visibilitychange', syncHiddenTimer);
+
+async function vjLoad(file){
+  if (!VJ.ctx) VJ.ctx = new (window.AudioContext||window.webkitAudioContext)();
+  if (VJ.playing) vjStop();
+  vj$('vj-file-name').textContent = 'decoding… ' + file.name;
+  try{ VJ.buf = await VJ.ctx.decodeAudioData(await file.arrayBuffer()); }
+  catch(e){ vj$('vj-file-name').textContent = '読み込めませんでした: ' + file.name; return; }
+  vj$('vj-file-name').textContent = file.name;
+  vjUI();
+}
+function vjPlay(){
+  if (!VJ.buf) return;
+  const c = VJ.ctx; if (c.state === 'suspended') c.resume();   // autoplay policy: resume inside the click
+  VJ.src = c.createBufferSource(); VJ.src.buffer = VJ.buf; VJ.src.loop = true;
+  VJ.analyser = c.createAnalyser(); VJ.analyser.fftSize = 2048;
+  VJ.analyser.smoothingTimeConstant = 0.3;                    // low = attacks stay sharp for kick detection
+  VJ.src.connect(VJ.analyser); VJ.analyser.connect(c.destination);
+  VJ.dest = VJ.dest || c.createMediaStreamDestination();     // tapped by REC so the WebM carries the audio
+  VJ.analyser.connect(VJ.dest);
+  VJ.freq = new Uint8Array(VJ.analyser.frequencyBinCount);
+  VJ.src.start(); VJ.playing = true;
+  if (vjSrc() === 'off') vj$('vj-src').value = 'kick';
+  vjUI();
+}
+function vjStop(){
+  if (VJ.src){ try{ VJ.src.stop(); }catch(e){} VJ.src = null; }
+  VJ.playing = false; VJ.low = VJ.mid = VJ.high = 0;
+  vjMeter('vj-mLow',0); vjMeter('vj-mMid',0); vjMeter('vj-mHigh',0);
+  vjUI();
+}
+function vjBand(lo, hi){
+  const binHz = (VJ.ctx.sampleRate/2)/VJ.freq.length;
+  const a = Math.floor(lo/binHz), b = Math.min(Math.ceil(hi/binHz), VJ.freq.length-1);
+  let s = 0; for (let i=a; i<=b; i++) s += VJ.freq[i];
+  return s/((b-a+1)*255);
+}
+function vjMeter(id, v){ vj$(id).firstElementChild.style.width = Math.round(Math.min(1, v)*100) + '%'; }
+function vjAnalyze(now){
+  VJ.analyser.getByteFrequencyData(VJ.freq);
+  const low = vjBand(30,150), mid = vjBand(400,2000), high = vjBand(4000,12000);
+  VJ.low = low; VJ.mid += (mid-VJ.mid)*0.25; VJ.high += (high-VJ.high)*0.45;
+  vjMeter('vj-mLow', low); vjMeter('vj-mMid', VJ.mid); vjMeter('vj-mHigh', VJ.high);
+  // kick = a sudden RISE in the low band (a moving-average threshold never fires on real music),
+  // and the low band must stand above the highs — a hi-hat is broadband and lifts every band at once
+  const th = 0.14 - (+vj$('vj-sens').value/100)*0.12, rise = low - VJ.prevLow;
+  if (rise > th && low > 0.10 && low - high > 0.06 && now - VJ.lastKick > 150){
+    VJ.lastKick = now;
+    const m = vj$('vj-mLow'); m.classList.add('hit'); setTimeout(()=>m.classList.remove('hit'), 90);
+    if (vjSrc() === 'kick') vjBeat();
+  }
+  VJ.prevLow = low;
+}
+function vjBeat(){
+  VJ.count++; VJ.flash = 1;
+  const act = vj$('vj-act').value;
+  if (act !== 'none') VJ_HOOKS.onBeat(act, VJ.count);
+  const ev = +vj$('vj-every').value;
+  if (ev > 0 && VJ.count % ev === 0) VJ_HOOKS.onEvery(VJ.count);
+}
+function vjTick(now, dt){
+  if (VJ.playing) vjAnalyze(now);
+  const beats = (now - VJ.origin)/1000*vjBpm()/60;
+  if (vjSrc() === 'clock'){
+    const idx = Math.floor(beats);
+    if (idx > VJ.lastIdx){ VJ.lastIdx = idx; vjBeat(); }
+  }
+  VJ.flash *= Math.pow(0.004, dt);
+  const led = vjSrc() === 'kick' ? VJ.flash : Math.pow(1 - (((beats % 1) + 1) % 1), 3);
+  vj$('vj-led').style.opacity = 0.15 + 0.85*led;
+  if (VJ.recOn){
+    const s = Math.floor((now - VJ.recT0)/1000);
+    vj$('vj-rec').textContent = `■ STOP & SAVE  ${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+  }
+}
+function vjTap(){
+  VJ_HOOKS.touch();
+  const now = performance.now();
+  VJ.taps = VJ.taps.filter(t => now - t < 2500); VJ.taps.push(now);
+  if (VJ.taps.length >= 2){
+    const iv = (VJ.taps[VJ.taps.length-1] - VJ.taps[0])/(VJ.taps.length-1);
+    vj$('vj-bpm').value = Math.round(60000/iv);
+  }
+  VJ.origin = now; VJ.lastIdx = 0;                           // the tap is the downbeat
+  if (vjSrc() === 'off') vj$('vj-src').value = 'clock';
+  if (vjSrc() === 'clock') vjBeat();
+  vjUI();
+}
+function vjRec(){
+  const b = vj$('vj-rec');
+  if (VJ.recOn){ VJ.rec.stop(); VJ.recOn = false; b.classList.remove('on'); b.textContent = '● REC WebM'; return; }
+  const stream = VJ_HOOKS.canvas.captureStream(60);
+  if (VJ.playing && VJ.dest) VJ.dest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
+  const mime = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'].find(m => MediaRecorder.isTypeSupported(m));
+  VJ.rec = new MediaRecorder(stream, { mimeType:mime, videoBitsPerSecond:16000000 });
+  VJ.chunks = [];
+  VJ.rec.ondataavailable = e => { if (e.data.size) VJ.chunks.push(e.data); };
+  VJ.rec.onstop = () => {
+    const a = document.createElement('a');
+    a.download = `${VJ_HOOKS.name}_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.webm`;
+    a.href = URL.createObjectURL(new Blob(VJ.chunks, { type:'video/webm' }));
+    a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+  };
+  VJ.rec.start(250);
+  VJ.recOn = true; VJ.recT0 = performance.now(); b.classList.add('on');
+}
+/* PNG sequence — offline and beat-exact: beats land on k·60/BPM from frame 0, the sim advances in
+   60 fps steps (2 per frame at 30 fps), and nothing reads the wall clock while it runs */
+async function vjSeq(){
+  if (!window.showDirectoryPicker){ alert('連番PNG は Chrome / Edge で開いてください（File System Access API を使います）'); return; }
+  const btn = vj$('vj-seq');
+  let dir; try{ dir = await window.showDirectoryPicker({ mode:'readwrite' }); }catch(e){ return; }
+  const fps = +vj$('vj-fps').value, bars = +vj$('vj-bars').value, bpm = vjBpm();
+  const frames = Math.round(bars*4*60/bpm*fps), sub = Math.max(1, Math.round(60/fps));
+  const [w, h] = vj$('vj-res').value.split('x').map(Number);
+  const beatsOn = vjSrc() !== 'off';
+  if (VJ.recOn) vjRec();
+  VJ_HOOKS.touch();
+  VJ.exporting = true; syncHiddenTimer();
+  VJ_HOOKS.beginExport(w, h);
+  let simT = 0, lastIdx = -1;
+  try{
+    for (let f=0; f<frames; f++){
+      for (let k=0; k<sub; k++){
+        if (beatsOn){ const idx = Math.floor(simT*bpm/60 + 1e-9); if (idx > lastIdx){ lastIdx = idx; vjBeat(); } }
+        VJ_HOOKS.advance(1/60); simT += 1/60;
+      }
+      VJ_HOOKS.render(1/fps);
+      const blob = await new Promise(r => VJ_HOOKS.canvas.toBlob(r, 'image/png'));
+      const fh = await dir.getFileHandle(`${VJ_HOOKS.name}_${String(f).padStart(4,'0')}.png`, { create:true });
+      const wr = await fh.createWritable(); await wr.write(blob); await wr.close();
+      btn.textContent = `${f+1} / ${frames}…`;
+    }
+    btn.textContent = `完了 ${frames} 枚 · ${fps}fps · ${bars} 小節 @${bpm}`;
+  }catch(e){ btn.textContent = '失敗: ' + e.message; }
+  VJ_HOOKS.endExport();
+  VJ.exporting = false; syncHiddenTimer(); queueRaf();
+  setTimeout(()=>{ btn.textContent = '⇩ 連番PNG を書き出す'; }, 5000);
+}
+/* gray out what can't act right now, so "it doesn't move" is never a mystery */
+function vjUI(){
+  vj$('vj-play').classList.toggle('off', !VJ.buf);
+  vj$('vj-play').textContent = VJ.playing ? '■ STOP' : '▶ PLAY';
+  for (const id of ['vj-r-sens', 'vj-r-mid', 'vj-r-high']) vj$(id).classList.toggle('dim', !VJ.playing);
+  const off = vjSrc() === 'off';
+  vj$('vj-r-act').classList.toggle('dim', off); vj$('vj-r-every').classList.toggle('dim', off);
+}
+function vjInit(){
+  vj$('vj-act').innerHTML = VJ_HOOKS.acts.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+  vj$('vj-every-lbl').textContent = VJ_HOOKS.everyLabel;
+  vj$('vj-mid-lbl').textContent = VJ_HOOKS.midLabel;
+  vj$('vj-high-lbl').textContent = VJ_HOOKS.highLabel;
+  vj$('vj-file').addEventListener('change', e => { const f = e.target.files[0]; if (f){ VJ_HOOKS.touch(); vjLoad(f); } });
+  vj$('vj-play').addEventListener('click', () => { VJ_HOOKS.touch(); VJ.playing ? vjStop() : vjPlay(); });
+  vj$('vj-tap').addEventListener('click', vjTap);
+  vj$('vj-src').addEventListener('change', () => { VJ_HOOKS.touch(); VJ.origin = performance.now(); VJ.lastIdx = 0; vjUI(); });
+  vj$('vj-sens').addEventListener('input', e => { vj$('vj-v-sens').textContent = e.target.value; });
+  vj$('vj-mid').addEventListener('input', e => { vj$('vj-v-mid').textContent = (+e.target.value).toFixed(2); });
+  vj$('vj-high').addEventListener('input', e => { vj$('vj-v-high').textContent = (+e.target.value).toFixed(2); });
+  vj$('vj-bpm').addEventListener('change', () => { vj$('vj-bpm').value = vjBpm(); });
+  vj$('vj-rec').addEventListener('click', vjRec);
+  vj$('vj-seq').addEventListener('click', vjSeq);
+  document.querySelectorAll('#vj-sp select').forEach(el => el.addEventListener('change', () => el.blur()));  // give the keys back
+  vjUI();
+}
+
+/* what the beat does in this piece */
+const VJ_HOOKS={
+  name:'EE09_growth',canvas:worldC,
+  acts:[['burst','BURST — 一拍で一気に育つ（くっつく粒 ×8）'],['seed','SEED — 空いた所に核が生まれる'],['flash','FLASH — いちばん新しい枝先が光る'],['none','なし']],
+  everyLabel:'NEXT SPECIES',midLabel:'育つ速さ',highLabel:'新しい枝先がきらめく',touch:()=>stopIdle(),
+  onBeat(act){beatFlash=1;if(act==='burst'){if(!g.full)grow(g,EVENT_CAP*2,Math.max(24,jpfNow()*8));}else if(act==='seed')newSeed();},
+  onEvery(){startMode(state.mode>=5?0:state.mode+1);},
+  advance,render:()=>draw(),
+  beginExport(w,h){worldC.width=w;worldC.height=h;tickAcc=0;VJ.mid=VJ.high=0;VJ.count=0;hand.on=false;},
+  endExport(){resizeWorld();last=performance.now();}
+};
+layoutRules();resizeWorld();
+startMode(0);if(!reduceMotion)startIdle();
+syncControls();vjInit();queueRaf();
+</script>
+</body>
+</html>
